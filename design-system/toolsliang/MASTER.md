@@ -4,45 +4,51 @@
 
 ## 方向
 
-toolsliang 採「平靜、快速、可信任的工具桌」：淺色優先、低噪音、清楚邊界、少量紫色重點與不干擾任務的動態。工具內容必須留在使用者裝置。介面不使用吉祥物、遊戲化、指標追蹤光暈、裝飾性卡片陰影或亮色模式黑色側邊欄。
+toolsliang 採「平靜、快速、可信任的工具桌」：淺色優先、低噪音、清楚邊界，以 `#FF8C42` 暖橘為品牌主色並搭配不干擾任務的動態。工具內容必須留在使用者裝置。介面不使用吉祥物、遊戲化、指標追蹤光暈、裝飾性卡片陰影或亮色模式黑色側邊欄。
 
 ## 色彩
 
+採 Primitive → Semantic → Component 三層架構；頁面與元件只使用 semantic 或 component token，不直接引用 primitive 或任意色碼。
+
 ### Primitive tokens
 
-| Token | Light | Dark | 用途 |
-|---|---:|---:|---|
-| `neutral-0` | `#FFFFFF` | `#FFFFFF` | 純白基準 |
-| `neutral-50` | `#FAFAFC` | `#F7F7FA` | 最淺表面 |
-| `neutral-100` | `#F3F3F6` | `#E8E8EE` | 頁面底色／暗色文字次級 |
-| `neutral-200` | `#E4E3E9` | `#C8C7D0` | 邊框／暗色次級文字 |
-| `neutral-600` | `#676671` | `#696874` | 亮色次級文字 |
-| `neutral-900` | `#29282F` | `#1D1D24` | 亮色主文字／暗色表面 |
-| `neutral-950` | `#14141A` | `#14141A` | 暗色背景 |
-| `violet-50` | `#F3F0FF` | `#F3F0FF` | 重點柔和底色 |
-| `violet-500` | `#6B4EFF` | `#A997FF` | 品牌／焦點 |
-| `violet-700` | `#4F35D2` | `#C4B9FF` | 亮色互動文字／暗色重點 |
-| `green-50` | `#E8F6EF` | `#17372E` | 成功與本機處理底色 |
-| `green-700` | `#197659` | `#7BDDB7` | 成功與本機處理文字 |
-| `amber-50` | `#FFF5E8` | `#3C281F` | 熱門／警示底色 |
-| `amber-700` | `#98471F` | `#FFB38B` | 熱門／警示文字 |
-| `red-50` | `#FFF0F0` | `#3A1E23` | 錯誤底色 |
-| `red-700` | `#B4232E` | `#FF9AA5` | 錯誤文字 |
+| Token | Value | 用途 |
+|---|---:|---|
+| `neutral-0` | `#FFFFFF` | 純白基準 |
+| `neutral-50` | `#FCFAF8` | 最淺暖色表面 |
+| `neutral-100` | `#F6F3F0` | 亮色頁面底色 |
+| `neutral-200` | `#E7E0DA` | 亮色邊框 |
+| `neutral-600` | `#6B635E` | 亮色次級文字 |
+| `neutral-900` | `#2D2825` | 亮色主文字 |
+| `neutral-950` | `#171412` | 暗色背景 |
+| `orange-50` | `#FFF8F3` | 暖橘 hover 表面 |
+| `orange-100` | `#FFEADB` | 選取與柔和重點 |
+| `orange-200` | `#FFD1B3` | 品牌淺色階 |
+| `orange-400` | `#FF8C42` | 品牌主色；按鈕需搭配深色文字 |
+| `orange-500` | `#F1782B` | 亮色按鈕 hover |
+| `orange-700` | `#A53E00` | focus 與 active |
+| `orange-800` | `#8D3200` | 亮色可讀互動文字與 icon |
+| `orange-950` | `#2B1608` | 主色表面上的文字 |
+| `green-50` / `green-700` | `#E8F6EF` / `#197659` | 成功與本機處理 |
+| `amber-50` / `amber-700` | `#FFF5E8` / `#98471F` | 熱門與提醒 |
+| `red-50` / `red-700` | `#FFF0F0` / `#B4232E` | 錯誤與破壞性操作 |
 
 ### Semantic tokens
 
 | Token | Light | Dark |
 |---|---|---|
-| `background` | `neutral-100` | `neutral-950` |
-| `foreground` | `neutral-900` | `neutral-50` |
-| `surface` | `neutral-0` | `neutral-900` |
-| `surface-subtle` | `neutral-50` | `#24242D` |
-| `surface-hover` | `violet-50` | `#302A4D` |
-| `muted-foreground` | `neutral-600` | `neutral-200` |
-| `border` | `neutral-200` | `#393844` |
-| `primary` | `violet-500` | `#A997FF` |
-| `primary-foreground` | `neutral-0` | `neutral-950` |
-| `focus-ring` | `violet-500` | `#B6A8FF` |
+| `background` | `#F6F3F0` | `#171412` |
+| `foreground` | `#2D2825` | `#FCFAF8` |
+| `surface` | `#FFFFFF` | `#211D1A` |
+| `surface-subtle` | `#FCFAF8` | `#2A2420` |
+| `surface-hover` | `#FFF8F3` | `#3B261C` |
+| `muted-foreground` | `#6B635E` | `#CFC5BE` |
+| `border` | `#E7E0DA` | `#4C423C` |
+| `primary` | `#FF8C42` | `#FF8C42` |
+| `primary-hover` | `#F1782B` | `#FF9F62` |
+| `primary-strong` | `#8D3200` | `#FFAF79` |
+| `primary-foreground` | `#2B1608` | `#241308` |
+| `focus-ring` | `#A53E00` | `#FF8C42` |
 | `success` | `green-700` | `#7BDDB7` |
 | `success-surface` | `green-50` | `#17372E` |
 | `warning` | `amber-700` | `#FFB38B` |
@@ -52,12 +58,27 @@ toolsliang 採「平靜、快速、可信任的工具桌」：淺色優先、低
 
 任何文字／背景組合必須驗證對比，不可只因 token 名稱合理就假設合格。狀態不得只靠顏色，需搭配文字、icon 或邊框。
 
+`#FF8C42` 在白底上不作小型文字或細線 icon；亮色主題使用 `primary-strong #8D3200`，暗色主題使用 `primary-strong #FFAF79`。品牌主色作按鈕背景時搭配 `primary-foreground`，對比分別為 7.44:1 與 7.75:1。
+
+### Component tokens
+
+| Token | Alias | 規則 |
+|---|---|---|
+| `button-primary-bg` | `primary` | 品牌主色背景 |
+| `button-primary-fg` | `primary-foreground` | 不使用白字，確保 AA |
+| `button-primary-hover-bg` | `primary-hover` | hover 不加入陰影或位移 |
+| `card-bg` / `card-border` | `surface` / `border` | 平面卡片與清楚邊界 |
+| `card-shadow` | `none` | default 與 hover 都為 none |
+| `input-bg` / `input-border` | `surface` / `border-strong` | 輸入欄位語意 |
+| `sidebar-active-bg` | `surface-hover` | 目前導覽項目背景 |
+| `sidebar-active-fg` | `primary-strong` | 目前導覽項目文字與 icon |
+
 ## Typography
 
 不從第三方字型 CDN 載入字型，避免隱私、效能與離線風險。正式字型堆疊：
 
 - 繁體中文：`"PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif`
-- 英文：`"Avenir Next", Avenir, ui-sans-serif, system-ui, sans-serif`
+- 英文：本機打包 `"Roboto Variable"`，fallback 為 `Roboto, ui-sans-serif, system-ui, sans-serif`
 - 等寬：`"SFMono-Regular", Consolas, "Liberation Mono", monospace`
 
 | Token | Size / line-height | Weight | 用途 |

@@ -44,6 +44,7 @@ usePageSeo({
       <h1>{{ locale === 'en' ? 'toolsliang Design System' : 'toolsliang 設計系統' }}</h1>
       <p>{{ locale === 'en' ? 'A calm, fast, privacy-forward utility desk.' : '平靜、快速、重視隱私的日常工具桌。' }}</p>
       <div class="ds-principles">
+        <Badge variant="outline">Primary #FF8C42</Badge>
         <Badge variant="outline">Flat, not shadowed</Badge>
         <Badge variant="outline">Local first</Badge>
         <Badge variant="outline">WCAG 2.2 AA</Badge>
@@ -67,7 +68,7 @@ usePageSeo({
       <Card class="type-specimen">
         <div class="type-display">事情處理好，內容不用交出去。</div>
         <div class="type-heading">A focused workspace for every tool.</div>
-        <p>繁體中文使用 PingFang TC、Noto Sans TC 與微軟正黑體。English uses Avenir Next and system sans-serif. 內文行高保留足夠空間，讓中英文混排依然清楚。</p>
+        <p>繁體中文使用 PingFang TC、Noto Sans TC 與微軟正黑體。English uses locally bundled Roboto. 內文行高保留足夠空間，讓中英文混排依然清楚。</p>
         <code>const content = 'stays on this device'</code>
       </Card>
     </section>

@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, LayoutGrid, PanelLeftClose, Star } from '@lucide/vue'
+import { ChevronRight, LayoutGrid, PanelLeftClose, Star } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { copy, toolCategories, toolsByCategory } from '@/features/tools/catalog'
 
 const props = defineProps<{ collapsed: boolean }>()
 const emit = defineEmits<{ toggle: [] }>()
 const { locale, withLocale } = useAppLocale()
+const route = useRoute()
+const toolsIndexPath = computed(() => withLocale('/tools/').replace(/\/$/, ''))
+const onToolsIndex = computed(() => route.path.replace(/\/$/, '') === toolsIndexPath.value)
+const showingSaved = computed(() => route.query.saved === 'true')
 </script>
 
 <template>
@@ -25,21 +29,20 @@ const { locale, withLocale } = useAppLocale()
     </div>
 
     <nav class="app-sidebar__nav" :aria-label="locale === 'en' ? 'Tool navigation' : '工具導覽'">
-      <NuxtLink class="sidebar-primary-link" :to="withLocale('/tools/')">
-        <LayoutGrid :size="20" aria-hidden="true" />
-        <span v-if="!props.collapsed">{{ locale === 'en' ? 'All tools' : '全部工具' }}</span>
-      </NuxtLink>
-      <NuxtLink class="sidebar-primary-link" :to="withLocale('/tools/?saved=true')">
-        <Star :size="20" aria-hidden="true" />
-        <span v-if="!props.collapsed">{{ locale === 'en' ? 'Saved' : '常用工具' }}</span>
-      </NuxtLink>
+      <div class="sidebar-main-links">
+        <NuxtLink :class="['sidebar-primary-link', { 'sidebar-primary-link--active': onToolsIndex && !showingSaved }]" :to="withLocale('/tools/')">
+          <LayoutGrid :size="20" aria-hidden="true" />
+          <span v-if="!props.collapsed">{{ locale === 'en' ? 'All tools' : '全部工具' }}</span>
+        </NuxtLink>
+        <NuxtLink :class="['sidebar-primary-link', { 'sidebar-primary-link--active': showingSaved }]" :to="withLocale('/tools/?saved=true')">
+          <Star :size="20" aria-hidden="true" />
+          <span v-if="!props.collapsed">{{ locale === 'en' ? 'Saved' : '常用工具' }}</span>
+        </NuxtLink>
+      </div>
 
       <template v-if="!props.collapsed">
         <section v-for="category in toolCategories" :key="category.id" class="sidebar-group">
-          <h2 class="sidebar-group__title">
-            <ToolIcon :name="category.icon" :size="17" />
-            {{ copy(category.name, locale) }}
-          </h2>
+          <h2 class="sidebar-group__title">{{ copy(category.name, locale) }}</h2>
           <NuxtLink
             v-for="tool in toolsByCategory(category.id)"
             :key="tool.slug"
@@ -53,10 +56,5 @@ const { locale, withLocale } = useAppLocale()
         </section>
       </template>
     </nav>
-
-    <Button v-if="!props.collapsed" variant="ghost" class="app-sidebar__collapse" @click="emit('toggle')">
-      <ChevronLeft :size="18" aria-hidden="true" />
-      {{ locale === 'en' ? 'Collapse' : '收合導覽' }}
-    </Button>
   </aside>
 </template>

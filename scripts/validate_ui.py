@@ -109,6 +109,15 @@ def main() -> None:
         visit(page, "/zh-tw/tools/")
         assert page.locator(".app-sidebar").is_visible()
         assert page.locator(".mobile-nav").is_hidden()
+        assert page.locator(".sidebar-group__title svg").count() == 0
+        assert page.get_by_text("收合導覽", exact=True).count() == 0
+        assert page.locator(".app-sidebar button[aria-expanded] svg").count() == 1
+        primary_links = page.locator(".sidebar-primary-link")
+        first_link_box = primary_links.nth(0).bounding_box()
+        second_link_box = primary_links.nth(1).bounding_box()
+        assert first_link_box and second_link_box
+        assert second_link_box["y"] - (first_link_box["y"] + first_link_box["height"]) >= 7
+        page.screenshot(path=str(ARTIFACTS / "tool-directory-desktop-light.png"), full_page=True)
         expanded_width = page.locator(".app-sidebar").evaluate("el => el.getBoundingClientRect().width")
         page.locator(".app-sidebar button[aria-expanded]").click()
         page.wait_for_timeout(250)
@@ -124,6 +133,7 @@ def main() -> None:
 
         visit(page, "/en/tools/json-formatter/")
         assert page.locator("html").get_attribute("lang") == "en"
+        assert "Roboto" in page.locator("body").evaluate("el => getComputedStyle(el).fontFamily")
         assert page.locator("link[rel='canonical']").get_attribute("href") == "https://toolsliang.com/en/tools/json-formatter/"
         assert page.locator("link[hreflang='zh-Hant-TW']").count() == 1
         checks.append("locale, canonical, hreflang")
@@ -131,6 +141,9 @@ def main() -> None:
         visit(page, "/zh-tw/design-system/")
         assert page.locator(".swatch-card").count() == 10
         assert page.locator(".component-showcase").count() == 1
+        primary = page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim().toLowerCase()")
+        assert primary == "#ff8c42", f"Unexpected primary token: {primary}"
+        assert_contrast(page, ".ui-button--default")
         page.screenshot(path=str(ARTIFACTS / "design-system-desktop-light.png"), full_page=True)
         checks.append("design system inventory")
 
@@ -140,6 +153,7 @@ def main() -> None:
         assert "dark" in (page.locator("html").get_attribute("class") or "")
         page.screenshot(path=str(ARTIFACTS / "design-system-desktop-dark.png"), full_page=True)
         assert_contrast(page, "body")
+        assert_contrast(page, ".ui-button--default")
         checks.append("dark theme")
 
         visit(page, "/zh-tw/?variant=A")

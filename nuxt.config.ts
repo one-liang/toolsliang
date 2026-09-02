@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   modules: ['shadcn-nuxt', '@nuxtjs/color-mode', '@nuxt/eslint'],
-  css: ['~/assets/css/main.css'],
+  css: ['@fontsource-variable/roboto', '~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
   },
@@ -27,7 +27,7 @@ export default defineNuxtConfig({
       titleTemplate: '%s · toolsliang',
       meta: [
         { name: 'color-scheme', content: 'light dark' },
-        { name: 'theme-color', content: '#f3f3f6' },
+        { name: 'theme-color', content: '#f6f3f0' },
       ],
     },
   },
