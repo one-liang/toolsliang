@@ -1,6 +1,6 @@
 # toolsliang UI Prototype
 
-> 狀態：已選擇 B 的結構，正在驗證手繪塗鴉與動態互動風格；此文件與 `app/components/variants/` 均為拋棄式驗證材料，不是 production Design System。
+> 狀態：已選擇 B 的結構，正在驗證簡約介面與動態互動風格；此文件與 `app/components/variants/` 均為拋棄式驗證材料，不是 production Design System。
 
 ## 要回答的問題
 
@@ -14,7 +14,7 @@ toolsliang 的 Landing Page、工具導覽與工具工作區，應採用什麼�
 
 Landing Page 先建立品牌、搜尋與本機處理信任，再把使用者帶入獨立 App Shell。首頁與工作區角色最清楚，適合從搜尋與 SEO 入口逐步理解產品的人。
 
-### Variant B：工具駕駛艙
+### Variant B：簡約動態工具台
 
 從第一屏就同時呈現側邊導覽、工具分類與釘選工作區。操作路徑最短、資訊密度最高，適合常回訪或已知道目標的人。
 
@@ -37,6 +37,6 @@ Landing Page 先建立品牌、搜尋與本機處理信任，再把使用者帶�
 
 以 Variant B 的「桌面左側導覽、中間工具探索、右側釘選工作區」為主要結構。這項決策確認資訊架構，不代表原有視覺風格或 prototype 程式碼可直接升格為 production。
 
-視覺進一步驗證「手繪塗鴉＋動態互動」：以成熟的工作手帳為意象，使用暖色紙張、墨水線、螢光筆、膠帶與少量手繪註記；不得使用吉祥物、卡通插畫或會干擾操作的持續動畫。GSAP 僅用於一次性進場、描線與局部操作回饋，且必須尊重 `prefers-reduced-motion`。
+視覺方向改為「簡約＋動態互動」：使用淺色側邊欄、低對比背景、白色工作卡、單一紫色重點與清楚的工具層級，移除手繪線、紙張紋理、膠帶和歪斜卡片。文字只保留搜尋、分類、工具名稱與本機處理承諾。GSAP 用於一次性區塊進場，指標光暈與 hover 回饋集中在主要操作區，且必須尊重 `prefers-reduced-motion`。
 
 待視覺方向確認後，正式實作應從 `develop` 建立新 feature branch，以 shadcn-vue 重建勝出結構與元件、建立 Design System Page，並排除 A、C、prototype switcher 與所有拋棄式程式碼。

@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/variant-b-minimal.css'],
   components: [{ path: '~/components', pathPrefix: false }],
   app: {
     head: {

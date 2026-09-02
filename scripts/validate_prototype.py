@@ -139,20 +139,20 @@ def main() -> None:
         assert page.locator(".b-workbench").is_visible(), "Variant B workspace did not reopen"
         page.locator(".utility-controls .icon-button").first.click()
         page.wait_for_timeout(250)
-        doodle_tokens = page.locator(".variant-b").evaluate(
+        variant_b_tokens = page.locator(".variant-b").evaluate(
             """
             element => {
               const style = getComputedStyle(element)
               return {
                 ink: style.getPropertyValue('--b-ink').trim(),
                 muted: style.getPropertyValue('--b-muted').trim(),
-                paper: style.getPropertyValue('--b-paper').trim(),
+                background: style.getPropertyValue('--b-bg').trim(),
               }
             }
             """
         )
-        assert contrast(doodle_tokens["ink"], doodle_tokens["paper"]) >= 4.5, "Variant B ink contrast is below 4.5:1"
-        assert contrast(doodle_tokens["muted"], doodle_tokens["paper"]) >= 4.5, "Variant B muted contrast is below 4.5:1"
+        assert contrast(variant_b_tokens["ink"], variant_b_tokens["background"]) >= 4.5, "Variant B ink contrast is below 4.5:1"
+        assert contrast(variant_b_tokens["muted"], variant_b_tokens["background"]) >= 4.5, "Variant B muted contrast is below 4.5:1"
         page.evaluate("window.scrollTo(0, 0)")
         page.screenshot(path=SCREENSHOT_DIR / "variant-b-dark-desktop.png", full_page=False)
         page.close()
