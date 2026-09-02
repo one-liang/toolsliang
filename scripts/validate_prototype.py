@@ -68,6 +68,8 @@ def main() -> None:
                     else None,
                 )
                 page.goto(f"{BASE_URL}/?variant={variant}", wait_until="networkidle")
+                if variant == "B":
+                    page.locator('.variant-b[data-motion="ready"]').wait_for(state="visible")
                 assert page.locator("h1").is_visible(), f"Variant {variant} has no visible h1 at {viewport_name}"
                 assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth"), (
                     f"Variant {variant} overflows horizontally at {viewport_name}"
@@ -128,6 +130,31 @@ def main() -> None:
         )
         assert contrast(tokens["ink"], tokens["background"]) >= 4.5, "Primary text contrast is below 4.5:1"
         assert contrast(tokens["muted"], tokens["background"]) >= 4.5, "Muted text contrast is below 4.5:1"
+
+        page.goto(f"{BASE_URL}/?variant=B", wait_until="networkidle")
+        page.locator('.variant-b[data-motion="ready"]').wait_for(state="visible")
+        page.get_by_role("button", name="收起工作區").click()
+        assert not page.locator(".b-workbench").is_visible(), "Variant B workspace did not close"
+        page.get_by_role("button", name="打開工作頁").click()
+        assert page.locator(".b-workbench").is_visible(), "Variant B workspace did not reopen"
+        page.locator(".utility-controls .icon-button").first.click()
+        page.wait_for_timeout(250)
+        doodle_tokens = page.locator(".variant-b").evaluate(
+            """
+            element => {
+              const style = getComputedStyle(element)
+              return {
+                ink: style.getPropertyValue('--b-ink').trim(),
+                muted: style.getPropertyValue('--b-muted').trim(),
+                paper: style.getPropertyValue('--b-paper').trim(),
+              }
+            }
+            """
+        )
+        assert contrast(doodle_tokens["ink"], doodle_tokens["paper"]) >= 4.5, "Variant B ink contrast is below 4.5:1"
+        assert contrast(doodle_tokens["muted"], doodle_tokens["paper"]) >= 4.5, "Variant B muted contrast is below 4.5:1"
+        page.evaluate("window.scrollTo(0, 0)")
+        page.screenshot(path=SCREENSHOT_DIR / "variant-b-dark-desktop.png", full_page=False)
         page.close()
 
         reduced_page = browser.new_page(viewport=VIEWPORTS["desktop"], reduced_motion="reduce")
@@ -135,6 +162,8 @@ def main() -> None:
         reduced_page.goto(f"{BASE_URL}/?variant=A", wait_until="networkidle")
         duration = reduced_page.locator(".tool-card").first.evaluate("element => getComputedStyle(element).transitionDuration")
         assert duration in ("0s", "0.00001s", "1e-05s"), f"Reduced motion rule not applied: {duration}"
+        reduced_page.goto(f"{BASE_URL}/?variant=B", wait_until="networkidle")
+        reduced_page.locator('.variant-b[data-motion="reduced"]').wait_for(state="visible")
         reduced_page.close()
 
         browser.close()

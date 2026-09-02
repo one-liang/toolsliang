@@ -6,7 +6,7 @@ const isPrototype = import.meta.dev
 
 const variants: Record<PrototypeVariant, string> = {
   A: '搜尋廣場',
-  B: '工具駕駛艙',
+  B: '手繪工具桌',
   C: '任務跑道',
 }
 
