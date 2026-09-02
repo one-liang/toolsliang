@@ -1,0 +1,21 @@
+{
+  "name": "toolsliang-ui-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prototype": "nuxt dev --host 127.0.0.1",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "nuxt": "^4.0.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vue-tsc": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
