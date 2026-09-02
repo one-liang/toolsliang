@@ -133,6 +133,13 @@ def main() -> None:
 
         page.goto(f"{BASE_URL}/?variant=B", wait_until="networkidle")
         page.locator('.variant-b[data-motion="ready"]').wait_for(state="visible")
+        assert page.locator(".b-local-status").count() == 0, "Variant B header still shows local-processing status"
+        assert page.locator(".b-tool-badge--new").count() > 0, "Variant B NEW badge is missing"
+        assert page.locator(".b-tool-badge--pro").count() > 0, "Variant B PRO badge is missing"
+        first_tool_tile = page.locator(".b-tool-tile").first
+        assert first_tool_tile.evaluate("element => getComputedStyle(element).boxShadow") == "none", "Variant B tool card has a shadow"
+        first_tool_tile.hover()
+        assert first_tool_tile.evaluate("element => getComputedStyle(element).boxShadow") == "none", "Variant B tool card hover has a shadow"
         page.get_by_role("button", name="收起工作區").click()
         assert not page.locator(".b-workbench").is_visible(), "Variant B workspace did not close"
         page.get_by_role("button", name="打開工作頁").click()

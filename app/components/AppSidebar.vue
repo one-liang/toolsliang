@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { categories } from '~/data/tools'
+import { categories, mockTools } from '~/data/tools'
 
 withDefaults(defineProps<{ tone?: 'plain' | 'ink' }>(), { tone: 'plain' })
 const { favorites, locale, sidebarCollapsed, t } = usePrototype()
+const categoryCount = (name: string) => mockTools.filter(tool => tool.category === name).length
 </script>
 
 <template>
@@ -29,7 +30,7 @@ const { favorites, locale, sidebarCollapsed, t } = usePrototype()
       <button v-for="(category, index) in categories" :key="category.name" type="button" :class="{ active: index === 0 }">
         <span class="category-dot" :class="`category-dot--${index}`" />
         <span>{{ locale === 'zh-tw' ? category.name : category.nameEn }}</span>
-        <small>{{ index === 0 ? 2 : index + 1 }}</small>
+        <small>{{ categoryCount(category.name) }}</small>
       </button>
     </nav>
 
