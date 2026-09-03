@@ -22,6 +22,17 @@ describe('tool content network boundary', () => {
     ])
   })
 
+  it('redacts tool content from a same-origin pathname in diagnostics', () => {
+    expect(inspectNetworkRequest({
+      url: 'http://127.0.0.1:3000/files/fixture-secret.pdf',
+      method: 'GET',
+      headers: {},
+      body: null,
+    }, toolContent, policy)).toEqual([
+      'GET /files/[工具內容：檔名]: URL 含有工具內容（檔名）',
+    ])
+  })
+
   it('reports encoded tool output, filenames, and third-party requests', () => {
     expect(inspectNetworkRequest({
       url: 'https://analytics.example.test/collect?query=%E7%A7%81%E5%AF%86%E6%B8%AC%E8%A9%A6%E8%BC%B8%E5%85%A5-8af3',

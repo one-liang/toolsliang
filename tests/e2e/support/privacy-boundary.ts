@@ -32,7 +32,7 @@ export function redactToolContent(
   value: string,
   toolContent: readonly ToolContentCanary[],
 ): string {
-  return toolContent.reduce((redacted, canary) => {
+  return toolContent.filter(canary => canary.value).reduce((redacted, canary) => {
     const replacement = `[工具內容：${canary.label}]`
     return redacted
       .replaceAll(canary.value, replacement)
@@ -60,7 +60,7 @@ export function inspectNetworkRequest(
   policy: NetworkBoundaryPolicy,
 ): string[] {
   const url = new URL(request.url)
-  const label = requestLabel(request, url, policy)
+  const label = redactToolContent(requestLabel(request, url, policy), toolContent)
   const findings: string[] = []
 
   if (['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) && !policy.allowedOrigins.includes(comparableOrigin(url))) {

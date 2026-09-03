@@ -5,12 +5,18 @@ import { inspectNetworkRequest, inspectWebSocketFrame, redactToolContent } from 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const TOOL_INPUT = '10001.09'
 const TOOL_OUTPUT = '新臺幣壹萬零壹元玖分'
+const SECONDARY_TOOL_INPUT = '765432.10'
+const SECONDARY_TOOL_OUTPUT = '新臺幣柒拾陸萬伍仟肆佰參拾貳元壹角'
+const INVALID_TOOL_INPUT = 'quality-invalid-input-8af3'
 const PAGE_LOAD_BUDGET_MS = 5_000
 const TOOL_RESPONSE_BUDGET_MS = 50
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 const TOOL_CONTENT = [
   { label: '輸入', value: TOOL_INPUT },
   { label: '輸出', value: TOOL_OUTPUT },
+  { label: '輸入', value: SECONDARY_TOOL_INPUT },
+  { label: '輸出', value: SECONDARY_TOOL_OUTPUT },
+  { label: '輸入', value: INVALID_TOOL_INPUT },
   { label: '檔名', value: 'quality-fixture.pdf' },
 ]
 
@@ -106,7 +112,7 @@ test('工具進頁即可操作，並在功能後提供清楚的使用說明', as
 test('英文頁以英文說明輸入錯誤', async ({ page }) => {
   await page.goto('/en/tools/ntd-uppercase/', { waitUntil: 'domcontentloaded' })
   await page.locator('[data-capability-ready="true"]').waitFor()
-  await page.getByLabel('Amount (NTD)').fill('invalid')
+  await page.getByLabel('Amount (NTD)').fill(INVALID_TOOL_INPUT)
 
   await expect(page.getByRole('alert')).toHaveText('Enter an amount of zero or more with up to two decimal places.')
 })
@@ -119,7 +125,7 @@ test('複製按鈕以淺色圖文呈現，且符合一般文字對比', async ({
       await page.getByRole('button', { name: '切換色彩模式' }).click()
       await expect(page.locator('html')).toHaveClass(/dark/)
     }
-    await page.getByLabel('輸入金額（新臺幣）').fill('100')
+    await page.getByLabel('輸入金額（新臺幣）').fill(SECONDARY_TOOL_INPUT)
 
     const contrast = await page.getByRole('button', { name: '複製結果' }).evaluate((element) => {
       function luminance(color: string) {
@@ -176,7 +182,7 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
 
 test('light 與 dark 模式皆通過 WCAG 2.2 AA 自動檢查', async ({ page }) => {
   await gotoTool(page)
-  await page.getByLabel('輸入金額（新臺幣）').fill('100')
+  await page.getByLabel('輸入金額（新臺幣）').fill(SECONDARY_TOOL_INPUT)
 
   for (const mode of ['light', 'dark'] as const) {
     if (mode === 'dark') {
