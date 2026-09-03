@@ -66,7 +66,7 @@ usePageSeo({
 </script>
 
 <template>
-  <main id="main-content" class="workspace-page tool-page">
+  <main id="main-content" class="workspace-page tool-page" tabindex="-1">
     <nav class="breadcrumbs" :aria-label="locale === 'en' ? 'Breadcrumb' : '麵包屑導覽'">
       <NuxtLink :to="withLocale('/tools/')">{{ locale === 'en' ? 'All tools' : '全部工具' }}</NuxtLink>
       <span aria-hidden="true">/</span>

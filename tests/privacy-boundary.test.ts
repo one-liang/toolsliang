@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inspectNetworkRequest } from './e2e/support/privacy-boundary'
+import { inspectNetworkRequest, redactToolContent } from './e2e/support/privacy-boundary'
 
 describe('tool content network boundary', () => {
   const toolContent = [
@@ -21,14 +21,15 @@ describe('tool content network boundary', () => {
 
   it('reports encoded tool output, filenames, and third-party requests', () => {
     expect(inspectNetworkRequest({
-      url: 'https://analytics.example.test/collect',
+      url: 'https://analytics.example.test/collect?query=%E7%A7%81%E5%AF%86%E6%B8%AC%E8%A9%A6%E8%BC%B8%E5%85%A5-8af3',
       method: 'POST',
       headers: { 'x-file-name': 'fixture-secret.pdf' },
       body: JSON.stringify({ result: '新台幣壹萬零壹元玖分' }),
     }, toolContent)).toEqual([
-      'POST https://analytics.example.test/collect: 不允許的第三方請求',
-      'POST https://analytics.example.test/collect: header 含有工具內容（檔名）',
-      'POST https://analytics.example.test/collect: body 含有工具內容（輸出）',
+      'POST https://analytics.example.test: 不允許的第三方請求',
+      'POST https://analytics.example.test: URL 含有工具內容（輸入）',
+      'POST https://analytics.example.test: header 含有工具內容（檔名）',
+      'POST https://analytics.example.test: body 含有工具內容（輸出）',
     ])
   })
 
@@ -48,7 +49,14 @@ describe('tool content network boundary', () => {
       headers: {},
       body: null,
     }, toolContent)).toEqual([
-      'WEBSOCKET wss://events.example.test/socket: 不允許的第三方請求',
+      'WEBSOCKET wss://events.example.test: 不允許的第三方請求',
     ])
+  })
+
+  it('redacts tool content from console and page errors', () => {
+    expect(redactToolContent(
+      'conversion failed for 私密測試輸入-8af3',
+      toolContent,
+    )).toBe('conversion failed for [工具內容：輸入]')
   })
 })

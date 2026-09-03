@@ -33,7 +33,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <main id="main-content" class="workspace-page directory-page">
+  <main id="main-content" class="workspace-page directory-page" tabindex="-1">
     <header class="workspace-heading">
       <p class="eyebrow">{{ copy.eyebrow }}</p>
       <h1>{{ savedOnly ? copy.savedTitle : copy.title }}</h1>

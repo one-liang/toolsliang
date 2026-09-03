@@ -15,9 +15,21 @@ const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
 function requestLabel(request: ObservedNetworkRequest, url: URL): string {
   const target = LOCAL_HOSTS.has(url.hostname)
     ? url.pathname
-    : request.url
+    : url.origin
 
   return `${request.method.toUpperCase()} ${target}`
+}
+
+export function redactToolContent(
+  value: string,
+  toolContent: readonly ToolContentCanary[],
+): string {
+  return toolContent.reduce((redacted, canary) => {
+    const replacement = `[工具內容：${canary.label}]`
+    return redacted
+      .replaceAll(canary.value, replacement)
+      .replaceAll(encodeURIComponent(canary.value), replacement)
+  }, value)
 }
 
 function containsToolContent(value: string, marker: string): boolean {

@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { inspectNetworkRequest } from './support/privacy-boundary'
+import { inspectNetworkRequest, redactToolContent } from './support/privacy-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const TOOL_INPUT = '10001.09'
@@ -19,9 +19,9 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
   ]
 
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text())
+    if (message.type() === 'error') consoleErrors.push(redactToolContent(message.text(), toolContent))
   })
-  page.on('pageerror', error => pageErrors.push(error.message))
+  page.on('pageerror', error => pageErrors.push(redactToolContent(error.message, toolContent)))
   page.on('request', (request) => {
     networkFindings.push(...inspectNetworkRequest({
       url: request.url(),
@@ -41,6 +41,11 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
 
   const response = await page.goto(TOOL_ROUTE, { waitUntil: 'networkidle' })
   expect(response?.ok(), `${TOOL_ROUTE} 應成功載入`).toBe(true)
+
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('link', { name: '跳至主要內容' })).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('main#main-content')).toBeFocused()
 
   const amount = page.getByLabel('輸入金額（新台幣）')
   await amount.focus()
@@ -112,6 +117,12 @@ for (const viewport of [
       await expect(desktopSidebar).toBeVisible()
       await expect(mobileNavigation).toBeHidden()
     }
+
+    const amount = page.getByLabel('輸入金額（新台幣）')
+    await amount.fill(TOOL_INPUT)
+    await expect(page.locator('.result-panel')).toContainText(TOOL_OUTPUT)
+    await page.getByRole('button', { name: '清除' }).click()
+    await expect(amount).toHaveValue('')
   })
 }
 
