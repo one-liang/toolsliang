@@ -39,7 +39,7 @@ usePageSeo({
 </script>
 
 <template>
-  <main id="main-content" class="workspace-page ds-page">
+  <main id="main-content" class="workspace-page ds-page" tabindex="-1">
     <header class="workspace-heading ds-intro">
       <p class="eyebrow">Version 1.0 · formal baseline</p>
       <h1>{{ locale === 'en' ? 'toolsliang Design System' : 'toolsliang 設計系統' }}</h1>

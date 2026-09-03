@@ -77,6 +77,10 @@ describe('tool catalog', () => {
         'zh-tw': '輸入與結果只在此裝置處理。',
         en: 'Input and results are processed only on this device.',
       },
+      pagePresentation: {
+        showHeadingIcon: false,
+        showLocalProcessingStatement: false,
+      },
       seo: {
         contentKey: 'ntd-uppercase',
         title: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },

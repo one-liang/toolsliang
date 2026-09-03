@@ -51,15 +51,24 @@ export interface NtdConversion {
   uppercase: string
 }
 
+export type NtdConversionErrorCode = 'invalid-format' | 'out-of-range'
+
+export class NtdConversionError extends Error {
+  constructor(public readonly code: NtdConversionErrorCode) {
+    super(code)
+    this.name = 'NtdConversionError'
+  }
+}
+
 export function convertNtd(input: string | number): NtdConversion {
   const compact = String(input).replaceAll(',', '').trim()
   if (!/^\d+(\.\d{0,2})?$/.test(compact)) {
-    throw new Error('請輸入大於或等於零，且最多兩位小數的金額。')
+    throw new NtdConversionError('invalid-format')
   }
 
   const amount = Number(compact)
   if (!Number.isSafeInteger(Math.round(amount * 100)) || amount > 89_000_000_000_000) {
-    throw new Error('金額超出可安全轉換的範圍。')
+    throw new NtdConversionError('out-of-range')
   }
 
   const cents = Math.round(amount * 100)
@@ -73,6 +82,6 @@ export function convertNtd(input: string | number): NtdConversion {
 
   return {
     normalized: (cents / 100).toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-    uppercase: `新台幣${convertInteger(integer)}元${fraction}`,
+    uppercase: `新臺幣${convertInteger(integer)}元${fraction}`,
   }
 }

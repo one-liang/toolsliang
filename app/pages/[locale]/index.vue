@@ -44,7 +44,7 @@ usePageSeo({
 </script>
 
 <template>
-  <main id="main-content" class="landing-main">
+  <main id="main-content" class="landing-main" tabindex="-1">
     <section class="landing-hero" aria-labelledby="landing-title">
       <p class="eyebrow">{{ t.eyebrow }}</p>
       <h1 id="landing-title">{{ t.title }}</h1>
