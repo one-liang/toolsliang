@@ -27,14 +27,16 @@ npm run test:e2e -- --project=chromium
 
 ## 自動檢查內容
 
-- 隱私：攔截瀏覽器請求，任何第三方 request，或 URL、header、body 內含工具輸入、輸出、檔名 canary 時立即失敗。訊息只指出內容類別，不回印工具內容。
+- 隱私：攔截瀏覽器請求與 WebSocket frame，任何未列入允許來源的 request，或 URL、header、body 內含各流程工具輸入、輸出、檔名 canary 時立即失敗。訊息只指出內容類別，不回印工具內容。
 - 核心流程：透過公開工具頁完成輸入、結果顯示與鍵盤操作，並檢查 console 與未捕捉例外。
-- 無障礙：light／dark 模式執行 axe WCAG 2.2 AA 規則，另驗證可見 focus 與至少 44 × 44 CSS px 的行動導覽目標。
+- 無障礙：light／dark 模式執行 axe WCAG 2.2 AA 規則，另驗證可見 focus 與至少 44 × 44 CSS px 的核心操作及行動導覽目標。
 - 響應式：在 375、768、1024 與 1440 CSS px 檢查無橫向跑版及正確的手機／桌面導覽。
-- 動態與效能：驗證 `prefers-reduced-motion`，並以寬鬆且可重跑的本機 smoke budget 防止明顯的載入或工具回應退化。
+- 動態與效能：驗證 `prefers-reduced-motion`、工具頁載入 smoke budget，以及新臺幣轉換須於 50ms 內完成。
 - 瀏覽器：相同核心 suite 必須在 Chromium、Firefox 與 WebKit 通過。
 
-新增檔案型工具時，測試必須把 fixture 的檔名、具辨識度的內容片段與輸出片段加入 canary 清單。不得改用真實使用者檔案，也不得把工具內容加入錯誤訊息、報告或 trace 標題。
+新增流程或檔案型工具時，測試必須把每條流程實際使用的輸入、fixture 檔名、具辨識度的內容片段與輸出片段加入 canary 清單。不得改用真實使用者檔案，也不得把工具內容加入錯誤訊息、報告或 trace 標題。
+
+E2E 每次自行啟動並關閉 production preview，不重用既有伺服器，避免 fresh build 後誤接到持有舊 manifest 的程序。
 
 ## CI
 
