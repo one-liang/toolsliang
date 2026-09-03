@@ -1,33 +1,66 @@
 <script setup lang="ts">
 import { LockKeyhole, Star } from '@lucide/vue'
+import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
-import { copy, getCategory, getTool } from '@/features/tools/catalog'
+import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
+import { resolveToolWorkspace } from '@/features/tools/workspace-resolver'
 
 definePageMeta({
   layout: 'app-shell',
-  validate: route => ['zh-tw', 'en'].includes(String(route.params.locale)) && Boolean(getTool(String(route.params.slug))),
+  validate: route => isSupportedLocale(String(route.params.locale)) && Boolean(getTool(String(route.params.slug))),
 })
 
 const route = useRoute()
 const { locale, withLocale } = useAppLocale()
+const { isSaved, toggleSaved } = useSavedTools()
 const tool = computed(() => getTool(String(route.params.slug))!)
+const saved = computed(() => isSaved(tool.value.slug))
 const category = computed(() => getCategory(tool.value.category)!)
-const isRepresentative = computed(() => tool.value.slug === 'ntd-uppercase')
+const workspace = computed(() => resolveToolWorkspace(tool.value.routeComponentKey)!)
+const offlineLabel = computed(() => {
+  const labels = {
+    ready: { 'zh-tw': '離線可用', en: 'Ready offline' },
+    'requires-first-download': { 'zh-tw': '首次下載後可離線使用', en: 'Offline after the first download' },
+    'online-to-prepare': { 'zh-tw': '需連線準備後才能本機處理', en: 'Requires a connection to prepare' },
+  }
+  return labels[tool.value.offlineMode][locale.value]
+})
 
 usePageSeo({
   locale,
   path: computed(() => `/tools/${tool.value.slug}/`),
-  title: computed(() => copy(tool.value.name, locale.value)),
-  description: computed(() => copy(tool.value.description, locale.value)),
+  title: computed(() => copy(tool.value.seo.title, locale.value)),
+  description: computed(() => copy(tool.value.seo.description, locale.value)),
   structuredData: computed(() => ({
     '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: copy(tool.value.name, locale.value),
-    description: copy(tool.value.description, locale.value),
-    applicationCategory: 'UtilitiesApplication',
-    operatingSystem: 'Any',
-    url: `https://toolsliang.com/${locale.value}/tools/${tool.value.slug}/`,
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: copy(tool.value.name, locale.value),
+        description: copy(tool.value.seo.description, locale.value),
+        applicationCategory: 'UtilitiesApplication',
+        operatingSystem: 'Any',
+        url: `https://toolsliang.com/${locale.value}/tools/${tool.value.slug}/`,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: locale.value === 'en' ? 'All tools' : '全部工具',
+            item: `https://toolsliang.com/${locale.value}/tools/`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: copy(tool.value.name, locale.value),
+            item: `https://toolsliang.com/${locale.value}/tools/${tool.value.slug}/`,
+          },
+        ],
+      },
+    ],
   })),
 })
 </script>
@@ -49,18 +82,64 @@ usePageSeo({
         </div>
         <p>{{ copy(tool.description, locale) }}</p>
       </div>
-      <Button variant="outline" class="tool-heading__save">
+      <Button
+        variant="outline"
+        class="tool-heading__save"
+        :aria-pressed="saved"
+        @click="toggleSaved(tool.slug)"
+      >
         <Star :size="18" aria-hidden="true" />
-        {{ locale === 'en' ? 'Save' : '加入常用' }}
+        {{ saved
+          ? (locale === 'en' ? 'Saved' : '已加入常用')
+          : (locale === 'en' ? 'Save' : '加入常用') }}
       </Button>
     </header>
 
     <div class="local-processing-note">
       <LockKeyhole :size="17" aria-hidden="true" />
-      <span>{{ locale === 'en' ? 'Local processing · Nothing is uploaded' : '本機處理・不會上傳任何內容' }}</span>
+      <span>{{ copy(tool.localProcessingStatement, locale) }}</span>
     </div>
 
-    <NtdUppercaseWorkspace v-if="isRepresentative" />
-    <ToolSpecificationNotice v-else :tool="tool" :locale="locale" />
+    <section class="tool-contract" :aria-labelledby="`tool-answer-${tool.slug}`">
+      <h2 :id="`tool-answer-${tool.slug}`">{{ locale === 'en' ? 'Before you start' : '開始前先知道' }}</h2>
+      <p>{{ copy(tool.seo.answer, locale) }}</p>
+      <dl>
+        <div>
+          <dt>{{ locale === 'en' ? 'Accepted input' : '可接受輸入' }}</dt>
+          <dd>{{ copy(tool.acceptedInput, locale) }}</dd>
+        </div>
+        <div>
+          <dt>{{ locale === 'en' ? 'Offline use' : '離線能力' }}</dt>
+          <dd>{{ offlineLabel }}</dd>
+        </div>
+        <div>
+          <dt>{{ locale === 'en' ? 'Source review' : '資料來源與審閱' }}</dt>
+          <dd class="tool-contract__sources">
+            <span>{{ copy(tool.contentReview.sourceEdition, locale) }}</span>
+            <span>
+              {{ locale === 'en' ? 'Effective' : '資料生效日' }}：
+              <time :datetime="tool.contentReview.sourceEffectiveAt">{{ formatReviewDate(tool.contentReview.sourceEffectiveAt, locale) }}</time>
+            </span>
+            <span>
+              {{ locale === 'en' ? 'Reviewed' : '內容審閱日' }}：
+              <time :datetime="tool.contentReview.reviewedAt">{{ formatReviewDate(tool.contentReview.reviewedAt, locale) }}</time>
+            </span>
+            <span class="tool-contract__source-links">
+              <a
+                v-for="source in tool.contentReview.sources"
+                :key="source.url"
+                :href="source.url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >{{ copy(source.title, locale) }}</a>
+            </span>
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <ToolCapabilityGate :requirements="tool.capabilities" :locale="locale">
+      <component :is="workspace" />
+    </ToolCapabilityGate>
   </main>
 </template>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { LockKeyhole } from '@lucide/vue'
+import { isSupportedLocale } from '@/features/tools/catalog'
 
 definePageMeta({
   layout: 'landing',
-  validate: route => ['zh-tw', 'en'].includes(String(route.params.locale)),
+  validate: route => isSupportedLocale(String(route.params.locale)),
 })
 
 const { locale, withLocale } = useAppLocale()

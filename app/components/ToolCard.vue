@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ArrowRight } from '@lucide/vue'
 import { Card } from '@/components/ui/card'
-import { copy, type LocaleCode, type ToolDefinition } from '@/features/tools/catalog'
+import { copy, type LocaleCode, type PublishedToolDefinition } from '@/features/tools/catalog'
 
-defineProps<{ tool: ToolDefinition; locale: LocaleCode }>()
+defineProps<{ tool: PublishedToolDefinition; locale: LocaleCode }>()
 </script>
 
 <template>

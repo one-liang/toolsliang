@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import { Search, X } from '@lucide/vue'
+import { computed, ref, useId } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { copy, tools, type LocaleCode } from '@/features/tools/catalog'
+import { copy, searchTools, type LocaleCode } from '@/features/tools/catalog'
 
 const props = defineProps<{ locale: LocaleCode; large?: boolean }>()
 const query = ref('')
-const normalizedQuery = computed(() => query.value.trim().toLocaleLowerCase(props.locale === 'en' ? 'en' : 'zh-TW'))
-const results = computed(() => {
-  if (!normalizedQuery.value) return []
-  return tools.filter((tool) => {
-    const haystack = `${copy(tool.name, props.locale)} ${copy(tool.description, props.locale)}`.toLocaleLowerCase()
-    return haystack.includes(normalizedQuery.value)
-  }).slice(0, 6)
-})
+const results = computed(() => searchTools(query.value, props.locale).slice(0, 6))
 const helpId = useId()
 const resultId = useId()
 </script>
@@ -25,7 +19,7 @@ const resultId = useId()
       v-model="query"
       type="search"
       autocomplete="off"
-      :placeholder="locale === 'en' ? 'Search tools, e.g. image resize' : '搜尋工具，例如：圖片尺寸調整'"
+      :placeholder="locale === 'en' ? 'Search tools, e.g. NTD amount' : '搜尋工具，例如：支票金額'"
       :aria-label="locale === 'en' ? 'Search all tools' : '搜尋全部工具'"
       :aria-describedby="helpId"
       :aria-controls="resultId"

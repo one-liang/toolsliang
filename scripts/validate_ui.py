@@ -66,6 +66,8 @@ def main() -> None:
     console_errors: list[str] = []
     page_errors: list[str] = []
     external_requests: set[str] = set()
+    tool_requests: list[str] = []
+    record_tool_requests = False
     checks: list[str] = []
 
     with sync_playwright() as playwright:
@@ -79,13 +81,16 @@ def main() -> None:
             parsed = urlparse(request.url)
             if parsed.scheme in {"http", "https"} and parsed.hostname not in {"127.0.0.1", "localhost"}:
                 external_requests.add(request.url)
+            if record_tool_requests:
+                tool_requests.append(f"{request.method} {request.url}")
 
-        page.on("request", capture_request)
+        context.on("request", capture_request)
 
         visit(page, "/zh-tw/")
         assert page.locator(".app-sidebar").count() == 0, "Landing must not render App Shell sidebar"
-        assert page.locator(".tool-card").count() == 8
-        assert page.locator("text=NEW").count() >= 1 and page.locator("text=PRO").count() >= 1
+        assert page.locator(".tool-card").count() == 1
+        assert page.locator("text=NEW").count() >= 1
+        assert page.locator("text=PRO").count() == 0
         assert_no_overflow(page, "desktop landing")
         assert_contrast(page, "body")
         assert_contrast(page, ".landing-hero__intro")
@@ -100,7 +105,7 @@ def main() -> None:
         checks.append("shadow-free card hover")
 
         search = page.get_by_role("searchbox", name="搜尋全部工具")
-        search.fill("JSON")
+        search.fill("支票")
         assert page.locator(".tool-search__result").count() == 1
         page.keyboard.press("Tab")
         assert page.evaluate("getComputedStyle(document.activeElement).outlineStyle") != "none"
@@ -126,15 +131,28 @@ def main() -> None:
         checks.append("collapsible desktop sidebar")
 
         visit(page, "/zh-tw/tools/ntd-uppercase/")
+        assert page.locator("[data-capability-gate]").get_attribute("data-capability-ready") == "true"
+        assert "輸入新臺幣金額" in page.locator(".tool-contract").inner_text()
+        assert "國庫支票管理辦法" in page.locator(".tool-contract").inner_text()
+        assert page.locator(".tool-contract__source-links a").count() == 2
+        assert "BreadcrumbList" in page.locator("script[type='application/ld+json']").inner_text()
+        record_tool_requests = True
         page.locator("#ntd-amount").fill("10001.09")
         assert "新台幣壹萬零壹元玖分" in page.locator(".result-panel").inner_text()
+        page.wait_for_timeout(100)
+        record_tool_requests = False
+        assert not tool_requests, f"Tool interaction made network requests: {tool_requests}"
         assert not external_requests, f"Tool interaction made external requests: {sorted(external_requests)}"
-        checks.append("local NTD workspace")
+        page.get_by_role("button", name="加入常用").click()
+        visit(page, "/zh-tw/tools/?saved=true")
+        assert page.locator(".tool-card").count() == 1
+        assert page.get_by_role("heading", name="常用工具", exact=True).is_visible()
+        checks.append("registered route, capability gate, and local common tools")
 
-        visit(page, "/en/tools/json-formatter/")
+        visit(page, "/en/tools/ntd-uppercase/")
         assert page.locator("html").get_attribute("lang") == "en"
         assert "Roboto" in page.locator("body").evaluate("el => getComputedStyle(el).fontFamily")
-        assert page.locator("link[rel='canonical']").get_attribute("href") == "https://toolsliang.com/en/tools/json-formatter/"
+        assert page.locator("link[rel='canonical']").get_attribute("href") == "https://toolsliang.com/en/tools/ntd-uppercase/"
         assert page.locator("link[hreflang='zh-Hant-TW']").count() == 1
         checks.append("locale, canonical, hreflang")
 

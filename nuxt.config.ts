@@ -1,4 +1,5 @@
 import tailwindcss from '@tailwindcss/vite'
+import { getPublicToolRoutes } from './app/features/tools/catalog'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -21,6 +22,11 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true,
+  },
+  nitro: {
+    prerender: {
+      routes: [...getPublicToolRoutes(), '/sitemap.xml'],
+    },
   },
   app: {
     head: {

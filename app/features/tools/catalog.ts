@@ -1,20 +1,81 @@
 export type LocaleCode = 'zh-tw' | 'en'
-export type ToolStatus = 'new' | 'pro' | 'hot' | 'saved'
-export type ToolIcon = 'banknote' | 'file-text' | 'image' | 'crop' | 'braces' | 'table' | 'type' | 'case-sensitive'
+export type ToolStatus = 'new' | 'pro' | 'hot'
+export type ToolProcessingClass = 'instant' | 'worker'
+export type ToolOfflineMode = 'ready' | 'requires-first-download' | 'online-to-prepare'
+export type ToolCapability = 'javascript' | 'web-worker' | 'wasm' | 'webgl' | 'webgpu'
+
+export const supportedLocales: LocaleCode[] = ['zh-tw', 'en']
+export const toolIcons = [
+  'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
+  'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive',
+] as const
+
+export type ToolIcon = typeof toolIcons[number]
 
 export interface LocalizedCopy {
   'zh-tw': string
   en: string
 }
 
-export interface ToolDefinition {
+export interface LocalizedTerms {
+  'zh-tw': string[]
+  en: string[]
+}
+
+export interface ToolStatusMetadata {
+  kind: ToolStatus
+  startsAt?: string
+  endsAt?: string
+  source?: string
+}
+
+interface ToolDefinitionBase {
   slug: string
   category: string
   icon: ToolIcon
   name: LocalizedCopy
   description: LocalizedCopy
-  status?: ToolStatus
+  aliases: LocalizedTerms
+  keywords: LocalizedTerms
+  status?: ToolStatusMetadata
 }
+
+export interface PublishedToolDefinition extends ToolDefinitionBase {
+  availability: {
+    state: 'published'
+    publishedAt: string
+  }
+  processingClass: ToolProcessingClass
+  routeComponentKey: string
+  offlineMode: ToolOfflineMode
+  capabilities: ToolCapability[]
+  acceptedInput: LocalizedCopy
+  localProcessingStatement: LocalizedCopy
+  seo: {
+    contentKey: string
+    title: LocalizedCopy
+    description: LocalizedCopy
+    answer: LocalizedCopy
+  }
+  contentReview: {
+    reviewedAt: string
+    sourceEdition: LocalizedCopy
+    sourceEffectiveAt: string
+    sources: Array<{
+      title: LocalizedCopy
+      url: string
+    }>
+  }
+}
+
+export interface UnpublishedToolDefinition extends ToolDefinitionBase {
+  availability: {
+    state: 'unpublished'
+    reason: LocalizedCopy
+  }
+}
+
+export type ToolDefinition = PublishedToolDefinition | UnpublishedToolDefinition
 
 export interface ToolCategory {
   id: string
@@ -25,82 +86,300 @@ export interface ToolCategory {
 
 export const toolCategories: ToolCategory[] = [
   {
+    id: 'calculation', icon: 'calculator',
+    name: { 'zh-tw': '計算工具', en: 'Calculators' },
+    description: { 'zh-tw': '處理日常數值、單位與健康參考計算。', en: 'Handle everyday values, units, and reference calculations.' },
+  },
+  {
+    id: 'time-calendar', icon: 'calendar-days',
+    name: { 'zh-tw': '時間與行事曆', en: 'Time & calendars' },
+    description: { 'zh-tw': '查看裝置時間並整理台灣行事曆。', en: 'Check device time and work with Taiwan calendars.' },
+  },
+  {
+    id: 'random-selection', icon: 'dices',
+    name: { 'zh-tw': '本機抽選', en: 'Local random selection' },
+    description: { 'zh-tw': '在單一裝置上進行隨機抽取。', en: 'Run random selections on one device.' },
+  },
+  {
+    id: 'image-commerce', icon: 'shopping-bag',
+    name: { 'zh-tw': '圖片與商務素材', en: 'Images & commerce' },
+    description: { 'zh-tw': '在本機準備圖片與商務視覺素材。', en: 'Prepare images and commerce visuals locally.' },
+  },
+  {
     id: 'document', icon: 'file-text',
     name: { 'zh-tw': '文件與金額', en: 'Documents & amounts' },
     description: { 'zh-tw': '整理日常文件內容與台灣常用格式。', en: 'Format everyday documents and Taiwan-specific content.' },
   },
-  {
-    id: 'image', icon: 'image',
-    name: { 'zh-tw': '圖片處理', en: 'Image tools' },
-    description: { 'zh-tw': '在瀏覽器內完成尺寸與格式調整。', en: 'Resize and prepare images directly in your browser.' },
-  },
-  {
-    id: 'data', icon: 'braces',
-    name: { 'zh-tw': '資料整理', en: 'Data helpers' },
-    description: { 'zh-tw': '清理、轉換並檢查結構化資料。', en: 'Clean, transform, and inspect structured data.' },
-  },
-  {
-    id: 'text', icon: 'type',
-    name: { 'zh-tw': '文字工具', en: 'Text tools' },
-    description: { 'zh-tw': '快速處理字數、大小寫與常用文字格式。', en: 'Handle counts, casing, and common text formats.' },
-  },
 ]
 
-export const tools: ToolDefinition[] = [
+const registeredTools: ToolDefinition[] = [
   {
-    slug: 'ntd-uppercase', category: 'document', icon: 'banknote', status: 'new',
-    name: { 'zh-tw': '新台幣大寫轉換', en: 'NTD uppercase converter' },
-    description: { 'zh-tw': '將金額轉為收據與合約常用的中文大寫。', en: 'Convert amounts to formal Chinese wording for receipts and contracts.' },
+    slug: 'ntd-uppercase', category: 'document', icon: 'banknote',
+    availability: { state: 'published', publishedAt: '2026-09-03' },
+    status: { kind: 'new', startsAt: '2026-09-03', endsAt: '2026-10-03' },
+    name: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },
+    description: { 'zh-tw': '將新臺幣數字金額轉為國字大寫。', en: 'Convert New Taiwan dollar amounts to formal Chinese wording.' },
+    aliases: {
+      'zh-tw': ['新臺幣國字大寫', '國字金額'],
+      en: ['Taiwan dollar uppercase', 'Chinese amount wording'],
+    },
+    keywords: {
+      'zh-tw': ['支票', '會計', '金額'],
+      en: ['cheque', 'accounting', 'amount'],
+    },
+    processingClass: 'instant',
+    routeComponentKey: 'NtdUppercaseWorkspace',
+    offlineMode: 'ready',
+    capabilities: ['javascript'],
+    acceptedInput: { 'zh-tw': '新臺幣數字金額', en: 'A numeric New Taiwan dollar amount' },
+    localProcessingStatement: {
+      'zh-tw': '輸入與結果只在此裝置處理。',
+      en: 'Input and results are processed only on this device.',
+    },
+    seo: {
+      contentKey: 'ntd-uppercase',
+      title: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },
+      description: {
+        'zh-tw': '在瀏覽器將新臺幣數字金額轉為國字大寫，輸入與結果不離開裝置。',
+        en: 'Convert New Taiwan dollar amounts to formal Chinese wording without sending input off your device.',
+      },
+      answer: {
+        'zh-tw': '輸入新臺幣金額，即可在本機取得國字大寫結果。',
+        en: 'Enter an NTD amount to produce formal Chinese wording locally.',
+      },
+    },
+    contentReview: {
+      reviewedAt: '2026-09-03',
+      sourceEdition: {
+        'zh-tw': '國庫支票管理辦法（民國 102 年 7 月 31 日修正）',
+        en: 'Regulations Governing Treasury Checks (amended July 31, 2013)',
+      },
+      sourceEffectiveAt: '2013-07-31',
+      sources: [
+        {
+          title: { 'zh-tw': '財政部主管法規查詢系統', en: 'Ministry of Finance Laws and Regulations' },
+          url: 'https://law-out.mof.gov.tw/LawContent.aspx?KeyWord=&id=FL005816',
+        },
+        {
+          title: { 'zh-tw': '財政部國庫署', en: 'National Treasury Administration' },
+          url: 'https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296',
+        },
+      ],
+    },
   },
   {
     slug: 'document-counter', category: 'document', icon: 'file-text',
+    availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': '文件字數統計', en: 'Document counter' },
     description: { 'zh-tw': '計算中文字、英文單字、段落與閱讀時間。', en: 'Count characters, words, paragraphs, and reading time.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
   },
   {
-    slug: 'image-resizer', category: 'image', icon: 'image', status: 'hot',
+    slug: 'image-resizer', category: 'image-commerce', icon: 'image',
+    availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': '圖片尺寸調整', en: 'Image resizer' },
     description: { 'zh-tw': '批次調整圖片尺寸，內容不離開裝置。', en: 'Resize image batches without files leaving your device.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
   },
   {
-    slug: 'image-cropper', category: 'image', icon: 'crop', status: 'pro',
+    slug: 'image-cropper', category: 'image-commerce', icon: 'crop', status: { kind: 'pro' },
+    availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': '圖片裁切', en: 'Image cropper' },
     description: { 'zh-tw': '依社群、證件與自訂比例快速裁切。', en: 'Crop for social, ID, and custom aspect ratios.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
   },
   {
-    slug: 'json-formatter', category: 'data', icon: 'braces', status: 'saved',
+    slug: 'json-formatter', category: 'document', icon: 'braces',
+    availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': 'JSON 格式化', en: 'JSON formatter' },
     description: { 'zh-tw': '格式化、壓縮並找出 JSON 語法問題。', en: 'Format, minify, and locate JSON syntax issues.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
   },
   {
-    slug: 'csv-viewer', category: 'data', icon: 'table',
+    slug: 'csv-viewer', category: 'document', icon: 'table',
+    availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': 'CSV 檢視器', en: 'CSV viewer' },
     description: { 'zh-tw': '在本機快速預覽欄位與資料列。', en: 'Preview columns and rows locally.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
   },
   {
-    slug: 'text-counter', category: 'text', icon: 'type', status: 'new',
+    slug: 'text-counter', category: 'document', icon: 'type',
+    availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': '文字計數器', en: 'Text counter' },
     description: { 'zh-tw': '即時計算字元、行數與去除空白後長度。', en: 'Count characters, lines, and trimmed length instantly.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
   },
   {
-    slug: 'case-converter', category: 'text', icon: 'case-sensitive',
+    slug: 'case-converter', category: 'document', icon: 'case-sensitive',
+    availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': '英文大小寫轉換', en: 'Case converter' },
     description: { 'zh-tw': '轉換標題、句首、camelCase 與 kebab-case。', en: 'Convert title, sentence, camel, and kebab case.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
   },
 ]
 
+const toolRegistryIssues = validateToolRegistry(registeredTools)
+if (toolRegistryIssues.length) {
+  throw new Error(`Invalid tool registry:\n${toolRegistryIssues.join('\n')}`)
+}
+
+export const publishedTools = registeredTools.filter(isPublishedTool)
+export const publishedToolCategories = categoriesForTools(publishedTools)
+
 export function copy<T extends LocalizedCopy>(value: T, locale: LocaleCode) {
   return value[locale]
+}
+
+export function formatReviewDate(value: string, locale: LocaleCode) {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en' : 'zh-TW', {
+    dateStyle: 'medium',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T00:00:00Z`))
+}
+
+export function isSupportedLocale(value: string): value is LocaleCode {
+  return supportedLocales.some(locale => locale === value)
 }
 
 export function getCategory(id: string) {
   return toolCategories.find(category => category.id === id)
 }
 
+export function getVisibleStatus(status: ToolStatusMetadata | undefined, now = new Date()) {
+  if (!status) return undefined
+  if (status.kind !== 'new') return status.kind
+
+  const date = now.toISOString().slice(0, 10)
+  if (status.startsAt && date < status.startsAt) return undefined
+  if (status.endsAt && date > status.endsAt) return undefined
+  return status.kind
+}
+
 export function getTool(slug: string) {
-  return tools.find(tool => tool.slug === slug)
+  return publishedTools.find(tool => tool.slug === slug)
 }
 
 export function toolsByCategory(categoryId: string) {
-  return tools.filter(tool => tool.category === categoryId)
+  return publishedTools.filter(tool => tool.category === categoryId)
+}
+
+export function categoriesForTools(tools: PublishedToolDefinition[]) {
+  return toolCategories.filter(category => tools.some(tool => tool.category === category.id))
+}
+
+export function searchTools(query: string, locale: LocaleCode) {
+  const localeTag = locale === 'en' ? 'en' : 'zh-TW'
+  const normalizedQuery = query.trim().toLocaleLowerCase(localeTag)
+  if (!normalizedQuery) return []
+
+  return publishedTools
+    .map((tool, index) => {
+      const normalize = (value: string) => value.toLocaleLowerCase(localeTag)
+      const name = normalize(copy(tool.name, locale))
+      const aliases = tool.aliases[locale].map(normalize)
+      const keywords = tool.keywords[locale].map(normalize)
+      const description = normalize(copy(tool.description, locale))
+      const category = getCategory(tool.category)
+      const categoryTerms = category
+        ? [normalize(copy(category.name, locale)), normalize(copy(category.description, locale))]
+        : []
+
+      let rank = Number.POSITIVE_INFINITY
+      if (name === normalizedQuery) rank = 0
+      else if (name.startsWith(normalizedQuery)) rank = 1
+      else if ([name, ...aliases, ...keywords, ...categoryTerms].some(term => term.includes(normalizedQuery))) rank = 2
+      else if (description.includes(normalizedQuery)) rank = 3
+
+      return { index, rank, tool }
+    })
+    .filter(result => Number.isFinite(result.rank))
+    .sort((left, right) => left.rank - right.rank || left.index - right.index)
+    .map(result => result.tool)
+}
+
+export function getPublicToolRoutes() {
+  return supportedLocales.flatMap(locale => publishedTools.map(tool => `/${locale}/tools/${tool.slug}/`))
+}
+
+export function getSavedTools(slugs: string[]) {
+  return slugs.map(getTool).filter((tool): tool is PublishedToolDefinition => Boolean(tool))
+}
+
+export function getUnavailableCapabilities(
+  requirements: ToolCapability[],
+  available: Partial<Record<ToolCapability, boolean>>,
+) {
+  return requirements.filter(requirement => !available[requirement])
+}
+
+export function validateToolRegistry(definitions: ToolDefinition[] = registeredTools) {
+  const issues: string[] = []
+  const slugs = new Set<string>()
+  const categoryIds = new Set(toolCategories.map(category => category.id))
+  const iconKeys = new Set<string>(toolIcons)
+  const hasLocalizedCopy = (value: LocalizedCopy | undefined) => Boolean(value?.['zh-tw']?.trim() && value.en?.trim())
+
+  for (const tool of definitions) {
+    const prefix = `[${tool.slug || 'missing-slug'}]`
+
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tool.slug)) issues.push(`${prefix} slug must be stable English kebab-case`)
+    if (slugs.has(tool.slug)) issues.push(`${prefix} duplicate slug`)
+    slugs.add(tool.slug)
+
+    if (!categoryIds.has(tool.category)) issues.push(`${prefix} unknown category: ${tool.category}`)
+    if (!iconKeys.has(tool.icon)) issues.push(`${prefix} unknown icon: ${tool.icon}`)
+    if (!hasLocalizedCopy(tool.name)) issues.push(`${prefix} missing localized name`)
+    if (!hasLocalizedCopy(tool.description)) issues.push(`${prefix} missing localized description`)
+
+    if (tool.status?.kind === 'new') {
+      if (!isIsoDate(tool.status.startsAt) || !isIsoDate(tool.status.endsAt) || tool.status.startsAt! > tool.status.endsAt!) {
+        issues.push(`${prefix} NEW status requires a valid startsAt/endsAt range`)
+      }
+    }
+    if (tool.status?.kind === 'hot' && !tool.status.source?.trim()) {
+      issues.push(`${prefix} HOT status requires a source`)
+    }
+
+    if (!isPublishedTool(tool)) continue
+
+    const published = tool as Partial<PublishedToolDefinition> & Pick<PublishedToolDefinition, 'availability'>
+    if (!isIsoDate(published.availability.publishedAt)) issues.push(`${prefix} published tool requires publishedAt`)
+    if (!published.routeComponentKey?.trim()) issues.push(`${prefix} published tool requires a workspace component key`)
+    if (!published.capabilities?.length) issues.push(`${prefix} published tool requires capability metadata`)
+    if (!hasLocalizedCopy(published.acceptedInput)) issues.push(`${prefix} published tool requires accepted input copy`)
+    if (!hasLocalizedCopy(published.localProcessingStatement)) issues.push(`${prefix} published tool requires local-processing copy`)
+    if (!published.seo?.contentKey?.trim() || !hasLocalizedCopy(published.seo.title) || !hasLocalizedCopy(published.seo.description) || !hasLocalizedCopy(published.seo.answer)) {
+      issues.push(`${prefix} published tool requires complete SEO/AEO metadata`)
+    }
+    if (
+      !isIsoDate(published.contentReview?.reviewedAt)
+      || !isIsoDate(published.contentReview?.sourceEffectiveAt)
+      || !hasLocalizedCopy(published.contentReview?.sourceEdition)
+      || !published.contentReview?.sources?.length
+      || published.contentReview.sources.some(source => !hasLocalizedCopy(source.title) || !isHttpsUrl(source.url))
+    ) {
+      issues.push(`${prefix} published tool requires content/source review metadata`)
+    }
+  }
+
+  return issues
+}
+
+function isPublishedTool(tool: ToolDefinition): tool is PublishedToolDefinition {
+  return tool.availability.state === 'published'
+}
+
+function isIsoDate(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value
+}
+
+function isHttpsUrl(value: string) {
+  try {
+    return new URL(value).protocol === 'https:'
+  }
+  catch {
+    return false
+  }
 }
