@@ -18,6 +18,59 @@ async function pressFocusForward(page: Page, testInfo: TestInfo) {
   await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Tab' : 'Tab')
 }
 
+test('工具進頁即可操作，並在功能後提供清楚的使用說明', async ({ page }) => {
+  await gotoTool(page)
+
+  const amount = page.getByLabel('輸入金額（新台幣）')
+  await expect(amount).toHaveValue('')
+  await expect(amount).toHaveAttribute('placeholder', '例如：12,850.50')
+  await expect(amount).toHaveAttribute('aria-invalid', 'false')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+
+  const workspace = page.locator('.tool-workspace')
+  const beforeYouStart = page.getByRole('heading', { name: '開始前先知道' })
+  expect(await workspace.evaluate(element => element.compareDocumentPosition(
+    document.getElementById('tool-answer-ntd-uppercase')!,
+  ) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy()
+  await expect(beforeYouStart).toBeVisible()
+
+  await expect(page.locator('.tool-heading__icon')).toHaveCount(0)
+  await expect(page.getByText('輸入與結果只在此裝置處理。')).toHaveCount(0)
+  await expect(page.getByText('轉換只在此瀏覽器執行。', { exact: false })).toHaveCount(0)
+
+  const referenceTable = page.getByRole('table', { name: '數字與國字大寫對照' })
+  await expect(referenceTable).toBeVisible()
+  await expect(referenceTable.getByRole('row', { name: '1 壹' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '資料來源與審閱' })).toBeVisible()
+})
+
+test('複製按鈕以淺色圖文呈現，且符合一般文字對比', async ({ page }) => {
+  await gotoTool(page)
+  await page.getByLabel('輸入金額（新台幣）').fill('100')
+
+  const contrast = await page.getByRole('button', { name: '複製結果' }).evaluate((element) => {
+    function luminance(color: string) {
+      const channels = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((channel) => {
+        const value = channel / 255
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+      })
+      return channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722
+    }
+
+    const style = getComputedStyle(element)
+    const foreground = luminance(style.color)
+    const background = luminance(style.backgroundColor)
+    return {
+      foreground,
+      background,
+      ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+    }
+  })
+
+  expect(contrast.foreground, '圖示與文字應比按鈕背景亮').toBeGreaterThan(contrast.background)
+  expect(contrast.ratio, '圖示與文字對比至少 4.5:1').toBeGreaterThanOrEqual(4.5)
+})
+
 test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成', async ({ page }, testInfo) => {
   const consoleErrors: string[] = []
   const pageErrors: string[] = []

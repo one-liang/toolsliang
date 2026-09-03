@@ -6,9 +6,18 @@ import { Input } from '@/components/ui/input'
 import { convertNtd } from '@/features/tools/ntd-uppercase/domain/convert'
 
 const { locale } = useAppLocale()
-const amount = ref('12850.50')
+const digitReference = [
+  { first: ['0', '零'], second: ['5', '伍'] },
+  { first: ['1', '壹'], second: ['6', '陸'] },
+  { first: ['2', '貳'], second: ['7', '柒'] },
+  { first: ['3', '參'], second: ['8', '捌'] },
+  { first: ['4', '肆'], second: ['9', '玖'] },
+] as const
+const amount = ref('')
 const copied = ref(false)
 const resultState = computed(() => {
+  if (!amount.value.trim()) return { conversion: null, error: '' }
+
   try {
     return { conversion: convertNtd(amount.value), error: '' }
   }
@@ -45,12 +54,12 @@ function reset() {
           v-model="amount"
           inputmode="decimal"
           autocomplete="off"
-          aria-describedby="ntd-help ntd-error"
+          :aria-describedby="error ? 'ntd-help ntd-error' : 'ntd-help'"
           :aria-invalid="Boolean(error)"
-          placeholder="例如：12,850.50"
+          :placeholder="locale === 'en' ? 'e.g. 12,850.50' : '例如：12,850.50'"
         />
         <p id="ntd-help" class="field-help">
-          {{ locale === 'en' ? 'Up to two decimal places. Conversion runs in this browser.' : '最多兩位小數；轉換只在此瀏覽器執行。' }}
+          {{ locale === 'en' ? 'Up to two decimal places.' : '最多兩位小數。' }}
         </p>
         <p v-if="error" id="ntd-error" class="field-error" role="alert">{{ error }}</p>
       </div>
@@ -63,7 +72,7 @@ function reset() {
     </div>
 
     <div class="tool-workspace__actions">
-      <Button :disabled="!conversion" @click="copyResult">
+      <Button class="tool-workspace__copy" :disabled="!conversion" @click="copyResult">
         <Check v-if="copied" :size="18" aria-hidden="true" />
         <Clipboard v-else :size="18" aria-hidden="true" />
         {{ copied ? (locale === 'en' ? 'Copied' : '已複製') : (locale === 'en' ? 'Copy result' : '複製結果') }}
@@ -74,4 +83,34 @@ function reset() {
       </Button>
     </div>
   </Card>
+
+  <section class="tool-reference" aria-labelledby="ntd-digit-reference">
+    <div class="tool-section-heading">
+      <p class="eyebrow">{{ locale === 'en' ? 'Quick reference' : '快速對照' }}</p>
+      <h2 id="ntd-digit-reference">{{ locale === 'en' ? 'Number to formal Chinese numeral' : '數字與國字對照' }}</h2>
+      <p>{{ locale === 'en' ? 'Use this table to see how each digit appears in the converted result.' : '可先從單一數字了解轉換結果使用的國字大寫。' }}</p>
+    </div>
+
+    <div class="tool-reference__table">
+      <table>
+        <caption class="sr-only">{{ locale === 'en' ? 'Number and formal Chinese numeral reference' : '數字與國字大寫對照' }}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ locale === 'en' ? 'Number' : '數字' }}</th>
+            <th scope="col">{{ locale === 'en' ? 'Formal Chinese numeral' : '國字大寫' }}</th>
+            <th scope="col">{{ locale === 'en' ? 'Number' : '數字' }}</th>
+            <th scope="col">{{ locale === 'en' ? 'Formal Chinese numeral' : '國字大寫' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in digitReference" :key="item.first[0]">
+            <td>{{ item.first[0] }}</td>
+            <td>{{ item.first[1] }}</td>
+            <td>{{ item.second[0] }}</td>
+            <td>{{ item.second[1] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </template>

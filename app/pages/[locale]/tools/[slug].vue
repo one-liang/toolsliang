@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LockKeyhole, Star } from '@lucide/vue'
+import { Star } from '@lucide/vue'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
@@ -74,7 +74,6 @@ usePageSeo({
     </nav>
 
     <header class="tool-heading">
-      <span class="tool-heading__icon"><ToolIcon :name="tool.icon" :size="26" /></span>
       <div class="tool-heading__copy">
         <div class="tool-heading__title-row">
           <h1>{{ copy(tool.name, locale) }}</h1>
@@ -95,14 +94,16 @@ usePageSeo({
       </Button>
     </header>
 
-    <div class="local-processing-note">
-      <LockKeyhole :size="17" aria-hidden="true" />
-      <span>{{ copy(tool.localProcessingStatement, locale) }}</span>
-    </div>
+    <ToolCapabilityGate :requirements="tool.capabilities" :locale="locale">
+      <component :is="workspace" />
+    </ToolCapabilityGate>
 
     <section class="tool-contract" :aria-labelledby="`tool-answer-${tool.slug}`">
-      <h2 :id="`tool-answer-${tool.slug}`">{{ locale === 'en' ? 'Before you start' : '開始前先知道' }}</h2>
-      <p>{{ copy(tool.seo.answer, locale) }}</p>
+      <div class="tool-section-heading">
+        <p class="eyebrow">{{ locale === 'en' ? 'Usage notes' : '使用備註' }}</p>
+        <h2 :id="`tool-answer-${tool.slug}`">{{ locale === 'en' ? 'Before you start' : '開始前先知道' }}</h2>
+        <p>{{ copy(tool.seo.answer, locale) }}</p>
+      </div>
       <dl>
         <div>
           <dt>{{ locale === 'en' ? 'Accepted input' : '可接受輸入' }}</dt>
@@ -112,34 +113,34 @@ usePageSeo({
           <dt>{{ locale === 'en' ? 'Offline use' : '離線能力' }}</dt>
           <dd>{{ offlineLabel }}</dd>
         </div>
-        <div>
-          <dt>{{ locale === 'en' ? 'Source review' : '資料來源與審閱' }}</dt>
-          <dd class="tool-contract__sources">
-            <span>{{ copy(tool.contentReview.sourceEdition, locale) }}</span>
-            <span>
-              {{ locale === 'en' ? 'Effective' : '資料生效日' }}：
-              <time :datetime="tool.contentReview.sourceEffectiveAt">{{ formatReviewDate(tool.contentReview.sourceEffectiveAt, locale) }}</time>
-            </span>
-            <span>
-              {{ locale === 'en' ? 'Reviewed' : '內容審閱日' }}：
-              <time :datetime="tool.contentReview.reviewedAt">{{ formatReviewDate(tool.contentReview.reviewedAt, locale) }}</time>
-            </span>
-            <span class="tool-contract__source-links">
-              <a
-                v-for="source in tool.contentReview.sources"
-                :key="source.url"
-                :href="source.url"
-                target="_blank"
-                rel="noopener noreferrer"
-              >{{ copy(source.title, locale) }}</a>
-            </span>
-          </dd>
-        </div>
       </dl>
     </section>
 
-    <ToolCapabilityGate :requirements="tool.capabilities" :locale="locale">
-      <component :is="workspace" />
-    </ToolCapabilityGate>
+    <section class="tool-contract tool-contract--sources" :aria-labelledby="`tool-sources-${tool.slug}`">
+      <div class="tool-section-heading">
+        <p class="eyebrow">{{ locale === 'en' ? 'References' : '參考依據' }}</p>
+        <h2 :id="`tool-sources-${tool.slug}`">{{ locale === 'en' ? 'Sources and review' : '資料來源與審閱' }}</h2>
+      </div>
+      <div class="tool-contract__sources">
+        <strong>{{ copy(tool.contentReview.sourceEdition, locale) }}</strong>
+        <span>
+          {{ locale === 'en' ? 'Effective' : '資料生效日' }}：
+          <time :datetime="tool.contentReview.sourceEffectiveAt">{{ formatReviewDate(tool.contentReview.sourceEffectiveAt, locale) }}</time>
+        </span>
+        <span>
+          {{ locale === 'en' ? 'Reviewed' : '內容審閱日' }}：
+          <time :datetime="tool.contentReview.reviewedAt">{{ formatReviewDate(tool.contentReview.reviewedAt, locale) }}</time>
+        </span>
+        <span class="tool-contract__source-links">
+          <a
+            v-for="source in tool.contentReview.sources"
+            :key="source.url"
+            :href="source.url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{{ copy(source.title, locale) }}</a>
+        </span>
+      </div>
+    </section>
   </main>
 </template>
