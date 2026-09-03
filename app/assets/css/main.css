@@ -70,6 +70,10 @@
   --button-primary-fg: var(--color-primary-foreground);
   --button-primary-hover-bg: var(--color-primary-hover);
   --button-primary-active-bg: var(--color-primary-active);
+  --button-contrast-bg: var(--orange-800);
+  --button-contrast-fg: var(--neutral-0);
+  --button-contrast-hover-bg: var(--orange-700);
+  --button-contrast-active-bg: var(--orange-950);
   --card-bg: var(--color-surface);
   --card-border: var(--color-border);
   --card-shadow: none;
@@ -369,10 +373,10 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .result-panel strong { font-size: clamp(1.15rem, 3vw, 1.6rem); line-height: 1.45; }
 .result-panel__amount { margin-top: 8px; color: var(--color-muted-foreground); font-family: var(--font-mono); font-size: .8rem; }
 .tool-workspace__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-.tool-workspace__copy { border-color: var(--orange-800); background: var(--orange-800); color: var(--neutral-0); }
-.tool-workspace__copy:active:not(:disabled) { border-color: var(--orange-950); background: var(--orange-950); color: var(--neutral-0); }
+.tool-workspace__copy { border-color: var(--button-contrast-bg); background: var(--button-contrast-bg); color: var(--button-contrast-fg); }
+.tool-workspace__copy:active:not(:disabled) { border-color: var(--button-contrast-active-bg); background: var(--button-contrast-active-bg); color: var(--button-contrast-fg); }
 @media (hover: hover) and (pointer: fine) {
-  .tool-workspace__copy:hover { border-color: var(--orange-700); background: var(--orange-700); color: var(--neutral-0); }
+  .tool-workspace__copy:hover { border-color: var(--button-contrast-hover-bg); background: var(--button-contrast-hover-bg); color: var(--button-contrast-fg); }
 }
 .tool-spec-notice { display: grid; grid-template-columns: 48px 1fr; gap: 15px; padding: 24px; }
 .tool-spec-notice__icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-subtle); color: var(--color-primary-strong); }

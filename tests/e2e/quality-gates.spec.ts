@@ -8,6 +8,64 @@ const TOOL_OUTPUT = '新臺幣壹萬零壹元玖分'
 const PAGE_LOAD_BUDGET_MS = 5_000
 const TOOL_RESPONSE_BUDGET_MS = 50
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
+const TOOL_CONTENT = [
+  { label: '輸入', value: TOOL_INPUT },
+  { label: '輸出', value: TOOL_OUTPUT },
+  { label: '檔名', value: 'quality-fixture.pdf' },
+]
+
+interface QualityFindings {
+  consoleErrors: string[]
+  pageErrors: string[]
+  networkFindings: string[]
+}
+
+const findingsByPage = new WeakMap<Page, QualityFindings>()
+
+test.beforeEach(({ page }) => {
+  const findings: QualityFindings = {
+    consoleErrors: [],
+    pageErrors: [],
+    networkFindings: [],
+  }
+  findingsByPage.set(page, findings)
+
+  page.on('console', (message) => {
+    if (message.type() === 'error') findings.consoleErrors.push(redactToolContent(message.text(), TOOL_CONTENT))
+  })
+  page.on('pageerror', error => findings.pageErrors.push(redactToolContent(error.message, TOOL_CONTENT)))
+  page.context().on('request', (request) => {
+    findings.networkFindings.push(...inspectNetworkRequest({
+      url: request.url(),
+      method: request.method(),
+      headers: request.headers(),
+      body: request.postData(),
+    }, TOOL_CONTENT, NETWORK_BOUNDARY_POLICY))
+  })
+  page.on('websocket', (socket) => {
+    findings.networkFindings.push(...inspectNetworkRequest({
+      url: socket.url(),
+      method: 'WEBSOCKET',
+      headers: {},
+      body: null,
+    }, TOOL_CONTENT, NETWORK_BOUNDARY_POLICY))
+    socket.on('framesent', (event) => {
+      findings.networkFindings.push(...inspectWebSocketFrame(
+        socket.url(),
+        event.payload,
+        TOOL_CONTENT,
+        NETWORK_BOUNDARY_POLICY,
+      ))
+    })
+  })
+})
+
+test.afterEach(({ page }) => {
+  const findings = findingsByPage.get(page)!
+  expect(findings.networkFindings, `工具內容網路邊界違規：\n${findings.networkFindings.join('\n')}`).toEqual([])
+  expect(findings.consoleErrors, `console errors：\n${findings.consoleErrors.join('\n')}`).toEqual([])
+  expect(findings.pageErrors, `page errors：\n${findings.pageErrors.join('\n')}`).toEqual([])
+})
 
 async function gotoTool(page: Page) {
   const response = await page.goto(TOOL_ROUTE, { waitUntil: 'domcontentloaded' })
@@ -88,44 +146,6 @@ test('複製按鈕以淺色圖文呈現，且符合一般文字對比', async ({
 })
 
 test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成', async ({ page }, testInfo) => {
-  const consoleErrors: string[] = []
-  const pageErrors: string[] = []
-  const networkFindings: string[] = []
-  const toolContent = [
-    { label: '輸入', value: TOOL_INPUT },
-    { label: '輸出', value: TOOL_OUTPUT },
-    { label: '檔名', value: 'quality-fixture.pdf' },
-  ]
-
-  page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(redactToolContent(message.text(), toolContent))
-  })
-  page.on('pageerror', error => pageErrors.push(redactToolContent(error.message, toolContent)))
-  page.on('request', (request) => {
-    networkFindings.push(...inspectNetworkRequest({
-      url: request.url(),
-      method: request.method(),
-      headers: request.headers(),
-      body: request.postData(),
-    }, toolContent, NETWORK_BOUNDARY_POLICY))
-  })
-  page.on('websocket', (socket) => {
-    networkFindings.push(...inspectNetworkRequest({
-      url: socket.url(),
-      method: 'WEBSOCKET',
-      headers: {},
-      body: null,
-    }, toolContent, NETWORK_BOUNDARY_POLICY))
-    socket.on('framesent', (event) => {
-      networkFindings.push(...inspectWebSocketFrame(
-        socket.url(),
-        event.payload,
-        toolContent,
-        NETWORK_BOUNDARY_POLICY,
-      ))
-    })
-  })
-
   const response = await gotoTool(page)
   expect(response?.ok(), `${TOOL_ROUTE} 應成功載入`).toBe(true)
 
@@ -152,9 +172,6 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
   await expect(page.locator('.result-panel')).toContainText('—')
   expect(await amount.evaluate(element => (element as HTMLInputElement).value)).toBe('')
 
-  expect(networkFindings, `工具內容網路邊界違規：\n${networkFindings.join('\n')}`).toEqual([])
-  expect(consoleErrors, `console errors：\n${consoleErrors.join('\n')}`).toEqual([])
-  expect(pageErrors, `page errors：\n${pageErrors.join('\n')}`).toEqual([])
 })
 
 test('light 與 dark 模式皆通過 WCAG 2.2 AA 自動檢查', async ({ page }) => {

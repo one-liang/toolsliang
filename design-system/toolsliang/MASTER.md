@@ -67,6 +67,8 @@ toolsliang 採「平靜、快速、可信任的工具桌」：淺色優先、低
 | `button-primary-bg` | `primary` | 品牌主色背景 |
 | `button-primary-fg` | `primary-foreground` | 不使用白字，確保 AA |
 | `button-primary-hover-bg` | `primary-hover` | hover 不加入陰影或位移 |
+| `button-contrast-bg` / `button-contrast-fg` | `orange-800` / `neutral-0` | 需淺色圖文的主要操作；背景加深以維持至少 4.5:1 |
+| `button-contrast-hover-bg` / `button-contrast-active-bg` | `orange-700` / `orange-950` | hover 與 active 保持淺色圖文及 AA 對比 |
 | `card-bg` / `card-border` | `surface` / `border` | 平面卡片與清楚邊界 |
 | `card-shadow` | `none` | default 與 hover 都為 none |
 | `input-bg` / `input-border` | `surface` / `border-strong` | 輸入欄位語意 |
