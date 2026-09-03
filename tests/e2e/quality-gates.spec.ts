@@ -10,6 +10,7 @@ const SECONDARY_TOOL_OUTPUT = '新臺幣柒拾陸萬伍仟肆佰參拾貳元壹�
 const INVALID_TOOL_INPUT = 'quality-invalid-input-8af3'
 const PAGE_LOAD_BUDGET_MS = 5_000
 const TOOL_RESPONSE_BUDGET_MS = 50
+const TOUCH_TARGET_TOLERANCE_PX = 0.001
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 const TOOL_CONTENT = [
   { label: '輸入', value: TOOL_INPUT },
@@ -242,8 +243,8 @@ for (const viewport of [
     ]
     for (const target of coreTargets) {
       const box = await target.boundingBox()
-      expect(Math.round(box?.width ?? 0), '主要操作目標寬度至少 44px').toBeGreaterThanOrEqual(44)
-      expect(Math.round(box?.height ?? 0), '主要操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
+      expect((box?.width ?? 0) + TOUCH_TARGET_TOLERANCE_PX, '主要操作目標寬度至少 44px').toBeGreaterThanOrEqual(44)
+      expect((box?.height ?? 0) + TOUCH_TARGET_TOLERANCE_PX, '主要操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
     }
 
     await page.getByRole('button', { name: '清除' }).click()
