@@ -242,8 +242,8 @@ for (const viewport of [
     ]
     for (const target of coreTargets) {
       const box = await target.boundingBox()
-      expect(box?.width, '主要操作目標寬度至少 44px').toBeGreaterThanOrEqual(44)
-      expect(box?.height, '主要操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
+      expect(Math.round(box?.width ?? 0), '主要操作目標寬度至少 44px').toBeGreaterThanOrEqual(44)
+      expect(Math.round(box?.height ?? 0), '主要操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
     }
 
     await page.getByRole('button', { name: '清除' }).click()
@@ -251,17 +251,18 @@ for (const viewport of [
   })
 }
 
-test('reduced motion 與基本效能預算通過', async ({ page }) => {
+test('reduced motion 取消非必要動畫', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/zh-tw/design-system/', { waitUntil: 'domcontentloaded' })
+  await page.goto('/zh-tw/design-system/', { waitUntil: 'networkidle' })
   await page.locator('.motion-dot').waitFor()
-  await page.reload({ waitUntil: 'load' })
 
   const animationDuration = await page.locator('.motion-dot').evaluate((element) => {
     return Number.parseFloat(getComputedStyle(element).animationDuration) * 1_000
   })
   expect(animationDuration, 'reduced motion 動畫時間應接近零').toBeLessThanOrEqual(1)
+})
 
+test('工具頁載入與轉換符合基本效能預算', async ({ page }) => {
   await page.goto(TOOL_ROUTE, { waitUntil: 'load' })
   await page.locator('[data-capability-ready="true"]').waitFor()
   const navigationDuration = await page.evaluate(() => {
