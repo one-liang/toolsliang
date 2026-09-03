@@ -41,13 +41,10 @@ jobs:
       - name: 執行單元測試
         run: npm run test:unit
 
-      - name: 建立 production bundle
-        run: npm run build
-
       - name: 安裝瀏覽器
         run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: 執行三瀏覽器品質閘門
+      - name: 建置並執行三瀏覽器品質閘門
         run: npm run test:e2e
 
       - name: 保留失敗診斷

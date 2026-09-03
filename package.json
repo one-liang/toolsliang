@@ -8,9 +8,9 @@
     "lint": "eslint .",
     "prepare": "nuxt prepare",
     "preview": "nuxt preview",
-    "quality": "npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e",
+    "quality": "npm run lint && npm run typecheck && npm run test:unit && npm run test:e2e",
     "test": "npm run test:unit",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run build && playwright test",
     "test:unit": "vitest run",
     "typecheck": "nuxt typecheck"
   },

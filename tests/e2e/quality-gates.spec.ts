@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page, type TestInfo } from '@playwright/test'
 import { inspectNetworkRequest, redactToolContent } from './support/privacy-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
@@ -8,7 +8,17 @@ const TOOL_OUTPUT = '新台幣壹萬零壹元玖分'
 const PAGE_LOAD_BUDGET_MS = 5_000
 const TOOL_RESPONSE_BUDGET_MS = 1_000
 
-test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成', async ({ page }) => {
+async function gotoTool(page: Page) {
+  const response = await page.goto(TOOL_ROUTE, { waitUntil: 'domcontentloaded' })
+  await page.locator('[data-capability-ready="true"]').waitFor()
+  return response
+}
+
+async function pressFocusForward(page: Page, testInfo: TestInfo) {
+  await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Tab' : 'Tab')
+}
+
+test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成', async ({ page }, testInfo) => {
   const consoleErrors: string[] = []
   const pageErrors: string[] = []
   const networkFindings: string[] = []
@@ -39,10 +49,10 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
     }, toolContent))
   })
 
-  const response = await page.goto(TOOL_ROUTE, { waitUntil: 'networkidle' })
+  const response = await gotoTool(page)
   expect(response?.ok(), `${TOOL_ROUTE} 應成功載入`).toBe(true)
 
-  await page.keyboard.press('Tab')
+  await pressFocusForward(page, testInfo)
   await expect(page.getByRole('link', { name: '跳至主要內容' })).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page.locator('main#main-content')).toBeFocused()
@@ -51,7 +61,7 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
   await amount.focus()
   await amount.fill(TOOL_INPUT)
   await expect(page.locator('.result-panel')).toContainText(TOOL_OUTPUT)
-  await page.keyboard.press('Tab')
+  await pressFocusForward(page, testInfo)
   await expect(page.getByRole('button', { name: '複製結果' })).toBeFocused()
   const focusStyle = await page.getByRole('button', { name: '複製結果' }).evaluate((element) => {
     const style = getComputedStyle(element)
@@ -59,10 +69,11 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
   })
   expect(focusStyle.style, '鍵盤 focus 必須有可見輪廓').not.toBe('none')
   expect(focusStyle.width, '鍵盤 focus 輪廓至少 2px').toBeGreaterThanOrEqual(2)
-  await page.keyboard.press('Tab')
+  await pressFocusForward(page, testInfo)
   await expect(page.getByRole('button', { name: '清除' })).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(amount).toHaveValue('')
+  await expect(page.locator('.result-panel')).toContainText('—')
+  expect(await amount.evaluate(element => (element as HTMLInputElement).value)).toBe('')
 
   expect(networkFindings, `工具內容網路邊界違規：\n${networkFindings.join('\n')}`).toEqual([])
   expect(consoleErrors, `console errors：\n${consoleErrors.join('\n')}`).toEqual([])
@@ -70,7 +81,7 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
 })
 
 test('light 與 dark 模式皆通過 WCAG 2.2 AA 自動檢查', async ({ page }) => {
-  await page.goto(TOOL_ROUTE, { waitUntil: 'networkidle' })
+  await gotoTool(page)
 
   for (const mode of ['light', 'dark'] as const) {
     if (mode === 'dark') {
@@ -94,7 +105,7 @@ for (const viewport of [
 ]) {
   test(`${viewport.label} ${viewport.width}px 無橫向跑版且導覽可觸控`, async ({ page }) => {
     await page.setViewportSize(viewport)
-    await page.goto(TOOL_ROUTE, { waitUntil: 'networkidle' })
+    await gotoTool(page)
 
     const dimensions = await page.locator('html').evaluate(element => ({
       clientWidth: element.clientWidth,
@@ -128,7 +139,9 @@ for (const viewport of [
 
 test('reduced motion 與基本效能預算通過', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/zh-tw/design-system/', { waitUntil: 'networkidle' })
+  await page.goto('/zh-tw/design-system/', { waitUntil: 'domcontentloaded' })
+  await page.locator('.motion-dot').waitFor()
+  await page.reload({ waitUntil: 'load' })
 
   const animationDuration = await page.locator('.motion-dot').evaluate((element) => {
     return Number.parseFloat(getComputedStyle(element).animationDuration) * 1_000
@@ -140,9 +153,27 @@ test('reduced motion 與基本效能預算通過', async ({ page }) => {
   })
   expect(navigationDuration, `頁面載入需低於 ${PAGE_LOAD_BUDGET_MS}ms`).toBeLessThan(PAGE_LOAD_BUDGET_MS)
 
-  await page.goto(TOOL_ROUTE, { waitUntil: 'networkidle' })
-  const startedAt = Date.now()
-  await page.getByLabel('輸入金額（新台幣）').fill(TOOL_INPUT)
-  await expect(page.locator('.result-panel')).toContainText(TOOL_OUTPUT)
-  expect(Date.now() - startedAt, `工具回應需低於 ${TOOL_RESPONSE_BUDGET_MS}ms`).toBeLessThan(TOOL_RESPONSE_BUDGET_MS)
+  await gotoTool(page)
+  const toolResponseDuration = await page.evaluate(({ budget, input, output }) => {
+    const amount = document.querySelector<HTMLInputElement>('#ntd-amount')!
+    const result = document.querySelector<HTMLElement>('.result-panel')!
+
+    return new Promise<number>((resolve, reject) => {
+      const startedAt = performance.now()
+      const observer = new MutationObserver(() => {
+        if (result.textContent?.includes(output)) {
+          observer.disconnect()
+          resolve(performance.now() - startedAt)
+        }
+      })
+      observer.observe(result, { childList: true, characterData: true, subtree: true })
+      amount.value = input
+      amount.dispatchEvent(new Event('input', { bubbles: true }))
+      window.setTimeout(() => {
+        observer.disconnect()
+        reject(new Error('工具結果未在效能量測期限內更新'))
+      }, budget)
+    })
+  }, { budget: TOOL_RESPONSE_BUDGET_MS, input: TOOL_INPUT, output: TOOL_OUTPUT })
+  expect(toolResponseDuration, `工具回應需低於 ${TOOL_RESPONSE_BUDGET_MS}ms`).toBeLessThan(TOOL_RESPONSE_BUDGET_MS)
 })
