@@ -331,6 +331,18 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .tool-heading__copy p { margin: 7px 0 0; color: var(--color-muted-foreground); }
 .tool-heading__save { grid-column: 1 / -1; }
 .local-processing-note { display: flex; align-items: center; gap: 7px; margin: 22px 0 16px; color: var(--color-success); font-size: .8rem; font-weight: 700; }
+.tool-contract { margin-bottom: 20px; padding: 18px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface-subtle); }
+.tool-contract h2 { margin: 0; font-size: 1rem; }
+.tool-contract p { margin: 8px 0 14px; color: var(--color-muted-foreground); }
+.tool-contract dl { display: grid; gap: 10px; margin: 0; }
+.tool-contract dl div { display: grid; gap: 2px; }
+.tool-contract dt { font-size: .75rem; font-weight: 800; color: var(--color-muted-foreground); }
+.tool-contract dd { margin: 0; font-size: .9rem; }
+.tool-contract__sources { display: grid; gap: 4px; }
+.tool-contract__source-links { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.tool-contract__source-links a { color: var(--color-primary-foreground-strong); text-decoration: underline; text-underline-offset: 3px; }
+.capability-checking { padding: 16px; color: var(--color-muted-foreground); }
+.capability-warning { padding: 16px; border: 1px solid var(--color-warning); border-radius: var(--radius-md); color: var(--color-foreground); background: var(--color-surface-subtle); }
 .tool-workspace { padding: clamp(18px, 4vw, 32px); border-radius: var(--radius-lg); }
 .tool-workspace__grid { display: grid; gap: 20px; }
 .field-group label { display: inline-block; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }

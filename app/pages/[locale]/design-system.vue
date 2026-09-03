@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { isSupportedLocale } from '@/features/tools/catalog'
 
 definePageMeta({
   layout: 'app-shell',
-  validate: route => ['zh-tw', 'en'].includes(String(route.params.locale)),
+  validate: route => isSupportedLocale(String(route.params.locale)),
 })
 
 const { locale } = useAppLocale()

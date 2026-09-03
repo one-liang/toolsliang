@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ChevronRight, LayoutGrid, PanelLeftClose, Star } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import { copy, toolCategories, toolsByCategory } from '@/features/tools/catalog'
+import { copy, publishedToolCategories, toolsByCategory } from '@/features/tools/catalog'
 
 const props = defineProps<{ collapsed: boolean }>()
 const emit = defineEmits<{ toggle: [] }>()
@@ -41,7 +41,7 @@ const showingSaved = computed(() => route.query.saved === 'true')
       </div>
 
       <template v-if="!props.collapsed">
-        <section v-for="category in toolCategories" :key="category.id" class="sidebar-group">
+        <section v-for="category in publishedToolCategories" :key="category.id" class="sidebar-group">
           <h2 class="sidebar-group__title">{{ copy(category.name, locale) }}</h2>
           <NuxtLink
             v-for="tool in toolsByCategory(category.id)"
