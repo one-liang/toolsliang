@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Star } from '@lucide/vue'
+import { LockKeyhole, Star } from '@lucide/vue'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
@@ -73,7 +73,8 @@ usePageSeo({
       <span>{{ copy(category.name, locale) }}</span>
     </nav>
 
-    <header class="tool-heading">
+    <header class="tool-heading" :class="{ 'tool-heading--with-icon': tool.pagePresentation.showHeadingIcon }">
+      <span v-if="tool.pagePresentation.showHeadingIcon" class="tool-heading__icon"><ToolIcon :name="tool.icon" :size="26" /></span>
       <div class="tool-heading__copy">
         <div class="tool-heading__title-row">
           <h1>{{ copy(tool.name, locale) }}</h1>
@@ -93,6 +94,11 @@ usePageSeo({
           : (locale === 'en' ? 'Save' : '加入常用') }}
       </Button>
     </header>
+
+    <div v-if="tool.pagePresentation.showLocalProcessingStatement" class="local-processing-note">
+      <LockKeyhole :size="17" aria-hidden="true" />
+      <span>{{ copy(tool.localProcessingStatement, locale) }}</span>
+    </div>
 
     <ToolCapabilityGate :requirements="tool.capabilities" :locale="locale">
       <component :is="workspace" />

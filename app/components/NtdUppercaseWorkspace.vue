@@ -3,18 +3,33 @@ import { Check, Clipboard, RotateCcw } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { convertNtd } from '@/features/tools/ntd-uppercase/domain/convert'
+import { convertNtd, NtdConversionError } from '@/features/tools/ntd-uppercase/domain/convert'
 
 const { locale } = useAppLocale()
 const digitReference = [
-  { first: ['0', '零'], second: ['5', '伍'] },
-  { first: ['1', '壹'], second: ['6', '陸'] },
-  { first: ['2', '貳'], second: ['7', '柒'] },
-  { first: ['3', '參'], second: ['8', '捌'] },
-  { first: ['4', '肆'], second: ['9', '玖'] },
+  { leftDigit: ['0', '零'], rightDigit: ['5', '伍'] },
+  { leftDigit: ['1', '壹'], rightDigit: ['6', '陸'] },
+  { leftDigit: ['2', '貳'], rightDigit: ['7', '柒'] },
+  { leftDigit: ['3', '參'], rightDigit: ['8', '捌'] },
+  { leftDigit: ['4', '肆'], rightDigit: ['9', '玖'] },
 ] as const
 const amount = ref('')
 const copied = ref(false)
+function conversionErrorMessage(caught: unknown) {
+  if (caught instanceof NtdConversionError) {
+    if (caught.code === 'out-of-range') {
+      return locale.value === 'en'
+        ? 'The amount exceeds the safe conversion range.'
+        : '金額超出可安全轉換的範圍。'
+    }
+    return locale.value === 'en'
+      ? 'Enter an amount of zero or more with up to two decimal places.'
+      : '請輸入大於或等於零，且最多兩位小數的金額。'
+  }
+
+  return locale.value === 'en' ? 'This amount could not be converted.' : '無法轉換此金額。'
+}
+
 const resultState = computed(() => {
   if (!amount.value.trim()) return { conversion: null, error: '' }
 
@@ -24,7 +39,7 @@ const resultState = computed(() => {
   catch (caught) {
     return {
       conversion: null,
-      error: caught instanceof Error ? caught.message : '無法轉換此金額。',
+      error: conversionErrorMessage(caught),
     }
   }
 })
@@ -48,7 +63,7 @@ function reset() {
   <Card class="tool-workspace" :aria-busy="false">
     <div class="tool-workspace__grid">
       <div class="field-group">
-        <label for="ntd-amount">{{ locale === 'en' ? 'Amount (NTD)' : '輸入金額（新台幣）' }}</label>
+        <label for="ntd-amount">{{ locale === 'en' ? 'Amount (NTD)' : '輸入金額（新臺幣）' }}</label>
         <Input
           id="ntd-amount"
           v-model="amount"
@@ -103,11 +118,11 @@ function reset() {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in digitReference" :key="item.first[0]">
-            <td>{{ item.first[0] }}</td>
-            <td>{{ item.first[1] }}</td>
-            <td>{{ item.second[0] }}</td>
-            <td>{{ item.second[1] }}</td>
+          <tr v-for="item in digitReference" :key="item.leftDigit[0]">
+            <td>{{ item.leftDigit[0] }}</td>
+            <td>{{ item.leftDigit[1] }}</td>
+            <td>{{ item.rightDigit[0] }}</td>
+            <td>{{ item.rightDigit[1] }}</td>
           </tr>
         </tbody>
       </table>

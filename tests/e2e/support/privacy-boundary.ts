@@ -10,10 +10,18 @@ export interface ToolContentCanary {
   value: string
 }
 
-const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
+export interface NetworkBoundaryPolicy {
+  allowedOrigins: readonly string[]
+}
 
-function requestLabel(request: ObservedNetworkRequest, url: URL): string {
-  const target = LOCAL_HOSTS.has(url.hostname)
+function comparableOrigin(url: URL): string {
+  if (url.protocol === 'ws:') return `http://${url.host}`
+  if (url.protocol === 'wss:') return `https://${url.host}`
+  return url.origin
+}
+
+function requestLabel(request: ObservedNetworkRequest, url: URL, policy: NetworkBoundaryPolicy): string {
+  const target = policy.allowedOrigins.includes(comparableOrigin(url))
     ? url.pathname
     : url.origin
 
@@ -49,12 +57,13 @@ function containsToolContent(value: string, marker: string): boolean {
 export function inspectNetworkRequest(
   request: ObservedNetworkRequest,
   toolContent: readonly ToolContentCanary[],
+  policy: NetworkBoundaryPolicy,
 ): string[] {
   const url = new URL(request.url)
-  const label = requestLabel(request, url)
+  const label = requestLabel(request, url, policy)
   const findings: string[] = []
 
-  if (['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) && !LOCAL_HOSTS.has(url.hostname)) {
+  if (['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) && !policy.allowedOrigins.includes(comparableOrigin(url))) {
     findings.push(`${label}: 不允許的第三方請求`)
   }
 
@@ -73,4 +82,18 @@ export function inspectNetworkRequest(
   }
 
   return findings
+}
+
+export function inspectWebSocketFrame(
+  socketUrl: string,
+  payload: string | Uint8Array,
+  toolContent: readonly ToolContentCanary[],
+  policy: NetworkBoundaryPolicy,
+): string[] {
+  return inspectNetworkRequest({
+    url: socketUrl,
+    method: 'WEBSOCKET FRAME',
+    headers: {},
+    body: typeof payload === 'string' ? payload : new TextDecoder().decode(payload),
+  }, toolContent, policy)
 }

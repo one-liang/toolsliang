@@ -51,6 +51,10 @@ export interface PublishedToolDefinition extends ToolDefinitionBase {
   capabilities: ToolCapability[]
   acceptedInput: LocalizedCopy
   localProcessingStatement: LocalizedCopy
+  pagePresentation: {
+    showHeadingIcon: boolean
+    showLocalProcessingStatement: boolean
+  }
   seo: {
     contentKey: string
     title: LocalizedCopy
@@ -132,6 +136,10 @@ const registeredTools: ToolDefinition[] = [
     offlineMode: 'ready',
     capabilities: ['javascript'],
     acceptedInput: { 'zh-tw': '新臺幣數字金額', en: 'A numeric New Taiwan dollar amount' },
+    pagePresentation: {
+      showHeadingIcon: false,
+      showLocalProcessingStatement: false,
+    },
     localProcessingStatement: {
       'zh-tw': '輸入與結果只在此裝置處理。',
       en: 'Input and results are processed only on this device.',

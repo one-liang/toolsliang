@@ -1,12 +1,13 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
-import { inspectNetworkRequest, redactToolContent } from './support/privacy-boundary'
+import { inspectNetworkRequest, inspectWebSocketFrame, redactToolContent } from './support/privacy-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const TOOL_INPUT = '10001.09'
-const TOOL_OUTPUT = '新台幣壹萬零壹元玖分'
+const TOOL_OUTPUT = '新臺幣壹萬零壹元玖分'
 const PAGE_LOAD_BUDGET_MS = 5_000
-const TOOL_RESPONSE_BUDGET_MS = 1_000
+const TOOL_RESPONSE_BUDGET_MS = 50
+const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 
 async function gotoTool(page: Page) {
   const response = await page.goto(TOOL_ROUTE, { waitUntil: 'domcontentloaded' })
@@ -21,7 +22,7 @@ async function pressFocusForward(page: Page, testInfo: TestInfo) {
 test('工具進頁即可操作，並在功能後提供清楚的使用說明', async ({ page }) => {
   await gotoTool(page)
 
-  const amount = page.getByLabel('輸入金額（新台幣）')
+  const amount = page.getByLabel('輸入金額（新臺幣）')
   await expect(amount).toHaveValue('')
   await expect(amount).toHaveAttribute('placeholder', '例如：12,850.50')
   await expect(amount).toHaveAttribute('aria-invalid', 'false')
@@ -44,31 +45,46 @@ test('工具進頁即可操作，並在功能後提供清楚的使用說明', as
   await expect(page.getByRole('heading', { name: '資料來源與審閱' })).toBeVisible()
 })
 
+test('英文頁以英文說明輸入錯誤', async ({ page }) => {
+  await page.goto('/en/tools/ntd-uppercase/', { waitUntil: 'domcontentloaded' })
+  await page.locator('[data-capability-ready="true"]').waitFor()
+  await page.getByLabel('Amount (NTD)').fill('invalid')
+
+  await expect(page.getByRole('alert')).toHaveText('Enter an amount of zero or more with up to two decimal places.')
+})
+
 test('複製按鈕以淺色圖文呈現，且符合一般文字對比', async ({ page }) => {
   await gotoTool(page)
-  await page.getByLabel('輸入金額（新台幣）').fill('100')
 
-  const contrast = await page.getByRole('button', { name: '複製結果' }).evaluate((element) => {
-    function luminance(color: string) {
-      const channels = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((channel) => {
-        const value = channel / 255
-        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
-      })
-      return channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722
+  for (const mode of ['light', 'dark'] as const) {
+    if (mode === 'dark') {
+      await page.getByRole('button', { name: '切換色彩模式' }).click()
+      await expect(page.locator('html')).toHaveClass(/dark/)
     }
+    await page.getByLabel('輸入金額（新臺幣）').fill('100')
 
-    const style = getComputedStyle(element)
-    const foreground = luminance(style.color)
-    const background = luminance(style.backgroundColor)
-    return {
-      foreground,
-      background,
-      ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
-    }
-  })
+    const contrast = await page.getByRole('button', { name: '複製結果' }).evaluate((element) => {
+      function luminance(color: string) {
+        const channels = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((channel) => {
+          const value = channel / 255
+          return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+        })
+        return channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722
+      }
 
-  expect(contrast.foreground, '圖示與文字應比按鈕背景亮').toBeGreaterThan(contrast.background)
-  expect(contrast.ratio, '圖示與文字對比至少 4.5:1').toBeGreaterThanOrEqual(4.5)
+      const style = getComputedStyle(element)
+      const foreground = luminance(style.color)
+      const background = luminance(style.backgroundColor)
+      return {
+        foreground,
+        background,
+        ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+      }
+    })
+
+    expect(contrast.foreground, `${mode} 模式圖示與文字應比按鈕背景亮`).toBeGreaterThan(contrast.background)
+    expect(contrast.ratio, `${mode} 模式圖示與文字對比至少 4.5:1`).toBeGreaterThanOrEqual(4.5)
+  }
 })
 
 test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成', async ({ page }, testInfo) => {
@@ -91,7 +107,7 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
       method: request.method(),
       headers: request.headers(),
       body: request.postData(),
-    }, toolContent))
+    }, toolContent, NETWORK_BOUNDARY_POLICY))
   })
   page.on('websocket', (socket) => {
     networkFindings.push(...inspectNetworkRequest({
@@ -99,7 +115,15 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
       method: 'WEBSOCKET',
       headers: {},
       body: null,
-    }, toolContent))
+    }, toolContent, NETWORK_BOUNDARY_POLICY))
+    socket.on('framesent', (event) => {
+      networkFindings.push(...inspectWebSocketFrame(
+        socket.url(),
+        event.payload,
+        toolContent,
+        NETWORK_BOUNDARY_POLICY,
+      ))
+    })
   })
 
   const response = await gotoTool(page)
@@ -110,7 +134,7 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
   await page.keyboard.press('Enter')
   await expect(page.locator('main#main-content')).toBeFocused()
 
-  const amount = page.getByLabel('輸入金額（新台幣）')
+  const amount = page.getByLabel('輸入金額（新臺幣）')
   await amount.focus()
   await amount.fill(TOOL_INPUT)
   await expect(page.locator('.result-panel')).toContainText(TOOL_OUTPUT)
@@ -135,6 +159,7 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
 
 test('light 與 dark 模式皆通過 WCAG 2.2 AA 自動檢查', async ({ page }) => {
   await gotoTool(page)
+  await page.getByLabel('輸入金額（新臺幣）').fill('100')
 
   for (const mode of ['light', 'dark'] as const) {
     if (mode === 'dark') {
@@ -182,9 +207,22 @@ for (const viewport of [
       await expect(mobileNavigation).toBeHidden()
     }
 
-    const amount = page.getByLabel('輸入金額（新台幣）')
+    const amount = page.getByLabel('輸入金額（新臺幣）')
     await amount.fill(TOOL_INPUT)
     await expect(page.locator('.result-panel')).toContainText(TOOL_OUTPUT)
+
+    const coreTargets = [
+      amount,
+      page.getByRole('button', { name: '加入常用' }),
+      page.getByRole('button', { name: '複製結果' }),
+      page.getByRole('button', { name: '清除' }),
+    ]
+    for (const target of coreTargets) {
+      const box = await target.boundingBox()
+      expect(box?.width, '主要操作目標寬度至少 44px').toBeGreaterThanOrEqual(44)
+      expect(box?.height, '主要操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
+    }
+
     await page.getByRole('button', { name: '清除' }).click()
     await expect(amount).toHaveValue('')
   })
@@ -201,12 +239,13 @@ test('reduced motion 與基本效能預算通過', async ({ page }) => {
   })
   expect(animationDuration, 'reduced motion 動畫時間應接近零').toBeLessThanOrEqual(1)
 
+  await page.goto(TOOL_ROUTE, { waitUntil: 'load' })
+  await page.locator('[data-capability-ready="true"]').waitFor()
   const navigationDuration = await page.evaluate(() => {
     return performance.getEntriesByType('navigation')[0]?.duration ?? Number.POSITIVE_INFINITY
   })
   expect(navigationDuration, `頁面載入需低於 ${PAGE_LOAD_BUDGET_MS}ms`).toBeLessThan(PAGE_LOAD_BUDGET_MS)
 
-  await gotoTool(page)
   const toolResponseDuration = await page.evaluate(({ budget, input, output }) => {
     const amount = document.querySelector<HTMLInputElement>('#ntd-amount')!
     const result = document.querySelector<HTMLElement>('.result-panel')!
