@@ -10,6 +10,7 @@ node_modules/
 .cache/
 coverage/
 dist/
+artifacts/
 
 *.log
 *.local
