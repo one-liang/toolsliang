@@ -1,0 +1,60 @@
+name: 前端品質閘門
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: lint、型別、測試與建置
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 取得程式碼
+        uses: actions/checkout@v5
+
+      - name: 設定 Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.15.0
+          cache: npm
+
+      - name: 安裝依賴
+        run: npm ci
+
+      - name: 執行 lint
+        run: npm run lint
+
+      - name: 執行 strict typecheck
+        run: npm run typecheck
+
+      - name: 執行單元測試
+        run: npm run test:unit
+
+      - name: 建立 production bundle
+        run: npm run build
+
+      - name: 安裝瀏覽器
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: 執行三瀏覽器品質閘門
+        run: npm run test:e2e
+
+      - name: 保留失敗診斷
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'vitest'
+import { inspectNetworkRequest } from './e2e/support/privacy-boundary'
+
+describe('tool content network boundary', () => {
+  const toolContent = [
+    { label: '輸入', value: '私密測試輸入-8af3' },
+    { label: '輸出', value: '新台幣壹萬零壹元玖分' },
+    { label: '檔名', value: 'fixture-secret.pdf' },
+  ]
+
+  it('reports a same-origin request that contains tool input', () => {
+    expect(inspectNetworkRequest({
+      url: 'http://127.0.0.1:3000/api/convert?amount=%E7%A7%81%E5%AF%86%E6%B8%AC%E8%A9%A6%E8%BC%B8%E5%85%A5-8af3',
+      method: 'GET',
+      headers: {},
+      body: null,
+    }, toolContent)).toEqual([
+      'GET /api/convert: URL 含有工具內容（輸入）',
+    ])
+  })
+
+  it('reports encoded tool output, filenames, and third-party requests', () => {
+    expect(inspectNetworkRequest({
+      url: 'https://analytics.example.test/collect',
+      method: 'POST',
+      headers: { 'x-file-name': 'fixture-secret.pdf' },
+      body: JSON.stringify({ result: '新台幣壹萬零壹元玖分' }),
+    }, toolContent)).toEqual([
+      'POST https://analytics.example.test/collect: 不允許的第三方請求',
+      'POST https://analytics.example.test/collect: header 含有工具內容（檔名）',
+      'POST https://analytics.example.test/collect: body 含有工具內容（輸出）',
+    ])
+  })
+
+  it('allows same-origin public assets without tool content', () => {
+    expect(inspectNetworkRequest({
+      url: 'http://127.0.0.1:3000/_nuxt/app.js',
+      method: 'GET',
+      headers: { accept: '*/*' },
+      body: null,
+    }, toolContent)).toEqual([])
+  })
+
+  it('reports a third-party WebSocket', () => {
+    expect(inspectNetworkRequest({
+      url: 'wss://events.example.test/socket',
+      method: 'WEBSOCKET',
+      headers: {},
+      body: null,
+    }, toolContent)).toEqual([
+      'WEBSOCKET wss://events.example.test/socket: 不允許的第三方請求',
+    ])
+  })
+})

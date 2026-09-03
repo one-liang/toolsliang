@@ -33,8 +33,17 @@ npm run dev
 ```bash
 npm run lint
 npm run typecheck
-npm test
+npm run test:unit
 npm run build
+npm run test:e2e
 ```
+
+可用 `npm run quality` 依序執行完整本機品質閘門。第一次執行瀏覽器測試前，先安裝三個測試引擎：
+
+```bash
+npx playwright install chromium firefox webkit
+```
+
+品質閘門的範圍、失敗判讀與人工驗證邊界請見 [前端品質閘門](./docs/QUALITY_GATES.md)。
 
 工具搜尋與工具內容處理只在瀏覽器執行，不得加入會傳送工具內容的伺服器 API、分析事件或第三方服務。
