@@ -17,14 +17,6 @@ const tool = computed(() => getTool(String(route.params.slug))!)
 const saved = computed(() => isSaved(tool.value.slug))
 const category = computed(() => getCategory(tool.value.category)!)
 const workspace = computed(() => resolveToolWorkspace(tool.value.routeComponentKey)!)
-const offlineLabel = computed(() => {
-  const labels = {
-    ready: { 'zh-tw': '離線可用', en: 'Ready offline' },
-    'requires-first-download': { 'zh-tw': '首次下載後可離線使用', en: 'Offline after the first download' },
-    'online-to-prepare': { 'zh-tw': '需連線準備後才能本機處理', en: 'Requires a connection to prepare' },
-  }
-  return labels[tool.value.offlineMode][locale.value]
-})
 
 usePageSeo({
   locale,
@@ -117,7 +109,7 @@ usePageSeo({
         </div>
         <div>
           <dt>{{ locale === 'en' ? 'Offline use' : '離線能力' }}</dt>
-          <dd>{{ offlineLabel }}</dd>
+          <dd><ToolOfflineStatus :tool="tool" :locale="locale" /></dd>
         </div>
       </dl>
     </section>

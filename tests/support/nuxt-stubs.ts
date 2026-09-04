@@ -11,6 +11,8 @@ import ToolSearchComponent from '@/components/ToolSearch.vue'
 import ToolStatusBadgeComponent from '@/components/ToolStatusBadge.vue'
 import { Button as ButtonComponent } from '@/components/ui/button'
 import { useAppLocale } from '@/composables/useAppLocale'
+import { useOfflineAsset } from '@/composables/useOfflineAsset'
+import { useWorkspaceDirty } from '@/composables/useWorkspaceDirty'
 
 export interface TestRoute {
   path: string
@@ -50,6 +52,8 @@ export function installNuxtStubs() {
   vi.stubGlobal('definePageMeta', () => {})
   vi.stubGlobal('usePageSeo', () => {})
   vi.stubGlobal('useAppLocale', useAppLocale)
+  vi.stubGlobal('useOfflineAsset', useOfflineAsset)
+  vi.stubGlobal('useWorkspaceDirty', useWorkspaceDirty)
   vi.stubGlobal('useState', <T>(key: string, init: () => T) => {
     if (!states.has(key)) states.set(key, ref(init()))
     return states.get(key)

@@ -12,5 +12,6 @@ const collapsed = useState('sidebar-collapsed', () => false)
       <slot />
     </div>
     <MobileBottomNav />
+    <PwaUpdateBanner />
   </div>
 </template>

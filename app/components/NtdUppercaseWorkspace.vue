@@ -15,6 +15,9 @@ const digitReference = [
 ] as const
 const amount = ref('')
 const copied = ref(false)
+// A waiting application update must ask before it discards an amount in progress.
+useWorkspaceDirty('ntd-uppercase', computed(() => amount.value.trim().length > 0))
+
 function conversionErrorMessage(caught: unknown) {
   if (caught instanceof NtdConversionError) {
     if (caught.code === 'out-of-range') {

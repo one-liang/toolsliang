@@ -7,6 +7,8 @@ export type ToolCapability = 'javascript' | 'web-worker' | 'wasm' | 'webgl' | 'w
 /** Every canonical URL, hreflang, sitemap entry and structured-data @id derives from this origin. */
 export const siteOrigin = 'https://toolsliang.com'
 export const supportedLocales: LocaleCode[] = ['zh-tw', 'en']
+/** Root of every large first-party engine, model or font a tool downloads on first use. */
+export const offlineAssetPathPrefix = '/assets/offline'
 export const toolIcons = [
   'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
   'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive',
@@ -22,6 +24,19 @@ export interface LocalizedCopy {
 export interface LocalizedTerms {
   'zh-tw': string[]
   en: string[]
+}
+
+/**
+ * A large engine, model or font a tool downloads on first use. The version is
+ * part of the URL so a cache entry always names the exact bytes it holds, and a
+ * superseded version can be swept without touching the current one.
+ */
+export interface ToolOfflineAsset {
+  id: string
+  version: string
+  url: string
+  bytes: number
+  label: LocalizedCopy
 }
 
 export interface ToolStatusMetadata {
@@ -50,6 +65,7 @@ export interface PublishedToolDefinition extends ToolDefinitionBase {
   processingClass: ToolProcessingClass
   routeComponentKey: string
   offlineMode: ToolOfflineMode
+  offlineAssets?: ToolOfflineAsset[]
   capabilities: ToolCapability[]
   acceptedInput: LocalizedCopy
   localProcessingStatement: LocalizedCopy
@@ -376,6 +392,7 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
     if (!isIsoDate(published.availability.publishedAt)) issues.push(`${prefix} published tool requires publishedAt`)
     if (!published.routeComponentKey?.trim()) issues.push(`${prefix} published tool requires a workspace component key`)
     if (!published.capabilities?.length) issues.push(`${prefix} published tool requires capability metadata`)
+    issues.push(...validateOfflineRegistration(prefix, published))
     if (!hasLocalizedCopy(published.acceptedInput)) issues.push(`${prefix} published tool requires accepted input copy`)
     if (!hasLocalizedCopy(published.localProcessingStatement)) issues.push(`${prefix} published tool requires local-processing copy`)
     if (!published.seo?.contentKey?.trim() || !hasLocalizedCopy(published.seo.title) || !hasLocalizedCopy(published.seo.description) || !hasLocalizedCopy(published.seo.answer)) {
@@ -393,6 +410,47 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
   }
 
   return issues
+}
+
+
+/**
+ * Offline capability and cache version are one decision: a tool is either
+ * usable straight from the App Shell cache, or it names the exact versioned
+ * first-party assets it must download first. Nothing in between can be
+ * explained honestly to a visitor before they start work.
+ */
+function validateOfflineRegistration(prefix: string, tool: Partial<PublishedToolDefinition>) {
+  const issues: string[] = []
+  const assets = tool.offlineAssets ?? []
+  const seen = new Set<string>()
+
+  if (tool.offlineMode === 'ready' && assets.length) {
+    issues.push(`${prefix} an offline ready tool must not require a downloaded asset`)
+  }
+  if (tool.offlineMode !== 'ready' && !assets.length) {
+    issues.push(`${prefix} a tool that is not offline ready must declare at least one versioned offline asset`)
+  }
+
+  for (const asset of assets) {
+    if (seen.has(asset.id)) issues.push(`${prefix} duplicate offline asset id: ${asset.id}`)
+    seen.add(asset.id)
+
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(asset.id)) issues.push(`${prefix} offline asset id must be stable English kebab-case: ${asset.id}`)
+    if (!isFirstPartyVersionedAssetUrl(asset.url, asset.version)) {
+      issues.push(`${prefix} offline asset ${asset.id} must serve its version from a first-party versioned URL`)
+    }
+    if (!(asset.bytes > 0)) issues.push(`${prefix} offline asset ${asset.id} requires a positive size`)
+    if (!asset.label?.['zh-tw']?.trim() || !asset.label.en?.trim()) issues.push(`${prefix} offline asset ${asset.id} requires a localized label`)
+  }
+
+  return issues
+}
+
+/** Versioned application assets come from a toolsliang-controlled origin only, never a third-party CDN. */
+function isFirstPartyVersionedAssetUrl(url: string, version: string) {
+  return Boolean(version?.trim())
+    && url.startsWith(`${offlineAssetPathPrefix}/`)
+    && url.includes(version)
 }
 
 function isPublishedTool(tool: ToolDefinition): tool is PublishedToolDefinition {
