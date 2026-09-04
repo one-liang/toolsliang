@@ -1,9 +1,7 @@
-export type ThemeMode = 'light' | 'dark'
+import { getDeviceStorage, readStoredValue, writeStoredValue, type DeviceStorage } from './device-storage'
 
-export interface ThemeStorage {
-  getItem: (key: string) => string | null
-  setItem: (key: string, value: string) => void
-}
+export type ThemeMode = 'light' | 'dark'
+export type ThemeStorage = DeviceStorage
 
 export const THEME_STORAGE_KEY = 'toolsliang-theme'
 export const DEFAULT_THEME: ThemeMode = 'light'
@@ -18,36 +16,15 @@ export function nextTheme(current: ThemeMode): ThemeMode {
 }
 
 export function getThemeStorage(): ThemeStorage | null {
-  try {
-    return typeof window === 'undefined' ? null : window.localStorage
-  }
-  catch {
-    // Storage can be unavailable in private or restricted browsing contexts.
-    return null
-  }
+  return getDeviceStorage()
 }
 
 export function readStoredTheme(storage: ThemeStorage | null | undefined): ThemeMode | null {
-  if (!storage) return null
-
-  try {
-    return normalizeStoredTheme(storage.getItem(THEME_STORAGE_KEY))
-  }
-  catch {
-    return null
-  }
+  return normalizeStoredTheme(readStoredValue(storage, THEME_STORAGE_KEY))
 }
 
 export function persistTheme(storage: ThemeStorage | null | undefined, mode: ThemeMode): boolean {
-  if (!storage) return false
-
-  try {
-    storage.setItem(THEME_STORAGE_KEY, mode)
-    return true
-  }
-  catch {
-    return false
-  }
+  return writeStoredValue(storage, THEME_STORAGE_KEY, mode)
 }
 
 export function applyThemeClass(root: HTMLElement, mode: ThemeMode) {

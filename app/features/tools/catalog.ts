@@ -48,6 +48,11 @@ export interface ToolStatusMetadata {
 
 interface ToolDefinitionBase {
   slug: string
+  /**
+   * Slugs this tool was published under before. A device that saved the old id
+   * keeps reaching the tool, and the URL contract of ADR-0011 stays stable.
+   */
+  formerSlugs?: string[]
   category: string
   icon: ToolIcon
   name: LocalizedCopy
@@ -347,8 +352,24 @@ export function getPublicPageRoutes() {
 }
 
 /** Turns a slug list — saved on a device, or curated for the landing page — into published tools. */
-export function resolvePublishedTools(slugs: string[]) {
-  return slugs.map(getTool).filter((tool): tool is PublishedToolDefinition => Boolean(tool))
+export function resolvePublishedTools(slugs: string[], tools: PublishedToolDefinition[] = publishedTools) {
+  return slugs
+    .map(slug => findPublishedTool(slug, tools))
+    .filter((tool): tool is PublishedToolDefinition => Boolean(tool))
+}
+
+/**
+ * The current slug of a tool a device saved earlier, or nothing when the tool
+ * was withdrawn. Saved lists are cleaned against this answer, so a stale device
+ * record can never produce a dead navigation target.
+ */
+export function resolveToolSlug(slug: string, tools: PublishedToolDefinition[] = publishedTools) {
+  return findPublishedTool(slug, tools)?.slug
+}
+
+function findPublishedTool(slug: string, tools: PublishedToolDefinition[]) {
+  return tools.find(tool => tool.slug === slug)
+    ?? tools.find(tool => tool.formerSlugs?.includes(slug))
 }
 
 export function getUnavailableCapabilities(
@@ -361,6 +382,8 @@ export function getUnavailableCapabilities(
 export function validateToolRegistry(definitions: ToolDefinition[] = registeredTools) {
   const issues: string[] = []
   const slugs = new Set<string>()
+  const registeredSlugs = new Set(definitions.map(definition => definition.slug))
+  const formerSlugs = new Set<string>()
   const categoryIds = new Set(toolCategories.map(category => category.id))
   const iconKeys = new Set<string>(toolIcons)
   const hasLocalizedCopy = (value: LocalizedCopy | undefined) => Boolean(value?.['zh-tw']?.trim() && value.en?.trim())
@@ -371,6 +394,13 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tool.slug)) issues.push(`${prefix} slug must be stable English kebab-case`)
     if (slugs.has(tool.slug)) issues.push(`${prefix} duplicate slug`)
     slugs.add(tool.slug)
+
+    for (const formerSlug of tool.formerSlugs ?? []) {
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formerSlug)) issues.push(`${prefix} former slug must be stable English kebab-case: ${formerSlug}`)
+      if (registeredSlugs.has(formerSlug)) issues.push(`${prefix} former slug must not collide with a registered slug: ${formerSlug}`)
+      if (formerSlugs.has(formerSlug)) issues.push(`${prefix} duplicate former slug: ${formerSlug}`)
+      formerSlugs.add(formerSlug)
+    }
 
     if (!categoryIds.has(tool.category)) issues.push(`${prefix} unknown category: ${tool.category}`)
     if (!iconKeys.has(tool.icon)) issues.push(`${prefix} unknown icon: ${tool.icon}`)

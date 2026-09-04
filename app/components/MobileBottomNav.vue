@@ -3,8 +3,8 @@ import { Home, LayoutGrid, Star } from '@lucide/vue'
 import ToolCategoryDrawer from '@/components/ToolCategoryDrawer.vue'
 
 const { locale, withLocale } = useAppLocale()
+const { savedViewPath, showingSaved } = useSavedToolsView()
 const route = useRoute()
-const showingSaved = computed(() => route.query.saved === 'true')
 const onHome = computed(() => route.path.replace(/\/$/, '') === `/${locale.value}`)
 </script>
 
@@ -19,7 +19,7 @@ const onHome = computed(() => route.path.replace(/\/$/, '') === `/${locale.value
       <span>{{ locale === 'en' ? 'Tools' : '工具' }}</span>
     </NuxtLink>
     <ToolCategoryDrawer />
-    <NuxtLink :class="['mobile-nav__item', { 'mobile-nav--active': showingSaved }]" :to="withLocale('/tools/?saved=true')">
+    <NuxtLink :class="['mobile-nav__item', 'mobile-nav__item--saved', { 'mobile-nav--active': showingSaved }]" :to="savedViewPath">
       <Star :size="21" aria-hidden="true" />
       <span>{{ locale === 'en' ? 'Saved' : '常用' }}</span>
     </NuxtLink>

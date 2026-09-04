@@ -1,47 +1,59 @@
-import { computed, onMounted, watch } from 'vue'
-import { resolvePublishedTools } from '@/features/tools/catalog'
+import { computed, onMounted, readonly } from 'vue'
+import { getDeviceStorage } from '@/features/shell/device-storage'
+import {
+  addSavedTool,
+  moveSavedTool,
+  persistSavedTools,
+  readSavedTools,
+  removeSavedTool,
+  toggleSavedTool,
+} from '@/features/shell/saved-tools'
+import { resolvePublishedTools, resolveToolSlug } from '@/features/tools/catalog'
 
-const storageKey = 'toolsliang-common-tools'
-
+/**
+ * Anonymous common tools: the stable tool ids this device saved, in the order
+ * the visitor arranged them. Nothing about tool content, usage, or history is
+ * recorded, and storage is only written after an explicit save, removal, or
+ * reorder — a visit that never saves anything leaves no trace on the device.
+ */
 export function useSavedTools() {
-  const savedSlugs = useState<string[]>('common-tool-slugs', () => [])
-  const storageReady = useState('common-tool-storage-ready', () => false)
+  const savedSlugs = useState<string[]>('saved-tool-slugs', () => [])
+  const restored = useState('saved-tools-restored', () => false)
 
   onMounted(() => {
-    if (storageReady.value) return
-    storageReady.value = true
-
-    try {
-      const stored = JSON.parse(localStorage.getItem(storageKey) ?? '[]')
-      if (Array.isArray(stored)) {
-        savedSlugs.value = resolvePublishedTools(stored.filter((slug): slug is string => typeof slug === 'string'))
-          .map(tool => tool.slug)
-      }
-    }
-    catch {
-      savedSlugs.value = []
-    }
+    if (restored.value) return
+    restored.value = true
+    savedSlugs.value = readSavedTools(getDeviceStorage(), slug => resolveToolSlug(slug))
   })
-
-  watch(savedSlugs, (slugs) => {
-    if (!storageReady.value) return
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(slugs))
-    }
-    catch {
-      // Storage can be unavailable in private or restricted browsing contexts.
-    }
-  }, { deep: true })
 
   const savedTools = computed(() => resolvePublishedTools(savedSlugs.value))
   const isSaved = (slug: string) => savedSlugs.value.includes(slug)
-  const toggleSaved = (slug: string) => {
-    const tool = resolvePublishedTools([slug])[0]
-    if (!tool) return
-    savedSlugs.value = isSaved(slug)
-      ? savedSlugs.value.filter(savedSlug => savedSlug !== slug)
-      : [...savedSlugs.value, slug]
+
+  function commit(next: string[]) {
+    savedSlugs.value = next
+    persistSavedTools(getDeviceStorage(), next)
   }
 
-  return { isSaved, savedTools, toggleSaved }
+  return {
+    savedSlugs: readonly(savedSlugs),
+    savedTools,
+    isSaved,
+    /** Saves an unsaved tool or removes a saved one, following a renamed slug to the tool it became. */
+    toggleSaved(slug: string) {
+      const current = resolveToolSlug(slug)
+      if (!current) return
+      commit(toggleSavedTool(savedSlugs.value, current))
+    },
+    saveTool(slug: string) {
+      const current = resolveToolSlug(slug)
+      if (!current) return
+      commit(addSavedTool(savedSlugs.value, current))
+    },
+    removeSaved(slug: string) {
+      commit(removeSavedTool(savedSlugs.value, slug))
+    },
+    moveSaved(slug: string, offset: -1 | 1) {
+      commit(moveSavedTool(savedSlugs.value, slug, offset))
+    },
+  }
 }
