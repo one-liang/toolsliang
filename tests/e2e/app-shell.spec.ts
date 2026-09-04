@@ -124,6 +124,18 @@ for (const viewport of [
       await expect(title.locator('svg'), '分類大標題不使用圖示').toHaveCount(0)
     }
 
+    const drawerDimensions = await page.locator('html').evaluate(element => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }))
+    expect(drawerDimensions.scrollWidth, '分類導覽開啟時不得有橫向跑版')
+      .toBeLessThanOrEqual(drawerDimensions.clientWidth + 1)
+
+    for (const target of [...await drawer.locator('.drawer-tool-link').all(), drawer.getByRole('button', { name: '關閉分類導覽' })]) {
+      const box = await target.boundingBox()
+      expect(box?.height, '分類導覽操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
+    }
+
     // Focus is trapped inside the drawer and returns to the trigger on Escape.
     await expect(drawer.locator(':focus')).toHaveCount(1)
     await page.keyboard.press('Escape')

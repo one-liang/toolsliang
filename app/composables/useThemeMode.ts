@@ -1,4 +1,4 @@
-import { computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import {
   applyThemeClass,
   DEFAULT_THEME,
@@ -23,10 +23,5 @@ export function useThemeMode() {
     persistTheme(getThemeStorage(), next)
   }
 
-  return {
-    mode,
-    isDark: computed(() => mode.value === 'dark'),
-    setMode,
-    toggle: () => setMode(nextTheme(mode.value)),
-  }
+  return { mode, toggle: () => setMode(nextTheme(mode.value)) }
 }

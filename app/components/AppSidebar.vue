@@ -25,6 +25,7 @@ const toggleLabel = computed(() => props.collapsed
         :aria-label="toggleLabel"
         :title="toggleLabel"
         :aria-expanded="!props.collapsed"
+        aria-controls="app-sidebar-nav"
         @click="emit('toggle')"
       >
         <PanelLeftClose v-if="!props.collapsed" :size="20" aria-hidden="true" />
@@ -32,7 +33,7 @@ const toggleLabel = computed(() => props.collapsed
       </Button>
     </div>
 
-    <nav class="app-sidebar__nav" :aria-label="locale === 'en' ? 'Tool navigation' : '工具導覽'">
+    <nav id="app-sidebar-nav" class="app-sidebar__nav" :aria-label="locale === 'en' ? 'Tool navigation' : '工具導覽'">
       <div class="sidebar-main-links">
         <NuxtLink
           :class="['sidebar-primary-link', { 'sidebar-primary-link--active': onToolsIndex && !showingSaved }]"

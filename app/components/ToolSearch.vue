@@ -9,7 +9,6 @@ const props = defineProps<{ locale: LocaleCode; large?: boolean }>()
 const query = ref('')
 const results = computed(() => searchTools(query.value, props.locale).slice(0, 6))
 const helpId = useId()
-const resultId = useId()
 </script>
 
 <template>
@@ -38,7 +37,6 @@ const resultId = useId()
     </span>
     <div
       v-if="query"
-      :id="resultId"
       class="tool-search__results"
       role="region"
       aria-live="polite"
