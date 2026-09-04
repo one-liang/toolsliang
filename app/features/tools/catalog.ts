@@ -309,6 +309,19 @@ export function getPublicToolRoutes() {
   return supportedLocales.flatMap(locale => publishedTools.map(tool => `/${locale}/tools/${tool.slug}/`))
 }
 
+/**
+ * Localized pages that are not a single tool. Prerendering and the sitemap read
+ * the same list so an indexable route can never exist without server-rendered
+ * metadata, or vice versa.
+ */
+export function getPublicPageRoutes() {
+  return supportedLocales.flatMap(locale => [
+    `/${locale}/`,
+    `/${locale}/tools/`,
+    `/${locale}/design-system/`,
+  ])
+}
+
 export function getSavedTools(slugs: string[]) {
   return slugs.map(getTool).filter((tool): tool is PublishedToolDefinition => Boolean(tool))
 }

@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
+import { gotoHydrated, waitForHydration } from './support/hydration'
 import { inspectNetworkRequest } from './support/privacy-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
@@ -47,17 +48,6 @@ async function pressFocusForward(page: Page, testInfo: TestInfo) {
   await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Tab' : 'Tab')
 }
 
-/** Interactive assertions must run after hydration, otherwise clicks reach static markup. */
-async function gotoHydrated(page: Page, route: string) {
-  await page.goto(route, { waitUntil: 'domcontentloaded' })
-  await waitForHydration(page)
-}
-
-async function waitForHydration(page: Page) {
-  await page.waitForFunction(() => Boolean(
-    (document.getElementById('__nuxt') as (HTMLElement & { __vue_app__?: unknown }) | null)?.__vue_app__,
-  ))
-}
 
 async function reloadHydrated(page: Page) {
   await page.reload({ waitUntil: 'domcontentloaded' })
