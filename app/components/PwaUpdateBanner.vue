@@ -9,8 +9,7 @@ const { applyUpdate, copy, dismiss, prompt, visible } = usePwaUpdate()
   <div
     v-if="visible"
     class="pwa-update"
-    :class="{ 'pwa-update--urgent': prompt.tone === 'urgent' }"
-    :role="prompt.tone === 'urgent' ? 'alert' : 'status'"
+    role="status"
     data-pwa-update
     :data-pwa-update-blocked="prompt.blockedByWork ? 'true' : 'false'"
   >

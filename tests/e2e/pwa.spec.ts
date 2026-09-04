@@ -177,6 +177,12 @@ test.describe('漸進式離線與更新控制', () => {
       return { names, entries }
     })
 
+    // The App Shell can only start offline if its stylesheet and the font that
+    // stylesheet declares were stored alongside the page itself.
+    expect(cached.entries.some(url => url.endsWith('.css')), '快取需包含 App Shell 樣式').toBe(true)
+    expect(cached.entries.some(url => /-latin(-ext)?-[^/]*\.woff2$/.test(url)), '快取需包含目前語言所需字型').toBe(true)
+    expect(cached.entries.some(url => url.endsWith('/zh-tw/manifest.webmanifest')), '快取需包含安裝 manifest').toBe(true)
+
     expect(cached.names.length).toBeGreaterThan(0)
     expect(cached.names.every(name => name.startsWith('toolsliang-')), `未預期的快取：${cached.names.join('、')}`).toBe(true)
     expect(cached.entries.length).toBeGreaterThan(0)

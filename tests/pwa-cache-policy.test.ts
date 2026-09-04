@@ -3,9 +3,8 @@ import {
   buildShellAssetUrls,
   buildShellPrecacheUrls,
   cacheName,
-  isRetiredOfflineAsset,
   disposeRequest,
-  extractShellAssets,
+  isRetiredOfflineAsset,
   isObsoleteCacheName,
   isStorableResponse,
   OFFLINE_ASSET_CACHE,
@@ -142,38 +141,5 @@ describe('shell asset precache list', () => {
 
   it('carries no page document, which belongs in the shell cache instead', () => {
     for (const route of buildShellPrecacheUrls()) expect(assets).not.toContain(route)
-  })
-})
-
-describe('shell asset extraction', () => {
-  const html = [
-    '<link rel="modulepreload" as="script" crossorigin href="/_nuxt/entry.Bx1.js">',
-    '<link rel="stylesheet" href="/_nuxt/entry.Cd2.css">',
-    '<script type="module" src="/_nuxt/tools.slug.Ee3.js"></script>',
-    '<link rel="preload" as="font" href="/_nuxt/roboto.Ff4.woff2">',
-    '<link rel="canonical" href="https://toolsliang.com/zh-tw/tools/">',
-    '<img src="/icons/icon-192.png">',
-  ].join('\n')
-
-  it('collects the build-hashed assets a precached page needs in order to hydrate', () => {
-    expect(extractShellAssets(html)).toEqual([
-      '/_nuxt/entry.Bx1.js',
-      '/_nuxt/entry.Cd2.css',
-      '/_nuxt/tools.slug.Ee3.js',
-      '/_nuxt/roboto.Ff4.woff2',
-    ])
-  })
-
-  it('ignores canonical links and assets that are not build scoped', () => {
-    expect(extractShellAssets(html)).not.toContain('https://toolsliang.com/zh-tw/tools/')
-    expect(extractShellAssets(html)).not.toContain('/icons/icon-192.png')
-  })
-
-  it('lists a repeated asset once', () => {
-    expect(extractShellAssets(`${html}\n${html}`)).toHaveLength(4)
-  })
-
-  it('returns nothing for a page with no application assets', () => {
-    expect(extractShellAssets('<html><body>offline</body></html>')).toEqual([])
   })
 })

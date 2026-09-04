@@ -501,7 +501,6 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
   background: var(--color-surface);
   box-shadow: 0 24px 64px rgb(0 0 0 / 24%);
 }
-.pwa-update--urgent { border-color: var(--color-warning); background: var(--color-warning-surface); }
 .pwa-update__copy strong { display: block; margin-bottom: 6px; font-size: 1rem; }
 .pwa-update__copy p { margin: 0; color: var(--color-muted-foreground); font-size: .9rem; line-height: 1.6; }
 .pwa-update__actions { display: flex; flex-wrap: wrap; gap: 8px; }

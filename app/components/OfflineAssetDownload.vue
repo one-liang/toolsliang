@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Download, RotateCcw, X } from '@lucide/vue'
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { formatAssetSize } from '@/features/pwa/offline-assets'
 import { copy, type LocaleCode, type ToolOfflineAsset } from '@/features/tools/catalog'

@@ -10,16 +10,16 @@ const props = defineProps<{
 }>()
 
 const online = useOnline()
-const cachedAssetIds = ref<Record<string, string>>({})
+const cachedAssetKeys = ref<Record<string, string>>({})
 const assets = computed(() => props.tool.offlineAssets ?? [])
 const readiness = computed(() => resolveOfflineReadiness(props.tool, {
-  cachedAssetIds: Object.values(cachedAssetIds.value),
+  cachedAssetKeys: Object.values(cachedAssetKeys.value),
   online: online.value,
 }))
 
 function recordCached(assetId: string, key: string | null) {
-  cachedAssetIds.value = Object.fromEntries(
-    Object.entries({ ...cachedAssetIds.value, [assetId]: key })
+  cachedAssetKeys.value = Object.fromEntries(
+    Object.entries({ ...cachedAssetKeys.value, [assetId]: key })
       .filter((entry): entry is [string, string] => Boolean(entry[1])),
   )
 }

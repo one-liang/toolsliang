@@ -123,23 +123,23 @@ describe('tool offline readiness', () => {
   const heavyTool = { offlineMode: 'requires-first-download' as const, offlineAssets: [engine] }
 
   it('reports a lightweight tool as ready without any download', () => {
-    expect(resolveOfflineReadiness(readyTool, { cachedAssetIds: [], online: false })).toBe('ready')
+    expect(resolveOfflineReadiness(readyTool, { cachedAssetKeys: [], online: false })).toBe('ready')
   })
 
   it('reports a heavy tool as prepared once every declared version is cached', () => {
-    expect(resolveOfflineReadiness(heavyTool, { cachedAssetIds: ['demo-engine@2026-09-01'], online: true })).toBe('prepared')
+    expect(resolveOfflineReadiness(heavyTool, { cachedAssetKeys: ['demo-engine@2026-09-01'], online: true })).toBe('prepared')
   })
 
   it('asks for a download when a declared version is missing and the device is online', () => {
-    expect(resolveOfflineReadiness(heavyTool, { cachedAssetIds: [], online: true })).toBe('needs-download')
+    expect(resolveOfflineReadiness(heavyTool, { cachedAssetKeys: [], online: true })).toBe('needs-download')
   })
 
   it('treats a superseded version as missing rather than as prepared', () => {
-    expect(resolveOfflineReadiness(heavyTool, { cachedAssetIds: ['demo-engine@2026-01-01'], online: true })).toBe('needs-download')
+    expect(resolveOfflineReadiness(heavyTool, { cachedAssetKeys: ['demo-engine@2026-01-01'], online: true })).toBe('needs-download')
   })
 
   it('explains that the download cannot happen until the device is back online', () => {
-    expect(resolveOfflineReadiness(heavyTool, { cachedAssetIds: [], online: false })).toBe('blocked-offline')
+    expect(resolveOfflineReadiness(heavyTool, { cachedAssetKeys: [], online: false })).toBe('blocked-offline')
   })
 
   it('describes every readiness state in both locales without promising more than it delivers', () => {

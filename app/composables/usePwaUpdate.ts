@@ -1,6 +1,5 @@
 import { computed, onMounted } from 'vue'
-import { describeUpdatePrompt, resolveUpdatePrompt, type UpdateSeverity } from '@/features/pwa/update-policy'
-import { useDirtyWorkspaces } from '@/composables/useWorkspaceDirty'
+import { describeUpdatePrompt, resolveUpdatePrompt } from '@/features/pwa/update-policy'
 
 const SERVICE_WORKER_URL = '/sw.js'
 const APPLY_UPDATE_MESSAGE = { type: 'toolsliang:apply-update' }
@@ -15,7 +14,6 @@ export function usePwaUpdate() {
   const { dirtyWorkspaces } = useDirtyWorkspaces()
   const hasWaitingWorker = useState('pwa-waiting-worker', () => false)
   const hasActiveController = useState('pwa-active-controller', () => false)
-  const severity = useState<UpdateSeverity>('pwa-update-severity', () => 'routine')
   const dismissed = useState('pwa-update-dismissed', () => false)
   const registered = useState('pwa-registered', () => false)
   let applying = false
@@ -25,7 +23,6 @@ export function usePwaUpdate() {
     hasWaitingWorker: hasWaitingWorker.value,
     hasActiveController: hasActiveController.value,
     dirtyWorkspaces: dirtyWorkspaces.value,
-    severity: severity.value,
   }))
   const copy = computed(() => describeUpdatePrompt(prompt.value, locale.value))
   const visible = computed(() => prompt.value.action !== 'none' && !dismissed.value)

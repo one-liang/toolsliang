@@ -1,4 +1,4 @@
-import { copy, publishedTools, type LocaleCode } from '../tools/catalog'
+import { copy, publishedTools, supportedLocales, type LocaleCode } from '../tools/catalog'
 
 export interface AppIcon {
   src: string
@@ -53,7 +53,7 @@ export function manifestPath(locale: LocaleCode): string {
 }
 
 export function manifestPaths(): string[] {
-  return (['zh-tw', 'en'] as LocaleCode[]).map(manifestPath)
+  return supportedLocales.map(manifestPath)
 }
 
 /**

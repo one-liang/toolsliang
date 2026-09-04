@@ -30,7 +30,7 @@ Service Worker 由 production build 產出到 `/sw.js`，`nuxt dev` 不註冊也
 ## 自動檢查內容
 
 - 隱私：攔截瀏覽器請求與 WebSocket frame，任何未列入允許來源的 request，或 URL、header、body 內含各流程工具輸入、輸出、檔名 canary 時立即失敗。訊息只指出內容類別，不回印工具內容。
-- 隱私（同源）：本站是無 API route 的預渲染靜態站台，因此同源請求只允許 GET 與 HEAD。瀏覽器不會把 `sendBeacon` 的 Blob 或其他二進位 payload 交給檢查器，`postData()` 與 `postDataBuffer()` 都會回 null，所以改以請求方法本身把關，避免讀不到的 payload 夾帶工具內容溜過閘門。
+- 隱私（同源）：本站沒有任何接受工具內容的端點；`sitemap.xml` 與雙語 manifest 雖然由 Nitro route 產生，但都在建置時預渲染成靜態檔案，執行期不接受請求主體。因此同源請求只允許 GET 與 HEAD。瀏覽器不會把 `sendBeacon` 的 Blob 或其他二進位 payload 交給檢查器，`postData()` 與 `postDataBuffer()` 都會回 null，所以改以請求方法本身把關，避免讀不到的 payload 夾帶工具內容溜過閘門。
 - 核心流程：透過公開工具頁完成輸入、結果顯示與鍵盤操作，並檢查 console 與未捕捉例外。
 - 無障礙：light／dark 模式執行 axe WCAG 2.2 AA 規則，另驗證可見 focus 與至少 44 × 44 CSS px 的核心操作及行動導覽目標。
 - 響應式：在 375、768、1024 與 1440 CSS px 檢查無橫向跑版及正確的手機／桌面導覽。

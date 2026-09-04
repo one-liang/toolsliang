@@ -1,4 +1,5 @@
 import { offlineAssetPathPrefix, publishedTools, supportedLocales } from '../tools/catalog'
+import { manifestPath } from './manifest'
 
 /**
  * Bumped by hand when the shape of what the Service Worker stores changes, so a
@@ -130,11 +131,10 @@ export function buildShellPrecacheUrls(): string[] {
   const urls = supportedLocales.flatMap(locale => [
     `/${locale}/`,
     `/${locale}/tools/`,
-    `/${locale}/offline/`,
     ...publishedTools.filter(tool => tool.offlineMode === 'ready').map(tool => `/${locale}/tools/${tool.slug}/`),
   ])
 
-  return [...new Set(urls)]
+  return [...new Set([...urls, ...offlineRoutes()])]
 }
 
 /**
@@ -144,19 +144,7 @@ export function buildShellPrecacheUrls(): string[] {
  */
 export function buildShellAssetUrls(): string[] {
   return [
-    ...supportedLocales.map(locale => `/${locale}/manifest.webmanifest`),
+    ...supportedLocales.map(manifestPath),
     ...buildShellPrecacheUrls().map(route => `${route}_payload.json`),
   ]
-}
-
-const SHELL_ASSET_REFERENCE = /(?:href|src)="(\/_nuxt\/[^"?#]+)"/g
-
-/**
- * Reads the build-hashed assets a prerendered page needs in order to boot.
- * Precaching the HTML alone is not enough: without its route chunk the page
- * loads offline and then fails to hydrate, which is worse than an honest
- * offline explanation.
- */
-export function extractShellAssets(html: string): string[] {
-  return [...new Set([...html.matchAll(SHELL_ASSET_REFERENCE)].map(match => match[1]!))]
 }

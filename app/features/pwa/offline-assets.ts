@@ -75,7 +75,7 @@ export function offlineAssetProgress(state: OfflineAssetState): number {
 export type OfflineReadiness = 'ready' | 'prepared' | 'needs-download' | 'blocked-offline'
 
 export interface OfflineReadinessContext {
-  cachedAssetIds: string[]
+  cachedAssetKeys: string[]
   online: boolean
 }
 
@@ -85,7 +85,7 @@ export function resolveOfflineReadiness(
 ): OfflineReadiness {
   if (tool.offlineMode === 'ready') return 'ready'
 
-  const cached = new Set(context.cachedAssetIds)
+  const cached = new Set(context.cachedAssetKeys)
   const missing = (tool.offlineAssets ?? []).filter(asset => !cached.has(offlineAssetKey(asset)))
 
   if (!missing.length) return 'prepared'

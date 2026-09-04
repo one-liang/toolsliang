@@ -11,11 +11,11 @@ import {
   buildShellPrecacheUrls,
   cacheName,
   disposeRequest,
-  extractShellAssets,
   isObsoleteCacheName,
   isRetiredOfflineAsset,
   isStorableResponse,
 } from './cache-policy'
+import { extractShellAssets, extractShellFonts } from './shell-assets'
 import { supportedLocales } from '../tools/catalog'
 
 declare const self: ServiceWorkerGlobalScope
@@ -63,13 +63,26 @@ async function inBatches<T>(items: T[], run: (item: T) => Promise<unknown>) {
   }
 }
 
+/** One unavailable asset degrades offline support; it must not fail the install. */
+async function storeStatic(cache: Cache, url: string) {
+  try {
+    const response = await fetch(url)
+    if (!storable(response)) return undefined
+
+    await cache.put(url, response.clone())
+    return response
+  }
+  catch {
+    return undefined
+  }
+}
+
 async function precacheShell() {
   const [shell, statics] = await Promise.all([caches.open(SHELL_CACHE), caches.open(STATIC_CACHE)])
 
   // Route payloads and the install manifest come first: they are small, and a
   // page starts prefetching payloads for its visible links immediately.
-  // One unavailable asset degrades offline support; it must not fail the install.
-  await inBatches(buildShellAssetUrls(), asset => statics.add(asset).catch(() => undefined))
+  await inBatches(buildShellAssetUrls(), url => storeStatic(statics, url))
 
   const assets = new Set<string>()
   await inBatches(buildShellPrecacheUrls(), async (url) => {
@@ -80,7 +93,18 @@ async function precacheShell() {
     for (const asset of extractShellAssets(await response.text())) assets.add(asset)
   })
 
-  await inBatches([...assets], asset => statics.add(asset).catch(() => undefined))
+  // Fonts are declared inside the stylesheet, so they are only discoverable
+  // once the shell CSS itself has been fetched.
+  const fonts = new Set<string>()
+  await inBatches([...assets], async (asset) => {
+    const response = await storeStatic(statics, asset)
+    if (!response || !asset.endsWith('.css')) return
+
+    const cssUrl = new URL(asset, self.location.origin).href
+    for (const font of extractShellFonts(await response.text(), cssUrl)) fonts.add(font)
+  })
+
+  await inBatches([...fonts], url => storeStatic(statics, url))
 }
 
 self.addEventListener('install', (event) => {

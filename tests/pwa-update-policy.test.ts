@@ -6,7 +6,6 @@ function signals(patch: Partial<UpdateSignals> = {}): UpdateSignals {
     hasWaitingWorker: true,
     hasActiveController: true,
     dirtyWorkspaces: [],
-    severity: 'routine',
     ...patch,
   }
 }
@@ -14,34 +13,25 @@ function signals(patch: Partial<UpdateSignals> = {}): UpdateSignals {
 describe('PWA update prompt', () => {
   it('stays silent when no new version is waiting', () => {
     expect(resolveUpdatePrompt(signals({ hasWaitingWorker: false }))).toEqual({
-      action: 'none', tone: 'info', blockedByWork: false,
+      action: 'none', blockedByWork: false,
     })
   })
 
   it('stays silent on the very first install, when nothing can be disrupted', () => {
     expect(resolveUpdatePrompt(signals({ hasActiveController: false }))).toEqual({
-      action: 'none', tone: 'info', blockedByWork: false,
+      action: 'none', blockedByWork: false,
     })
   })
 
   it('notifies rather than reloading when a new version is ready', () => {
     expect(resolveUpdatePrompt(signals())).toEqual({
-      action: 'notify', tone: 'info', blockedByWork: false,
+      action: 'notify', blockedByWork: false,
     })
   })
 
   it('requires an explicit confirmation while a workspace still holds work', () => {
     expect(resolveUpdatePrompt(signals({ dirtyWorkspaces: ['ntd-uppercase'] }))).toEqual({
-      action: 'confirm-before-reload', tone: 'info', blockedByWork: true,
-    })
-  })
-
-  it('raises urgency for a security update without taking the decision away', () => {
-    expect(resolveUpdatePrompt(signals({ severity: 'security' }))).toEqual({
-      action: 'notify', tone: 'urgent', blockedByWork: false,
-    })
-    expect(resolveUpdatePrompt(signals({ severity: 'security', dirtyWorkspaces: ['ntd-uppercase'] }))).toEqual({
-      action: 'confirm-before-reload', tone: 'urgent', blockedByWork: true,
+      action: 'confirm-before-reload', blockedByWork: true,
     })
   })
 
@@ -49,10 +39,8 @@ describe('PWA update prompt', () => {
     for (const hasWaitingWorker of [true, false]) {
       for (const hasActiveController of [true, false]) {
         for (const dirtyWorkspaces of [[], ['ntd-uppercase']]) {
-          for (const severity of ['routine', 'security'] as const) {
-            const prompt = resolveUpdatePrompt({ hasWaitingWorker, hasActiveController, dirtyWorkspaces, severity })
-            expect(['none', 'notify', 'confirm-before-reload']).toContain(prompt.action)
-          }
+          const prompt = resolveUpdatePrompt({ hasWaitingWorker, hasActiveController, dirtyWorkspaces })
+          expect(['none', 'notify', 'confirm-before-reload']).toContain(prompt.action)
         }
       }
     }
@@ -78,9 +66,4 @@ describe('update prompt copy', () => {
     expect(describeUpdatePrompt(prompt, 'en').body).toContain('unfinished')
   })
 
-  it('states that a security update still explains its effect', () => {
-    const prompt = resolveUpdatePrompt(signals({ severity: 'security' }))
-    expect(describeUpdatePrompt(prompt, 'zh-tw').title).toBe('有安全性更新可以套用')
-    expect(describeUpdatePrompt(prompt, 'en').title).toBe('A security update is ready')
-  })
 })
