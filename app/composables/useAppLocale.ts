@@ -1,3 +1,4 @@
+import { alternateLocalePath } from '@/features/shell/locale'
 import type { LocaleCode } from '@/features/tools/catalog'
 
 export function useAppLocale() {
@@ -5,7 +6,7 @@ export function useAppLocale() {
   const locale = computed<LocaleCode>(() => route.params.locale === 'en' ? 'en' : 'zh-tw')
   const alternateLocale = computed<LocaleCode>(() => locale.value === 'en' ? 'zh-tw' : 'en')
   const withLocale = (path = '') => `/${locale.value}${path}`
-  const alternatePath = computed(() => route.fullPath.replace(/^\/(zh-tw|en)/, `/${alternateLocale.value}`))
+  const alternatePath = computed(() => alternateLocalePath(route.fullPath, alternateLocale.value))
 
   watchEffect(() => {
     useHead({ htmlAttrs: { lang: locale.value === 'en' ? 'en' : 'zh-Hant-TW' } })

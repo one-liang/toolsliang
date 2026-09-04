@@ -3,14 +3,13 @@ import { Languages, Moon, Sun } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 
 const { locale, alternateLocale, alternatePath } = useAppLocale()
-const colorMode = useColorMode()
-const isDark = computed(() => colorMode.value === 'dark')
+const { toggle } = useThemeMode()
 const themeLabel = computed(() => locale.value === 'en' ? 'Toggle color theme' : '切換色彩模式')
 
 function toggleTheme() {
   const root = document.documentElement
   root.classList.add('theme-switching')
-  colorMode.preference = isDark.value ? 'light' : 'dark'
+  toggle()
   window.requestAnimationFrame(() => {
     window.requestAnimationFrame(() => root.classList.remove('theme-switching'))
   })

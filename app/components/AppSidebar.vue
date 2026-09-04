@@ -10,6 +10,9 @@ const route = useRoute()
 const toolsIndexPath = computed(() => withLocale('/tools/').replace(/\/$/, ''))
 const onToolsIndex = computed(() => route.path.replace(/\/$/, '') === toolsIndexPath.value)
 const showingSaved = computed(() => route.query.saved === 'true')
+const toggleLabel = computed(() => props.collapsed
+  ? (locale.value === 'en' ? 'Expand sidebar' : '展開側邊欄')
+  : (locale.value === 'en' ? 'Collapse sidebar' : '收合側邊欄'))
 </script>
 
 <template>
@@ -19,8 +22,10 @@ const showingSaved = computed(() => route.query.saved === 'true')
       <Button
         variant="ghost"
         size="icon"
-        :aria-label="locale === 'en' ? 'Collapse sidebar' : '收合側邊欄'"
+        :aria-label="toggleLabel"
+        :title="toggleLabel"
         :aria-expanded="!props.collapsed"
+        aria-controls="app-sidebar-nav"
         @click="emit('toggle')"
       >
         <PanelLeftClose v-if="!props.collapsed" :size="20" aria-hidden="true" />
@@ -28,33 +33,40 @@ const showingSaved = computed(() => route.query.saved === 'true')
       </Button>
     </div>
 
-    <nav class="app-sidebar__nav" :aria-label="locale === 'en' ? 'Tool navigation' : '工具導覽'">
+    <nav id="app-sidebar-nav" class="app-sidebar__nav" :aria-label="locale === 'en' ? 'Tool navigation' : '工具導覽'">
       <div class="sidebar-main-links">
-        <NuxtLink :class="['sidebar-primary-link', { 'sidebar-primary-link--active': onToolsIndex && !showingSaved }]" :to="withLocale('/tools/')">
+        <NuxtLink
+          :class="['sidebar-primary-link', { 'sidebar-primary-link--active': onToolsIndex && !showingSaved }]"
+          :to="withLocale('/tools/')"
+          :title="props.collapsed ? (locale === 'en' ? 'All tools' : '全部工具') : undefined"
+        >
           <LayoutGrid :size="20" aria-hidden="true" />
-          <span v-if="!props.collapsed">{{ locale === 'en' ? 'All tools' : '全部工具' }}</span>
+          <span :class="{ 'sr-only': props.collapsed }">{{ locale === 'en' ? 'All tools' : '全部工具' }}</span>
         </NuxtLink>
-        <NuxtLink :class="['sidebar-primary-link', { 'sidebar-primary-link--active': showingSaved }]" :to="withLocale('/tools/?saved=true')">
+        <NuxtLink
+          :class="['sidebar-primary-link', { 'sidebar-primary-link--active': showingSaved }]"
+          :to="withLocale('/tools/?saved=true')"
+          :title="props.collapsed ? (locale === 'en' ? 'Saved' : '常用工具') : undefined"
+        >
           <Star :size="20" aria-hidden="true" />
-          <span v-if="!props.collapsed">{{ locale === 'en' ? 'Saved' : '常用工具' }}</span>
+          <span :class="{ 'sr-only': props.collapsed }">{{ locale === 'en' ? 'Saved' : '常用工具' }}</span>
         </NuxtLink>
       </div>
 
-      <template v-if="!props.collapsed">
-        <section v-for="category in publishedToolCategories" :key="category.id" class="sidebar-group">
-          <h2 class="sidebar-group__title">{{ copy(category.name, locale) }}</h2>
-          <NuxtLink
-            v-for="tool in toolsByCategory(category.id)"
-            :key="tool.slug"
-            class="sidebar-tool-link"
-            :to="withLocale(`/tools/${tool.slug}/`)"
-          >
-            <ToolIcon :name="tool.icon" :size="17" />
-            <span>{{ copy(tool.name, locale) }}</span>
-            <ToolStatusBadge v-if="tool.status" :status="tool.status" :locale="locale" />
-          </NuxtLink>
-        </section>
-      </template>
+      <section v-for="category in publishedToolCategories" :key="category.id" class="sidebar-group">
+        <h2 :class="['sidebar-group__title', { 'sr-only': props.collapsed }]">{{ copy(category.name, locale) }}</h2>
+        <NuxtLink
+          v-for="tool in toolsByCategory(category.id)"
+          :key="tool.slug"
+          class="sidebar-tool-link"
+          :to="withLocale(`/tools/${tool.slug}/`)"
+          :title="props.collapsed ? copy(tool.name, locale) : undefined"
+        >
+          <ToolIcon :name="tool.icon" :size="17" />
+          <span :class="{ 'sr-only': props.collapsed }">{{ copy(tool.name, locale) }}</span>
+          <ToolStatusBadge v-if="tool.status && !props.collapsed" :status="tool.status" :locale="locale" />
+        </NuxtLink>
+      </section>
     </nav>
   </aside>
 </template>
