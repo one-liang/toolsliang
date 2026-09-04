@@ -8,7 +8,7 @@ import {
   landingCopyKeys,
   validateLandingContent,
 } from '@/features/landing/content'
-import { publishedTools, supportedLocales, type LocaleCode } from '@/features/tools/catalog'
+import { publishedTools, supportedLocales, unpublishedToolSlugs, type LocaleCode } from '@/features/tools/catalog'
 
 function structuredNode(locale: LocaleCode, type: string) {
   const graph = buildLandingStructuredData(locale)['@graph'] as Array<Record<string, unknown>>
@@ -49,9 +49,9 @@ describe('landing content registry', () => {
     const enFaq = getLandingFaq('en')
     expect(zhFaq.length).toBeGreaterThanOrEqual(3)
     expect(enFaq).toHaveLength(zhFaq.length)
-    for (const entry of [...zhFaq, ...enFaq]) {
-      expect(entry.question.trim()).not.toBe('')
-      expect(entry.answer.trim()).not.toBe('')
+    for (const entry of [...zhFaq, ...enFaq, ...zhPoints, ...enPoints]) {
+      expect(entry.heading.trim()).not.toBe('')
+      expect(entry.body.trim()).not.toBe('')
     }
   })
 })
@@ -79,9 +79,9 @@ describe('landing structured data', () => {
       const mainEntity = structuredNode(locale, 'FAQPage')?.mainEntity as Array<Record<string, never>>
 
       expect(mainEntity).toHaveLength(faq.length)
-      expect(mainEntity.map(entry => entry.name)).toEqual(faq.map(entry => entry.question))
+      expect(mainEntity.map(entry => entry.name)).toEqual(faq.map(entry => entry.heading))
       expect(mainEntity.map(entry => (entry.acceptedAnswer as Record<string, string>).text))
-        .toEqual(faq.map(entry => entry.answer))
+        .toEqual(faq.map(entry => entry.body))
     }
   })
 
@@ -95,10 +95,11 @@ describe('landing structured data', () => {
   })
 
   it('never exposes an unpublished tool', () => {
+    expect(unpublishedToolSlugs.length, '註冊表需要有未發布工具才能驗證邊界').toBeGreaterThan(0)
+
     for (const locale of supportedLocales) {
       const serialized = JSON.stringify(buildLandingStructuredData(locale))
-      expect(serialized).not.toContain('image-resizer')
-      expect(serialized).not.toContain('json-formatter')
+      for (const slug of unpublishedToolSlugs) expect(serialized).not.toContain(slug)
     }
   })
 })

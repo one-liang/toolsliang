@@ -1,22 +1,18 @@
 import {
   copy,
   getTool,
+  localeUrl,
+  resolvePublishedTools,
+  siteOrigin,
   type LocaleCode,
   type LocalizedCopy,
-  type PublishedToolDefinition,
 } from '@/features/tools/catalog'
 
-export interface LandingFaqEntry {
-  question: LocalizedCopy
-  answer: LocalizedCopy
-}
-
-export interface LandingPrivacyPoint {
-  title: LocalizedCopy
+/** A short heading plus the sentence that backs it, both fully localized. */
+interface LocalizedSection {
+  heading: LocalizedCopy
   body: LocalizedCopy
 }
-
-const SITE_ORIGIN = 'https://toolsliang.com'
 
 /**
  * Editorial highlight for the landing page. It is a curated shortlist, never a
@@ -78,23 +74,23 @@ const landingCopy = {
 export type LandingCopyKey = keyof typeof landingCopy
 export const landingCopyKeys = Object.keys(landingCopy) as LandingCopyKey[]
 
-const landingPrivacyPoints: LandingPrivacyPoint[] = [
+const landingPrivacyPoints: LocalizedSection[] = [
   {
-    title: { 'zh-tw': '檔案不上傳', en: 'Files are not uploaded' },
+    heading: { 'zh-tw': '檔案不上傳', en: 'Files are not uploaded' },
     body: {
       'zh-tw': '你選擇的檔案與圖片只在瀏覽器記憶體中處理，不會傳到 toolsliang 或第三方服務。',
       en: 'The files and images you choose are handled in browser memory, never sent to toolsliang or a third-party service.',
     },
   },
   {
-    title: { 'zh-tw': '搜尋留在本機', en: 'Search stays local' },
+    heading: { 'zh-tw': '搜尋留在本機', en: 'Search stays local' },
     body: {
       'zh-tw': '首頁搜尋比對的是隨頁面一起載入的工具資料，查詢文字不會送到搜尋或分析服務。',
       en: 'The home page searches tool data that loads with the page; your query never reaches a search or analytics service.',
     },
   },
   {
-    title: { 'zh-tw': '匿名就能使用', en: 'Anonymous by default' },
+    heading: { 'zh-tw': '匿名就能使用', en: 'Anonymous by default' },
     body: {
       'zh-tw': '所有工具不需要註冊或登入；登入只用來同步語言、主題與常用工具等偏好。',
       en: 'Every tool works without an account; signing in only syncs preferences such as language, theme, and saved tools.',
@@ -102,31 +98,31 @@ const landingPrivacyPoints: LandingPrivacyPoint[] = [
   },
 ]
 
-const landingFaq: LandingFaqEntry[] = [
+const landingFaq: LocalizedSection[] = [
   {
-    question: { 'zh-tw': 'toolsliang 是什麼？', en: 'What is toolsliang?' },
-    answer: {
+    heading: { 'zh-tw': 'toolsliang 是什麼？', en: 'What is toolsliang?' },
+    body: {
       'zh-tw': 'toolsliang 是台灣優先的萬用工具網站，提供電商上架、辦公文件、日常計算與本機抽選等工具，每個工具都有自己的頁面。',
       en: 'toolsliang is a Taiwan-first utility site with tools for online storefronts, office documents, everyday calculations, and local random selection. Each tool has its own page.',
     },
   },
   {
-    question: { 'zh-tw': '我的檔案、文字與數值會被上傳嗎？', en: 'Are my files, text, and values uploaded?' },
-    answer: {
+    heading: { 'zh-tw': '我的檔案、文字與數值會被上傳嗎？', en: 'Are my files, text, and values uploaded?' },
+    body: {
       'zh-tw': '不會。工具內容與處理結果都在你的瀏覽器完成，toolsliang 沒有接收這些內容的伺服器路徑。',
       en: 'No. Tool content and results are handled in your browser, and toolsliang has no server path that receives them.',
     },
   },
   {
-    question: { 'zh-tw': '搜尋工具時會把查詢文字送出去嗎？', en: 'Does searching send my query anywhere?' },
-    answer: {
+    heading: { 'zh-tw': '搜尋工具時會把查詢文字送出去嗎？', en: 'Does searching send my query anywhere?' },
+    body: {
       'zh-tw': '不會。搜尋比對的是隨頁面載入的工具資料，查詢文字與點選紀錄都不會送到搜尋或分析服務。',
       en: 'No. Search matches tool data loaded with the page; neither your query nor what you click is sent to a search or analytics service.',
     },
   },
   {
-    question: { 'zh-tw': '需要註冊或登入才能使用工具嗎？', en: 'Do I need an account to use the tools?' },
-    answer: {
+    heading: { 'zh-tw': '需要註冊或登入才能使用工具嗎？', en: 'Do I need an account to use the tools?' },
+    body: {
       'zh-tw': '不需要。所有工具都可以匿名使用；登入只用來跨裝置同步語言、主題與常用工具等偏好，不會同步工具內容。',
       en: 'No. Every tool works anonymously. Signing in only syncs preferences such as language, theme, and saved tools across devices — never tool content.',
     },
@@ -138,10 +134,8 @@ if (landingContentIssues.length) {
   throw new Error(`Invalid landing content:\n${landingContentIssues.join('\n')}`)
 }
 
-export function getFeaturedTools(): PublishedToolDefinition[] {
-  return featuredToolSlugs
-    .map(getTool)
-    .filter((tool): tool is PublishedToolDefinition => Boolean(tool))
+export function getFeaturedTools() {
+  return resolvePublishedTools(featuredToolSlugs)
 }
 
 export function getLandingCopy(locale: LocaleCode): Record<LandingCopyKey, string> {
@@ -151,16 +145,17 @@ export function getLandingCopy(locale: LocaleCode): Record<LandingCopyKey, strin
 }
 
 export function getLandingPrivacyPoints(locale: LocaleCode) {
-  return landingPrivacyPoints.map(point => ({
-    title: copy(point.title, locale),
-    body: copy(point.body, locale),
-  }))
+  return localizeSections(landingPrivacyPoints, locale)
 }
 
 export function getLandingFaq(locale: LocaleCode) {
-  return landingFaq.map(entry => ({
-    question: copy(entry.question, locale),
-    answer: copy(entry.answer, locale),
+  return localizeSections(landingFaq, locale)
+}
+
+function localizeSections(sections: LocalizedSection[], locale: LocaleCode) {
+  return sections.map(section => ({
+    heading: copy(section.heading, locale),
+    body: copy(section.body, locale),
   }))
 }
 
@@ -172,16 +167,17 @@ export function getLandingFaq(locale: LocaleCode) {
 export function buildLandingStructuredData(locale: LocaleCode): Record<string, unknown> {
   const text = getLandingCopy(locale)
   const language = locale === 'en' ? 'en' : 'zh-Hant-TW'
-  const organizationId = `${SITE_ORIGIN}/#organization`
+  const landingUrl = localeUrl(locale, '/')
+  const organizationId = `${siteOrigin}/#organization`
 
   return {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'WebSite',
-        '@id': `${SITE_ORIGIN}/${locale}/#website`,
+        '@id': `${landingUrl}#website`,
         name: 'toolsliang',
-        url: `${SITE_ORIGIN}/${locale}/`,
+        url: landingUrl,
         inLanguage: language,
         description: text.seoDescription,
         publisher: { '@id': organizationId },
@@ -190,17 +186,17 @@ export function buildLandingStructuredData(locale: LocaleCode): Record<string, u
         '@type': 'Organization',
         '@id': organizationId,
         name: 'toolsliang',
-        url: `${SITE_ORIGIN}/`,
+        url: `${siteOrigin}/`,
         description: text.organizationDescription,
       },
       {
         '@type': 'FAQPage',
-        '@id': `${SITE_ORIGIN}/${locale}/#faq`,
+        '@id': `${landingUrl}#faq`,
         inLanguage: language,
         mainEntity: getLandingFaq(locale).map(entry => ({
           '@type': 'Question',
-          name: entry.question,
-          acceptedAnswer: { '@type': 'Answer', text: entry.answer },
+          name: entry.heading,
+          acceptedAnswer: { '@type': 'Answer', text: entry.body },
         })),
       },
     ],
@@ -223,15 +219,11 @@ export function validateLandingContent() {
   }
   if (!featuredToolSlugs.length) issues.push('[featured] requires at least one published highlight')
 
-  for (const [index, point] of landingPrivacyPoints.entries()) {
-    if (!hasLocalizedCopy(point.title) || !hasLocalizedCopy(point.body)) {
-      issues.push(`[privacy:${index}] requires both locales`)
-    }
-  }
-
-  for (const [index, entry] of landingFaq.entries()) {
-    if (!hasLocalizedCopy(entry.question) || !hasLocalizedCopy(entry.answer)) {
-      issues.push(`[faq:${index}] requires both locales`)
+  for (const [label, sections] of [['privacy', landingPrivacyPoints], ['faq', landingFaq]] as const) {
+    for (const [index, section] of sections.entries()) {
+      if (!hasLocalizedCopy(section.heading) || !hasLocalizedCopy(section.body)) {
+        issues.push(`[${label}:${index}] requires both locales`)
+      }
     }
   }
 

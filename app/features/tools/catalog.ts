@@ -4,6 +4,8 @@ export type ToolProcessingClass = 'instant' | 'worker'
 export type ToolOfflineMode = 'ready' | 'requires-first-download' | 'online-to-prepare'
 export type ToolCapability = 'javascript' | 'web-worker' | 'wasm' | 'webgl' | 'webgpu'
 
+/** Every canonical URL, hreflang, sitemap entry and structured-data @id derives from this origin. */
+export const siteOrigin = 'https://toolsliang.com'
 export const supportedLocales: LocaleCode[] = ['zh-tw', 'en']
 export const toolIcons = [
   'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
@@ -233,6 +235,8 @@ if (toolRegistryIssues.length) {
 
 export const publishedTools = registeredTools.filter(isPublishedTool)
 export const publishedToolCategories = categoriesForTools(publishedTools)
+/** Registered but not yet public. Tests assert these never reach an indexable surface. */
+export const unpublishedToolSlugs = registeredTools.filter(tool => !isPublishedTool(tool)).map(tool => tool.slug)
 
 export function copy<T extends LocalizedCopy>(value: T, locale: LocaleCode) {
   return value[locale]
@@ -305,6 +309,10 @@ export function searchTools(query: string, locale: LocaleCode) {
     .map(result => result.tool)
 }
 
+export function localeUrl(locale: LocaleCode, path: string) {
+  return `${siteOrigin}/${locale}${path}`
+}
+
 export function getPublicToolRoutes() {
   return supportedLocales.flatMap(locale => publishedTools.map(tool => `/${locale}/tools/${tool.slug}/`))
 }
@@ -322,7 +330,8 @@ export function getPublicPageRoutes() {
   ])
 }
 
-export function getSavedTools(slugs: string[]) {
+/** Turns a slug list — saved on a device, or curated for the landing page — into published tools. */
+export function resolvePublishedTools(slugs: string[]) {
   return slugs.map(getTool).filter((tool): tool is PublishedToolDefinition => Boolean(tool))
 }
 

@@ -3,7 +3,7 @@ import {
   categoriesForTools,
   formatReviewDate,
   getPublicToolRoutes,
-  getSavedTools,
+  resolvePublishedTools,
   getUnavailableCapabilities,
   getTool,
   getVisibleStatus,
@@ -128,8 +128,8 @@ describe('tool catalog', () => {
     expect(isSupportedLocale('tw')).toBe(false)
   })
 
-  it('resolves common-tool slugs through the published registry', () => {
-    expect(getSavedTools(['image-resizer', 'ntd-uppercase']).map(tool => tool.slug)).toEqual(['ntd-uppercase'])
+  it('resolves saved and curated slugs through the published registry', () => {
+    expect(resolvePublishedTools(['image-resizer', 'ntd-uppercase']).map(tool => tool.slug)).toEqual(['ntd-uppercase'])
   })
 
   it('uses unique stable English slugs', () => {

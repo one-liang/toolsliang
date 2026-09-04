@@ -9,9 +9,9 @@ const entries = computed(() => getLandingFaq(props.locale))
 
 <template>
   <dl class="landing-faq__list">
-    <div v-for="entry in entries" :key="entry.question" class="landing-faq__item">
-      <dt class="landing-faq__question">{{ entry.question }}</dt>
-      <dd class="landing-faq__answer">{{ entry.answer }}</dd>
+    <div v-for="entry in entries" :key="entry.heading" class="landing-faq__item">
+      <dt class="landing-faq__question">{{ entry.heading }}</dt>
+      <dd class="landing-faq__answer">{{ entry.body }}</dd>
     </div>
   </dl>
 </template>

@@ -2,15 +2,13 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import LandingPage from '@/pages/[locale]/index.vue'
 import { getFeaturedTools, getLandingFaq } from '@/features/landing/content'
-import { publishedTools } from '@/features/tools/catalog'
+import { publishedTools, unpublishedToolSlugs } from '@/features/tools/catalog'
 import { landingGlobals, setTestRoute } from './support/nuxt-stubs'
 
 function mountLanding(locale: 'zh-tw' | 'en' = 'zh-tw') {
   setTestRoute({ path: `/${locale}/`, fullPath: `/${locale}/`, params: { locale } })
   return mount(LandingPage, { global: landingGlobals() })
 }
-
-const unpublishedSlugs = ['image-resizer', 'image-cropper', 'json-formatter', 'csv-viewer', 'text-counter', 'case-converter', 'document-counter']
 
 describe('landing page', () => {
   it('opens every published tool from the category grid', () => {
@@ -24,7 +22,8 @@ describe('landing page', () => {
 
   it('never links an unpublished tool', () => {
     const html = mountLanding().html()
-    for (const slug of unpublishedSlugs) {
+    expect(unpublishedToolSlugs.length, '註冊表需要有未發布工具才能驗證邊界').toBeGreaterThan(0)
+    for (const slug of unpublishedToolSlugs) {
       expect(html, `${slug} 尚未發布，不得產生入口`).not.toContain(slug)
     }
   })
@@ -58,8 +57,8 @@ describe('landing page', () => {
       const faq = getLandingFaq(locale)
 
       expect(wrapper.findAll('.landing-faq__question')).toHaveLength(faq.length)
-      expect(wrapper.get('.landing-faq__question').text()).toBe(faq[0]!.question)
-      expect(wrapper.get('.landing-faq__answer').text()).toBe(faq[0]!.answer)
+      expect(wrapper.get('.landing-faq__question').text()).toBe(faq[0]!.heading)
+      expect(wrapper.get('.landing-faq__answer').text()).toBe(faq[0]!.body)
     }
   })
 

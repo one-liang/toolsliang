@@ -1,4 +1,4 @@
-import type { LocaleCode } from '@/features/tools/catalog'
+import { siteOrigin, type LocaleCode } from '@/features/tools/catalog'
 
 export function usePageSeo(options: {
   locale: Ref<LocaleCode>
@@ -8,7 +8,7 @@ export function usePageSeo(options: {
   structuredData?: ComputedRef<Record<string, unknown>>
 }) {
   const resolvedPath = computed(() => unref(options.path))
-  const canonical = computed(() => `https://toolsliang.com/${options.locale.value}${resolvedPath.value}`)
+  const canonical = computed(() => `${siteOrigin}/${options.locale.value}${resolvedPath.value}`)
 
   useSeoMeta({
     title: () => unref(options.title),
@@ -17,15 +17,18 @@ export function usePageSeo(options: {
     ogDescription: () => unref(options.description),
     ogUrl: canonical,
     ogSiteName: 'toolsliang',
+    ogType: 'website',
+    ogLocale: () => options.locale.value === 'en' ? 'en' : 'zh_TW',
+    ogLocaleAlternate: () => options.locale.value === 'en' ? 'zh_TW' : 'en',
     twitterCard: 'summary',
   })
 
   useHead(() => ({
     link: [
       { rel: 'canonical', href: canonical.value },
-      { rel: 'alternate', hreflang: 'zh-Hant-TW', href: `https://toolsliang.com/zh-tw${resolvedPath.value}` },
-      { rel: 'alternate', hreflang: 'en', href: `https://toolsliang.com/en${resolvedPath.value}` },
-      { rel: 'alternate', hreflang: 'x-default', href: `https://toolsliang.com/zh-tw${resolvedPath.value}` },
+      { rel: 'alternate', hreflang: 'zh-Hant-TW', href: `${siteOrigin}/zh-tw${resolvedPath.value}` },
+      { rel: 'alternate', hreflang: 'en', href: `${siteOrigin}/en${resolvedPath.value}` },
+      { rel: 'alternate', hreflang: 'x-default', href: `${siteOrigin}/zh-tw${resolvedPath.value}` },
     ],
     script: options.structuredData
       ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(options.structuredData.value) }]

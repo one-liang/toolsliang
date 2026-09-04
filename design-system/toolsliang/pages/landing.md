@@ -6,6 +6,7 @@
 - 分類網格巢狀於「工具分類」區段之下，分類標題降為 `h3`，維持連續的 heading hierarchy。
 - 熱門工具為編輯挑選，不依個人使用紀錄或聚合排行排序；文案必須說明這一點。
 - 常見問題以 `dl` 呈現且全部可見；只有可見的問答才可進入 `FAQPage` structured data。
+- 本機搜尋不得宣告 `SearchAction` 或任何 `potentialAction`，避免對外承諾不存在的伺服器端搜尋；搜尋行為改以搜尋框下方的可見說明與 `FAQPage` 內的可見問答描述。
 - 內容、熱門清單與 structured data 由 `app/features/landing/content.ts` 提供，不在頁面內硬寫文案。
 - 工具項目直接連到 locale-prefixed 工具頁；不在首頁展開操作面板。
 - 首頁必須在 `/zh-tw/` 與 `/en/` 預先產生，確保 canonical、hreflang、OG 與 structured data 在 server HTML 內可驗證。

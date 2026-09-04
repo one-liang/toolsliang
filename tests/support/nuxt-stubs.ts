@@ -4,7 +4,6 @@ import {
   reactive, readonly, ref, shallowRef, toRef, useId, watch, watchEffect,
 } from 'vue'
 import LandingFaqComponent from '@/components/LandingFaq.vue'
-import LandingFeaturedToolsComponent from '@/components/LandingFeaturedTools.vue'
 import ToolCardComponent from '@/components/ToolCard.vue'
 import ToolCategoryGridComponent from '@/components/ToolCategoryGrid.vue'
 import ToolIconComponent from '@/components/ToolIcon.vue'
@@ -76,7 +75,6 @@ export function landingGlobals() {
     components: {
       Button: ButtonComponent,
       LandingFaq: LandingFaqComponent,
-      LandingFeaturedTools: LandingFeaturedToolsComponent,
       ToolCard: ToolCardComponent,
       ToolCategoryGrid: ToolCategoryGridComponent,
       ToolIcon: ToolIconComponent,

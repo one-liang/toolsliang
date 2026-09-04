@@ -2,6 +2,7 @@
 import { LockKeyhole, ShieldCheck } from '@lucide/vue'
 import {
   buildLandingStructuredData,
+  getFeaturedTools,
   getLandingCopy,
   getLandingPrivacyPoints,
 } from '@/features/landing/content'
@@ -15,6 +16,7 @@ definePageMeta({
 const { locale, withLocale } = useAppLocale()
 const t = computed(() => getLandingCopy(locale.value))
 const privacyPoints = computed(() => getLandingPrivacyPoints(locale.value))
+const featuredTools = getFeaturedTools()
 
 usePageSeo({
   locale,
@@ -50,10 +52,10 @@ usePageSeo({
         <p>{{ t.privacyBody }}</p>
       </header>
       <ul class="landing-privacy__points">
-        <li v-for="point in privacyPoints" :key="point.title" class="landing-privacy__point">
+        <li v-for="point in privacyPoints" :key="point.heading" class="landing-privacy__point">
           <span class="landing-privacy__icon"><LockKeyhole :size="20" aria-hidden="true" /></span>
           <div>
-            <h3>{{ point.title }}</h3>
+            <h3>{{ point.heading }}</h3>
             <p>{{ point.body }}</p>
           </div>
         </li>
@@ -66,7 +68,9 @@ usePageSeo({
         <h2 id="featured-title">{{ t.featuredTitle }}</h2>
         <p>{{ t.featuredIntro }}</p>
       </header>
-      <LandingFeaturedTools :locale="locale" />
+      <div class="landing-featured__grid">
+        <ToolCard v-for="tool in featuredTools" :key="tool.slug" :tool="tool" :locale="locale" />
+      </div>
     </section>
 
     <section class="landing-section landing-catalog" aria-labelledby="catalog-title">
