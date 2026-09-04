@@ -1,7 +1,6 @@
 import { computed, onMounted, readonly } from 'vue'
 import { getDeviceStorage } from '@/features/shell/device-storage'
 import {
-  addSavedTool,
   moveSavedTool,
   persistSavedTools,
   readSavedTools,
@@ -19,11 +18,13 @@ import { resolvePublishedTools, resolveToolSlug } from '@/features/tools/catalog
 export function useSavedTools() {
   const savedSlugs = useState<string[]>('saved-tool-slugs', () => [])
   const restored = useState('saved-tools-restored', () => false)
+  /** Turns false once a write is refused, so the interface stops promising the list will survive. */
+  const storageAvailable = useState('saved-tools-storage-available', () => true)
 
   onMounted(() => {
     if (restored.value) return
-    restored.value = true
     savedSlugs.value = readSavedTools(getDeviceStorage(), slug => resolveToolSlug(slug))
+    restored.value = true
   })
 
   const savedTools = computed(() => resolvePublishedTools(savedSlugs.value))
@@ -31,23 +32,21 @@ export function useSavedTools() {
 
   function commit(next: string[]) {
     savedSlugs.value = next
-    persistSavedTools(getDeviceStorage(), next)
+    storageAvailable.value = persistSavedTools(getDeviceStorage(), next)
   }
 
   return {
     savedSlugs: readonly(savedSlugs),
     savedTools,
+    /** The device list has been read; before that the interface has nothing to say about it. */
+    restored: readonly(restored),
+    storageAvailable: readonly(storageAvailable),
     isSaved,
     /** Saves an unsaved tool or removes a saved one, following a renamed slug to the tool it became. */
     toggleSaved(slug: string) {
       const current = resolveToolSlug(slug)
       if (!current) return
       commit(toggleSavedTool(savedSlugs.value, current))
-    },
-    saveTool(slug: string) {
-      const current = resolveToolSlug(slug)
-      if (!current) return
-      commit(addSavedTool(savedSlugs.value, current))
     },
     removeSaved(slug: string) {
       commit(removeSavedTool(savedSlugs.value, slug))

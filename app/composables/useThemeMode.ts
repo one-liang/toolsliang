@@ -1,8 +1,8 @@
 import { onMounted } from 'vue'
+import { getDeviceStorage } from '@/features/shell/device-storage'
 import {
   applyThemeClass,
   DEFAULT_THEME,
-  getThemeStorage,
   nextTheme,
   persistTheme,
   readStoredTheme,
@@ -13,14 +13,14 @@ export function useThemeMode() {
   const mode = useState<ThemeMode>('theme-mode', () => DEFAULT_THEME)
 
   onMounted(() => {
-    mode.value = readStoredTheme(getThemeStorage()) ?? DEFAULT_THEME
+    mode.value = readStoredTheme(getDeviceStorage()) ?? DEFAULT_THEME
     applyThemeClass(document.documentElement, mode.value)
   })
 
   function setMode(next: ThemeMode) {
     mode.value = next
     applyThemeClass(document.documentElement, next)
-    persistTheme(getThemeStorage(), next)
+    persistTheme(getDeviceStorage(), next)
   }
 
   return { mode, toggle: () => setMode(nextTheme(mode.value)) }

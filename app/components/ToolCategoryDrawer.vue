@@ -48,7 +48,7 @@ watch(() => route.fullPath, () => {
             <NuxtLink
               v-for="tool in savedTools"
               :key="tool.slug"
-              class="drawer-saved__link"
+              class="drawer-tool-link drawer-saved__link"
               :to="withLocale(`/tools/${tool.slug}/`)"
             >
               <ToolIcon :name="tool.icon" :size="19" />

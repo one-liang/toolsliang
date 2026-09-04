@@ -1,7 +1,6 @@
-import { getDeviceStorage, readStoredValue, writeStoredValue, type DeviceStorage } from './device-storage'
+import { readStoredValue, writeStoredValue, type DeviceStorage } from './device-storage'
 
 export type ThemeMode = 'light' | 'dark'
-export type ThemeStorage = DeviceStorage
 
 export const THEME_STORAGE_KEY = 'toolsliang-theme'
 export const DEFAULT_THEME: ThemeMode = 'light'
@@ -15,15 +14,11 @@ export function nextTheme(current: ThemeMode): ThemeMode {
   return current === 'dark' ? 'light' : 'dark'
 }
 
-export function getThemeStorage(): ThemeStorage | null {
-  return getDeviceStorage()
-}
-
-export function readStoredTheme(storage: ThemeStorage | null | undefined): ThemeMode | null {
+export function readStoredTheme(storage: DeviceStorage | null | undefined): ThemeMode | null {
   return normalizeStoredTheme(readStoredValue(storage, THEME_STORAGE_KEY))
 }
 
-export function persistTheme(storage: ThemeStorage | null | undefined, mode: ThemeMode): boolean {
+export function persistTheme(storage: DeviceStorage | null | undefined, mode: ThemeMode): boolean {
   return writeStoredValue(storage, THEME_STORAGE_KEY, mode)
 }
 

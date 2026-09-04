@@ -6,7 +6,7 @@ import { copy, publishedToolCategories, toolsByCategory } from '@/features/tools
 const props = defineProps<{ collapsed: boolean }>()
 const emit = defineEmits<{ toggle: [] }>()
 const { locale, withLocale } = useAppLocale()
-const { savedTools } = useSavedTools()
+const { restored, savedTools } = useSavedTools()
 const { savedViewPath, showingSaved } = useSavedToolsView()
 const route = useRoute()
 const toolsIndexPath = computed(() => withLocale('/tools/').replace(/\/$/, ''))
@@ -66,7 +66,7 @@ const toggleLabel = computed(() => props.collapsed
           <ToolIcon :name="tool.icon" :size="17" />
           <span :class="{ 'sr-only': props.collapsed }">{{ copy(tool.name, locale) }}</span>
         </NuxtLink>
-        <p v-if="!savedTools.length && !props.collapsed" class="sidebar-saved__empty">
+        <p v-if="restored && !savedTools.length && !props.collapsed" class="sidebar-saved__empty">
           {{ locale === 'en' ? 'Save a tool to open it from here.' : '在工具頁加入常用，就能從這裡開啟。' }}
         </p>
       </section>

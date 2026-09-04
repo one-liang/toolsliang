@@ -147,8 +147,7 @@ describe('tool catalog', () => {
     }
 
     expect(resolveToolSlug('ntd-uppercase', [renamed])).toBe('ntd-amount-in-words')
-    expect(resolvePublishedTools(['ntd-uppercase'], [renamed]).map(tool => tool.name['zh-tw']))
-      .toEqual(['新臺幣國字大寫'])
+    expect(resolveToolSlug('ntd-amount-in-words', [renamed])).toBe('ntd-amount-in-words')
   })
 
   it('rejects a former slug that collides with a live slug or is not stable English kebab-case', () => {

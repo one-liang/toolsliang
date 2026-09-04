@@ -7,8 +7,7 @@ definePageMeta({
 })
 
 const { locale } = useAppLocale()
-const route = useRoute()
-const { savedTools, moveSaved, removeSaved } = useSavedTools()
+const { restored, savedTools, storageAvailable, moveSaved, removeSaved } = useSavedTools()
 const { showingSaved: savedOnly } = useSavedToolsView()
 const copy = computed(() => locale.value === 'en' ? {
   eyebrow: 'Tool directory', title: 'What do you want to get done?',
@@ -40,7 +39,8 @@ useSeoMeta({
       <p>{{ savedOnly ? copy.savedIntro : copy.intro }}</p>
     </header>
     <template v-if="savedOnly">
-      <SavedToolList :tools="savedTools" :locale="locale" @move="moveSaved" @remove="removeSaved" />
+      <SavedStorageNotice v-if="!storageAvailable" :locale="locale" />
+      <SavedToolList v-if="restored" :tools="savedTools" :locale="locale" @move="moveSaved" @remove="removeSaved" />
     </template>
     <template v-else>
       <ToolSearch :locale="locale" />

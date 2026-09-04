@@ -39,6 +39,13 @@ describe('saved tools storage record', () => {
     expect(parseSavedTools(future)).toEqual(['beta'])
   })
 
+  it('starts empty rather than guessing at a record it cannot read', () => {
+    const unreadable = JSON.stringify({ version: SAVED_TOOLS_SCHEMA_VERSION + 1, tools: [{ id: 'beta' }] })
+
+    expect(parseSavedTools(unreadable)).toEqual([])
+    expect(parseSavedTools(JSON.stringify({ version: 0, slugs: ['beta'] }))).toEqual([])
+  })
+
   it('ignores unreadable or wrongly shaped values instead of throwing', () => {
     expect(parseSavedTools(null)).toEqual([])
     expect(parseSavedTools('')).toEqual([])

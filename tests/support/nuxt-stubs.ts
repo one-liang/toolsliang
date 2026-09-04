@@ -4,6 +4,7 @@ import {
   reactive, readonly, ref, shallowRef, toRef, useId, watch, watchEffect,
 } from 'vue'
 import LandingFaqComponent from '@/components/LandingFaq.vue'
+import SavedStorageNoticeComponent from '@/components/SavedStorageNotice.vue'
 import SavedToolListComponent from '@/components/SavedToolList.vue'
 import ToolCardComponent from '@/components/ToolCard.vue'
 import ToolCategoryGridComponent from '@/components/ToolCategoryGrid.vue'
@@ -84,6 +85,7 @@ export function savedToolsGlobals() {
   return {
     components: {
       Button: ButtonComponent,
+      SavedStorageNotice: SavedStorageNoticeComponent,
       SavedToolList: SavedToolListComponent,
       ToolCard: ToolCardComponent,
       ToolCategoryGrid: ToolCategoryGridComponent,

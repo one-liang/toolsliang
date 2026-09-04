@@ -4,6 +4,7 @@ import { gotoHydrated, waitForHydration } from './support/hydration'
 import { inspectNetworkRequest } from './support/privacy-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
+const DIRECTORY_ROUTE = '/zh-tw/tools/'
 const SAVED_ROUTE = '/zh-tw/tools/?saved=true'
 const SAVED_STORAGE_KEY = 'toolsliang-saved-tools'
 const LEGACY_STORAGE_KEY = 'toolsliang-common-tools'
@@ -102,6 +103,12 @@ test('匿名收藏後，側邊欄與常用工具檢視同步，重新載入仍�
   await expect(page).toHaveURL(/\/zh-tw\/tools\/\?saved=true$/)
   await expect(page.locator('.saved-tool')).toHaveCount(1)
   await expect(page.locator('.saved-tool__link')).toHaveAttribute('href', TOOL_ROUTE)
+
+  // The catalog marks what this device already saved.
+  await settleBeforeLeaving(page)
+  await gotoHydrated(page, DIRECTORY_ROUTE)
+  const savedCard = page.locator('.tool-card', { hasText: '新臺幣國字大寫' }).first()
+  await expect(savedCard.locator('.tool-card__badges')).toContainText('常用')
 })
 
 test('鍵盤可完成加入、排序控制與移除，並保有可見 focus', async ({ page }) => {
@@ -162,10 +169,18 @@ test('手機導覽的常用入口可觸控操作，且常用工具檢視通過 W
   await expect(page.locator('.mobile-nav__item--saved')).toHaveClass(/mobile-nav--active/)
   await expect(page.locator('.mobile-nav .mobile-nav--active')).toHaveCount(1)
 
+  const controlBoxes: Array<{ x: number, width: number }> = []
   for (const control of await page.locator('.saved-tool__actions button').all()) {
     const box = await control.boundingBox()
     expect((box?.width ?? 0) + TOUCH_TARGET_TOLERANCE_PX, '常用工具操作目標寬度至少 44px').toBeGreaterThanOrEqual(44)
     expect((box?.height ?? 0) + TOUCH_TARGET_TOLERANCE_PX, '常用工具操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
+    controlBoxes.push({ x: box?.x ?? 0, width: box?.width ?? 0 })
+  }
+
+  controlBoxes.sort((left, right) => left.x - right.x)
+  for (const [index, box] of controlBoxes.slice(1).entries()) {
+    const previous = controlBoxes[index]!
+    expect(box.x - (previous.x + previous.width), '相鄰操作目標之間保留間距').toBeGreaterThan(0)
   }
 
   const layout = await page.locator('html').evaluate(element => ({

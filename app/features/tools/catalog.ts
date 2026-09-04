@@ -352,16 +352,18 @@ export function getPublicPageRoutes() {
 }
 
 /** Turns a slug list — saved on a device, or curated for the landing page — into published tools. */
-export function resolvePublishedTools(slugs: string[], tools: PublishedToolDefinition[] = publishedTools) {
+export function resolvePublishedTools(slugs: string[]) {
   return slugs
-    .map(slug => findPublishedTool(slug, tools))
+    .map(slug => findPublishedTool(slug, publishedTools))
     .filter((tool): tool is PublishedToolDefinition => Boolean(tool))
 }
 
 /**
  * The current slug of a tool a device saved earlier, or nothing when the tool
  * was withdrawn. Saved lists are cleaned against this answer, so a stale device
- * record can never produce a dead navigation target.
+ * record can never produce a dead navigation target. No registered tool has been
+ * renamed yet, so `tools` lets a test exercise the rename path the registry
+ * cannot show on its own.
  */
 export function resolveToolSlug(slug: string, tools: PublishedToolDefinition[] = publishedTools) {
   return findPublishedTool(slug, tools)?.slug

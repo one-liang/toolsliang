@@ -23,10 +23,12 @@ export interface SavedToolsRecord {
 }
 
 /**
- * Accepts every shape this key has held: the current versioned record, the
- * unversioned array an earlier release wrote, and a record from a future
- * release whose extra fields this one does not understand. A slug is a stable
- * tool id, so it stays readable across those versions.
+ * Accepts every shape this key has held: the unversioned array the first
+ * release wrote, the current versioned record, and a record from a later
+ * release. A stable tool id is the one thing every version agrees on, so a
+ * newer record is read for its slugs and anything else it carries is left
+ * behind — a device that moves between releases keeps its saved tools instead
+ * of starting over.
  */
 export function parseSavedTools(raw: string | null | undefined): string[] {
   if (!raw) return []
@@ -39,9 +41,13 @@ export function parseSavedTools(raw: string | null | undefined): string[] {
     return []
   }
 
+  // Before SAVED_TOOLS_SCHEMA_VERSION existed the record was the slug list itself.
   if (Array.isArray(value)) return value.filter(isSlug)
+  if (!isRecordObject(value)) return []
 
-  const slugs = (value as Partial<SavedToolsRecord> | null)?.slugs
+  const { version, slugs } = value
+  if (typeof version !== 'number' || version < SAVED_TOOLS_SCHEMA_VERSION) return []
+
   return Array.isArray(slugs) ? slugs.filter(isSlug) : []
 }
 
@@ -106,6 +112,10 @@ export function persistSavedTools(storage: DeviceStorage | null | undefined, slu
   if (written) removeStoredValue(storage, LEGACY_SAVED_TOOLS_STORAGE_KEY)
 
   return written
+}
+
+function isRecordObject(value: unknown): value is Partial<SavedToolsRecord> {
+  return typeof value === 'object' && value !== null
 }
 
 function isSlug(value: unknown): value is string {

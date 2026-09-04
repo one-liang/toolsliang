@@ -1,11 +1,13 @@
+import { renderToString } from '@vue/server-renderer'
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
-import { defineComponent, nextTick } from 'vue'
+import { describe, expect, it, vi } from 'vitest'
+import { createSSRApp, defineComponent, nextTick, h } from 'vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import MobileBottomNav from '@/components/MobileBottomNav.vue'
 import SavedToolList from '@/components/SavedToolList.vue'
 import { useSavedTools } from '@/composables/useSavedTools'
 import { LEGACY_SAVED_TOOLS_STORAGE_KEY, SAVED_TOOLS_STORAGE_KEY } from '@/features/shell/saved-tools'
+import ToolCard from '@/components/ToolCard.vue'
 import { getTool, type LocaleCode, type PublishedToolDefinition } from '@/features/tools/catalog'
 import DirectoryPage from '@/pages/[locale]/tools/index.vue'
 import ToolPage from '@/pages/[locale]/tools/[slug].vue'
@@ -37,6 +39,16 @@ const SavedToolsHost = defineComponent({
   setup: () => useSavedTools(),
   template: '<div />',
 })
+
+/** Renders the way the prerendered page does: no browser, so no device list. */
+function renderOnServer(component: Parameters<typeof createSSRApp>[0], props?: Record<string, unknown>) {
+  const app = createSSRApp({ render: () => h(component, props) })
+  app.component('NuxtLink', { props: ['to'], template: '<a :href="to"><slot /></a>' })
+  app.component('BrandMark', { template: '<span />' })
+  app.component('ToolIcon', { template: '<span />' })
+  app.component('ToolStatusBadge', { template: '<span />' })
+  return renderToString(app)
+}
 
 describe('SavedToolList', () => {
   it('lists saved tools in their saved order with a link to each tool', () => {
@@ -207,8 +219,9 @@ describe('saved tools navigation entries', () => {
       .toBe(sidebar.get('.sidebar-primary-link--saved').attributes('href'))
   })
 
-  it('tells the visitor how the sidebar list fills up while it is empty', () => {
+  it('tells the visitor how the sidebar list fills up while it is empty', async () => {
     const wrapper = mount(AppSidebar, { props: { collapsed: false }, global: { stubs: shellStubs } })
+    await nextTick()
 
     expect(wrapper.findAll('.sidebar-saved__link')).toHaveLength(0)
     expect(wrapper.get('.sidebar-saved__empty').text().length).toBeGreaterThan(0)
@@ -225,6 +238,58 @@ describe('saved tools navigation entries', () => {
     expect(wrapper.get('.sidebar-saved__title').classes()).toContain('sr-only')
     for (const link of wrapper.findAll('.sidebar-saved__link')) {
       expect(link.text().trim().length, '收合時常用工具仍需有可讀名稱').toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('saved tools on the prerendered shell', () => {
+  it('claims nothing about this device before the saved list is read', async () => {
+    localStorage.setItem(SAVED_TOOLS_STORAGE_KEY, JSON.stringify({ version: 1, slugs: ['ntd-uppercase'] }))
+
+    const sidebar = await renderOnServer(AppSidebar, { collapsed: false })
+    const nav = await renderOnServer(MobileBottomNav)
+
+    expect(sidebar, '預先產生的側邊欄不顯示裝置專屬的空狀態').not.toContain('sidebar-saved__empty')
+    expect(sidebar).not.toContain('sidebar-saved__link')
+    expect(nav, '預先產生的導覽不標示常用檢視').not.toMatch(/mobile-nav__item--saved[^"]*mobile-nav--active/)
+  })
+
+  it('marks a saved tool in the catalog once the device list is read', async () => {
+    const host = mount(SavedToolsHost)
+    await nextTick()
+    host.vm.toggleSaved('ntd-uppercase')
+    await nextTick()
+
+    const saved = mount(ToolCard, { props: { tool: firstTool, locale: 'zh-tw' }, global: { stubs: shellStubs } })
+    const unsaved = mount(ToolCard, { props: { tool: secondTool, locale: 'zh-tw' }, global: { stubs: shellStubs } })
+
+    expect(saved.get('.tool-card__badges').text()).toContain('常用')
+    expect(unsaved.find('.tool-card__badges').text()).not.toContain('常用')
+  })
+})
+
+describe('saved tools when the browser refuses to store them', () => {
+  it('says the list will not survive instead of claiming it was saved', async () => {
+    const blocked = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('storage blocked')
+    })
+
+    try {
+      const host = mount(SavedToolsHost)
+      await nextTick()
+      host.vm.toggleSaved('ntd-uppercase')
+      await nextTick()
+
+      expect(host.vm.savedSlugs, '介面仍反映這次操作').toEqual(['ntd-uppercase'])
+      expect(host.vm.storageAvailable).toBe(false)
+
+      const wrapper = mountDirectory()
+      await nextTick()
+
+      expect(wrapper.get('.saved-storage-notice').text()).toContain('無法保存')
+    }
+    finally {
+      blocked.mockRestore()
     }
   })
 })
