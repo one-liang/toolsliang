@@ -2,7 +2,7 @@
 import { LockKeyhole, Star } from '@lucide/vue'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
-import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
+import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale, localeUrl } from '@/features/tools/catalog'
 import { resolveToolWorkspace } from '@/features/tools/workspace-resolver'
 
 definePageMeta({
@@ -40,7 +40,7 @@ usePageSeo({
         description: copy(tool.value.seo.description, locale.value),
         applicationCategory: 'UtilitiesApplication',
         operatingSystem: 'Any',
-        url: `https://toolsliang.com/${locale.value}/tools/${tool.value.slug}/`,
+        url: localeUrl(locale.value, `/tools/${tool.value.slug}/`),
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
       },
       {
@@ -50,13 +50,13 @@ usePageSeo({
             '@type': 'ListItem',
             position: 1,
             name: locale.value === 'en' ? 'All tools' : '全部工具',
-            item: `https://toolsliang.com/${locale.value}/tools/`,
+            item: localeUrl(locale.value, '/tools/'),
           },
           {
             '@type': 'ListItem',
             position: 2,
             name: copy(tool.value.name, locale.value),
-            item: `https://toolsliang.com/${locale.value}/tools/${tool.value.slug}/`,
+            item: localeUrl(locale.value, `/tools/${tool.value.slug}/`),
           },
         ],
       },

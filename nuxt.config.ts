@@ -1,6 +1,6 @@
 import tailwindcss from '@tailwindcss/vite'
 import { themeBootstrapScript } from './app/features/shell/theme'
-import { getPublicToolRoutes } from './app/features/tools/catalog'
+import { getPublicPageRoutes, getPublicToolRoutes } from './app/features/tools/catalog'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -20,7 +20,7 @@ export default defineNuxtConfig({
   },
   nitro: {
     prerender: {
-      routes: [...getPublicToolRoutes(), '/sitemap.xml'],
+      routes: [...getPublicPageRoutes(), ...getPublicToolRoutes(), '/sitemap.xml'],
     },
   },
   app: {

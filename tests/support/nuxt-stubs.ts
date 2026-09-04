@@ -3,6 +3,13 @@ import {
   computed, inject, nextTick, onBeforeUnmount, onMounted, onUnmounted, provide,
   reactive, readonly, ref, shallowRef, toRef, useId, watch, watchEffect,
 } from 'vue'
+import LandingFaqComponent from '@/components/LandingFaq.vue'
+import ToolCardComponent from '@/components/ToolCard.vue'
+import ToolCategoryGridComponent from '@/components/ToolCategoryGrid.vue'
+import ToolIconComponent from '@/components/ToolIcon.vue'
+import ToolSearchComponent from '@/components/ToolSearch.vue'
+import ToolStatusBadgeComponent from '@/components/ToolStatusBadge.vue'
+import { Button as ButtonComponent } from '@/components/ui/button'
 import { useAppLocale } from '@/composables/useAppLocale'
 
 export interface TestRoute {
@@ -39,6 +46,9 @@ export function installNuxtStubs() {
 
   vi.stubGlobal('useRoute', () => route)
   vi.stubGlobal('useHead', () => {})
+  vi.stubGlobal('useSeoMeta', () => {})
+  vi.stubGlobal('definePageMeta', () => {})
+  vi.stubGlobal('usePageSeo', () => {})
   vi.stubGlobal('useAppLocale', useAppLocale)
   vi.stubGlobal('useState', <T>(key: string, init: () => T) => {
     if (!states.has(key)) states.set(key, ref(init()))
@@ -54,4 +64,25 @@ export const shellStubs = {
   BrandMark: true,
   ToolIcon: true,
   ToolStatusBadge: true,
+}
+
+/**
+ * Pages rely on Nuxt auto-imported components, so a page-level test has to
+ * register the real tree to observe what a visitor can actually reach.
+ */
+export function landingGlobals() {
+  return {
+    components: {
+      Button: ButtonComponent,
+      LandingFaq: LandingFaqComponent,
+      ToolCard: ToolCardComponent,
+      ToolCategoryGrid: ToolCategoryGridComponent,
+      ToolIcon: ToolIconComponent,
+      ToolSearch: ToolSearchComponent,
+      ToolStatusBadge: ToolStatusBadgeComponent,
+    },
+    stubs: {
+      NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
+    },
+  }
 }

@@ -1,5 +1,5 @@
 import { computed, onMounted, watch } from 'vue'
-import { getSavedTools } from '@/features/tools/catalog'
+import { resolvePublishedTools } from '@/features/tools/catalog'
 
 const storageKey = 'toolsliang-common-tools'
 
@@ -14,7 +14,7 @@ export function useSavedTools() {
     try {
       const stored = JSON.parse(localStorage.getItem(storageKey) ?? '[]')
       if (Array.isArray(stored)) {
-        savedSlugs.value = getSavedTools(stored.filter((slug): slug is string => typeof slug === 'string'))
+        savedSlugs.value = resolvePublishedTools(stored.filter((slug): slug is string => typeof slug === 'string'))
           .map(tool => tool.slug)
       }
     }
@@ -33,10 +33,10 @@ export function useSavedTools() {
     }
   }, { deep: true })
 
-  const savedTools = computed(() => getSavedTools(savedSlugs.value))
+  const savedTools = computed(() => resolvePublishedTools(savedSlugs.value))
   const isSaved = (slug: string) => savedSlugs.value.includes(slug)
   const toggleSaved = (slug: string) => {
-    const tool = getSavedTools([slug])[0]
+    const tool = resolvePublishedTools([slug])[0]
     if (!tool) return
     savedSlugs.value = isSaved(slug)
       ? savedSlugs.value.filter(savedSlug => savedSlug !== slug)

@@ -1,13 +1,8 @@
-import { getPublicToolRoutes, supportedLocales } from '@/features/tools/catalog'
+import { getPublicPageRoutes, getPublicToolRoutes } from '@/features/tools/catalog'
 
 export function renderToolSitemap(baseUrl: string) {
   const origin = baseUrl.replace(/\/$/, '')
-  const staticRoutes = supportedLocales.flatMap(locale => [
-    `/${locale}/`,
-    `/${locale}/tools/`,
-    `/${locale}/design-system/`,
-  ])
-  const urls = [...staticRoutes, ...getPublicToolRoutes()]
+  const urls = [...getPublicPageRoutes(), ...getPublicToolRoutes()]
     .map(path => `  <url><loc>${origin}${path}</loc></url>`)
     .join('\n')
 
