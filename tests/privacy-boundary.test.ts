@@ -47,6 +47,49 @@ describe('tool content network boundary', () => {
     ])
   })
 
+  it('reports a same-origin request whose body cannot be read', () => {
+    expect(inspectNetworkRequest({
+      url: 'http://127.0.0.1:3000/collect',
+      method: 'POST',
+      headers: {},
+      body: null,
+    }, toolContent, policy)).toEqual([
+      'POST /collect: 同源請求只允許 GET 或 HEAD，本站沒有 API route',
+    ])
+  })
+
+  it('reports the disallowed method alongside readable tool content', () => {
+    expect(inspectNetworkRequest({
+      url: 'http://127.0.0.1:3000/collect',
+      method: 'POST',
+      headers: {},
+      body: '新臺幣壹萬零壹元玖分',
+    }, toolContent, policy)).toEqual([
+      'POST /collect: 同源請求只允許 GET 或 HEAD，本站沒有 API route',
+      'POST /collect: body 含有工具內容（輸出）',
+    ])
+  })
+
+  it('does not repeat the method finding for an already rejected third-party request', () => {
+    expect(inspectNetworkRequest({
+      url: 'https://analytics.example.test/collect',
+      method: 'POST',
+      headers: {},
+      body: null,
+    }, toolContent, policy)).toEqual([
+      'POST https://analytics.example.test: 不允許的第三方請求',
+    ])
+  })
+
+  it('allows same-origin HEAD for static assets', () => {
+    expect(inspectNetworkRequest({
+      url: 'http://127.0.0.1:3000/_nuxt/app.js',
+      method: 'HEAD',
+      headers: {},
+      body: null,
+    }, toolContent, policy)).toEqual([])
+  })
+
   it('allows same-origin public assets without tool content', () => {
     expect(inspectNetworkRequest({
       url: 'http://127.0.0.1:3000/_nuxt/app.js',
