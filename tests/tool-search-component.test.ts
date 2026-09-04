@@ -21,5 +21,7 @@ describe('ToolSearch', () => {
 
     await wrapper.get('input').setValue('支票')
     expect(wrapper.get('.tool-search__result').attributes('href')).toBe('/zh-tw/tools/ntd-uppercase/')
+    expect(wrapper.get('input').attributes('aria-expanded'), 'searchbox 不支援 aria-expanded').toBeUndefined()
+    expect(wrapper.get('.tool-search__results').attributes('aria-label')).toBe('工具搜尋結果')
   })
 })

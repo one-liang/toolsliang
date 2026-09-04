@@ -22,8 +22,6 @@ const resultId = useId()
       :placeholder="locale === 'en' ? 'Search tools, e.g. NTD amount' : '搜尋工具，例如：支票金額'"
       :aria-label="locale === 'en' ? 'Search all tools' : '搜尋全部工具'"
       :aria-describedby="helpId"
-      :aria-controls="resultId"
-      :aria-expanded="Boolean(query)"
     />
     <Button
       v-if="query"
@@ -38,7 +36,14 @@ const resultId = useId()
     <span :id="helpId" class="sr-only">
       {{ locale === 'en' ? 'Search runs only in this browser.' : '搜尋只在此瀏覽器內執行。' }}
     </span>
-    <div v-if="query" :id="resultId" class="tool-search__results" role="region" aria-live="polite">
+    <div
+      v-if="query"
+      :id="resultId"
+      class="tool-search__results"
+      role="region"
+      aria-live="polite"
+      :aria-label="locale === 'en' ? 'Tool search results' : '工具搜尋結果'"
+    >
       <NuxtLink
         v-for="tool in results"
         :key="tool.slug"

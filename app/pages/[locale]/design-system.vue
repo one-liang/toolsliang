@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { isSupportedLocale } from '@/features/tools/catalog'
+import { isSupportedLocale, publishedTools } from '@/features/tools/catalog'
 
 definePageMeta({
   layout: 'app-shell',
@@ -16,6 +16,9 @@ definePageMeta({
 
 const { locale } = useAppLocale()
 const sample = ref('')
+const errorFieldId = useId()
+const errorMessageId = useId()
+const showcaseTools = computed(() => publishedTools.slice(0, 2))
 const swatches = [
   ['background', '頁面背景'], ['surface', '主要表面'], ['surface-subtle', '次要表面'],
   ['foreground', '主要文字'], ['muted-foreground', '次要文字'], ['border', '邊界'],
@@ -90,10 +93,68 @@ usePageSeo({
         <div class="component-row"><span class="component-label">Buttons</span><Button>Primary</Button><Button variant="secondary">Secondary</Button><Button variant="outline">Outline</Button><Button variant="ghost">Ghost</Button><Button disabled>Disabled</Button><Button aria-busy="true"><LoaderCircle class="spin" :size="18" /> Loading</Button></div>
         <div class="component-row"><span class="component-label">Badges</span><Badge variant="new">NEW</Badge><Badge variant="pro">PRO</Badge><Badge variant="hot">熱門</Badge><Badge variant="saved">常用</Badge><Badge variant="success"><Check :size="13" />Success</Badge><Badge variant="error"><AlertCircle :size="13" />Error</Badge></div>
         <div class="component-row component-row--fields"><span class="component-label">Fields</span><label><span>Default</span><Input v-model="sample" placeholder="輸入內容" /></label><label><span>Error</span><Input aria-invalid="true" value="無效內容" /></label><label><span>Disabled</span><Input disabled value="不可編輯" /></label></div>
-        <div class="state-grid">
-          <div><Search /><strong>Hover</strong><p>只改背景與邊框</p></div><div><Settings /><strong>Focus</strong><p>3px ring + 2px offset</p></div><div><CheckCircle2 /><strong>Success</strong><p>文字、icon、顏色</p></div><div><AlertCircle /><strong>Error</strong><p>可宣告的錯誤訊息</p></div>
-        </div>
       </Card>
+
+      <h3 class="ds-subheading">Interaction & feedback states</h3>
+      <p class="ds-subheading__note">每個狀態都是實際 production 元件，可直接用滑鼠與鍵盤驗證；狀態一律搭配文字，不只靠顏色。</p>
+      <div class="state-matrix">
+        <article class="state-demo">
+          <h4>Hover</h4>
+          <Button data-state-demo="hover" variant="outline">尋找工具</Button>
+          <p>指標移入只改變背景與邊框，沒有陰影或位移。</p>
+        </article>
+        <article class="state-demo">
+          <h4>Focus</h4>
+          <Button data-state-demo="focus" variant="outline">用 Tab 聚焦這顆按鈕</Button>
+          <p>鍵盤 focus 顯示 3px focus ring 與 2px offset。</p>
+        </article>
+        <article class="state-demo">
+          <h4>Active</h4>
+          <Button data-state-demo="active">按住看按下狀態</Button>
+          <p>按下時切換到 primary active token，轉場 80ms。</p>
+        </article>
+        <article class="state-demo">
+          <h4>Disabled</h4>
+          <Button data-state-demo="disabled" disabled>目前無法使用</Button>
+          <p>停用時同時關閉指標事件，並以文字說明無法使用。</p>
+        </article>
+        <article class="state-demo">
+          <h4>Loading</h4>
+          <Button data-state-demo="loading" aria-busy="true">
+            <LoaderCircle class="spin" :size="18" aria-hidden="true" />處理中…
+          </Button>
+          <p>以 aria-busy 與「處理中」文字宣告，不只靠旋轉動畫。</p>
+        </article>
+        <article class="state-demo">
+          <h4>Error</h4>
+          <label class="state-demo__label" :for="errorFieldId">輸入金額（新臺幣）</label>
+          <Input
+            :id="errorFieldId"
+            data-state-demo="error"
+            aria-invalid="true"
+            :aria-describedby="errorMessageId"
+            default-value="1o.999"
+          />
+          <p :id="errorMessageId" class="field-error" role="alert">請輸入零以上、小數點後最多兩位的金額。</p>
+        </article>
+        <article class="state-demo">
+          <h4>Success</h4>
+          <p class="state-message" data-state-demo="success">
+            <CheckCircle2 :size="17" aria-hidden="true" />已複製結果到剪貼簿
+          </p>
+          <p>成功訊息同時提供 icon、文字與語意色，且不自動消失。</p>
+        </article>
+      </div>
+
+      <h3 class="ds-subheading">App shell components</h3>
+      <p class="ds-subheading__note">工具卡片、狀態標籤與本機搜尋都是 App Shell 正在使用的元件；側欄、底部導覽與分類 drawer 就是包住本頁的外框。</p>
+      <div class="shell-showcase">
+        <ToolCard v-for="tool in showcaseTools" :key="tool.slug" :tool="tool" :locale="locale" />
+      </div>
+      <div class="shell-showcase__search">
+        <span class="component-label">Search</span>
+        <ToolSearch :locale="locale" />
+      </div>
     </section>
 
     <Separator />
