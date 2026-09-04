@@ -20,6 +20,15 @@ function comparableOrigin(url: URL): string {
   return url.origin
 }
 
+/**
+ * The product ships as a prerendered static site with no API route, so a
+ * same-origin request that can carry a body is always suspicious. Browsers hide
+ * binary payloads such as a `sendBeacon` Blob from the inspector, so the method
+ * itself has to be the gate rather than the body.
+ */
+const READ_ONLY_METHODS = ['GET', 'HEAD']
+const BODY_CARRYING_PROTOCOLS = ['http:', 'https:']
+
 function requestLabel(request: ObservedNetworkRequest, url: URL, policy: NetworkBoundaryPolicy): string {
   const target = policy.allowedOrigins.includes(comparableOrigin(url))
     ? url.pathname
@@ -63,8 +72,13 @@ export function inspectNetworkRequest(
   const label = redactToolContent(requestLabel(request, url, policy), toolContent)
   const findings: string[] = []
 
-  if (['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) && !policy.allowedOrigins.includes(comparableOrigin(url))) {
+  const sameOrigin = policy.allowedOrigins.includes(comparableOrigin(url))
+
+  if (['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol) && !sameOrigin) {
     findings.push(`${label}: 不允許的第三方請求`)
+  }
+  else if (BODY_CARRYING_PROTOCOLS.includes(url.protocol) && !READ_ONLY_METHODS.includes(request.method.toUpperCase())) {
+    findings.push(`${label}: 同源請求只允許 GET 或 HEAD，本站沒有 API route`)
   }
 
   const surfaces = [

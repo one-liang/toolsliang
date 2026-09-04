@@ -6,6 +6,8 @@ const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const DIRECTORY_ROUTE = '/zh-tw/tools/'
 const DESIGN_SYSTEM_ROUTE = '/zh-tw/design-system/'
 const THEME_STORAGE_KEY = 'toolsliang-theme'
+// Sub-pixel layout can report a 44px target as 43.999996; the same tolerance as the tool quality gate.
+const TOUCH_TARGET_TOLERANCE_PX = 0.001
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 
 interface ShellFindings {
@@ -99,8 +101,8 @@ for (const viewport of [
 
     for (const item of await bottomNav.locator('.mobile-nav__item').all()) {
       const box = await item.boundingBox()
-      expect(box?.width, '底部導覽目標寬度至少 44px').toBeGreaterThanOrEqual(44)
-      expect(box?.height, '底部導覽目標高度至少 44px').toBeGreaterThanOrEqual(44)
+      expect((box?.width ?? 0) + TOUCH_TARGET_TOLERANCE_PX, '底部導覽目標寬度至少 44px').toBeGreaterThanOrEqual(44)
+      expect((box?.height ?? 0) + TOUCH_TARGET_TOLERANCE_PX, '底部導覽目標高度至少 44px').toBeGreaterThanOrEqual(44)
     }
 
     const trigger = page.getByRole('button', { name: '分類' })
@@ -133,7 +135,7 @@ for (const viewport of [
 
     for (const target of [...await drawer.locator('.drawer-tool-link').all(), drawer.getByRole('button', { name: '關閉分類導覽' })]) {
       const box = await target.boundingBox()
-      expect(box?.height, '分類導覽操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
+      expect((box?.height ?? 0) + TOUCH_TARGET_TOLERANCE_PX, '分類導覽操作目標高度至少 44px').toBeGreaterThanOrEqual(44)
     }
 
     // Focus is trapped inside the drawer and returns to the trigger on Escape.
