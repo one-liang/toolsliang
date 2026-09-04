@@ -18,11 +18,8 @@ const toolsForCategory = (categoryId: string) => displayedTools.value.filter(too
   <div class="category-grid">
     <section v-for="category in displayedCategories" :key="category.id" class="category-panel">
       <header class="category-panel__header">
-        <span class="category-panel__icon"><ToolIcon :name="category.icon" :size="22" /></span>
-        <div>
-          <h2>{{ copy(category.name, locale) }}</h2>
-          <p>{{ copy(category.description, locale) }}</p>
-        </div>
+        <h2>{{ copy(category.name, locale) }}</h2>
+        <p>{{ copy(category.description, locale) }}</p>
       </header>
       <div class="category-panel__tools">
         <ToolCard v-for="tool in toolsForCategory(category.id)" :key="tool.slug" :tool="tool" :locale="locale" />
