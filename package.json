@@ -33,6 +33,7 @@
     "@tailwindcss/vite": "^4.0.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.4.6",
+    "esbuild": "^0.28.0",
     "eslint": "^10.0.0",
     "happy-dom": "^20.0.0",
     "shadcn-nuxt": "^2.0.0",

@@ -7,5 +7,6 @@
       <BrandMark />
       <p>toolsliang · Local-first utility tools</p>
     </footer>
+    <PwaUpdateBanner />
   </div>
 </template>

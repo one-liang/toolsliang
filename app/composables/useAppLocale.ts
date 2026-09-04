@@ -1,3 +1,4 @@
+import { manifestPath } from '@/features/pwa/manifest'
 import { alternateLocalePath } from '@/features/shell/locale'
 import type { LocaleCode } from '@/features/tools/catalog'
 
@@ -9,7 +10,11 @@ export function useAppLocale() {
   const alternatePath = computed(() => alternateLocalePath(route.fullPath, alternateLocale.value))
 
   watchEffect(() => {
-    useHead({ htmlAttrs: { lang: locale.value === 'en' ? 'en' : 'zh-Hant-TW' } })
+    // The installed app opens the locale it was installed from, so the manifest follows the page.
+    useHead({
+      htmlAttrs: { lang: locale.value === 'en' ? 'en' : 'zh-Hant-TW' },
+      link: [{ rel: 'manifest', href: manifestPath(locale.value) }],
+    })
   })
 
   return { locale, alternateLocale, alternatePath, withLocale }
