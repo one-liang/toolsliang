@@ -7,17 +7,16 @@ definePageMeta({
 })
 
 const { locale } = useAppLocale()
-const route = useRoute()
-const { savedTools } = useSavedTools()
-const savedOnly = computed(() => route.query.saved === 'true')
+const { restored, savedTools, storageAvailable, moveSaved, removeSaved } = useSavedTools()
+const { showingSaved: savedOnly } = useSavedToolsView()
 const copy = computed(() => locale.value === 'en' ? {
   eyebrow: 'Tool directory', title: 'What do you want to get done?',
   intro: 'Search or browse by category. Every tool opens in its own focused workspace.',
-  savedTitle: 'Saved tools', savedIntro: 'Tools saved on this device.', savedEmpty: 'No saved tools on this device yet.',
+  savedTitle: 'Saved tools', savedIntro: 'Tools saved on this device, in the order you arranged them. Only tool names are kept here — never what you work on.',
 } : {
   eyebrow: '工具目錄', title: '今天想完成什麼？',
   intro: '搜尋或依分類瀏覽，每個工具都會開啟自己的專注工作區。',
-  savedTitle: '常用工具', savedIntro: '保存在這台裝置上的常用工具。', savedEmpty: '這台裝置還沒有常用工具。',
+  savedTitle: '常用工具', savedIntro: '保存在這台裝置上的常用工具，順序由你決定。這裡只記錄工具名稱，不會保存你處理的內容。',
 })
 
 usePageSeo({
@@ -39,8 +38,13 @@ useSeoMeta({
       <h1>{{ savedOnly ? copy.savedTitle : copy.title }}</h1>
       <p>{{ savedOnly ? copy.savedIntro : copy.intro }}</p>
     </header>
-    <ToolSearch v-if="!savedOnly" :locale="locale" />
-    <ToolCategoryGrid :locale="locale" :tools="savedOnly ? savedTools : undefined" />
-    <p v-if="savedOnly && !savedTools.length" class="empty-state">{{ copy.savedEmpty }}</p>
+    <template v-if="savedOnly">
+      <SavedStorageNotice v-if="!storageAvailable" :locale="locale" />
+      <SavedToolList v-if="restored" :tools="savedTools" :locale="locale" @move="moveSaved" @remove="removeSaved" />
+    </template>
+    <template v-else>
+      <ToolSearch :locale="locale" />
+      <ToolCategoryGrid :locale="locale" />
+    </template>
   </main>
 </template>

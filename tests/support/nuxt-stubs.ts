@@ -4,6 +4,8 @@ import {
   reactive, readonly, ref, shallowRef, toRef, useId, watch, watchEffect,
 } from 'vue'
 import LandingFaqComponent from '@/components/LandingFaq.vue'
+import SavedStorageNoticeComponent from '@/components/SavedStorageNotice.vue'
+import SavedToolListComponent from '@/components/SavedToolList.vue'
 import ToolCardComponent from '@/components/ToolCard.vue'
 import ToolCategoryGridComponent from '@/components/ToolCategoryGrid.vue'
 import ToolIconComponent from '@/components/ToolIcon.vue'
@@ -12,6 +14,8 @@ import ToolStatusBadgeComponent from '@/components/ToolStatusBadge.vue'
 import { Button as ButtonComponent } from '@/components/ui/button'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useOfflineAsset } from '@/composables/useOfflineAsset'
+import { useSavedTools } from '@/composables/useSavedTools'
+import { useSavedToolsView } from '@/composables/useSavedToolsView'
 import { useWorkspaceDirty } from '@/composables/useWorkspaceDirty'
 
 export interface TestRoute {
@@ -53,6 +57,8 @@ export function installNuxtStubs() {
   vi.stubGlobal('usePageSeo', () => {})
   vi.stubGlobal('useAppLocale', useAppLocale)
   vi.stubGlobal('useOfflineAsset', useOfflineAsset)
+  vi.stubGlobal('useSavedTools', useSavedTools)
+  vi.stubGlobal('useSavedToolsView', useSavedToolsView)
   vi.stubGlobal('useWorkspaceDirty', useWorkspaceDirty)
   vi.stubGlobal('useState', <T>(key: string, init: () => T) => {
     if (!states.has(key)) states.set(key, ref(init()))
@@ -68,6 +74,31 @@ export const shellStubs = {
   BrandMark: true,
   ToolIcon: true,
   ToolStatusBadge: true,
+}
+
+/**
+ * The tool directory and tool page manage saved tools through the same real
+ * component tree a visitor uses; only the workspace and offline surfaces a
+ * saved-tool test does not exercise are stubbed.
+ */
+export function savedToolsGlobals() {
+  return {
+    components: {
+      Button: ButtonComponent,
+      SavedStorageNotice: SavedStorageNoticeComponent,
+      SavedToolList: SavedToolListComponent,
+      ToolCard: ToolCardComponent,
+      ToolCategoryGrid: ToolCategoryGridComponent,
+      ToolIcon: ToolIconComponent,
+      ToolSearch: ToolSearchComponent,
+      ToolStatusBadge: ToolStatusBadgeComponent,
+    },
+    stubs: {
+      NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
+      ToolCapabilityGate: { template: '<div><slot /></div>' },
+      ToolOfflineStatus: true,
+    },
+  }
 }
 
 /**

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { copy, publishedToolCategories, toolsByCategory } from '@/features/tools/catalog'
 
 const { locale, withLocale } = useAppLocale()
+const { savedTools } = useSavedTools()
 const route = useRoute()
 const open = ref(false)
 
@@ -42,6 +43,19 @@ watch(() => route.fullPath, () => {
         </DialogDescription>
 
         <div class="tool-drawer__body">
+          <section v-if="savedTools.length" class="drawer-saved">
+            <h3 class="drawer-saved__title">{{ locale === 'en' ? 'Saved tools' : '常用工具' }}</h3>
+            <NuxtLink
+              v-for="tool in savedTools"
+              :key="tool.slug"
+              class="drawer-tool-link drawer-saved__link"
+              :to="withLocale(`/tools/${tool.slug}/`)"
+            >
+              <ToolIcon :name="tool.icon" :size="19" />
+              <span class="drawer-tool-link__name">{{ copy(tool.name, locale) }}</span>
+            </NuxtLink>
+          </section>
+
           <section v-for="category in publishedToolCategories" :key="category.id" class="drawer-category">
             <h3 class="drawer-category__title">{{ copy(category.name, locale) }}</h3>
             <p class="drawer-category__description">{{ copy(category.description, locale) }}</p>

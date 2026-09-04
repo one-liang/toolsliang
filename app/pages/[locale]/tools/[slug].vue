@@ -12,7 +12,7 @@ definePageMeta({
 
 const route = useRoute()
 const { locale, withLocale } = useAppLocale()
-const { isSaved, toggleSaved } = useSavedTools()
+const { isSaved, storageAvailable, toggleSaved } = useSavedTools()
 const tool = computed(() => getTool(String(route.params.slug))!)
 const saved = computed(() => isSaved(tool.value.slug))
 const category = computed(() => getCategory(tool.value.category)!)
@@ -86,6 +86,8 @@ usePageSeo({
           : (locale === 'en' ? 'Save' : '加入常用') }}
       </Button>
     </header>
+
+    <SavedStorageNotice v-if="!storageAvailable" :locale="locale" />
 
     <div v-if="tool.pagePresentation.showLocalProcessingStatement" class="local-processing-note">
       <LockKeyhole :size="17" aria-hidden="true" />

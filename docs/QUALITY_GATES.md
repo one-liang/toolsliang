@@ -37,6 +37,7 @@ Service Worker 由 production build 產出到 `/sw.js`，`nuxt dev` 不註冊也
 - 動態與效能：驗證 `prefers-reduced-motion`、工具頁載入 smoke budget，以及新臺幣轉換須於 50ms 內完成。
 - 瀏覽器：相同核心 suite 必須在 Chromium、Firefox 與 WebKit 通過。
 - PWA：驗證雙語 manifest、圖示可下載、離線說明頁 noindex 且通過 axe，以及安裝捷徑只指向已可離線使用的工具。Service Worker 生命週期（首次載入後離線啟動、未快取頁面的離線說明、等待中新版本的通知與確認）只在 Chromium 執行，因為 Playwright 的 Firefox 與 WebKit 版本沒有可驗證的 Service Worker 生命週期；跨瀏覽器共用的快取政策由單元測試覆蓋。
+- 常用工具：驗證未收藏前不寫入本機儲存、重新載入與離線後仍保留、鍵盤與觸控可完成加入、排序與移除、操作目標至少 44 × 44 CSS px、下架與未知工具會被清除、舊版紀錄可升級，以及中英文切換後指向同一個工具。常用工具檢視在 375px 下另跑 light／dark 的 axe 檢查。離線重新啟動同樣只在 Chromium 驗證，理由與 Service Worker 生命週期相同。
 - PWA 快取邊界：列舉所有 Cache Storage 名稱與項目，證明只有 `toolsliang-` 前綴的版本化應用資產、沒有查詢字串，也不含任何工具內容 canary。
 
 離線測試會刻意中斷連線，瀏覽器因此回報無法送出的請求。只有這類網路不可用訊息在明確標記的離線測試中被容許，應用層錯誤仍然是失敗。

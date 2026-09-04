@@ -4,6 +4,7 @@ import {
   formatReviewDate,
   getPublicToolRoutes,
   resolvePublishedTools,
+  resolveToolSlug,
   getUnavailableCapabilities,
   getTool,
   getVisibleStatus,
@@ -130,6 +131,31 @@ describe('tool catalog', () => {
 
   it('resolves saved and curated slugs through the published registry', () => {
     expect(resolvePublishedTools(['image-resizer', 'ntd-uppercase']).map(tool => tool.slug)).toEqual(['ntd-uppercase'])
+  })
+
+  it('answers which published tool a saved slug still points at', () => {
+    expect(resolveToolSlug('ntd-uppercase')).toBe('ntd-uppercase')
+    expect(resolveToolSlug('image-resizer'), '未上線工具不得成為導覽目標').toBeUndefined()
+    expect(resolveToolSlug('tool-that-never-existed')).toBeUndefined()
+  })
+
+  it('follows a renamed tool from the slug a device saved earlier', () => {
+    const renamed: PublishedToolDefinition = {
+      ...getTool('ntd-uppercase')!,
+      slug: 'ntd-amount-in-words',
+      formerSlugs: ['ntd-uppercase'],
+    }
+
+    expect(resolveToolSlug('ntd-uppercase', [renamed])).toBe('ntd-amount-in-words')
+    expect(resolveToolSlug('ntd-amount-in-words', [renamed])).toBe('ntd-amount-in-words')
+  })
+
+  it('rejects a former slug that collides with a live slug or is not stable English kebab-case', () => {
+    const collides: PublishedToolDefinition = { ...getTool('ntd-uppercase')!, formerSlugs: ['ntd-uppercase'] }
+    expect(validateToolRegistry([collides])).toContain('[ntd-uppercase] former slug must not collide with a registered slug: ntd-uppercase')
+
+    const malformed: PublishedToolDefinition = { ...getTool('ntd-uppercase')!, formerSlugs: ['NTD_Uppercase'] }
+    expect(validateToolRegistry([malformed])).toContain('[ntd-uppercase] former slug must be stable English kebab-case: NTD_Uppercase')
   })
 
   it('uses unique stable English slugs', () => {
