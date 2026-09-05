@@ -16,6 +16,7 @@ import {
   validateToolRegistry,
   type PublishedToolDefinition,
 } from '@/features/tools/catalog'
+import { bmiContentReview } from '@/features/tools/bmi-calculator/domain/sources'
 
 describe('tool catalog', () => {
   it('accepts the registered catalog contract', () => {
@@ -44,13 +45,13 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['ntd-uppercase'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['bmi-calculator', 'ntd-uppercase'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
     expect(getTool('image-resizer')).toBeUndefined()
     expect(toolsByCategory('image-commerce')).toEqual([])
-    expect(publishedToolCategories.map(category => category.id)).toEqual(['document'])
+    expect(publishedToolCategories.map(category => category.id)).toEqual(['calculation', 'document'])
   })
 
   it('provides the complete public route and content contract from one registration', () => {
@@ -107,6 +108,25 @@ describe('tool catalog', () => {
     })
   })
 
+  it('registers the BMI tool against its reviewed health source', () => {
+    const tool = getTool('bmi-calculator')!
+
+    expect(tool).toMatchObject({
+      category: 'calculation',
+      processingClass: 'instant',
+      routeComponentKey: 'BmiCalculatorWorkspace',
+      offlineMode: 'ready',
+      capabilities: ['javascript'],
+      pagePresentation: {
+        showHeadingIcon: false,
+        showLocalProcessingStatement: true,
+      },
+      seo: { contentKey: 'bmi-calculator' },
+    })
+    expect(tool.contentReview, '健康資訊來源必須沿用 T07 鎖定的審閱結果').toBe(bmiContentReview)
+    expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明身高體重留在裝置').toContain('此裝置')
+  })
+
   it('expires NEW status from its registered date range', () => {
     const tool = getTool('ntd-uppercase')!
 
@@ -123,7 +143,9 @@ describe('tool catalog', () => {
 
   it('generates public routes only for supported locales and published stable slugs', () => {
     expect(getPublicToolRoutes()).toEqual([
+      '/zh-tw/tools/bmi-calculator/',
       '/zh-tw/tools/ntd-uppercase/',
+      '/en/tools/bmi-calculator/',
       '/en/tools/ntd-uppercase/',
     ])
     expect(isSupportedLocale('tw')).toBe(false)

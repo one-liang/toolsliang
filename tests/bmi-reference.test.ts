@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   bmiAdultMinimumAgeYears,
@@ -14,11 +12,11 @@ import {
   bmiContentReview,
   bmiReferenceVersion,
 } from '@/features/tools/bmi-calculator/domain/sources'
-
-const decisionRecord = readFileSync(
-  resolve(process.cwd(), 'docs/research/001-bmi-formula-and-health-sources.md'),
-  'utf8',
-)
+import {
+  bmiDecisionRecord as decisionRecord,
+  parseImperialVectors,
+  parseMetricVectors,
+} from './support/bmi-decision-record'
 
 interface DocumentedVector {
   heightMetres: number
@@ -26,32 +24,6 @@ interface DocumentedVector {
   documentedBmi: number
   documentedDisplay: string
   documentedCategory: string
-}
-
-/** Rows of the decision record's metric vector table (section 5.5). */
-function parseMetricVectors(): DocumentedVector[] {
-  const pattern = /^\| (\d+(?:\.\d+)?) cm \| (\d+(?:\.\d+)?) kg \| (\d+\.\d+) \| (\d+\.\d) \| `([a-z-]+)` \|/gm
-
-  return [...decisionRecord.matchAll(pattern)].map(([, height, weight, bmi, display, category]) => ({
-    heightMetres: Number(height) / 100,
-    weightKilograms: Number(weight),
-    documentedBmi: Number(bmi),
-    documentedDisplay: display!,
-    documentedCategory: category!,
-  }))
-}
-
-/** Rows of the decision record's imperial vector table (section 5.6). */
-function parseImperialVectors(): DocumentedVector[] {
-  const pattern = /^\| (\d+) ft (\d+(?:\.\d+)?) in \| (\d+(?:\.\d+)?) lb \|[^|]+\| (\d+\.\d+) \| (\d+\.\d) \| `([a-z-]+)` \|/gm
-
-  return [...decisionRecord.matchAll(pattern)].map(([, feet, inches, pounds, bmi, display, category]) => ({
-    heightMetres: Number(feet) * bmiUnitFactors.footToMetre + Number(inches) * bmiUnitFactors.inchToMetre,
-    weightKilograms: Number(pounds) * bmiUnitFactors.poundToKilogram,
-    documentedBmi: Number(bmi),
-    documentedDisplay: display!,
-    documentedCategory: category!,
-  }))
 }
 
 /** The published formula divides twice, so the vectors have to as well. */
