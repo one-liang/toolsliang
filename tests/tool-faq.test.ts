@@ -25,8 +25,12 @@ describe('tool faq registry', () => {
     }
   })
 
+  it('registers the questions of every published tool under its own content key', () => {
+    expect(getToolFaq('ntd-uppercase', 'zh-tw')).toHaveLength(9)
+    expect(getToolFaq('ntd-uppercase', 'en')[0]!.heading).not.toBe(getToolFaq('ntd-uppercase', 'zh-tw')[0]!.heading)
+  })
+
   it('leaves a tool without approved questions with none', () => {
-    expect(getToolFaq('ntd-uppercase', 'zh-tw')).toEqual([])
     expect(getToolFaq('a-content-key-that-does-not-exist', 'zh-tw')).toEqual([])
   })
 })
@@ -63,9 +67,10 @@ describe('tool structured data', () => {
   })
 
   it('omits the FAQ node for a tool that answers no questions', () => {
-    expect(graphOf('ntd-uppercase', 'zh-tw').map(node => node['@type'])).toEqual([
-      'WebApplication',
-      'BreadcrumbList',
-    ])
+    const tool = getTool('ntd-uppercase')!
+    const unreviewed = { ...tool, seo: { ...tool.seo, contentKey: 'a-content-key-that-does-not-exist' } }
+    const graph = buildToolStructuredData(unreviewed, 'zh-tw')['@graph'] as Array<Record<string, unknown>>
+
+    expect(graph.map(node => node['@type'])).toEqual(['WebApplication', 'BreadcrumbList'])
   })
 })

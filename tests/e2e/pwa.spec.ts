@@ -6,7 +6,7 @@ import { inspectNetworkRequest, redactToolContent } from './support/privacy-boun
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const OFFLINE_ROUTE = '/zh-tw/offline/'
 const TOOL_INPUT = '10001.09'
-const TOOL_OUTPUT = '新臺幣壹萬零壹元玖分'
+const TOOL_OUTPUT = '新臺幣壹萬零壹元零玖分'
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 const TOOL_CONTENT = [
   { label: '輸入', value: TOOL_INPUT },

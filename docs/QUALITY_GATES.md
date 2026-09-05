@@ -38,6 +38,7 @@ Service Worker 由 production build 產出到 `/sw.js`，`nuxt dev` 不註冊也
 - 瀏覽器：相同核心 suite 必須在 Chromium、Firefox 與 WebKit 通過。
 - PWA：驗證雙語 manifest、圖示可下載、離線說明頁 noindex 且通過 axe，以及安裝捷徑只指向已可離線使用的工具。Service Worker 生命週期（首次載入後離線啟動、未快取頁面的離線說明、等待中新版本的通知與確認）只在 Chromium 執行，因為 Playwright 的 Firefox 與 WebKit 版本沒有可驗證的 Service Worker 生命週期；跨瀏覽器共用的快取政策由單元測試覆蓋。
 - BMI 計算：以公制與英制代表案例驗證計算結果與分級文字、逾範圍與格式錯誤的可修正訊息、尚未填寫時不觸發 alert、結果由 `aria-live` 宣告且不移動焦點，並確認公式、成人分級表、六則使用限制、雙語 FAQ 與來源連結都可見。中英文頁各驗證一次錯誤訊息語言。
+- 新臺幣國字大寫：以工具自己的 spec 驗證三種用途對同一筆金額的寫法差異、國庫用途的四捨五入前後對照、支票拒絕角分與超出上限時寫出該用途上限、複製成功與失敗都由 `role="status"` 宣告，以及規則版本識別碼與來源連結出現在結果附近。中英文頁各驗證一次錯誤訊息語言。這個工具同時是品質閘門的 tracer bullet，頁面層級的鍵盤、無障礙、響應式與效能檢查只在 `quality-gates.spec.ts` 執行一次，不重複。
 - 常用工具：驗證未收藏前不寫入本機儲存、重新載入與離線後仍保留、鍵盤與觸控可完成加入、排序與移除、操作目標至少 44 × 44 CSS px、下架與未知工具會被清除、舊版紀錄可升級，以及中英文切換後指向同一個工具。常用工具檢視在 375px 下另跑 light／dark 的 axe 檢查。離線重新啟動同樣只在 Chromium 驗證，理由與 Service Worker 生命週期相同。
 - PWA 快取邊界：列舉所有 Cache Storage 名稱與項目，證明只有 `toolsliang-` 前綴的版本化應用資產、沒有查詢字串，也不含任何工具內容 canary。
 

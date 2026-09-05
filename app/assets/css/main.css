@@ -410,27 +410,48 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
   .tool-workspace__copy:hover { border-color: var(--button-contrast-hover-bg); background: var(--button-contrast-hover-bg); color: var(--button-contrast-fg); }
 }
 .bmi-units { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; padding: 0; border: 0; }
-.bmi-units legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
-.bmi-units__option { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; padding: 8px 15px; border: 1px solid var(--input-border); border-radius: var(--radius-md); background: var(--color-surface); font-size: .86rem; cursor: pointer; }
-.bmi-units__option:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); color: var(--color-primary-strong); font-weight: 700; }
-.bmi-units__option input { width: 18px; height: 18px; accent-color: var(--color-primary-strong); }
+.bmi-units legend, .ntd-purposes legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
+.bmi-units__option, .ntd-purposes__option { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; padding: 8px 15px; border: 1px solid var(--input-border); border-radius: var(--radius-md); background: var(--color-surface); font-size: .86rem; cursor: pointer; }
+.bmi-units__option:has(input:checked), .ntd-purposes__option:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); color: var(--color-primary-strong); font-weight: 700; }
+.bmi-units__option input, .ntd-purposes__option input { width: 18px; height: 18px; accent-color: var(--color-primary-strong); }
 .bmi-fields { display: grid; gap: 18px; align-content: start; }
 .bmi-fields__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .field-pending { margin: 7px 0 0; color: var(--color-muted-foreground); font-size: .8rem; font-weight: 700; }
-.bmi-source { margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .8rem; }
-.bmi-source a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
+.bmi-source, .ntd-source { margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .8rem; }
+.bmi-source a, .ntd-source a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
 .bmi-result__value { font-family: var(--font-mono); }
 .bmi-result__category { margin-top: 8px; font-size: .95rem; font-weight: 700; }
-.bmi-result__pending { color: var(--color-muted-foreground); font-size: .9rem; }
-.bmi-caveats { margin-top: 22px; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
-.bmi-caveats__title { margin: 0 0 10px; font-size: .95rem; font-weight: 800; }
-.bmi-caveats ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; list-style: disc outside; color: var(--color-muted-foreground); font-size: .84rem; }
+.bmi-result__pending, .ntd-result__pending { color: var(--color-muted-foreground); font-size: .9rem; }
+.bmi-caveats, .ntd-caveats { margin-top: 22px; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.bmi-caveats__title, .ntd-caveats__title { margin: 0 0 10px; font-size: .95rem; font-weight: 800; }
+.bmi-caveats ul, .ntd-caveats ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; list-style: disc outside; color: var(--color-muted-foreground); font-size: .84rem; }
 .bmi-formula { display: inline-block; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); font-size: .88rem; }
 .bmi-category-table th:nth-child(odd), .bmi-category-table td:nth-child(odd) { width: 45%; }
 .bmi-category-table th:nth-child(even), .bmi-category-table td:nth-child(even) { width: 55%; }
 .bmi-category-table td:nth-child(odd) { font-family: inherit; font-weight: 700; }
 .bmi-category-table td:nth-child(even) { font-family: var(--font-mono); white-space: nowrap; }
 .bmi-category-table__scroll { overflow-x: auto; }
+.ntd-purposes { margin: 0 0 20px; padding: 0; border: 0; }
+.ntd-purposes .field-help { margin: 0 0 10px; }
+.ntd-purposes__options { display: flex; flex-wrap: wrap; gap: 8px; }
+.ntd-rules__title { margin: 18px 0 0; font-size: .75rem; font-weight: 800; color: var(--color-muted-foreground); }
+.ntd-rules { display: grid; gap: 8px; margin: 8px 0 0; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.ntd-rules div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.ntd-rules dt { color: var(--color-muted-foreground); font-size: .75rem; font-weight: 800; }
+.ntd-rules dd { margin: 0; font-size: .82rem; }
+.ntd-zero-note { margin: 10px 0 0; padding: 10px 12px; border-left: 3px solid var(--color-primary-strong); color: var(--color-muted-foreground); font-size: .8rem; }
+.ntd-result__wording { overflow-wrap: anywhere; }
+.ntd-result__rounded { margin-top: 8px; color: var(--color-primary-strong); font-size: .82rem; font-weight: 700; }
+.ntd-copy-status { min-height: 20px; margin: 10px 0 0; color: var(--color-success); font-size: .8rem; font-weight: 700; }
+.ntd-copy-status--failed { color: var(--color-destructive); }
+.ntd-examples__scroll { overflow-x: auto; }
+/* Four columns of document wording need room; below that the table scrolls instead of stacking each numeral. */
+.ntd-examples { min-width: 560px; }
+.ntd-examples th:first-child, .ntd-examples td:first-child { width: 20%; }
+.ntd-examples th:not(:first-child), .ntd-examples td:not(:first-child) { width: 26%; }
+.ntd-examples tbody th { background: var(--color-surface); color: var(--color-foreground); font-family: var(--font-mono); font-size: .8rem; font-weight: 700; white-space: nowrap; }
+/* Wording cells are prose, not figures; the nth-child pair only matches the specificity of the .tool-reference default it replaces. */
+.ntd-examples td:nth-child(odd), .ntd-examples td:nth-child(even) { font-family: inherit; font-size: .84rem; }
 .tool-faq { display: grid; gap: 14px; margin: 0; }
 .tool-faq__question { margin: 0 0 6px; font-size: .95rem; font-weight: 800; }
 .tool-faq__answer { margin: 0; color: var(--color-muted-foreground); font-size: .88rem; line-height: 1.65; }

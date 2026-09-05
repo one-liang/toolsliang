@@ -1,4 +1,5 @@
 import { bmiContentReview } from './bmi-calculator/domain/sources'
+import { ntdContentReview } from './ntd-uppercase/domain/sources'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -194,58 +195,47 @@ const registeredTools: ToolDefinition[] = [
     availability: { state: 'published', publishedAt: '2026-09-03' },
     status: { kind: 'new', startsAt: '2026-09-03', endsAt: '2026-10-03' },
     name: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },
-    description: { 'zh-tw': '將新臺幣數字金額轉為國字大寫。', en: 'Convert New Taiwan dollar amounts to formal Chinese wording.' },
+    description: {
+      'zh-tw': '依所選用途將新臺幣數字金額轉為國字大寫。',
+      en: 'Convert New Taiwan dollar amounts to formal Chinese wording for the purpose you pick.',
+    },
     aliases: {
       'zh-tw': ['新臺幣國字大寫', '國字金額'],
       en: ['Taiwan dollar uppercase', 'Chinese amount wording'],
     },
     keywords: {
-      'zh-tw': ['支票', '會計', '金額'],
-      en: ['cheque', 'accounting', 'amount'],
+      'zh-tw': ['支票', '會計', '國庫', '金額'],
+      en: ['cheque', 'accounting', 'treasury', 'amount'],
     },
     processingClass: 'instant',
     routeComponentKey: 'NtdUppercaseWorkspace',
     offlineMode: 'ready',
     capabilities: ['javascript'],
-    acceptedInput: { 'zh-tw': '新臺幣數字金額', en: 'A numeric New Taiwan dollar amount' },
+    acceptedInput: {
+      'zh-tw': '一筆新臺幣數字金額，小數點後最多兩位',
+      en: 'One New Taiwan dollar amount, with at most two decimal places',
+    },
     pagePresentation: {
       showHeadingIcon: false,
       showLocalProcessingStatement: false,
     },
     localProcessingStatement: {
-      'zh-tw': '輸入與結果只在此裝置處理。',
-      en: 'Input and results are processed only on this device.',
+      'zh-tw': '金額、用途與轉換結果只在此裝置處理。',
+      en: 'The amount, the purpose, and the wording are processed only on this device.',
     },
     seo: {
       contentKey: 'ntd-uppercase',
       title: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },
       description: {
-        'zh-tw': '在瀏覽器將新臺幣數字金額轉為國字大寫，輸入與結果不離開裝置。',
-        en: 'Convert New Taiwan dollar amounts to formal Chinese wording without sending input off your device.',
+        'zh-tw': '在瀏覽器將新臺幣金額寫成國字大寫，可選一般會計、支票填寫參考或國庫付款憑單規則，金額與結果不離開裝置。',
+        en: 'Write New Taiwan dollar amounts in formal Chinese in your browser, using accounting, cheque-reference, or treasury-voucher rules, with nothing leaving your device.',
       },
       answer: {
-        'zh-tw': '輸入新臺幣金額，即可在本機取得國字大寫結果。',
-        en: 'Enter an NTD amount to produce formal Chinese wording locally.',
+        'zh-tw': '先選一般會計、支票填寫參考或國庫付款憑單，再輸入金額，工具會依該用途的規則在本機寫出國字大寫，並附上可逐字核對的數字金額。',
+        en: 'Pick the accounting, cheque-reference, or treasury-voucher purpose, enter an amount, and the tool writes the formal Chinese wording locally, beside the numerals to check it against.',
       },
     },
-    contentReview: {
-      reviewedAt: '2026-09-03',
-      sourceEdition: {
-        'zh-tw': '國庫支票管理辦法（民國 102 年 7 月 31 日修正）',
-        en: 'Regulations Governing Treasury Checks (amended July 31, 2013)',
-      },
-      sourceEffectiveAt: '2013-07-31',
-      sources: [
-        {
-          title: { 'zh-tw': '財政部主管法規查詢系統', en: 'Ministry of Finance Laws and Regulations' },
-          url: 'https://law-out.mof.gov.tw/LawContent.aspx?KeyWord=&id=FL005816',
-        },
-        {
-          title: { 'zh-tw': '財政部國庫署', en: 'National Treasury Administration' },
-          url: 'https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296',
-        },
-      ],
-    },
+    contentReview: ntdContentReview,
   },
   {
     slug: 'document-counter', category: 'document', icon: 'file-text',
