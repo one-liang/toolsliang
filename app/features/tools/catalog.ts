@@ -2,6 +2,7 @@ import { bmiContentReview } from './bmi-calculator/domain/sources'
 import { ntdContentReview } from './ntd-uppercase/domain/sources'
 import { randomPickerContentReview } from './random-picker/domain/sources'
 import { taiwanCalendarContentReview } from './taiwan-calendar/domain/sources'
+import { deviceTimeDefinition } from './device-time/definition'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -16,7 +17,7 @@ export const supportedLocales: LocaleCode[] = ['zh-tw', 'en']
 export const offlineAssetPathPrefix = '/assets/offline'
 export const toolIcons = [
   'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
-  'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive',
+  'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive', 'clock',
 ] as const
 
 export type ToolIcon = typeof toolIcons[number]
@@ -145,6 +146,7 @@ export const toolCategories: ToolCategory[] = [
 ]
 
 const registeredTools: ToolDefinition[] = [
+  deviceTimeDefinition,
   {
     slug: 'bmi-calculator', category: 'calculation', icon: 'calculator',
     availability: { state: 'published', publishedAt: '2026-09-05' },

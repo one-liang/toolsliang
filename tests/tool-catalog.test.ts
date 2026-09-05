@@ -47,7 +47,7 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
@@ -149,10 +149,12 @@ describe('tool catalog', () => {
 
   it('generates public routes only for supported locales and published stable slugs', () => {
     expect(getPublicToolRoutes()).toEqual([
+      '/zh-tw/tools/device-time/',
       '/zh-tw/tools/bmi-calculator/',
       '/zh-tw/tools/ntd-uppercase/',
       '/zh-tw/tools/random-picker/',
       '/zh-tw/tools/taiwan-calendar/',
+      '/en/tools/device-time/',
       '/en/tools/bmi-calculator/',
       '/en/tools/ntd-uppercase/',
       '/en/tools/random-picker/',
