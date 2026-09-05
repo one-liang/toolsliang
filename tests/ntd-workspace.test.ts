@@ -143,11 +143,29 @@ describe('NTD uppercase workspace', () => {
     expect(caveats()).toContain(ntdCaveats['treasury-rounds-to-yuan']['zh-tw'])
   })
 
-  it('names the rule version and the source the wording follows', () => {
-    const source = mountWorkspace().get('.ntd-source')
+  it('names the rule version and cites the source of the chosen purpose', async () => {
+    const wrapper = mountWorkspace()
+    const source = () => wrapper.get('.ntd-source')
 
-    expect(source.text()).toContain(ntdReferenceVersion)
-    expect(source.get('a').attributes('href')).toBe('https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=G0380028')
+    expect(source().text()).toContain(ntdReferenceVersion)
+    expect(source().text(), '一般會計不受法規限制，必須說清楚').toContain('沒有法規限制')
+    expect(source().get('a').attributes('href')).toBe('https://www.twnch.org.tw/manual.html')
+
+    await selectPurpose(wrapper, 'treasury')
+    expect(source().get('a').attributes('href')).toBe('https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296')
+
+    await selectPurpose(wrapper, 'cheque')
+    expect(source().get('a').text(), '非現行法規必須標示').toContain('非現行法規')
+  })
+
+  it('warns only the treasury purpose about zeros on several unit boundaries', async () => {
+    const wrapper = mountWorkspace()
+    expect(wrapper.find('.ntd-zero-note').exists()).toBe(false)
+
+    await selectPurpose(wrapper, 'treasury')
+    const note = wrapper.get('.ntd-zero-note').text()
+    expect(note).toContain('單一單位交界')
+    expect(note).toContain('付款機關')
   })
 
   it('summarizes the rules of the chosen purpose', async () => {

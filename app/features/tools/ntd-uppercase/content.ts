@@ -7,7 +7,7 @@ import {
   type NtdErrorCode,
   type NtdPurpose,
 } from './domain/reference'
-import { ntdCaveatKeys, type NtdCaveatKey } from './domain/sources'
+import { ntdCaveatKeys, ntdContentReview, type NtdCaveatKey } from './domain/sources'
 import type { ToolFaqEntry } from '../faq'
 import { hasLocalizedCopy, type LocaleCode, type LocalizedCopy } from '../catalog'
 
@@ -54,8 +54,11 @@ const ntdCopyEntries = {
   endingLabel: { 'zh-tw': '結尾', en: 'Ending' },
   caveatsTitle: { 'zh-tw': '抄寫前要知道', en: 'Before you copy this' },
   sourceLabel: { 'zh-tw': '規則依據', en: 'Rule source' },
-  sourceUpdatedLabel: { 'zh-tw': '來源更新日', en: 'Source updated' },
   ruleVersionLabel: { 'zh-tw': '規則版本', en: 'Rule version' },
+  treasuryZeroNote: {
+    'zh-tw': '國庫署公開的例示只涵蓋單一單位交界；金額若在多個交界都是零，建議與付款機關再確認一次，核對時也請逐位讀，不要照口語讀。',
+    en: 'The National Treasury Administration publishes an example for a single unit boundary only; when zeros fall on several boundaries, confirm the wording with the paying agency, and read it position by position rather than the way the number is said aloud.',
+  },
   examplesEyebrow: { 'zh-tw': '用途差異', en: 'Purpose differences' },
   examplesTitle: { 'zh-tw': '同一筆金額的三種寫法', en: 'One amount, three ways to write it' },
   examplesIntro: {
@@ -162,6 +165,35 @@ const ntdErrorCopy: Record<NtdErrorCode, LocalizedCopy> = {
   },
 }
 
+/**
+ * Which reviewed source governs each purpose. Section 4.1 records that no
+ * regulation limits the numerals of general accounting, so its wording follows
+ * cheque practice and cites the source that fixed that practice.
+ */
+const purposeSources: Record<NtdPurpose, { url: string, note: LocalizedCopy }> = {
+  accounting: {
+    url: 'https://www.twnch.org.tw/manual.html',
+    note: {
+      'zh-tw': '一般會計沒有法規限制可用的國字，寫法沿用票據實務。',
+      en: 'No regulation limits the numerals used in general accounting, so this wording follows cheque practice.',
+    },
+  },
+  cheque: {
+    url: 'https://www.law.cbc.gov.tw/Law/ShowAll?LawID=LA06C001001&LawDataType=1',
+    note: {
+      'zh-tw': '支票寫法依中央銀行的支票使用須知。',
+      en: 'Cheque wording follows the Central Bank instructions for treasury account deposit cheques.',
+    },
+  },
+  treasury: {
+    url: 'https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296',
+    note: {
+      'zh-tw': '國庫付款憑單寫法依財政部國庫署的國庫集中支付作業說明。',
+      en: 'Treasury voucher wording follows the National Treasury Administration centralised payment guidance.',
+    },
+  },
+}
+
 /** Section 4: what each purpose changes, in the reviewed wording. */
 const ntdPurposeSummaries: Record<NtdPurpose, Record<'fraction' | 'internalZero' | 'ending', LocalizedCopy>> = {
   accounting: {
@@ -226,8 +258,8 @@ export const ntdFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '國庫付款憑單為什麼不寫中間的「零」？', en: 'Why does a treasury voucher omit the internal 零?' },
     body: {
-      'zh-tw': '財政部國庫署「國庫集中支付作業」明文規定「大寫中間之零不書寫」，並以 10,215 元應寫「壹萬貳佰壹拾伍元整」為例。這與一般會計寫法相反，因此抄寫與核對時請逐位對照旁邊的阿拉伯數字金額，不要照口語讀。',
-      en: 'The National Treasury Administration centralised payment guidance requires the internal 零 to be omitted, and gives NT$10,215 written as 壹萬貳佰壹拾伍元整 as its example. That is the opposite of general accounting wording, so read the numerals beside the result position by position rather than the way the number is said aloud.',
+      'zh-tw': '財政部國庫署「國庫集中支付作業」明文規定「大寫中間之零不書寫」，並以 10,215 元應寫「壹萬貳佰壹拾伍元整」為例。這與一般會計寫法相反，而且公開的例示只涵蓋單一單位交界；金額若在多個交界都是零，建議與付款機關再確認一次。抄寫與核對時請逐位對照旁邊的阿拉伯數字金額，不要照口語讀。',
+      en: 'The National Treasury Administration centralised payment guidance requires the internal 零 to be omitted, and gives NT$10,215 written as 壹萬貳佰壹拾伍元整 as its example. That is the opposite of general accounting wording, and the published example covers a single unit boundary only, so confirm the wording with the paying agency when zeros fall on several boundaries. Read the numerals beside the result position by position rather than the way the number is said aloud.',
     },
   },
   {
@@ -296,6 +328,7 @@ export function ntdErrorMessage(code: NtdErrorCode, purpose: NtdPurpose, locale:
 
 export function getNtdPurposeSummary(purpose: NtdPurpose, locale: LocaleCode) {
   const summary = ntdPurposeSummaries[purpose]
+  const source = purposeSource(purpose)
 
   return {
     label: ntdPurposeRules[purpose].label[locale],
@@ -303,7 +336,17 @@ export function getNtdPurposeSummary(purpose: NtdPurpose, locale: LocaleCode) {
     fraction: summary.fraction[locale],
     internalZero: summary.internalZero[locale],
     ending: summary.ending[locale],
+    sourceNote: purposeSources[purpose].note[locale],
+    source: { title: source.title[locale], url: source.url },
   }
+}
+
+/** The cited source is always one the review already published, never a new link. */
+function purposeSource(purpose: NtdPurpose) {
+  const source = ntdContentReview.sources.find(item => item.url === purposeSources[purpose].url)
+  if (!source) throw new Error(`The ${purpose} source is not in the reviewed source list`)
+
+  return source
 }
 
 function ntdPurposeLimit(purpose: NtdPurpose) {
@@ -342,6 +385,10 @@ export function validateNtdContent() {
   for (const purpose of ntdPurposes) {
     for (const [field, copy] of Object.entries(ntdPurposeSummaries[purpose])) {
       if (!hasLocalizedCopy(copy)) issues.push(`[purpose:${purpose}:${field}] requires both locales`)
+    }
+    if (!hasLocalizedCopy(purposeSources[purpose].note)) issues.push(`[purpose:${purpose}:sourceNote] requires both locales`)
+    if (!ntdContentReview.sources.some(source => source.url === purposeSources[purpose].url)) {
+      issues.push(`[purpose:${purpose}] cites a source outside the reviewed list`)
     }
   }
 

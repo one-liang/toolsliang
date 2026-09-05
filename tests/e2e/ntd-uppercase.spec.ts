@@ -2,19 +2,30 @@ import { expect, test, type Page } from '@playwright/test'
 import { guardToolContentBoundary } from './support/tool-content-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
-const HAZARD_INPUT = '100000001'
+const HAZARD_INPUT = '100,000,001'
 const ACCOUNTING_WORDING = '新臺幣壹億零壹元整'
 const TREASURY_WORDING = '新臺幣壹億壹元整'
 const ROUNDING_INPUT = '12,850.5'
 const ROUNDED_WORDING = '新臺幣壹萬貳仟捌佰伍拾壹元整'
 const CHEQUE_FRACTION_INPUT = '100.5'
-const COPY_INPUT = '1018'
+const OVER_LIMIT_INPUT = '1,000,000,000,000'
+const CHEQUE_INPUT = '50,301'
+const CHEQUE_WORDING = '新臺幣伍萬零參佰零壹元整'
+const COPY_INPUT = '1,018'
 const COPY_WORDING = '新臺幣壹仟零壹拾捌元整'
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
+/**
+ * Every amount this suite types and every wording it reads back. Grouped
+ * amounts are deliberate: a bare four- or five-digit canary would also match a
+ * hashed asset filename and fail the boundary check for the wrong reason.
+ */
 const TOOL_CONTENT = [
   { label: '輸入', value: HAZARD_INPUT },
   { label: '輸入', value: ROUNDING_INPUT },
   { label: '輸入', value: CHEQUE_FRACTION_INPUT },
+  { label: '輸入', value: OVER_LIMIT_INPUT },
+  { label: '輸入', value: CHEQUE_INPUT },
+  { label: '輸出', value: CHEQUE_WORDING },
   { label: '輸入', value: COPY_INPUT },
   { label: '輸出', value: ACCOUNTING_WORDING },
   { label: '輸出', value: TREASURY_WORDING },
@@ -67,7 +78,8 @@ test('工具開啟即說明三種用途、規則與來源', async ({ page }) => 
   await expect(caveats, '免責必須在結果附近，而不是只在頁尾').toContainText('不是法律或會計審查')
   await expect(caveats).toContainText('金額只在你的瀏覽器換算')
   await expect(page.locator('.ntd-source')).toContainText('ntd-uppercase-2026-09-05')
-  await expect(page.locator('.ntd-source').getByRole('link', { name: /票據法第 7 條/ })).toBeVisible()
+  await expect(page.locator('.ntd-source').getByRole('link', { name: /票據交換業務手冊/ }),
+    '一般會計沿用票據實務，必須指名來源').toBeVisible()
 
   const examples = page.getByRole('table', { name: '同一筆金額在三種用途的國字大寫' })
   await expect(examples.getByRole('row', { name: /壹佰零壹元整.*壹佰壹元整/ })).toBeVisible()
@@ -85,6 +97,8 @@ test('換用途會以同一筆金額改寫，國庫用途顯示四捨五入前�
   await expect(page.locator('.ntd-result__wording'), '國庫用途不寫中間的零').toHaveText(TREASURY_WORDING)
   await expect(amount, '換用途不得清空金額').toHaveValue(HAZARD_INPUT)
   await expect(page.locator('.ntd-caveats')).toContainText('不書寫中間的「零」')
+  await expect(page.locator('.ntd-zero-note'), '多個交界都是零時要提醒再確認').toContainText('付款機關')
+  await expect(page.locator('.ntd-source').getByRole('link', { name: /國庫集中支付作業/ })).toBeVisible()
 
   await amount.fill(ROUNDING_INPUT)
   const rounded = page.locator('.ntd-result__rounded')
@@ -102,7 +116,7 @@ test('支票用途不替使用者改動金額，中英文都說明怎麼改', as
   await expect(page.locator('.ntd-result__wording'), '無法換寫時不得顯示結果').toHaveCount(0)
   await expect(page.getByRole('button', { name: '複製結果' })).toBeDisabled()
 
-  await page.getByLabel('輸入金額（新臺幣）').fill('1000000000000')
+  await page.getByLabel('輸入金額（新臺幣）').fill(OVER_LIMIT_INPUT)
   await expect(page.getByRole('alert'), '超出上限時必須寫出這個用途的上限').toContainText('999,999,999,999')
 
   await gotoTool(page, '/en/tools/ntd-uppercase/')
@@ -111,9 +125,9 @@ test('支票用途不替使用者改動金額，中英文都說明怎麼改', as
   await expect(page.getByRole('alert'))
     .toHaveText('A cheque amount is written to 元 only; confirm the amount with the payee, then enter a whole number.')
 
-  await page.getByLabel('Amount (NTD)').fill('101')
+  await page.getByLabel('Amount (NTD)').fill(CHEQUE_INPUT)
   await expect(page.getByRole('alert'), '修正後錯誤訊息必須消失').toHaveCount(0)
-  await expect(page.locator('.ntd-result__wording'), '結果本身仍是繁體中文單據用語').toHaveText('新臺幣壹佰零壹元整')
+  await expect(page.locator('.ntd-result__wording'), '結果本身仍是繁體中文單據用語').toHaveText(CHEQUE_WORDING)
 })
 
 for (const outcome of ['granted', 'denied'] as const) {
@@ -136,7 +150,7 @@ for (const outcome of ['granted', 'denied'] as const) {
       await expect(status).toHaveText('無法自動複製，請手動選取結果文字後複製。')
     }
 
-    await page.getByLabel('輸入金額（新臺幣）').fill('2000')
+    await page.getByLabel('輸入金額（新臺幣）').fill(ROUNDING_INPUT)
     await expect(status, '金額改變後，舊的複製狀態不得留在畫面上').toHaveText('')
   })
 }

@@ -3,7 +3,6 @@ import { Check, Clipboard, RotateCcw } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { formatReviewDate } from '@/features/tools/catalog'
 import {
   getNtdCaveats,
   getNtdCopy,
@@ -12,17 +11,14 @@ import {
   ntdErrorMessage,
 } from '@/features/tools/ntd-uppercase/content'
 import { convertNtd } from '@/features/tools/ntd-uppercase/domain/convert'
-import { ntdDigits, ntdPurposes, type NtdPurpose } from '@/features/tools/ntd-uppercase/domain/reference'
-import { ntdContentReview, ntdReferenceVersion } from '@/features/tools/ntd-uppercase/domain/sources'
+import { ntdDigits, ntdPurposes, ntdWords, type NtdPurpose } from '@/features/tools/ntd-uppercase/domain/reference'
+import { ntdReferenceVersion } from '@/features/tools/ntd-uppercase/domain/sources'
 
 const { locale } = useAppLocale()
 const text = computed(() => getNtdCopy(locale.value))
 /** Two columns of five, so the ten numerals stay readable on a phone. */
 const digitReference = ntdDigits.map((numeral, value) => ({ value: String(value), numeral }))
 const digitRows = digitReference.slice(0, 5).map((left, index) => ({ left, right: digitReference[index + 5]! }))
-/** The rule the wording follows is cited where the result is read. */
-const primarySource = ntdContentReview.sources[0]!
-
 const purpose = ref<NtdPurpose>('accounting')
 const amount = ref('')
 const touched = ref(false)
@@ -128,10 +124,11 @@ function clear() {
         <p v-if="pending" id="ntd-pending" class="field-pending">{{ pending }}</p>
         <p v-if="error" id="ntd-error" class="field-error" role="alert">{{ error }}</p>
 
+        <p class="ntd-rules__title">{{ text.purposeRulesTitle }}</p>
         <dl class="ntd-rules">
           <div>
             <dt>{{ text.limitLabel }}</dt>
-            <dd>{{ summary.limit }} {{ '元' }}</dd>
+            <dd>{{ summary.limit }} {{ ntdWords.yuan }}</dd>
           </div>
           <div>
             <dt>{{ text.fractionLabel }}</dt>
@@ -146,6 +143,7 @@ function clear() {
             <dd>{{ summary.ending }}</dd>
           </div>
         </dl>
+        <p v-if="purpose === 'treasury'" class="ntd-zero-note">{{ text.treasuryZeroNote }}</p>
       </div>
 
       <div class="result-panel ntd-result" aria-live="polite">
@@ -182,10 +180,9 @@ function clear() {
         <li v-for="caveat in caveats" :key="caveat.key">{{ caveat.text }}</li>
       </ul>
       <p class="ntd-source">
-        {{ text.sourceLabel }}：<a :href="primarySource.url" target="_blank" rel="noopener noreferrer">{{ primarySource.title[locale] }}</a>
-        （{{ text.sourceUpdatedLabel }}
-        <time :datetime="ntdContentReview.sourceEffectiveAt">{{ formatReviewDate(ntdContentReview.sourceEffectiveAt, locale) }}</time>
-        ・{{ text.ruleVersionLabel }} {{ ntdReferenceVersion }}）
+        {{ summary.sourceNote }}
+        {{ text.sourceLabel }}：<a :href="summary.source.url" target="_blank" rel="noopener noreferrer">{{ summary.source.title }}</a>
+        （{{ text.ruleVersionLabel }} {{ ntdReferenceVersion }}）
       </p>
     </section>
   </Card>

@@ -16,7 +16,7 @@ import {
   ntdPurposes,
   type NtdPurpose,
 } from '@/features/tools/ntd-uppercase/domain/reference'
-import { ntdCaveatKeys } from '@/features/tools/ntd-uppercase/domain/sources'
+import { ntdCaveatKeys, ntdContentReview } from '@/features/tools/ntd-uppercase/domain/sources'
 import { supportedLocales } from '@/features/tools/catalog'
 
 /**
@@ -93,6 +93,30 @@ describe('ntd uppercase content', () => {
     expect(getNtdPurposeSummary('treasury', 'zh-tw').internalZero).toContain('不書寫')
     expect(getNtdPurposeSummary('accounting', 'en').label).toBe('Accounting')
     expect(getNtdPurposeSummary('treasury', 'en').fraction.toLowerCase()).toContain('round')
+  })
+
+  it('cites the source that governs the chosen purpose, from the reviewed list', () => {
+    const reviewed = ntdContentReview.sources.map(source => source.url)
+
+    expect(getNtdPurposeSummary('treasury', 'zh-tw').source.url).toBe('https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296')
+    expect(getNtdPurposeSummary('cheque', 'zh-tw').source.title, '非現行法規必須標示').toContain('非現行法規')
+    expect(getNtdPurposeSummary('accounting', 'zh-tw').sourceNote, '一般會計沒有法規限制，必須說清楚').toContain('沒有法規限制')
+
+    for (const purpose of ntdPurposes) {
+      const summary = getNtdPurposeSummary(purpose, 'en')
+      expect(reviewed, `${purpose} 的來源必須在已審閱清單內`).toContain(summary.source.url)
+      expect(summary.source.title.trim()).not.toBe('')
+      expect(summary.sourceNote.trim()).not.toBe('')
+    }
+  })
+
+  it('warns that the treasury example covers one unit boundary only', () => {
+    const note = getNtdCopy('zh-tw').treasuryZeroNote
+
+    expect(note, '§11 要求說明公開例示只涵蓋單一交界').toContain('單一單位交界')
+    expect(note, '§11 要求建議與付款機關再確認').toContain('付款機關')
+    expect(note, '§11 要求提醒逐位讀').toContain('逐位讀')
+    expect(getNtdCopy('en').treasuryZeroNote.toLowerCase()).toContain('paying agency')
   })
 
   it('builds the worked examples from the reviewed vectors, not from prose', () => {

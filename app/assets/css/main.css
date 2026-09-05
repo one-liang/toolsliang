@@ -434,10 +434,12 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .ntd-purposes { margin: 0 0 20px; padding: 0; border: 0; }
 .ntd-purposes .field-help { margin: 0 0 10px; }
 .ntd-purposes__options { display: flex; flex-wrap: wrap; gap: 8px; }
-.ntd-rules { display: grid; gap: 8px; margin: 18px 0 0; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.ntd-rules__title { margin: 18px 0 0; font-size: .75rem; font-weight: 800; color: var(--color-muted-foreground); }
+.ntd-rules { display: grid; gap: 8px; margin: 8px 0 0; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
 .ntd-rules div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .ntd-rules dt { color: var(--color-muted-foreground); font-size: .75rem; font-weight: 800; }
 .ntd-rules dd { margin: 0; font-size: .82rem; }
+.ntd-zero-note { margin: 10px 0 0; padding: 10px 12px; border-left: 3px solid var(--color-primary-strong); color: var(--color-muted-foreground); font-size: .8rem; }
 .ntd-result__wording { overflow-wrap: anywhere; }
 .ntd-result__rounded { margin-top: 8px; color: var(--color-primary-strong); font-size: .82rem; font-weight: 700; }
 .ntd-copy-status { min-height: 20px; margin: 10px 0 0; color: var(--color-success); font-size: .8rem; font-weight: 700; }
@@ -448,6 +450,7 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .ntd-examples th:first-child, .ntd-examples td:first-child { width: 20%; }
 .ntd-examples th:not(:first-child), .ntd-examples td:not(:first-child) { width: 26%; }
 .ntd-examples tbody th { background: var(--color-surface); color: var(--color-foreground); font-family: var(--font-mono); font-size: .8rem; font-weight: 700; white-space: nowrap; }
+/* Wording cells are prose, not figures; the nth-child pair only matches the specificity of the .tool-reference default it replaces. */
 .ntd-examples td:nth-child(odd), .ntd-examples td:nth-child(even) { font-family: inherit; font-size: .84rem; }
 .tool-faq { display: grid; gap: 14px; margin: 0; }
 .tool-faq__question { margin: 0 0 6px; font-size: .95rem; font-weight: 800; }

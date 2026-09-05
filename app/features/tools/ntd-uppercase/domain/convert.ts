@@ -63,6 +63,8 @@ export type NtdConversionOutcome =
 
 const FULL_WIDTH_DIGIT_OFFSET = 0xFEE0
 const GROUP_DIGITS = 4
+/** The value a group must reach to fill its leading 仟 position. */
+const GROUP_LEADING_UNIT = 10 ** (GROUP_DIGITS - 1)
 const FEN_PER_YUAN = 100n
 
 export function convertNtd(input: string, purpose: NtdPurpose): NtdConversionOutcome {
@@ -189,15 +191,16 @@ function writeInteger(yuanDigits: string, internalZero: NtdInternalZeroPolicy) {
     }
 
     // A group that does not fill its 仟 position also opens with a skipped one.
-    if (wording && (skippedGroup || value < 1000)) wording += zero
-    wording += writeGroup(group, internalZero) + ntdLargeUnits[groups.length - 1 - position]
+    if (wording && (skippedGroup || value < GROUP_LEADING_UNIT)) wording += zero
+    wording += writeGroup(group, zero) + ntdLargeUnits[groups.length - 1 - position]
     skippedGroup = false
   })
 
   return wording
 }
 
-function writeGroup(group: string, internalZero: NtdInternalZeroPolicy) {
+/** `zero` is the character a skipped position takes, which is empty for a purpose that omits it. */
+function writeGroup(group: string, zero: string) {
   let wording = ''
   let skippedPosition = false
 
@@ -208,7 +211,7 @@ function writeGroup(group: string, internalZero: NtdInternalZeroPolicy) {
       continue
     }
 
-    if (skippedPosition && internalZero === 'write') wording += ntdDigits[0]
+    if (skippedPosition) wording += zero
     wording += `${ntdDigits[digit]}${ntdSmallUnits[position]}`
     skippedPosition = false
   }
