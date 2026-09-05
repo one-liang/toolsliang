@@ -2,7 +2,9 @@
 import { LockKeyhole, Star } from '@lucide/vue'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
-import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale, localeUrl } from '@/features/tools/catalog'
+import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
+import { getToolFaq } from '@/features/tools/faq'
+import { buildToolStructuredData } from '@/features/tools/structured-data'
 import { resolveToolWorkspace } from '@/features/tools/workspace-resolver'
 
 definePageMeta({
@@ -17,43 +19,14 @@ const tool = computed(() => getTool(String(route.params.slug))!)
 const saved = computed(() => isSaved(tool.value.slug))
 const category = computed(() => getCategory(tool.value.category)!)
 const workspace = computed(() => resolveToolWorkspace(tool.value.routeComponentKey)!)
+const faq = computed(() => getToolFaq(tool.value.seo.contentKey, locale.value))
 
 usePageSeo({
   locale,
   path: computed(() => `/tools/${tool.value.slug}/`),
   title: computed(() => copy(tool.value.seo.title, locale.value)),
   description: computed(() => copy(tool.value.seo.description, locale.value)),
-  structuredData: computed(() => ({
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebApplication',
-        name: copy(tool.value.name, locale.value),
-        description: copy(tool.value.seo.description, locale.value),
-        applicationCategory: 'UtilitiesApplication',
-        operatingSystem: 'Any',
-        url: localeUrl(locale.value, `/tools/${tool.value.slug}/`),
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: locale.value === 'en' ? 'All tools' : '全部工具',
-            item: localeUrl(locale.value, '/tools/'),
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: copy(tool.value.name, locale.value),
-            item: localeUrl(locale.value, `/tools/${tool.value.slug}/`),
-          },
-        ],
-      },
-    ],
-  })),
+  structuredData: computed(() => buildToolStructuredData(tool.value, locale.value)),
 })
 </script>
 
@@ -112,6 +85,19 @@ usePageSeo({
         <div>
           <dt>{{ locale === 'en' ? 'Offline use' : '離線能力' }}</dt>
           <dd><ToolOfflineStatus :tool="tool" :locale="locale" /></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section v-if="faq.length" class="tool-contract tool-contract--faq" :aria-labelledby="`tool-faq-${tool.slug}`">
+      <div class="tool-section-heading">
+        <p class="eyebrow">{{ locale === 'en' ? 'Common questions' : '常見問題' }}</p>
+        <h2 :id="`tool-faq-${tool.slug}`">{{ locale === 'en' ? 'What people ask about this tool' : '關於這個工具的常見問題' }}</h2>
+      </div>
+      <dl class="tool-faq">
+        <div v-for="entry in faq" :key="entry.heading" class="tool-faq__item">
+          <dt class="tool-faq__question">{{ entry.heading }}</dt>
+          <dd class="tool-faq__answer">{{ entry.body }}</dd>
         </div>
       </dl>
     </section>

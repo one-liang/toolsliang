@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
-import { inspectNetworkRequest, inspectWebSocketFrame, redactToolContent } from './support/privacy-boundary'
+import { guardToolContentBoundary } from './support/tool-content-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const TOOL_INPUT = '10001.09'
@@ -21,58 +21,7 @@ const TOOL_CONTENT = [
   { label: '檔名', value: 'quality-fixture.pdf' },
 ]
 
-interface QualityFindings {
-  consoleErrors: string[]
-  pageErrors: string[]
-  networkFindings: string[]
-}
-
-const findingsByPage = new WeakMap<Page, QualityFindings>()
-
-test.beforeEach(({ page }) => {
-  const findings: QualityFindings = {
-    consoleErrors: [],
-    pageErrors: [],
-    networkFindings: [],
-  }
-  findingsByPage.set(page, findings)
-
-  page.on('console', (message) => {
-    if (message.type() === 'error') findings.consoleErrors.push(redactToolContent(message.text(), TOOL_CONTENT))
-  })
-  page.on('pageerror', error => findings.pageErrors.push(redactToolContent(error.message, TOOL_CONTENT)))
-  page.context().on('request', (request) => {
-    findings.networkFindings.push(...inspectNetworkRequest({
-      url: request.url(),
-      method: request.method(),
-      headers: request.headers(),
-      body: request.postData(),
-    }, TOOL_CONTENT, NETWORK_BOUNDARY_POLICY))
-  })
-  page.on('websocket', (socket) => {
-    findings.networkFindings.push(...inspectNetworkRequest({
-      url: socket.url(),
-      method: 'WEBSOCKET',
-      headers: {},
-      body: null,
-    }, TOOL_CONTENT, NETWORK_BOUNDARY_POLICY))
-    socket.on('framesent', (event) => {
-      findings.networkFindings.push(...inspectWebSocketFrame(
-        socket.url(),
-        event.payload,
-        TOOL_CONTENT,
-        NETWORK_BOUNDARY_POLICY,
-      ))
-    })
-  })
-})
-
-test.afterEach(({ page }) => {
-  const findings = findingsByPage.get(page)!
-  expect(findings.networkFindings, `工具內容網路邊界違規：\n${findings.networkFindings.join('\n')}`).toEqual([])
-  expect(findings.consoleErrors, `console errors：\n${findings.consoleErrors.join('\n')}`).toEqual([])
-  expect(findings.pageErrors, `page errors：\n${findings.pageErrors.join('\n')}`).toEqual([])
-})
+guardToolContentBoundary(TOOL_CONTENT, NETWORK_BOUNDARY_POLICY)
 
 async function gotoTool(page: Page) {
   const response = await page.goto(TOOL_ROUTE, { waitUntil: 'domcontentloaded' })

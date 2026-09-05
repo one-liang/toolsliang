@@ -1,3 +1,5 @@
+import { bmiContentReview } from './bmi-calculator/domain/sources'
+
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
 export type ToolProcessingClass = 'instant' | 'worker'
@@ -140,6 +142,53 @@ export const toolCategories: ToolCategory[] = [
 ]
 
 const registeredTools: ToolDefinition[] = [
+  {
+    slug: 'bmi-calculator', category: 'calculation', icon: 'calculator',
+    availability: { state: 'published', publishedAt: '2026-09-05' },
+    status: { kind: 'new', startsAt: '2026-09-05', endsAt: '2026-10-05' },
+    name: { 'zh-tw': 'BMI 計算', en: 'BMI Calculator' },
+    description: {
+      'zh-tw': '依身高與體重估算成人 BMI。',
+      en: 'Estimate adult BMI from height and weight.',
+    },
+    aliases: {
+      'zh-tw': ['BMI 計算機', '身體質量指數'],
+      en: ['BMI calculator', 'body mass index'],
+    },
+    keywords: {
+      'zh-tw': ['身高', '體重', '健康體位'],
+      en: ['height', 'weight', 'healthy weight'],
+    },
+    processingClass: 'instant',
+    routeComponentKey: 'BmiCalculatorWorkspace',
+    offlineMode: 'ready',
+    capabilities: ['javascript'],
+    acceptedInput: {
+      'zh-tw': '公制或英制的成人身高與體重',
+      en: 'An adult height and weight, in metric or imperial units',
+    },
+    pagePresentation: {
+      showHeadingIcon: false,
+      showLocalProcessingStatement: true,
+    },
+    localProcessingStatement: {
+      'zh-tw': '身高、體重與結果只在此裝置計算，不會保存或送出。',
+      en: 'Height, weight, and the result are calculated on this device; nothing is stored or sent.',
+    },
+    seo: {
+      contentKey: 'bmi-calculator',
+      title: { 'zh-tw': 'BMI 計算', en: 'BMI Calculator' },
+      description: {
+        'zh-tw': '在瀏覽器依身高與體重計算成人 BMI，對照國民健康署分級，身高體重不離開裝置。',
+        en: 'Calculate adult BMI from height and weight in your browser, with Taiwan\'s official categories and no data leaving your device.',
+      },
+      answer: {
+        'zh-tw': 'BMI ＝ 體重（公斤）÷ 身高（公尺）÷ 身高（公尺），結果對照國民健康署成人健康體位標準。',
+        en: 'BMI = weight (kg) ÷ height (m) ÷ height (m), read against the Health Promotion Administration adult standard.',
+      },
+    },
+    contentReview: bmiContentReview,
+  },
   {
     slug: 'ntd-uppercase', category: 'document', icon: 'banknote',
     availability: { state: 'published', publishedAt: '2026-09-03' },
