@@ -410,21 +410,21 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
   .tool-workspace__copy:hover { border-color: var(--button-contrast-hover-bg); background: var(--button-contrast-hover-bg); color: var(--button-contrast-fg); }
 }
 .bmi-units { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; padding: 0; border: 0; }
-.bmi-units legend, .ntd-purposes legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
-.bmi-units__option, .ntd-purposes__option { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; padding: 8px 15px; border: 1px solid var(--input-border); border-radius: var(--radius-md); background: var(--color-surface); font-size: .86rem; cursor: pointer; }
-.bmi-units__option:has(input:checked), .ntd-purposes__option:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); color: var(--color-primary-strong); font-weight: 700; }
-.bmi-units__option input, .ntd-purposes__option input { width: 18px; height: 18px; accent-color: var(--color-primary-strong); }
+.bmi-units legend, .ntd-purposes legend, .picker-options legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
+.bmi-units__option, .ntd-purposes__option, .picker-option { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; padding: 8px 15px; border: 1px solid var(--input-border); border-radius: var(--radius-md); background: var(--color-surface); font-size: .86rem; cursor: pointer; }
+.bmi-units__option:has(input:checked), .ntd-purposes__option:has(input:checked), .picker-option:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); color: var(--color-primary-strong); font-weight: 700; }
+.bmi-units__option input, .ntd-purposes__option input, .picker-option input { width: 18px; height: 18px; accent-color: var(--color-primary-strong); }
 .bmi-fields { display: grid; gap: 18px; align-content: start; }
 .bmi-fields__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .field-pending { margin: 7px 0 0; color: var(--color-muted-foreground); font-size: .8rem; font-weight: 700; }
-.bmi-source, .ntd-source { margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .8rem; }
-.bmi-source a, .ntd-source a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
+.bmi-source, .ntd-source, .picker-source { margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .8rem; }
+.bmi-source a, .ntd-source a, .picker-source a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
 .bmi-result__value { font-family: var(--font-mono); }
 .bmi-result__category { margin-top: 8px; font-size: .95rem; font-weight: 700; }
-.bmi-result__pending, .ntd-result__pending { color: var(--color-muted-foreground); font-size: .9rem; }
-.bmi-caveats, .ntd-caveats { margin-top: 22px; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
-.bmi-caveats__title, .ntd-caveats__title { margin: 0 0 10px; font-size: .95rem; font-weight: 800; }
-.bmi-caveats ul, .ntd-caveats ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; list-style: disc outside; color: var(--color-muted-foreground); font-size: .84rem; }
+.bmi-result__pending, .ntd-result__pending, .picker-result__pending { color: var(--color-muted-foreground); font-size: .9rem; }
+.bmi-caveats, .ntd-caveats, .picker-caveats { margin-top: 22px; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.bmi-caveats__title, .ntd-caveats__title, .picker-caveats__title { margin: 0 0 10px; font-size: .95rem; font-weight: 800; }
+.bmi-caveats ul, .ntd-caveats ul, .picker-caveats ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; list-style: disc outside; color: var(--color-muted-foreground); font-size: .84rem; }
 .bmi-formula { display: inline-block; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); font-size: .88rem; }
 .bmi-category-table th:nth-child(odd), .bmi-category-table td:nth-child(odd) { width: 45%; }
 .bmi-category-table th:nth-child(even), .bmi-category-table td:nth-child(even) { width: 55%; }
@@ -452,6 +452,43 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .ntd-examples tbody th { background: var(--color-surface); color: var(--color-foreground); font-family: var(--font-mono); font-size: .8rem; font-weight: 700; white-space: nowrap; }
 /* Wording cells are prose, not figures; the nth-child pair only matches the specificity of the .tool-reference default it replaces. */
 .ntd-examples td:nth-child(odd), .ntd-examples td:nth-child(even) { font-family: inherit; font-size: .84rem; }
+.picker-inputs { display: grid; align-content: start; gap: 0; }
+.picker-list { width: 100%; min-height: 168px; height: auto; padding: 12px 14px; resize: vertical; line-height: 1.7; }
+.picker-add { margin-top: 18px; }
+.picker-add__row { display: flex; flex-wrap: wrap; gap: 8px; }
+.picker-add__row > .ui-input { flex: 1 1 180px; }
+.picker-add__button { flex: 0 0 auto; }
+.picker-summary__title { margin: 18px 0 0; font-size: .75rem; font-weight: 800; color: var(--color-muted-foreground); }
+.picker-summary { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.picker-summary li { padding: 5px 10px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface-subtle); font-size: .78rem; }
+.picker-options { margin: 18px 0 0; padding: 0; border: 0; }
+.picker-options .field-help { margin: 0 0 10px; }
+.picker-options__row { display: flex; flex-wrap: wrap; gap: 8px; }
+.picker-count { margin-top: 18px; }
+.picker-count > .ui-input { max-width: 160px; }
+.picker-wheel-note { margin: 10px 0 0; padding: 10px 12px; border-left: 3px solid var(--color-primary-strong); color: var(--color-muted-foreground); font-size: .8rem; }
+.picker-stage { display: grid; align-content: start; gap: 16px; }
+.picker-wheel { display: grid; justify-items: center; gap: 12px; }
+/* A rotated square grows its own bounding box; clipping it here keeps the page from scrolling sideways mid-spin. */
+.picker-wheel__frame { position: relative; width: min(320px, 100%); aspect-ratio: 1; overflow: hidden; }
+.picker-wheel__pointer { position: absolute; z-index: 1; top: 0; left: 50%; width: 0; height: 0; translate: -50% 0; border-inline: 9px solid transparent; border-top: 16px solid var(--color-primary-strong); }
+.picker-wheel__disc { display: block; width: 100%; height: 100%; transition-property: transform; transition-timing-function: cubic-bezier(.16, .84, .36, 1); }
+.picker-wheel__slice { fill: var(--color-surface); stroke: var(--color-border-strong); stroke-width: 1; }
+.picker-wheel__slice--odd { fill: var(--color-surface-hover); }
+.picker-wheel__slice--won { stroke: var(--color-primary-strong); stroke-width: 3; }
+.picker-wheel__label { fill: var(--color-foreground); font-family: inherit; text-anchor: middle; dominant-baseline: middle; }
+.picker-progress { width: min(320px, 100%); height: 8px; overflow: hidden; border-radius: 999px; background: var(--color-border); }
+.picker-progress > span { display: block; height: 100%; background: var(--color-primary-strong); transition: width var(--duration-fast) linear; }
+.picker-candidates { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 0; padding: 0; list-style: none; color: var(--color-muted-foreground); font-size: .78rem; }
+.picker-candidates li { padding: 3px 8px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface); }
+.picker-result__list { display: grid; gap: 6px; margin: 0; padding-left: 22px; }
+.picker-result__item { font-size: clamp(1.05rem, 2.4vw, 1.35rem); font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+.picker-result__spinning { margin: 0; color: var(--color-muted-foreground); font-size: .9rem; }
+.picker-source a + a { margin-left: 10px; }
+.picker-method__steps { display: grid; gap: 12px; margin: 0; padding-left: 20px; }
+.picker-method__steps li { padding-left: 4px; }
+.picker-method__steps strong { display: block; margin-bottom: 3px; font-size: .92rem; }
+.picker-method__steps span { color: var(--color-muted-foreground); font-size: .86rem; line-height: 1.65; }
 .tool-faq { display: grid; gap: 14px; margin: 0; }
 .tool-faq__question { margin: 0 0 6px; font-size: .95rem; font-weight: 800; }
 .tool-faq__answer { margin: 0; color: var(--color-muted-foreground); font-size: .88rem; line-height: 1.65; }

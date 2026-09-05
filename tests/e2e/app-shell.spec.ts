@@ -50,6 +50,11 @@ async function pressFocusForward(page: Page, testInfo: TestInfo) {
 
 
 async function reloadHydrated(page: Page) {
+  // This tests a persisted preference, not an interrupted navigation: the
+  // sidebar prefetches the payload of every tool route it can see, and a reload
+  // in the middle of those requests cancels them, which the browser reports as
+  // an error even though the next load fetches them again.
+  await page.waitForLoadState('networkidle')
   await page.reload({ waitUntil: 'domcontentloaded' })
   await waitForHydration(page)
 }

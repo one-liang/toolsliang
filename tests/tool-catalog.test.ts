@@ -18,6 +18,7 @@ import {
 } from '@/features/tools/catalog'
 import { bmiContentReview } from '@/features/tools/bmi-calculator/domain/sources'
 import { ntdContentReview } from '@/features/tools/ntd-uppercase/domain/sources'
+import { randomPickerContentReview } from '@/features/tools/random-picker/domain/sources'
 
 describe('tool catalog', () => {
   it('accepts the registered catalog contract', () => {
@@ -46,13 +47,13 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['bmi-calculator', 'ntd-uppercase'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['bmi-calculator', 'ntd-uppercase', 'random-picker'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
     expect(getTool('image-resizer')).toBeUndefined()
     expect(toolsByCategory('image-commerce')).toEqual([])
-    expect(publishedToolCategories.map(category => category.id)).toEqual(['calculation', 'document'])
+    expect(publishedToolCategories.map(category => category.id)).toEqual(['calculation', 'random-selection', 'document'])
   })
 
   it('provides the complete public route and content contract from one registration', () => {
@@ -112,6 +113,26 @@ describe('tool catalog', () => {
     expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明身高體重留在裝置').toContain('此裝置')
   })
 
+  it('registers the random picker against its reviewed fairness sources', () => {
+    const tool = getTool('random-picker')!
+
+    expect(tool).toMatchObject({
+      category: 'random-selection',
+      processingClass: 'instant',
+      routeComponentKey: 'RandomPickerWorkspace',
+      offlineMode: 'ready',
+      capabilities: ['javascript'],
+      pagePresentation: {
+        showHeadingIcon: false,
+        showLocalProcessingStatement: true,
+      },
+      seo: { contentKey: 'random-picker' },
+    })
+    expect(tool.contentReview, '等機率的依據必須沿用 T12 鎖定的審閱結果').toBe(randomPickerContentReview)
+    expect(tool.seo.answer['zh-tw'], '工具頁必須說明結果無法由第三方稽核').toContain('稽核')
+    expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明名單留在裝置').toContain('此裝置')
+  })
+
   it('expires NEW status from its registered date range', () => {
     const tool = getTool('ntd-uppercase')!
 
@@ -130,8 +151,10 @@ describe('tool catalog', () => {
     expect(getPublicToolRoutes()).toEqual([
       '/zh-tw/tools/bmi-calculator/',
       '/zh-tw/tools/ntd-uppercase/',
+      '/zh-tw/tools/random-picker/',
       '/en/tools/bmi-calculator/',
       '/en/tools/ntd-uppercase/',
+      '/en/tools/random-picker/',
     ])
     expect(isSupportedLocale('tw')).toBe(false)
   })
