@@ -81,6 +81,45 @@ export function evaluateBmi(input: BmiMeasurementInput): BmiEvaluation {
   return { state: 'ready', bmi, display: formatDisplay(bmi, category), category }
 }
 
+/**
+ * Keeps a measurement across a unit switch. A value the calculator could not use
+ * — unreadable, or outside the supported range — is left behind rather than
+ * converted into a number nobody typed, and what carries over is rounded to the
+ * two decimal places the fields accept.
+ */
+export function convertBmiValues(
+  from: BmiUnitSystem,
+  to: BmiUnitSystem,
+  values: Partial<Record<BmiFieldId, string>>,
+): Partial<Record<BmiFieldId, string>> {
+  if (from === to) return { ...values }
+
+  const read: TextReader = field => normalizeNumericText(values[field] ?? '')
+  const metres = (from === 'metric' ? readMetricHeight(read) : readImperialHeight(read)).metres
+  const kilograms = (from === 'metric' ? readMetricWeight(read) : readImperialWeight(read)).kilograms
+
+  if (to === 'metric') {
+    return {
+      'height-centimetres': metres === undefined ? '' : formatFieldValue(metres * 100),
+      'weight-kilograms': kilograms === undefined ? '' : formatFieldValue(kilograms),
+    }
+  }
+
+  const totalInches = metres === undefined ? 0 : metres / bmiUnitFactors.inchToMetre
+  const feet = Math.floor(totalInches / INCHES_PER_FOOT)
+
+  return {
+    'height-feet': metres === undefined ? '' : String(feet),
+    'height-inches': metres === undefined ? '' : formatFieldValue(totalInches - feet * INCHES_PER_FOOT),
+    'weight-pounds': kilograms === undefined ? '' : formatFieldValue(kilograms / bmiUnitFactors.poundToKilogram),
+  }
+}
+
+/** Two decimal places at most, with no trailing zero the field would not accept back. */
+function formatFieldValue(value: number) {
+  return String(Number(value.toFixed(2)))
+}
+
 interface MeasurementReading {
   errors: BmiFieldError[]
   metres?: number
@@ -104,25 +143,31 @@ function readMetricWeight(read: TextReader): MeasurementReading {
 }
 
 /**
- * Feet carry the height, so blank inches means a whole number of feet rather
- * than an unfinished entry. Inches beyond twelve are still converted: section
- * 5.1 of the decision record rules out judging whether a combination looks
- * sensible.
+ * Feet and inches are one height, so either half may be left out: 0 ft 70 in and
+ * 5 ft are both complete entries, and only a height of nothing is missing.
+ * Inches beyond twelve are still converted, because section 5.1 of the decision
+ * record rules out judging whether a combination looks sensible.
  */
 function readImperialHeight(read: TextReader): MeasurementReading {
-  const feet = readNumber(read('height-feet'), { measure: 'height', field: 'height-feet' })
-  if ('error' in feet) return { errors: [feet.error] }
-  if (!Number.isInteger(feet.value)) {
-    return { errors: [{ measure: 'height', field: 'height-feet', code: 'invalid-number' }] }
-  }
-
+  const origin = { measure: 'height', field: 'height-feet' } as const
+  const feetText = read('height-feet')
   const inchesText = read('height-inches')
+  if (!feetText && !inchesText) return { errors: [{ ...origin, code: 'missing' }] }
+
+  const feet = feetText
+    ? readNumber(feetText, origin, { allowZero: true })
+    : { value: 0 }
+  if ('error' in feet) return { errors: [feet.error] }
+  if (!Number.isInteger(feet.value)) return { errors: [{ ...origin, code: 'invalid-number' }] }
+
   const inches = inchesText
     ? readNumber(inchesText, { measure: 'height', field: 'height-inches' }, { allowZero: true })
     : { value: 0 }
   if ('error' in inches) return { errors: [inches.error] }
 
   const metres = feet.value * bmiUnitFactors.footToMetre + inches.value * bmiUnitFactors.inchToMetre
+  if (metres <= 0) return { errors: [{ ...origin, code: 'non-positive' }] }
+
   return guardHeight(metres, 'height-feet')
 }
 

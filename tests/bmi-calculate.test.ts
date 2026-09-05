@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   bmiFieldsByUnitSystem,
   bmiSupportedRange,
+  convertBmiValues,
   evaluateBmi,
   type BmiFieldError,
   type BmiMeasurementInput,
@@ -80,6 +81,19 @@ describe('bmi calculator', () => {
     ])
     expect(errorsOf(imperial('', '', '160'))).toEqual([
       { measure: 'height', field: 'height-feet', code: 'missing' },
+    ])
+  })
+
+  it('reads feet and inches as one height, whichever half is left out', () => {
+    // Section 5.1 rules out judging a combination: 0 ft 70 in is 1.778 m like any other.
+    const wholeInches = evaluateBmi(imperial('0', '70', '160'))
+    expect(wholeInches.state).toBe('ready')
+    if (wholeInches.state !== 'ready') return
+    expect(wholeInches.display).toBe('23.0')
+
+    expect(evaluateBmi(imperial('', '70', '160')).state, '英尺留空視為 0').toBe('ready')
+    expect(errorsOf(imperial('0', '0', '160')), '完全沒有身高才是錯誤').toEqual([
+      { measure: 'height', field: 'height-feet', code: 'non-positive' },
     ])
   })
 
@@ -166,6 +180,37 @@ describe('bmi calculator', () => {
       { measure: 'height', field: 'height-centimetres', code: 'invalid-number' },
       { measure: 'weight', field: 'weight-kilograms', code: 'non-positive' },
     ])
+  })
+
+  it('carries a measurement across a unit switch instead of dropping it', () => {
+    expect(convertBmiValues('metric', 'imperial', {
+      'height-centimetres': '170',
+      'weight-kilograms': '65',
+    })).toMatchObject({
+      'height-feet': '5',
+      'height-inches': '6.93',
+      'weight-pounds': '143.3',
+    })
+
+    expect(convertBmiValues('imperial', 'metric', {
+      'height-feet': '5',
+      'height-inches': '9',
+      'weight-pounds': '160',
+    })).toMatchObject({
+      'height-centimetres': '175.26',
+      'weight-kilograms': '72.57',
+    })
+  })
+
+  it('leaves a blank or unreadable measurement blank instead of converting nonsense', () => {
+    expect(convertBmiValues('metric', 'imperial', {
+      'height-centimetres': 'not-a-number',
+      'weight-kilograms': '',
+    })).toMatchObject({
+      'height-feet': '',
+      'height-inches': '',
+      'weight-pounds': '',
+    })
   })
 
   it('publishes the supported ranges its messages quote', () => {

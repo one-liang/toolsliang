@@ -11,12 +11,15 @@ import {
 } from '@/features/tools/bmi-calculator/content'
 import {
   bmiFieldsByUnitSystem,
+  convertBmiValues,
   evaluateBmi,
   type BmiFieldId,
   type BmiMeasure,
   type BmiUnitSystem,
 } from '@/features/tools/bmi-calculator/domain/calculate'
 import { bmiCategories } from '@/features/tools/bmi-calculator/domain/reference'
+import { bmiContentReview } from '@/features/tools/bmi-calculator/domain/sources'
+import { formatReviewDate } from '@/features/tools/catalog'
 
 const { locale } = useAppLocale()
 const text = computed(() => getBmiCopy(locale.value))
@@ -26,6 +29,8 @@ const categoryRows = computed(() => bmiCategories.map(category => ({
   name: category.name[locale.value],
   range: bmiCategoryRangeText(category),
 })))
+/** The standard the categories come from, cited where the result is read. */
+const primarySource = bmiContentReview.sources[0]!
 
 const unitSystem = ref<BmiUnitSystem>('metric')
 const values = ref<Record<BmiFieldId, string>>({
@@ -36,40 +41,81 @@ const values = ref<Record<BmiFieldId, string>>({
   'weight-pounds': '',
 })
 
-const activeFields = computed(() => bmiFieldsByUnitSystem[unitSystem.value] as readonly BmiFieldId[])
+/**
+ * One entry per measurement, so the two unit systems describe themselves from
+ * the same shape instead of repeating a field block each. Feet and inches are
+ * one measurement in two boxes: they share a hint and a message.
+ */
+const measurementGroups = computed(() => unitSystem.value === 'metric'
+  ? [
+      {
+        measure: 'height' as const,
+        hint: text.value.heightCentimetresHint,
+        fields: [{ id: 'height-centimetres' as const, label: text.value.heightCentimetresLabel, inputmode: 'decimal', placeholder: '170' }],
+      },
+      {
+        measure: 'weight' as const,
+        hint: text.value.weightKilogramsHint,
+        fields: [{ id: 'weight-kilograms' as const, label: text.value.weightKilogramsLabel, inputmode: 'decimal', placeholder: '65' }],
+      },
+    ]
+  : [
+      {
+        measure: 'height' as const,
+        hint: text.value.heightImperialHint,
+        fields: [
+          { id: 'height-feet' as const, label: text.value.heightFeetLabel, inputmode: 'numeric', placeholder: '5' },
+          { id: 'height-inches' as const, label: text.value.heightInchesLabel, inputmode: 'decimal', placeholder: '9' },
+        ],
+      },
+      {
+        measure: 'weight' as const,
+        hint: text.value.weightPoundsHint,
+        fields: [{ id: 'weight-pounds' as const, label: text.value.weightPoundsLabel, inputmode: 'decimal', placeholder: '160' }],
+      },
+    ])
+
 const evaluation = computed(() => evaluateBmi({ unitSystem: unitSystem.value, values: values.value }))
 const errors = computed(() => evaluation.value.state === 'invalid' ? evaluation.value.errors : [])
 const result = computed(() => evaluation.value.state === 'ready' ? evaluation.value : undefined)
 
 /**
- * A blank field is not a mistake, so it never becomes an alert: the result
- * panel simply names what it is still waiting for, while a value that cannot be
- * used is reported on the measurement that has to change.
+ * A blank field is not a mistake, so it never becomes an alert: the measurement
+ * says calmly that it is still waiting, while a value that cannot be used is
+ * reported as an error on the measurement that has to change.
  */
-const pendingMeasurements = computed(() => errors.value
-  .filter(error => error.code === 'missing')
-  .map(error => bmiFieldErrorMessage(error, locale.value)))
+function pendingMessage(measure: BmiMeasure) {
+  const pending = errors.value.find(error => error.measure === measure && error.code === 'missing')
+  return pending && bmiFieldErrorMessage(pending, locale.value)
+}
 
-function measureError(measure: BmiMeasure) {
+function errorFor(measure: BmiMeasure) {
   const error = errors.value.find(item => item.measure === measure && item.code !== 'missing')
   return error && { field: error.field, message: bmiFieldErrorMessage(error, locale.value) }
 }
 
-const heightError = computed(() => measureError('height'))
-const weightError = computed(() => measureError('weight'))
-
-function describedBy(field: BmiFieldId, measure: BmiMeasure) {
-  const error = measure === 'height' ? heightError.value : weightError.value
-  return [`bmi-${field}-help`, error ? `bmi-${measure}-error` : ''].filter(Boolean).join(' ')
+function describedBy(measure: BmiMeasure) {
+  return [
+    `bmi-${measure}-help`,
+    pendingMessage(measure) ? `bmi-${measure}-pending` : '',
+    errorFor(measure) ? `bmi-${measure}-error` : '',
+  ].filter(Boolean).join(' ')
 }
 
-function isInvalid(field: BmiFieldId, measure: BmiMeasure) {
-  const error = measure === 'height' ? heightError.value : weightError.value
-  return String(error?.field === field)
+function ariaInvalid(field: BmiFieldId, measure: BmiMeasure) {
+  return errorFor(measure)?.field === field
+}
+
+/** Switching units keeps the measurement rather than emptying the form. */
+function selectUnitSystem(next: BmiUnitSystem) {
+  if (next === unitSystem.value) return
+  values.value = { ...values.value, ...convertBmiValues(unitSystem.value, next, values.value) }
+  unitSystem.value = next
 }
 
 // A waiting application update must ask before it discards measurements in progress.
-useWorkspaceDirty('bmi-calculator', computed(() => activeFields.value.some(field => values.value[field].trim())))
+useWorkspaceDirty('bmi-calculator', computed(() =>
+  bmiFieldsByUnitSystem[unitSystem.value].some(field => values.value[field].trim())))
 
 function reset() {
   for (const field of Object.keys(values.value) as BmiFieldId[]) values.value[field] = ''
@@ -82,11 +128,11 @@ function reset() {
       <legend>{{ text.unitLegend }}</legend>
       <label v-for="option in (['metric', 'imperial'] as const)" :key="option" class="bmi-units__option">
         <input
-          :id="`bmi-unit-${option}`"
-          v-model="unitSystem"
           type="radio"
           name="bmi-unit-system"
           :value="option"
+          :checked="unitSystem === option"
+          @change="selectUnitSystem(option)"
         >
         <span>{{ option === 'metric' ? text.unitMetric : text.unitImperial }}</span>
       </label>
@@ -94,86 +140,29 @@ function reset() {
 
     <div class="tool-workspace__grid">
       <div class="bmi-fields">
-        <template v-if="unitSystem === 'metric'">
-          <div class="field-group">
-            <label for="bmi-height-centimetres">{{ text.heightCentimetresLabel }}</label>
-            <Input
-              id="bmi-height-centimetres"
-              v-model="values['height-centimetres']"
-              inputmode="decimal"
-              autocomplete="off"
-              :aria-describedby="describedBy('height-centimetres', 'height')"
-              :aria-invalid="isInvalid('height-centimetres', 'height')"
-              placeholder="170"
-            />
-            <p id="bmi-height-centimetres-help" class="field-help">{{ text.heightCentimetresHint }}</p>
-            <p v-if="heightError" id="bmi-height-error" class="field-error" role="alert">{{ heightError.message }}</p>
-          </div>
-
-          <div class="field-group">
-            <label for="bmi-weight-kilograms">{{ text.weightKilogramsLabel }}</label>
-            <Input
-              id="bmi-weight-kilograms"
-              v-model="values['weight-kilograms']"
-              inputmode="decimal"
-              autocomplete="off"
-              :aria-describedby="describedBy('weight-kilograms', 'weight')"
-              :aria-invalid="isInvalid('weight-kilograms', 'weight')"
-              placeholder="65"
-            />
-            <p id="bmi-weight-kilograms-help" class="field-help">{{ text.weightKilogramsHint }}</p>
-            <p v-if="weightError" id="bmi-weight-error" class="field-error" role="alert">{{ weightError.message }}</p>
-          </div>
-        </template>
-
-        <template v-else>
-          <div class="field-group">
-            <div class="bmi-fields__pair">
-              <div>
-                <label for="bmi-height-feet">{{ text.heightFeetLabel }}</label>
-                <Input
-                  id="bmi-height-feet"
-                  v-model="values['height-feet']"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  :aria-describedby="describedBy('height-feet', 'height')"
-                  :aria-invalid="isInvalid('height-feet', 'height')"
-                  placeholder="5"
-                />
-              </div>
-              <div>
-                <label for="bmi-height-inches">{{ text.heightInchesLabel }}</label>
-                <Input
-                  id="bmi-height-inches"
-                  v-model="values['height-inches']"
-                  inputmode="decimal"
-                  autocomplete="off"
-                  :aria-describedby="describedBy('height-inches', 'height')"
-                  :aria-invalid="isInvalid('height-inches', 'height')"
-                  placeholder="9"
-                />
-              </div>
+        <div v-for="group in measurementGroups" :key="group.measure" class="field-group">
+          <div :class="{ 'bmi-fields__pair': group.fields.length > 1 }">
+            <div v-for="field in group.fields" :key="field.id">
+              <label :for="`bmi-${field.id}`">{{ field.label }}</label>
+              <Input
+                :id="`bmi-${field.id}`"
+                v-model="values[field.id]"
+                :inputmode="field.inputmode"
+                autocomplete="off"
+                :aria-describedby="describedBy(group.measure)"
+                :aria-invalid="ariaInvalid(field.id, group.measure)"
+                :placeholder="field.placeholder"
+              />
             </div>
-            <p id="bmi-height-feet-help" class="field-help">{{ text.heightFeetHint }}</p>
-            <p id="bmi-height-inches-help" class="sr-only">{{ text.heightFeetHint }}</p>
-            <p v-if="heightError" id="bmi-height-error" class="field-error" role="alert">{{ heightError.message }}</p>
           </div>
-
-          <div class="field-group">
-            <label for="bmi-weight-pounds">{{ text.weightPoundsLabel }}</label>
-            <Input
-              id="bmi-weight-pounds"
-              v-model="values['weight-pounds']"
-              inputmode="decimal"
-              autocomplete="off"
-              :aria-describedby="describedBy('weight-pounds', 'weight')"
-              :aria-invalid="isInvalid('weight-pounds', 'weight')"
-              placeholder="160"
-            />
-            <p id="bmi-weight-pounds-help" class="field-help">{{ text.weightPoundsHint }}</p>
-            <p v-if="weightError" id="bmi-weight-error" class="field-error" role="alert">{{ weightError.message }}</p>
-          </div>
-        </template>
+          <p :id="`bmi-${group.measure}-help`" class="field-help">{{ group.hint }}</p>
+          <p v-if="pendingMessage(group.measure)" :id="`bmi-${group.measure}-pending`" class="field-pending">
+            {{ pendingMessage(group.measure) }}
+          </p>
+          <p v-if="errorFor(group.measure)" :id="`bmi-${group.measure}-error`" class="field-error" role="alert">
+            {{ errorFor(group.measure)!.message }}
+          </p>
+        </div>
       </div>
 
       <div class="result-panel bmi-result" aria-live="polite">
@@ -185,11 +174,7 @@ function reset() {
           </span>
           <span class="result-panel__amount">{{ text.resultSummary }}</span>
         </template>
-        <template v-else>
-          <span class="bmi-result__pending">
-            {{ pendingMeasurements.length ? pendingMeasurements.join(' ') : text.resultEmpty }}
-          </span>
-        </template>
+        <span v-else class="bmi-result__pending">{{ text.resultEmpty }}</span>
       </div>
     </div>
 
@@ -205,6 +190,11 @@ function reset() {
       <ul>
         <li v-for="caveat in caveats" :key="caveat.key">{{ caveat.text }}</li>
       </ul>
+      <p class="bmi-source">
+        {{ text.sourceLabel }}：<a :href="primarySource.url" target="_blank" rel="noopener noreferrer">{{ primarySource.title[locale] }}</a>
+        （{{ text.sourceUpdatedLabel }}
+        <time :datetime="bmiContentReview.sourceEffectiveAt">{{ formatReviewDate(bmiContentReview.sourceEffectiveAt, locale) }}</time>）
+      </p>
     </section>
   </Card>
 

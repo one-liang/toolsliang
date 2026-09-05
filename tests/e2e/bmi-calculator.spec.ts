@@ -11,12 +11,17 @@ const IMPERIAL_INCHES = '2'
 const IMPERIAL_POUNDS = '220.5'
 const IMPERIAL_RESULT_BMI = '28.3'
 const INVALID_INPUT = 'bmi-invalid-input-4d71'
+const CONVERTED_FEET = '5'
+const CONVERTED_INCHES = '8.32'
+const CONVERTED_POUNDS = '150.95'
+const TOOL_RESPONSE_BUDGET_MS = 50
 const TOUCH_TARGET_TOLERANCE_PX = 0.001
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 const TOOL_CONTENT = [
   { label: '輸入', value: HEIGHT_CM },
   { label: '輸入', value: WEIGHT_KG },
   { label: '輸入', value: IMPERIAL_POUNDS },
+  { label: '輸入', value: CONVERTED_POUNDS },
   { label: '輸入', value: INVALID_INPUT },
   { label: '輸出', value: RESULT_BMI },
   { label: '輸出', value: IMPERIAL_RESULT_BMI },
@@ -53,9 +58,13 @@ test('工具開啟時即說明本機處理、公式、分級與使用限制', as
   await expect(caveats).toContainText('不是醫療診斷')
   await expect(caveats).toContainText('只適用 18 歲（含）以上成人')
   await expect(caveats).toContainText('懷孕期間不適用')
+  const source = page.locator('.bmi-source')
+  await expect(source, '來源必須在結果附近，而不是只在頁尾').toContainText('成人健康體位標準')
+  await expect(source).toContainText('2025年9月11日')
   await expect(page.getByRole('heading', { name: '關於這個工具的常見問題' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '資料來源與審閱' })).toBeVisible()
-  await expect(page.getByRole('link', { name: '國民健康署：成人健康體位標準' })).toBeVisible()
+  await expect(page.locator('.tool-contract__source-links')
+    .getByRole('link', { name: '國民健康署：成人健康體位標準' })).toBeVisible()
 })
 
 test('身高體重留在裝置，公英制皆可用鍵盤完成計算', async ({ page }, testInfo) => {
@@ -69,7 +78,7 @@ test('身高體重留在裝置，公英制皆可用鍵盤完成計算', async ({
   const height = page.getByLabel('身高（公分）')
   await height.focus()
   await height.fill(HEIGHT_CM)
-  await expect(page.locator('.result-panel'), '只填身高時，結果區平靜地說明還缺什麼').toContainText('還需要填寫體重')
+  await expect(page.locator('#bmi-weight-pending'), '只填身高時，欄位旁平靜地說明還缺什麼').toContainText('還需要填寫體重')
   await expect(page.getByRole('alert')).toHaveCount(0)
 
   await pressFocusForward(page, testInfo)
@@ -81,6 +90,11 @@ test('身高體重留在裝置，公英制皆可用鍵盤完成計算', async ({
   await expect(weight, '結果更新不得搬動焦點').toBeFocused()
 
   await page.getByRole('radio', { name: '英制（英尺、英吋、磅）' }).check()
+  await expect(page.getByLabel('身高（英尺）'), '切換單位不得清空已輸入的量測值').toHaveValue(CONVERTED_FEET)
+  await expect(page.getByLabel('身高（英吋）')).toHaveValue(CONVERTED_INCHES)
+  await expect(page.getByLabel('體重（磅）')).toHaveValue(CONVERTED_POUNDS)
+  await expect(page.locator('.bmi-result__value'), '換算後仍是同一個人').toHaveText(RESULT_BMI)
+
   await page.getByLabel('身高（英尺）').fill(IMPERIAL_FEET)
   await page.getByLabel('身高（英吋）').fill(IMPERIAL_INCHES)
   await page.getByLabel('體重（磅）').fill(IMPERIAL_POUNDS)
@@ -177,3 +191,32 @@ for (const viewport of [
     }
   })
 }
+
+test('計算在效能預算內完成', async ({ page }) => {
+  await gotoTool(page)
+  await page.getByLabel('身高（公分）').fill(HEIGHT_CM)
+
+  const responseDuration = await page.evaluate(({ budget, input, output }) => {
+    const weight = document.querySelector<HTMLInputElement>('#bmi-weight-kilograms')!
+    const result = document.querySelector<HTMLElement>('.result-panel')!
+
+    return new Promise<number>((resolve, reject) => {
+      const startedAt = performance.now()
+      const observer = new MutationObserver(() => {
+        if (result.textContent?.includes(output)) {
+          observer.disconnect()
+          resolve(performance.now() - startedAt)
+        }
+      })
+      observer.observe(result, { childList: true, characterData: true, subtree: true })
+      weight.value = input
+      weight.dispatchEvent(new Event('input', { bubbles: true }))
+      window.setTimeout(() => {
+        observer.disconnect()
+        reject(new Error('工具結果未在效能量測期限內更新'))
+      }, budget)
+    })
+  }, { budget: TOOL_RESPONSE_BUDGET_MS, input: WEIGHT_KG, output: RESULT_BMI })
+
+  expect(responseDuration, `BMI 計算需低於 ${TOOL_RESPONSE_BUDGET_MS}ms`).toBeLessThan(TOOL_RESPONSE_BUDGET_MS)
+})

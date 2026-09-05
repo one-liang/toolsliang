@@ -416,6 +416,9 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .bmi-units__option input { width: 18px; height: 18px; accent-color: var(--color-primary-strong); }
 .bmi-fields { display: grid; gap: 18px; align-content: start; }
 .bmi-fields__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.field-pending { margin: 7px 0 0; color: var(--color-muted-foreground); font-size: .8rem; font-weight: 700; }
+.bmi-source { margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .8rem; }
+.bmi-source a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
 .bmi-result__value { font-family: var(--font-mono); }
 .bmi-result__category { margin-top: 8px; font-size: .95rem; font-weight: 700; }
 .bmi-result__pending { color: var(--color-muted-foreground); font-size: .9rem; }

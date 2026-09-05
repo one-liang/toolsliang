@@ -2,7 +2,7 @@ import { bmiSupportedRange, type BmiFieldError, type BmiFieldId } from './domain
 import type { BmiCategory } from './domain/reference'
 import { bmiCaveatKeys, type BmiCaveatKey } from './domain/sources'
 import type { ToolFaqEntry } from '../faq'
-import type { LocaleCode, LocalizedCopy } from '../catalog'
+import { hasLocalizedCopy, type LocaleCode, type LocalizedCopy } from '../catalog'
 
 /**
  * Everything the BMI workspace and page say out loud. It sits beside the
@@ -13,20 +13,33 @@ import type { LocaleCode, LocalizedCopy } from '../catalog'
  * constants so a bound can never be retyped into a message it does not match.
  */
 
+const { metric, imperial } = bmiSupportedRange
+
 const bmiCopyEntries = {
   unitLegend: { 'zh-tw': '輸入單位', en: 'Units' },
   unitMetric: { 'zh-tw': '公制（公分、公斤）', en: 'Metric (cm, kg)' },
   unitImperial: { 'zh-tw': '英制（英尺、英吋、磅）', en: 'Imperial (ft, in, lb)' },
-  heightLegend: { 'zh-tw': '身高', en: 'Height' },
   heightCentimetresLabel: { 'zh-tw': '身高（公分）', en: 'Height (cm)' },
   heightFeetLabel: { 'zh-tw': '身高（英尺）', en: 'Height (ft)' },
   heightInchesLabel: { 'zh-tw': '身高（英吋）', en: 'Height (in)' },
   weightKilogramsLabel: { 'zh-tw': '體重（公斤）', en: 'Weight (kg)' },
   weightPoundsLabel: { 'zh-tw': '體重（磅）', en: 'Weight (lb)' },
-  heightCentimetresHint: { 'zh-tw': '支援 100 到 250 公分，最多兩位小數。', en: 'From 100 to 250 cm, up to two decimal places.' },
-  heightFeetHint: { 'zh-tw': '英尺請填整數，英吋可留空當作 0。', en: 'Whole feet; leave inches blank for zero.' },
-  weightKilogramsHint: { 'zh-tw': '支援 20 到 500 公斤，最多兩位小數。', en: 'From 20 to 500 kg, up to two decimal places.' },
-  weightPoundsHint: { 'zh-tw': '支援 44.1 到 1102.31 磅，最多兩位小數。', en: 'From 44.1 to 1102.31 lb, up to two decimal places.' },
+  heightCentimetresHint: {
+    'zh-tw': `支援 ${metric.heightCentimetres.min} 到 ${metric.heightCentimetres.max} 公分，最多兩位小數。`,
+    en: `From ${metric.heightCentimetres.min} to ${metric.heightCentimetres.max} cm, up to two decimal places.`,
+  },
+  heightImperialHint: {
+    'zh-tw': `支援 ${imperial.height.minFeet} 英尺 ${imperial.height.minInches} 英吋 到 ${imperial.height.maxFeet} 英尺 ${imperial.height.maxInches} 英吋；英尺請填整數，留空的一欄視為 0。`,
+    en: `From ${imperial.height.minFeet} ft ${imperial.height.minInches} in to ${imperial.height.maxFeet} ft ${imperial.height.maxInches} in; whole feet, and a blank box counts as zero.`,
+  },
+  weightKilogramsHint: {
+    'zh-tw': `支援 ${metric.weightKilograms.min} 到 ${metric.weightKilograms.max} 公斤，最多兩位小數。`,
+    en: `From ${metric.weightKilograms.min} to ${metric.weightKilograms.max} kg, up to two decimal places.`,
+  },
+  weightPoundsHint: {
+    'zh-tw': `支援 ${imperial.weightPounds.min} 到 ${imperial.weightPounds.max} 磅，最多兩位小數。`,
+    en: `From ${imperial.weightPounds.min} to ${imperial.weightPounds.max} lb, up to two decimal places.`,
+  },
   resultLabel: { 'zh-tw': '計算結果', en: 'Result' },
   resultEmpty: {
     'zh-tw': '填入身高與體重後，這裡會顯示 BMI 數值與分級。',
@@ -52,7 +65,8 @@ const bmiCopyEntries = {
   categoryTableCaption: { 'zh-tw': '成人 BMI 分級與對應範圍', en: 'Adult BMI categories and their ranges' },
   categoryColumn: { 'zh-tw': '分級', en: 'Category' },
   rangeColumn: { 'zh-tw': 'BMI 範圍', en: 'BMI range' },
-  faqTitle: { 'zh-tw': '常見問題', en: 'Common questions' },
+  sourceLabel: { 'zh-tw': '分級依據', en: 'Category source' },
+  sourceUpdatedLabel: { 'zh-tw': '來源更新日', en: 'Source updated' },
 } satisfies Record<string, LocalizedCopy>
 
 export type BmiCopyKey = keyof typeof bmiCopyEntries
@@ -207,8 +221,6 @@ function fieldErrorCopy(error: BmiFieldError): LocalizedCopy {
 }
 
 function outOfRangeCopy(field: BmiFieldId, measureName: LocalizedCopy): LocalizedCopy {
-  const { metric, imperial } = bmiSupportedRange
-
   switch (field) {
     case 'height-centimetres':
       return {
@@ -235,7 +247,6 @@ function outOfRangeCopy(field: BmiFieldId, measureName: LocalizedCopy): Localize
 
 export function validateBmiContent() {
   const issues: string[] = []
-  const hasLocalizedCopy = (value: LocalizedCopy | undefined) => Boolean(value?.['zh-tw']?.trim() && value.en?.trim())
 
   for (const key of bmiCopyKeys) {
     if (!hasLocalizedCopy(bmiCopy[key])) issues.push(`[copy:${key}] requires both locales`)

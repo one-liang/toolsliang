@@ -68,12 +68,33 @@ describe('BMI workspace', () => {
     expect(wrapper.get('[role="alert"]').text()).toContain('250')
   })
 
-  it('asks calmly for the measurement that is still missing', async () => {
+  it('asks calmly, beside the field, for the measurement that is still missing', async () => {
     const wrapper = mountWorkspace()
     await wrapper.get('#bmi-height-centimetres').setValue('170')
 
     expect(wrapper.findAll('[role="alert"]'), '尚未填寫不是錯誤').toHaveLength(0)
-    expect(wrapper.get('.result-panel').text()).toContain('還需要填寫體重')
+    const pending = wrapper.get('#bmi-weight-pending')
+    expect(pending.text()).toContain('還需要填寫體重')
+    expect(wrapper.get('#bmi-weight-kilograms').attributes('aria-describedby')).toContain('bmi-weight-pending')
+    expect(wrapper.get('#bmi-weight-kilograms').attributes('aria-invalid'), '未填寫不是輸入錯誤').toBe('false')
+  })
+
+  it('carries the measurement across a unit switch instead of emptying the form', async () => {
+    const wrapper = await enterMetric(mountWorkspace(), '170', '65')
+    await wrapper.get('input[name="bmi-unit-system"][value="imperial"]').setValue()
+
+    expect((wrapper.get('#bmi-height-feet').element as HTMLInputElement).value).toBe('5')
+    expect((wrapper.get('#bmi-height-inches').element as HTMLInputElement).value).toBe('6.93')
+    expect((wrapper.get('#bmi-weight-pounds').element as HTMLInputElement).value).toBe('143.3')
+    expect(wrapper.get('.bmi-result__value').text(), '換算後的結果仍是同一個人').toBe('22.5')
+  })
+
+  it('names the reviewed source and its update date beside the result', () => {
+    const source = mountWorkspace().get('.bmi-source')
+
+    expect(source.text()).toContain('成人健康體位標準')
+    expect(source.text()).toContain('2025年9月11日')
+    expect(source.get('a').attributes('href')).toBe('https://www.hpa.gov.tw/Pages/Detail.aspx?nodeid=542&pid=9737')
   })
 
   it('returns to an empty workspace after a reset', async () => {

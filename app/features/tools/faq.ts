@@ -1,5 +1,5 @@
 import { bmiFaq } from './bmi-calculator/content'
-import { publishedTools, type LocaleCode, type LocalizedCopy } from './catalog'
+import { hasLocalizedCopy, publishedTools, type LocaleCode, type LocalizedCopy } from './catalog'
 
 /**
  * Questions a tool answers on its own page. A tool registers them under the
@@ -38,7 +38,7 @@ export function validateToolFaq() {
     if (!entries.length) issues.push(`[${contentKey}] registered without a question`)
 
     for (const [index, entry] of entries.entries()) {
-      if (!entry.heading['zh-tw']?.trim() || !entry.heading.en?.trim() || !entry.body['zh-tw']?.trim() || !entry.body.en?.trim()) {
+      if (!hasLocalizedCopy(entry.heading) || !hasLocalizedCopy(entry.body)) {
         issues.push(`[${contentKey}:${index}] requires both locales`)
       }
     }

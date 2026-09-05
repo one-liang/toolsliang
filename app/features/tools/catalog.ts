@@ -319,6 +319,11 @@ export function formatReviewDate(value: string, locale: LocaleCode) {
   }).format(new Date(`${value}T00:00:00Z`))
 }
 
+/** The bilingual completeness rule every registry and content module validates against. */
+export function hasLocalizedCopy(value: LocalizedCopy | undefined) {
+  return Boolean(value?.['zh-tw']?.trim() && value.en?.trim())
+}
+
 export function isSupportedLocale(value: string): value is LocaleCode {
   return supportedLocales.some(locale => locale === value)
 }
@@ -437,7 +442,6 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
   const formerSlugs = new Set<string>()
   const categoryIds = new Set(toolCategories.map(category => category.id))
   const iconKeys = new Set<string>(toolIcons)
-  const hasLocalizedCopy = (value: LocalizedCopy | undefined) => Boolean(value?.['zh-tw']?.trim() && value.en?.trim())
 
   for (const tool of definitions) {
     const prefix = `[${tool.slug || 'missing-slug'}]`
