@@ -1,5 +1,6 @@
 import { bmiContentReview } from './bmi-calculator/domain/sources'
 import { ntdContentReview } from './ntd-uppercase/domain/sources'
+import { randomPickerContentReview } from './random-picker/domain/sources'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -236,6 +237,53 @@ const registeredTools: ToolDefinition[] = [
       },
     },
     contentReview: ntdContentReview,
+  },
+  {
+    slug: 'random-picker', category: 'random-selection', icon: 'dices',
+    availability: { state: 'published', publishedAt: '2026-09-05' },
+    status: { kind: 'new', startsAt: '2026-09-05', endsAt: '2026-10-05' },
+    name: { 'zh-tw': '本機抽選與抽籤輪盤', en: 'Local Random Draw & Wheel' },
+    description: {
+      'zh-tw': '在這台裝置上等機率抽出一名或多名。',
+      en: 'Draw one or several names with equal chances, on this device.',
+    },
+    aliases: {
+      'zh-tw': ['抽籤', '隨機抽人', '名單抽選'],
+      en: ['random picker', 'name picker', 'draw wheel'],
+    },
+    keywords: {
+      'zh-tw': ['抽籤', '輪盤', '名單', '隨機'],
+      en: ['draw', 'wheel', 'shuffle', 'random'],
+    },
+    processingClass: 'instant',
+    routeComponentKey: 'RandomPickerWorkspace',
+    offlineMode: 'ready',
+    capabilities: ['javascript'],
+    acceptedInput: {
+      'zh-tw': '一份候選名單，一行一個項目，最多 10,000 筆',
+      en: 'A candidate list, one entry per line, up to 10,000 entries',
+    },
+    pagePresentation: {
+      showHeadingIcon: false,
+      showLocalProcessingStatement: true,
+    },
+    localProcessingStatement: {
+      'zh-tw': '名單、抽選設定與結果只在此裝置處理，不保存也不送出。',
+      en: 'The list, the settings, and the result are handled on this device only; nothing is stored or sent.',
+    },
+    seo: {
+      contentKey: 'random-picker',
+      title: { 'zh-tw': '本機抽選與抽籤輪盤', en: 'Local Random Draw & Wheel' },
+      description: {
+        'zh-tw': '在瀏覽器等機率抽出一名或多名，可用名單或輪盤呈現，名單與結果不離開裝置，也不會被保存。',
+        en: 'Draw one or several entries with equal chances in your browser, as a list or a wheel, with nothing leaving your device and nothing stored.',
+      },
+      answer: {
+        'zh-tw': '貼上名單後選擇重複項目策略與抽出人數，工具以瀏覽器的密碼學隨機來源搭配拒絕取樣與 Fisher–Yates 抽出不重複的中選名單；輪盤只是呈現方式，不影響結果，且結果無法由第三方稽核。',
+        en: 'Paste a list, pick how repeats are treated and how many to draw, and the tool uses the browser\'s cryptographic randomness with rejection sampling and a Fisher–Yates shuffle to draw without repeats; the wheel only presents that result, and no third party can audit it.',
+      },
+    },
+    contentReview: randomPickerContentReview,
   },
   {
     slug: 'document-counter', category: 'document', icon: 'file-text',
