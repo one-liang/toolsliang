@@ -9,8 +9,9 @@
 - 狀態：已決策，無未決問題
 
 本紀錄鎖定 BMI 工具的公式、分級、換算、輸入範圍、精度與健康資訊邊界。實作與測試以
-`app/features/tools/bmi-calculator/domain/reference.ts` 引用同一份決策；本文件與該模組的內容由
-`tests/bmi-reference.test.ts` 綁定，任一方改動而未同步即測試失敗。
+`app/features/tools/bmi-calculator/domain/reference.ts` 與 `sources.ts` 引用同一份決策。
+`tests/bmi-reference.test.ts` 會逐列重新計算 §5.5、§5.6 的測試向量，並比對本文件與模組的分級界線、
+來源清單與免責主題；任一方改動而未同步即測試失敗。
 
 本研究不需要任何真實使用者健康資料，以下所有數值均為合成案例。
 
@@ -34,6 +35,9 @@
 > BMI＝體重(公斤)÷身高(公尺)÷身高(公尺)
 
 世界衛生組織的定義同為 `weight (kg) / height² (m²)`，兩者一致，因此公式本身沒有地區差異。
+
+完整精度值依來源寫法以 `體重 ÷ 身高 ÷ 身高` 兩次除法計算。這不是形式問題：`w / h / h` 與 `w / (h * h)`
+在 IEEE 754 下可能差一個最末位，測試向量必須指明是哪一種。
 
 英制輸入採「英尺＋英吋」與「磅」，一律先換算為公尺與公斤，再套用同一條公式：
 
@@ -74,6 +78,11 @@
 - 第一版**不細分**輕度、中度、重度肥胖。「成人健康體位標準」只公告到「肥胖」一級，細分等級來自其他文件；
   混用多份來源會讓版本識別碼失去意義。若日後要細分，必須另行查核來源、更新版本識別碼與測試。
 - 分級文字為官方用語，不得改寫成「正常／不正常」或「標準體重」等未經公告的說法。
+
+界線與 WHO 的國際分級（過重 ≧25、肥胖 ≧30）不同，這是台灣主管機關的公告值，不是把國際標準改寫。
+WHO 2004 年的亞洲族群專家諮詢維持國際分級不變，另提出 23、27.5、32.5、37.5 作為各國可自行採用的
+公共衛生行動點；它說明「亞洲族群在較低 BMI 即可能有較高風險」，但不是台灣 24／27 的出處。
+台灣頁面與英文頁面都採國民健康署界線，並在說明中指出與國際分級的差異。
 
 國民健康署「成人健康體重對照表」可作為交叉驗證：身高 150 公分時，健康體重上限列為 53.9 公斤、
 過重自 54.0 公斤起、肥胖自 60.8 公斤起，與 24（54.0÷2.25）與 27（60.75÷2.25）的界線一致。
@@ -130,41 +139,47 @@
 
 ### 5.5 測試向量（公制）
 
+完整精度欄為 `體重 ÷ 身高 ÷ 身高` 的雙精度結果四捨五入至小數點後 6 位；實作測試比對數值時應採
+±5e-7 的容差，斷言的重點是顯示值與分級。
+
 | 身高 | 體重 | 完整精度 BMI | 顯示值 | 分級 | 用途 |
 | --- | --- | --- | --- | --- | --- |
-| 170 cm | 65 kg | 22.49134948096886 | 22.5 | `healthy-weight` | 代表案例 |
-| 160 cm | 47.3 kg | 18.476562499999996 | 18.4 | `underweight` | 四捨五入會誤觸界線 |
-| 160 cm | 47.36 kg | 18.499999999999996 | 18.5 | `healthy-weight` | 浮點誤差需靠容差修正 |
-| 175 cm | 73.4 kg | 23.967346938775513 | 23.9 | `healthy-weight` | 顯示值須改用捨去 |
-| 175 cm | 73.5 kg | 24.0 | 24.0 | `overweight` | 界線值 |
-| 150 cm | 60.7 kg | 26.977777777777778 | 26.9 | `overweight` | 界線下緣 |
-| 150 cm | 60.8 kg | 27.022222222222222 | 27.0 | `obese` | 界線上緣 |
-| 180 cm | 87.48 kg | 27.0 | 27.0 | `obese` | 界線值 |
-| 100 cm | 20 kg | 20.0 | 20.0 | `healthy-weight` | 範圍下限 |
-| 250 cm | 500 kg | 80.0 | 80.0 | `obese` | 範圍上限 |
+| 170 cm | 65 kg | 22.491349 | 22.5 | `healthy-weight` | 代表案例 |
+| 160 cm | 47.3 kg | 18.476562 | 18.4 | `underweight` | 四捨五入會誤觸界線 |
+| 160 cm | 47.36 kg | 18.500000 | 18.5 | `healthy-weight` | 浮點誤差需靠容差修正 |
+| 175 cm | 73.4 kg | 23.967347 | 23.9 | `healthy-weight` | 顯示值須改用捨去 |
+| 175 cm | 73.5 kg | 24.000000 | 24.0 | `overweight` | 界線值 |
+| 150 cm | 60.7 kg | 26.977778 | 26.9 | `overweight` | 界線下緣 |
+| 150 cm | 60.8 kg | 27.022222 | 27.0 | `obese` | 界線上緣 |
+| 180 cm | 87.48 kg | 27.000000 | 27.0 | `obese` | 界線值 |
+| 100 cm | 20 kg | 20.000000 | 20.0 | `healthy-weight` | 範圍下限 |
+| 250 cm | 500 kg | 80.000000 | 80.0 | `obese` | 範圍上限 |
 
 ### 5.6 測試向量（英制）
 
-| 身高 | 體重 | 換算 | 完整精度 BMI | 顯示值 | 分級 |
+換算欄為方便閱讀而四捨五入至小數點後 4 位；實際計算一律使用 §2 的精確係數，不得改用換算欄的近似值。
+
+| 身高 | 體重 | 換算（參考） | 完整精度 BMI | 顯示值 | 分級 |
 | --- | --- | --- | --- | --- | --- |
-| 5 ft 9 in | 160 lb | 1.7526 m／72.5747792 kg | 23.627627125029512 | 23.6 | `healthy-weight` |
-| 5 ft 0 in | 100 lb | 1.524 m／45.359237 kg | 19.5297105455322 | 19.5 | `healthy-weight` |
-| 6 ft 2 in | 220 lb | 1.8796 m／99.79032140000001 kg | 28.246038626847163 | 28.2 | `obese` |
+| 5 ft 9 in | 160 lb | 1.7526 m／72.5748 kg | 23.627627 | 23.6 | `healthy-weight` |
+| 5 ft 0 in | 100 lb | 1.5240 m／45.3592 kg | 19.529711 | 19.5 | `healthy-weight` |
+| 6 ft 2 in | 220 lb | 1.8796 m／99.7903 kg | 28.246039 | 28.2 | `obese` |
 
 ## 6. 免責、來源標示與用語規則
 
-### 6.1 必須同時呈現的免責主題
+### 6.1 必須同時呈現的免責內容
 
-實作必須在結果附近（不是只在頁尾）呈現以下每一個主題，中英文皆完整：
+實作必須在結果附近（不是只在頁尾）呈現以下每一則，中英文皆完整。句子可直接採用，
+T08 若調整語氣，仍必須保留同一個主張與範圍，不得弱化或省略任何一則。
 
-| 免責 key | 中文要點 | 英文要點 |
+| 免責 key | 繁體中文 | English |
 | --- | --- | --- |
-| `not-a-diagnosis` | BMI 是體位篩檢參考，不是醫療診斷，也不評估疾病風險 | BMI is a screening reference, not a medical diagnosis or risk assessment |
-| `adults-only` | 適用 18 歲（含）以上成人 | Applies to adults aged 18 and over |
-| `body-composition` | 不區分脂肪、肌肉與骨質，也不反映脂肪分布 | Does not distinguish fat, muscle, or bone mass, or where fat is carried |
-| `pregnancy` | 懷孕期間不適用，孕期體重另有依孕前 BMI 的建議 | Not applicable during pregnancy; gestational weight gain follows pre-pregnancy BMI guidance |
-| `older-adults` | 長者、肌肉量高或身體組成特殊者，結果僅供參考 | For older adults or people with atypical body composition, treat the result as reference only |
-| `professional-advice` | 需要健康判斷時請諮詢醫事人員 | Consult a health professional for any health decision |
+| `not-a-diagnosis` | BMI 是體位篩檢的參考值，不是醫療診斷，也不用來評估疾病風險。 | BMI is a screening reference, not a medical diagnosis or a disease risk assessment. |
+| `adults-only` | 這裡的分級只適用 18 歲（含）以上成人；未滿 18 歲需依年齡與性別對照百分位。 | These categories apply to adults aged 18 and over; people under 18 need age- and sex-specific percentiles. |
+| `body-composition` | BMI 不區分脂肪、肌肉與骨質，也看不出脂肪長在哪裡。 | BMI does not distinguish fat, muscle, or bone mass, and does not show where fat is carried. |
+| `pregnancy` | 懷孕期間不適用；孕期體重另有以孕前 BMI 為基準的建議增重範圍。 | It does not apply during pregnancy; gestational weight gain follows guidance based on pre-pregnancy BMI. |
+| `older-adults` | 長者、肌肉量高或身體組成特殊的人，結果僅供參考。 | For older adults or people with atypical body composition, treat the result as reference only. |
+| `professional-advice` | 需要健康判斷或體重管理計畫時，請諮詢醫事人員。 | Consult a health professional for any health decision or weight management plan. |
 
 ### 6.2 來源標示
 
@@ -188,7 +203,7 @@
 | --- | --- | --- |
 | BMI 如何計算？ | How is BMI calculated? | 國民健康署公式、WHO 定義 |
 | 台灣成人的 BMI 分級標準是什麼？ | What are Taiwan's adult BMI categories? | 成人健康體位標準四級界線 |
-| 為什麼台灣的過重界線是 24，不是 WHO 的 25？ | Why does Taiwan use 24 instead of the WHO cut-off of 25? | WHO 亞洲族群 BMI 專家諮詢（Lancet 2004）與國民健康署公告 |
+| 為什麼台灣的過重界線是 24，不是 WHO 的 25？ | Why does Taiwan use 24 instead of the WHO cut-off of 25? | 24／27 出自國民健康署公告的成人健康體位標準；WHO 專家諮詢僅作為「亞洲族群在較低 BMI 即有較高風險」的文獻背景 |
 | 未滿 18 歲可以用這個工具嗎？ | Can people under 18 use this tool? | 兒童與青少年 BMI 建議值採百分位 |
 | 懷孕可以用 BMI 判斷嗎？ | Can BMI be used during pregnancy? | 孕期體重以孕前 BMI 為基準另有建議 |
 | BMI 可以看出體脂肪或健康狀況嗎？ | Does BMI measure body fat or health? | CDC：BMI 不區分脂肪與肌肉，是篩檢而非診斷 |
@@ -207,7 +222,7 @@
 | 衛生福利部國民健康署「兒童與青少年生長身體質量指數(BMI)建議值」 | 更新 2021-06-21 | 未滿 18 歲不適用的依據 | 是 | https://www.hpa.gov.tw/Pages/Detail.aspx?nodeid=542&pid=9547 |
 | 國民健康署孕產婦關懷網站「孕期體重過輕或過重對母嬰健康都有影響」（參考《孕婦衛教手冊》2024.03 版） | 擷取於 2026-09-05 | 懷孕期間不適用的依據 | 是 | https://mammy.hpa.gov.tw/Home/NewsKBContent?id=1919&type=01 |
 | WHO, Obesity and overweight fact sheet | 更新 2025-12-08 | BMI 國際定義與 25／30 界線 | 是 | https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight |
-| WHO expert consultation, Appropriate body-mass index for Asian populations（Lancet 2004;363:157-163） | 2004 | 亞洲族群採較低界線的依據 | 是 | https://doi.org/10.1016/S0140-6736(03)15268-3 |
+| WHO expert consultation, Appropriate body-mass index for Asian populations（Lancet 2004;363:157-163） | 2004 | 亞洲族群在較低 BMI 即有較高風險的文獻背景 | 是 | https://doi.org/10.1016/S0140-6736(03)15268-3 |
 | CDC, About Body Mass Index (BMI) | 最後檢視 2025-12-16 | BMI 為篩檢指標、不區分脂肪與肌肉 | 是 | https://www.cdc.gov/bmi/about/index.html |
 | NIST Special Publication 811, Appendix B.9 | 現行版 | 英吋、英尺換算精確值 | 是 | https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9 |
 | NIST Handbook 44, Appendix C | 2026 版 | 磅換算精確值 | 是 | https://www.nist.gov/system/files/documents/2025/12/30/appc-26-HB44-20251222.pdf |
@@ -220,13 +235,17 @@
 | 是否加入腰圍輸入與判定？ | 否 | 腰圍屬於代謝症候群判讀範疇，超出 BMI 工具邊界；僅在說明中提及並附來源 |
 | 是否詢問年齡或性別？ | 否 | 工具不收集任何身分資訊；適用族群以文案標示即可 |
 | 是否提供「理想體重範圍」？ | 第一版否 | 會被理解為個人化目標建議，逼近醫療建議邊界；如要提供需另開 ticket 與內容審查 |
+| 英文頁要不要改用 WHO 的 25／30？ | 否 | 同一個工具不能因語言而給出不同分級；改以說明文字指出與國際分級的差異 |
 | 分級要不要用顏色區分？ | 顏色只能輔助 | 分級必須以文字表達，符合 WCAG 2.2 AA 對非顏色依賴的要求 |
 
 本紀錄沒有留下會改變產品方向的未決問題。
 
 ## 10. 交付給 T08 的引用點
 
-- `app/features/tools/bmi-calculator/domain/reference.ts`：分級界線、換算係數、輸入範圍、精度規則、
-  免責主題 key、以及可直接填入工具註冊 `contentReview` 的來源資料。
-- `tests/bmi-reference.test.ts`：鎖定上述決策，並確保本文件與該模組不會各自漂移。
+- `app/features/tools/bmi-calculator/domain/reference.ts`：分級界線與官方分級名稱、換算係數、
+  輸入範圍與精度常數。
+- `app/features/tools/bmi-calculator/domain/sources.ts`：來源版本識別碼、免責主題 key，以及可直接
+  填入工具註冊 `contentReview` 的來源資料（T08 建立工具頁時登錄到 `catalog.ts`）。
+- `tests/bmi-reference.test.ts`：鎖定上述決策，逐列重新計算 §5.5、§5.6 的測試向量，
+  並確保本文件與兩個模組不會各自漂移。
 - T08 需自行實作的部分：計算函式、單位切換 UI、錯誤訊息文案、雙語內容、structured data 與頁面測試。
