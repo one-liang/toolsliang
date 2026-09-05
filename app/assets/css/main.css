@@ -66,6 +66,9 @@
   --sidebar-collapsed: 76px;
 
   /* Component tokens */
+  --device-clock-font-size: clamp(2rem, 4vw, 3.5rem);
+  --device-clock-font-weight: 750;
+  --device-clock-line-height: 1.35;
   --button-primary-bg: var(--color-primary);
   --button-primary-fg: var(--color-primary-foreground);
   --button-primary-hover-bg: var(--color-primary-hover);

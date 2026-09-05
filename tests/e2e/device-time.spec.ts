@@ -9,6 +9,8 @@ const canaries = [
   { label: '裝置日期', value: '2031年7月8日' },
   { label: '英文裝置日期', value: 'July 8, 2031' },
   { label: '裝置時間戳', value: instant },
+  { label: '裝置時區', value: 'Asia/Taipei' },
+  { label: '裝置 UTC 時差', value: 'UTC+08:00' },
 ]
 
 test.use({ timezoneId: 'Asia/Taipei' })
@@ -47,13 +49,14 @@ for (const locale of ['zh-tw', 'en'] as const) {
     context.on('request', request => findings.push(...inspectNetworkRequest({
       url: request.url(), method: request.method(), headers: request.headers(), body: request.postData(),
     }, canaries, { allowedOrigins: ['http://127.0.0.1:4173'] })))
-    page.on('websocket', socket => socket.on('framesent', event => findings.push(...inspectWebSocketFrame(socket.url(), event.payload, canaries, { allowedOrigins: ['http://127.0.0.1:4173'] }))))
+    page.on('websocket', (socket) => {
+      findings.push(...inspectNetworkRequest({ url: socket.url(), method: 'WEBSOCKET', headers: {}, body: null }, canaries, { allowedOrigins: ['http://127.0.0.1:4173'] }))
+      socket.on('framesent', event => findings.push(...inspectWebSocketFrame(socket.url(), event.payload, canaries, { allowedOrigins: ['http://127.0.0.1:4173'] })))
+    })
     page.on('pageerror', () => findings.push('未捕捉例外'))
     page.on('console', message => {
       if (message.type() === 'error' || canaries.some(canary => message.text().includes(canary.value))) findings.push('主控台錯誤或工具內容')
     })
-    await page.clock.install({ time: new Date(instant) })
-    await page.clock.pauseAt(new Date(instant))
     await page.addInitScript(() => {
       let attempts = 0
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
@@ -64,6 +67,10 @@ for (const locale of ['zh-tw', 'en'] as const) {
       } })
     })
     await gotoHydrated(page, `/${locale}/tools/device-time/`)
+    await page.locator('[data-device-clock]').waitFor()
+    await page.clock.install({ time: new Date(instant) })
+    await page.clock.pauseAt(new Date(instant))
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
     const clock = page.locator('[data-device-clock]')
     await expect(clock.locator('time')).toHaveText('17:10:11')
     await expect(clock).toContainText('Asia/Taipei')
@@ -93,7 +100,7 @@ for (const locale of ['zh-tw', 'en'] as const) {
     await expect(page.locator('[data-device-clock]')).toBeVisible()
     for (const width of [320, 375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 1000 })
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      await expect.poll(() => page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth }))).toEqual({ viewport: width, content: width })
       for (const control of await page.locator('.device-time button').all()) {
         const box = await control.boundingBox()
         expect(box!.width).toBeGreaterThanOrEqual(44)
@@ -101,16 +108,22 @@ for (const locale of ['zh-tw', 'en'] as const) {
       }
     }
     await page.setViewportSize({ width: 375, height: 812 })
+    await page.locator('[data-copy-time]').focus()
+    await expect.poll(async () => {
+      const button = await page.locator('[data-copy-time]').boundingBox()
+      const navigation = await page.locator('.mobile-nav').boundingBox()
+      return button!.y + button!.height <= navigation!.y
+    }).toBe(true)
     for (const theme of ['light', 'dark']) {
-      if (theme === 'dark') await page.getByRole('button', { name: locale === 'en' ? 'Toggle color mode' : '切換色彩模式' }).click()
+      if (theme === 'dark') await page.getByRole('button', { name: locale === 'en' ? 'Toggle color theme' : '切換色彩模式' }).click()
       expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
       if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/device-time-${locale}-${theme}-375.png`, fullPage: true })
     }
     await page.addStyleTag({ content: '* { line-height: 1.5 !important; letter-spacing: .12em !important; word-spacing: .16em !important; } p { margin-bottom: 2em !important; }' })
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.locator('body').evaluate(element => element.style.zoom = '2')
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   })
 }
 

@@ -90,6 +90,22 @@ describe('裝置時間公開工具頁', () => {
     expect(sessionStorage.length).toBe(0)
   })
 
+  it('等待剪貼簿回應時提供可見狀態且保留可聚焦的複製按鈕', async () => {
+    let complete: () => void = () => {}
+    const writeText = vi.fn(() => new Promise<void>((resolve) => { complete = resolve }))
+    vi.spyOn(navigator, 'clipboard', 'get').mockReturnValue({ writeText } as unknown as Clipboard)
+    await openTool('en')
+    await page.get('[data-copy-time]').trigger('click')
+    expect(page.get('[role="status"]').text()).toBe('Copying time information…')
+    expect(page.get('[data-copy-time]').attributes('disabled')).toBeUndefined()
+    expect(page.get('[data-copy-time]').attributes('aria-busy')).toBe('true')
+    await page.get('[data-copy-time]').trigger('click')
+    expect(writeText).toHaveBeenCalledTimes(1)
+    complete()
+    await flushPromises()
+    expect(page.get('[role="status"]').text()).toBe('Time information copied.')
+  })
+
   it('無法讀取 Intl 時區時，提供基本時間與能力說明', async () => {
     vi.mocked(Intl.DateTimeFormat.prototype.resolvedOptions).mockImplementation(() => { throw new Error('unavailable') })
     await openTool()
