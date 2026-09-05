@@ -125,8 +125,8 @@ export const randomPickerCaveats: Record<RandomPickerCaveatKey, LocalizedCopy> =
 
 const randomPickerErrorCopy: Record<RandomPickerErrorCode, LocalizedCopy> = {
   'randomness-unavailable': {
-    'zh-tw': '這個瀏覽器沒有提供安全隨機來源，無法保證等機率抽選；請改用最新版瀏覽器或其他裝置。',
-    en: 'This browser provides no secure random source, so an equal-probability draw cannot be guaranteed; use an up-to-date browser or another device.',
+    'zh-tw': '這個瀏覽器沒有提供可用的安全隨機來源，無法保證等機率抽選；請改用最新版瀏覽器或其他裝置。',
+    en: 'This browser has no usable secure random source, so an equal-probability draw cannot be guaranteed; use an up-to-date browser or another device.',
   },
   'empty': {
     'zh-tw': '請先貼上或逐項輸入候選名單，一行一個。',

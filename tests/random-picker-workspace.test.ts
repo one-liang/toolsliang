@@ -206,13 +206,18 @@ describe('random picker workspace', () => {
     expect(wrapper.findAll('.picker-candidates li').map(item => item.text())).toEqual(['Amy', 'Bob', 'Cindy'])
   })
 
-  it('clears a stale result as soon as the list or the settings change', async () => {
+  it('clears a stale result and stale wheel names as soon as the list changes', async () => {
+    stubReducedMotion(true)
     scriptRandom([0])
-    const wrapper = await draw(await enterList(mountWorkspace(), 'Amy\nBob'))
+    const wrapper = await enterList(mountWorkspace(), 'Amy\nBob')
+    await wrapper.get('input[name="picker-presentation"][value="wheel"]').setValue()
+    await draw(wrapper)
     expect(drawnEntries(wrapper)).toEqual(['Amy'])
 
-    await enterList(wrapper, 'Amy\nBob\nCindy')
+    await enterList(wrapper, 'Cindy\nDan\nErin')
     expect(drawnEntries(wrapper), '名單改了就不能留著舊結果').toHaveLength(0)
+    expect(wrapper.findAll('.picker-candidates li').map(item => item.text()), '輪盤旁的名單必須跟著改')
+      .toEqual(['Cindy', 'Dan', 'Erin'])
   })
 
   it('returns to an empty workspace after a reset, keeping the chosen settings', async () => {
@@ -234,8 +239,12 @@ describe('random picker workspace', () => {
     })
     const wrapper = await draw(await enterList(mountWorkspace(), 'Amy\nBob'))
 
-    expect(wrapper.get('[role="alert"]').text()).toContain('沒有提供安全隨機來源')
+    expect(wrapper.get('[role="alert"]').text()).toContain('沒有提供可用的安全隨機來源')
     expect(drawnEntries(wrapper)).toHaveLength(0)
+    expect(wrapper.get('.picker-draw').attributes('disabled'), '來源不可信時不得讓人一直重按').toBeDefined()
+
+    await enterList(wrapper, 'Amy\nBob\nCindy')
+    expect(wrapper.get('.picker-draw').attributes('disabled'), '改動名單後可以再試一次').toBeUndefined()
   })
 
   it('names the rule version and cites the method sources', () => {

@@ -34,11 +34,6 @@ export interface RandomPickerRequest {
   hasSecureRandom: boolean
 }
 
-export interface RandomPickerPlan {
-  list: RandomPickerList
-  drawCount: number
-}
-
 /** Numbers a refusal needs to be actionable. Never an entry: those stay on the page. */
 export interface RandomPickerErrorValues {
   limit?: number
@@ -46,9 +41,13 @@ export interface RandomPickerErrorValues {
   entries?: number
 }
 
+/**
+ * Both branches carry the parsed list, so the page shows the same entry count
+ * the draw would use instead of parsing the field a second time to say it.
+ */
 export type RandomPickerOutcome =
-  | { state: 'ready', plan: RandomPickerPlan }
-  | { state: 'error', code: RandomPickerErrorCode, values: RandomPickerErrorValues }
+  | { state: 'ready', list: RandomPickerList, drawCount: number }
+  | { state: 'error', list: RandomPickerList, code: RandomPickerErrorCode, values: RandomPickerErrorValues }
 
 export const randomWordCeiling = 2 ** 32
 /**
@@ -120,15 +119,18 @@ export function secureRandomWords(source: Crypto | undefined): RandomWords | und
 
 /**
  * Everything that has to be true before a draw can run, in the reviewed check
- * order. It returns the parsed list as well, so the page shows the same entry
- * count the draw would use rather than a second, separately derived one.
+ * order: the random source first, then the list, then how many to take from it.
+ * Both outcomes carry the parsed list, so the page reports the entry count the
+ * draw would actually use instead of parsing the field a second time to say it.
  */
 export function planRandomPicker(request: RandomPickerRequest): RandomPickerOutcome {
+  const list = parseRandomPickerList(request.text, request.duplicates)
+  const refuse = (code: RandomPickerErrorCode, values: RandomPickerErrorValues = {}): RandomPickerOutcome =>
+    ({ state: 'error', list, code, values })
+
   if (!request.hasSecureRandom) return refuse('randomness-unavailable')
   // An untouched field is not a mistake; a field holding only whitespace is.
   if (!request.text) return refuse('empty')
-
-  const list = parseRandomPickerList(request.text, request.duplicates)
   if (!list.entries.length) return refuse('no-entries')
   if (list.overlongEntries) {
     return refuse('entry-too-long', { count: list.overlongEntries, limit: randomPickerLimits.maxEntryLength })
@@ -141,9 +143,5 @@ export function planRandomPicker(request: RandomPickerRequest): RandomPickerOutc
     return refuse('draw-count-exceeds-entries', { count: request.drawCount, entries: list.entries.length })
   }
 
-  return { state: 'ready', plan: { list, drawCount: request.drawCount } }
-}
-
-function refuse(code: RandomPickerErrorCode, values: RandomPickerErrorValues = {}): RandomPickerOutcome {
-  return { state: 'error', code, values }
+  return { state: 'ready', list, drawCount: request.drawCount }
 }

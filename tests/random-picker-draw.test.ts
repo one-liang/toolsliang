@@ -117,7 +117,7 @@ describe('unbiased index sampling', () => {
     const startedAt = performance.now()
     const outcome = planRandomPicker({ text, duplicates: 'keep', drawCount: 10, hasSecureRandom: true })
     if (outcome.state !== 'ready') throw new Error(`planning failed: ${outcome.code}`)
-    const picks = drawRandomPicks(outcome.plan.list.entries, outcome.plan.drawCount, randomWords)
+    const picks = drawRandomPicks(outcome.list.entries, outcome.drawCount, randomWords)
     const duration = performance.now() - startedAt
 
     expect(picks).toHaveLength(10)
@@ -131,7 +131,17 @@ describe('random picker planning', () => {
 
     expect(outcome).toMatchObject({
       state: 'ready',
-      plan: { drawCount: 2, list: { entries: ['Amy', 'Bob', 'Cindy'] } },
+      drawCount: 2,
+      list: { entries: ['Amy', 'Bob', 'Cindy'] },
+    })
+  })
+
+  it('reports the parsed list on a refusal too, so the page never counts the entries twice', () => {
+    const outcome = planRandomPicker({ text: 'Amy\n\nBob', duplicates: 'keep', drawCount: 9, hasSecureRandom: true })
+
+    expect(outcome.list, '被拒絕的名單仍要說得出它解析到什麼').toMatchObject({
+      entries: ['Amy', 'Bob'],
+      blankLines: 1,
     })
   })
 
@@ -164,13 +174,12 @@ describe('random picker planning', () => {
 
   it('quotes the numbers a refusal needs and never the entries themselves', () => {
     const outcome = planRandomPicker({ text: 'Amy\nBob', duplicates: 'keep', drawCount: 5, hasSecureRandom: true })
+    if (outcome.state !== 'error') throw new Error('這筆抽選應該被拒絕')
 
-    expect(outcome).toEqual({
-      state: 'error',
-      code: 'draw-count-exceeds-entries',
-      values: { count: 5, entries: 2 },
-    })
-    expect(JSON.stringify(outcome), '錯誤內容不得帶出名單文字').not.toContain('Amy')
+    expect(outcome.code).toBe('draw-count-exceeds-entries')
+    expect(outcome.values).toEqual({ count: 5, entries: 2 })
+    expect(Object.values(outcome.values).every(value => typeof value === 'number'), '錯誤數值不得帶出名單文字')
+      .toBe(true)
   })
 
   it('counts merged duplicates against the ceiling, because merging is what the draw runs on', () => {

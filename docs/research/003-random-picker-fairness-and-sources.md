@@ -81,6 +81,9 @@ limit = 2^32 − (2^32 mod n)      // 最大的 n 的倍數
 所以回傳值嚴格等機率。丟棄的機率是 `(2^32 mod n) / 2^32`，在名單上限 10,000 筆時小於
 2.4 × 10⁻⁶，因此不需要迴圈上限以外的保護；實作仍設 `maxRejectionRounds = 64` 作為
 「隨機來源壞掉」的偵測，連續 64 次落在丟棄區間的機率小於 10⁻³⁰⁰，只可能是來源異常。
+這種情況與「瀏覽器根本沒有 `crypto.getRandomValues`」在使用者眼中是同一件事——**沒有可用的
+安全隨機來源**——因此共用 `randomness-unavailable` 這一個錯誤 key，訊息也寫成「沒有提供可用的」
+而不是「沒有提供」。發生時停止抽選並停用抽選按鈕，直到使用者改動名單或設定。
 
 `n = 1` 時 `limit = 2^32`，不會丟棄任何 word，回傳恆為 0。
 
@@ -142,6 +145,10 @@ limit = 2^32 − (2^32 mod n)      // 最大的 n 的倍數
 
 超過上限時停止抽選並說明可以怎麼改，不自動截斷名單：替使用者刪掉項目會直接改變每個人的機會。
 
+規格 12.4 允許大量貼上時顯示解析進度。第一版不做：上限內的名單解析與抽選在參考機器上遠低於
+200ms（§6.4 的效能測試以 10,000 筆驗證），進度條只會閃一下就消失，比直接顯示解析結果更難理解。
+名單摘要（有效項目、略過空白行、合併重複）本身就是解析完成的證據，改動名單後即時更新。
+
 ## 5. 抽選設定與錯誤策略
 
 ### 5.1 設定
@@ -159,7 +166,7 @@ limit = 2^32 − (2^32 mod n)      // 最大的 n 的倍數
 
 | 錯誤 key | 觸發條件 | 繁體中文 | English |
 | --- | --- | --- | --- |
-| `randomness-unavailable` | 瀏覽器沒有 `crypto.getRandomValues` | 這個瀏覽器沒有提供安全隨機來源，無法保證等機率抽選；請改用最新版瀏覽器或其他裝置。 | This browser provides no secure random source, so an equal-probability draw cannot be guaranteed; use an up-to-date browser or another device. |
+| `randomness-unavailable` | 瀏覽器沒有 `crypto.getRandomValues`，或該來源連續 `maxRejectionRounds` 次都給不出可用的隨機值 | 這個瀏覽器沒有提供可用的安全隨機來源，無法保證等機率抽選；請改用最新版瀏覽器或其他裝置。 | This browser has no usable secure random source, so an equal-probability draw cannot be guaranteed; use an up-to-date browser or another device. |
 | `empty` | 名單欄位完全沒有內容 | 請先貼上或逐項輸入候選名單，一行一個。 | Paste or add your candidates first, one per line. |
 | `no-entries` | 有輸入內容，但每一行去除空白後都是空的 | 名單裡沒有可抽選的項目，請確認每一行都有文字。 | The list has no entry to draw from; make sure each line has text. |
 | `entry-too-long` | 有項目超過長度上限 | 有 {count} 個項目超過 {limit} 個字，請縮短後再抽。 | {count} entries are longer than {limit} characters; shorten them before drawing. |
@@ -234,8 +241,8 @@ limit = 2^32 − (2^32 mod n)      // 最大的 n 的倍數
 6. 落在 `[limit, 2^32)` 的 word 一律被丟棄，不會被 `mod` 折回任何結果。
 7. `k = n` 時，抽選結果是名單的一個排列（每個項目恰好出現一次）。
 8. 輪盤停止角度必定把中選扇形的中心對準指標：`(扇形中心角 + 停止角度) mod 360 === 0`。
-9. 名單順序被打亂不改變任何一筆的中選機率——以固定隨機序列對調換後的名單重跑，
-   中選的**項目集合**由隨機序列決定，與項目文字無關。
+9. 抽出的位置只由隨機位元與名單長度決定：以同一段隨機序列對兩份長度相同、文字完全不同的名單
+   重跑，抽中的**位置**完全相同。項目文字不進入任何一次計算，因此不影響任何一筆的中選機率。
 
 第 5 與第 6 條是等機率的**證明**，不是統計觀察：它們直接檢查取樣區間的整除性質，
 不受樣本數影響。統計檢定（§6.4）只是煙霧測試，用來抓明顯的實作錯誤，不能取代這兩條。

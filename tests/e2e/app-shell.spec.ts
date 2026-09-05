@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
-import { gotoHydrated, gotoToolHydrated, waitForHydration, waitForToolWorkspace } from './support/hydration'
+import { gotoHydrated, waitForHydration } from './support/hydration'
 import { inspectNetworkRequest } from './support/privacy-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
@@ -50,13 +50,13 @@ async function pressFocusForward(page: Page, testInfo: TestInfo) {
 
 
 async function reloadHydrated(page: Page) {
+  // This tests a persisted preference, not an interrupted navigation: the
+  // sidebar prefetches the payload of every tool route it can see, and a reload
+  // in the middle of those requests cancels them, which the browser reports as
+  // an error even though the next load fetches them again.
+  await page.waitForLoadState('networkidle')
   await page.reload({ waitUntil: 'domcontentloaded' })
   await waitForHydration(page)
-}
-
-async function reloadToolHydrated(page: Page) {
-  await reloadHydrated(page)
-  await waitForToolWorkspace(page)
 }
 
 function readStoredTheme(page: Page) {
@@ -174,19 +174,18 @@ test('桌面側邊欄可用鍵盤收合，收合後仍能開啟每個工具', as
 
   await collapsedTools.first().click()
   await expect(page).toHaveURL(/\/zh-tw\/tools\/[a-z0-9-]+\/$/)
-  await waitForToolWorkspace(page)
 
   await page.keyboard.press('Enter')
   await expect(page.getByRole('button', { name: '展開側邊欄' })).toBeVisible()
 })
 
 test('主題預設亮色，只有使用者主動切換後才保存偏好', async ({ page }) => {
-  await gotoToolHydrated(page, TOOL_ROUTE)
+  await gotoHydrated(page, TOOL_ROUTE)
 
   await expect(page.locator('html')).not.toHaveClass(/dark/)
   expect(await readStoredTheme(page), '未切換前不得寫入偏好').toBeNull()
 
-  await reloadToolHydrated(page)
+  await reloadHydrated(page)
   expect(await readStoredTheme(page), '重新載入仍不得寫入偏好').toBeNull()
 
   const themeToggle = page.getByRole('button', { name: '切換色彩模式' })
@@ -195,7 +194,7 @@ test('主題預設亮色，只有使用者主動切換後才保存偏好', async
   await expect(page.locator('html')).toHaveClass(/dark/)
   expect(await readStoredTheme(page)).toBe('dark')
 
-  await reloadToolHydrated(page)
+  await reloadHydrated(page)
   await expect(page.locator('html'), '重新載入需沿用已保存的偏好').toHaveClass(/dark/)
 
   await page.getByRole('button', { name: '切換色彩模式' }).click()
@@ -204,7 +203,7 @@ test('主題預設亮色，只有使用者主動切換後才保存偏好', async
 })
 
 test('中英文切換保留目前工具，並套用對應字體', async ({ page }) => {
-  await gotoToolHydrated(page, TOOL_ROUTE)
+  await gotoHydrated(page, TOOL_ROUTE)
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hant-TW')
 
   await page.getByRole('link', { name: 'EN' }).click()

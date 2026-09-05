@@ -19,7 +19,6 @@ import {
   type RandomPickerPick,
   type RandomWords,
 } from '@/features/tools/random-picker/domain/draw'
-import { parseRandomPickerList } from '@/features/tools/random-picker/domain/list'
 import {
   duplicatePolicies,
   randomPickerLimits,
@@ -28,7 +27,7 @@ import {
   type RandomPickerPresentation,
 } from '@/features/tools/random-picker/domain/reference'
 import { randomPickerContentReview, randomPickerReferenceVersion } from '@/features/tools/random-picker/domain/sources'
-import { canPresentWheel, wheelSlices, wheelStopRotation } from '@/features/tools/random-picker/domain/wheel'
+import { canPresentWheel, nextWheelRotation, wheelLabelStyle, wheelSlices, wheelViewBox } from '@/features/tools/random-picker/domain/wheel'
 
 /**
  * The workspace never decides anything about fairness: it reads the plan, calls
@@ -52,7 +51,6 @@ const touched = ref(false)
 const randomWords = shallowRef<RandomWords>()
 const secureRandomChecked = ref(false)
 const picks = ref<RandomPickerPick[]>([])
-const wheelEntries = ref<string[]>([])
 const spinning = ref(false)
 const spinProgress = ref(0)
 const rotation = ref(0)
@@ -70,13 +68,13 @@ const drawCount = computed(() => {
 
   return value.trim() ? Number(value) : Number.NaN
 })
-const list = computed(() => parseRandomPickerList(listText.value, duplicates.value))
 const outcome = computed(() => planRandomPicker({
   text: listText.value,
   duplicates: duplicates.value,
   drawCount: drawCount.value,
   hasSecureRandom: !secureRandomChecked.value || Boolean(randomWords.value),
 }))
+const list = computed(() => outcome.value.list)
 const summary = computed(() => getRandomPickerSummary(list.value, locale.value))
 const caveats = computed(() => getRandomPickerCaveats(
   locale.value,
@@ -110,13 +108,11 @@ const error = computed(() => {
 const countError = computed(() => outcome.value.state === 'error' && outcome.value.code.startsWith('draw-count'))
 const wheelReadable = computed(() => canPresentWheel(list.value.entries.length, drawCount.value))
 const showWheel = computed(() => presentation.value === 'wheel' && wheelReadable.value)
-const slices = computed(() => wheelSlices(wheelEntries.value.length ? wheelEntries.value : list.value.entries))
+const slices = computed(() => wheelSlices(list.value.entries))
 const wheelLabel = computed(() => `${text.value.wheelCaption}（${slices.value.length}）`)
-/** Slice labels shrink and clip as the wheel fills up; the adjacent list stays complete. */
-const wheelFontSize = computed(() => (slices.value.length > 24 ? 4 : slices.value.length > 12 ? 6 : 8))
-const wheelLabelLength = computed(() => (slices.value.length > 24 ? 4 : slices.value.length > 12 ? 6 : 10))
+const wheelFontSize = computed(() => wheelLabelStyle(slices.value.length).fontSize)
 const wonIndex = computed(() => (spinning.value ? undefined : picks.value[0]?.index))
-const canDraw = computed(() => outcome.value.state === 'ready' && !spinning.value)
+const canDraw = computed(() => outcome.value.state === 'ready' && !spinning.value && !drawFailed.value)
 const listDescribedBy = computed(() => ['picker-list-help', pending.value ? 'picker-pending' : '', error.value && !countError.value ? 'picker-error' : '']
   .filter(Boolean)
   .join(' '))
@@ -136,6 +132,8 @@ watch([listText, duplicates, drawCountInput, presentation], () => {
   touched.value = true
   drawFailed.value = false
   stopSpin()
+  // The wheel and its adjacent name list follow the parsed list, so an edit
+  // mid-spin cannot leave the old names on screen beside a new entry count.
   picks.value = []
 })
 
@@ -159,7 +157,7 @@ function draw() {
   stopSpin()
   let drawn: RandomPickerPick[]
   try {
-    drawn = drawRandomPicks(plan.plan.list.entries, plan.plan.drawCount, randomWords.value)
+    drawn = drawRandomPicks(plan.list.entries, plan.drawCount, randomWords.value)
   }
   catch {
     // A source that cannot produce uniform words must not silently produce a winner.
@@ -169,11 +167,10 @@ function draw() {
   }
 
   drawFailed.value = false
-  wheelEntries.value = [...plan.plan.list.entries]
-  const landOn = drawn[0]!.index
-  rotation.value = nextRotationBase() + wheelStopRotation(landOn, plan.plan.list.entries.length, showWheel.value && !prefersReducedMotion() ? SPIN_TURNS : 0)
+  const spins = showWheel.value && !prefersReducedMotion() ? SPIN_TURNS : 0
+  rotation.value = nextWheelRotation(rotation.value, drawn[0]!.index, plan.list.entries.length, spins)
 
-  if (showWheel.value && !prefersReducedMotion()) startSpin(drawn)
+  if (spins) startSpin(drawn)
   else settle(drawn)
 }
 
@@ -221,35 +218,9 @@ function reset() {
   newEntry.value = ''
   drawCountInput.value = '1'
   picks.value = []
-  wheelEntries.value = []
   rotation.value = 0
   drawFailed.value = false
   touched.value = false
-}
-
-/** Keeps the wheel turning forwards between draws instead of snapping backwards. */
-function nextRotationBase() {
-  return Math.ceil(rotation.value / 360) * 360
-}
-
-/**
- * A short wheel keeps its labels upright, which is the easiest to read; a
- * crowded one lays them along the radius so they stop colliding. Either way the
- * full names stay in the list beside the wheel.
- */
-function labelTransform(centreAngle: number) {
-  const upright = slices.value.length <= 12
-  const rotation = upright ? -centreAngle : -90
-
-  return `rotate(${centreAngle}) translate(0 -66) rotate(${rotation})`
-}
-
-function clipLabel(label: string) {
-  const characters = [...label]
-
-  return characters.length > wheelLabelLength.value
-    ? `${characters.slice(0, wheelLabelLength.value - 1).join('')}…`
-    : label
 }
 
 function prefersReducedMotion() {
@@ -359,7 +330,7 @@ function prefersReducedMotion() {
             <span class="picker-wheel__pointer" aria-hidden="true" />
             <svg
               class="picker-wheel__disc"
-              viewBox="-110 -110 220 220"
+              :viewBox="wheelViewBox"
               role="img"
               :aria-label="wheelLabel"
               :style="{ transform: `rotate(${rotation}deg)`, transitionDuration: spinning ? `${SPIN_DURATION_MS}ms` : '0ms' }"
@@ -376,8 +347,8 @@ function prefersReducedMotion() {
                 <text
                   class="picker-wheel__label"
                   :font-size="wheelFontSize"
-                  :transform="labelTransform(slice.centreAngle)"
-                >{{ clipLabel(slice.label) }}</text>
+                  :transform="slice.labelTransform"
+                >{{ slice.label }}</text>
               </g>
             </svg>
           </div>

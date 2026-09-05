@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { supportedLocales, type LocaleCode } from '@/features/tools/catalog'
+import { copy, getTool, supportedLocales, type LocaleCode } from '@/features/tools/catalog'
 import {
   getRandomPickerCaveats,
   getRandomPickerCopy,
@@ -15,9 +15,24 @@ import { parseRandomPickerList } from '@/features/tools/random-picker/domain/lis
 import { randomPickerErrorCodes, randomPickerLimits } from '@/features/tools/random-picker/domain/reference'
 import { randomPickerCaveatKeys } from '@/features/tools/random-picker/domain/sources'
 
-/** Everything the tool says out loud, in the two languages it has to say it in. */
+/**
+ * Everything the tool says out loud, in the two languages it has to say it in —
+ * the registration copy included, because a search result is where a claim
+ * about fairness would do the most damage.
+ */
 function everyVisibleString(locale: LocaleCode) {
+  const tool = getTool('random-picker')!
+
   return [
+    copy(tool.name, locale),
+    copy(tool.description, locale),
+    copy(tool.acceptedInput, locale),
+    copy(tool.localProcessingStatement, locale),
+    copy(tool.seo.title, locale),
+    copy(tool.seo.description, locale),
+    copy(tool.seo.answer, locale),
+    ...tool.aliases[locale],
+    ...tool.keywords[locale],
     ...randomPickerCopyKeys.map(key => getRandomPickerCopy(locale)[key]),
     ...randomPickerCaveatKeys.map(key => randomPickerCaveats[key][locale]),
     ...randomPickerErrorCodes.map(code => randomPickerErrorMessage(code, { count: 3, limit: 5, entries: 2 }, locale)),
