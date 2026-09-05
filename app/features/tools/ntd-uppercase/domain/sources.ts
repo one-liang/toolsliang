@@ -8,7 +8,7 @@ import type { PublishedToolDefinition } from '@/features/tools/catalog'
  */
 
 /** Names the reviewed set of rules the tool follows, by review date. */
-export const ntdRuleVersion = 'ntd-uppercase-2026-09-05'
+export const ntdReferenceVersion = 'ntd-uppercase-2026-09-05'
 
 /**
  * Every caveat must appear next to the result, in both locales. The three

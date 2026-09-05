@@ -118,6 +118,13 @@ export const ntdInputRules = {
   stripsWhitespace: true,
 } as const
 
+/**
+ * Listed in the order the checks run: the first one that fails is the error the
+ * user sees, and only that one. The order decides which message wins when two
+ * boundaries meet — precision before the purpose rule, the purpose rule before
+ * the range, and the treasury rounding before the range, so the range is always
+ * checked against the amount that would actually be written.
+ */
 export const ntdErrorCodes = [
   'empty',
   'invalid-format',
@@ -143,7 +150,9 @@ export interface NtdGoldenVector {
 /**
  * Every case the decision record pins down, including the two worked examples
  * published by the sources: NT$1,018 for the cheque wording and NT$10,215 for
- * the treasury voucher.
+ * the treasury voucher. They live beside the rules rather than only in the test
+ * because the implementation ticket needs them as data — the same vectors drive
+ * the converter's tests, the worked examples on the page and the FAQ.
  */
 export const ntdGoldenVectors = [
   { input: '0', purpose: 'accounting', normalized: '0.00', wording: '新臺幣零元整' },
@@ -160,6 +169,14 @@ export const ntdGoldenVectors = [
   { input: '100010000', purpose: 'accounting', normalized: '100,010,000.00', wording: '新臺幣壹億零壹萬元整' },
   { input: '100000001', purpose: 'accounting', normalized: '100,000,001.00', wording: '新臺幣壹億零壹元整' },
   { input: '1000000000000', purpose: 'accounting', normalized: '1,000,000,000,000.00', wording: '新臺幣壹兆元整' },
+  { input: '12850', purpose: 'accounting', normalized: '12,850.00', wording: '新臺幣壹萬貳仟捌佰伍拾元整' },
+  { input: '12851', purpose: 'accounting', normalized: '12,851.00', wording: '新臺幣壹萬貳仟捌佰伍拾壹元整' },
+  {
+    input: '999999999999',
+    purpose: 'accounting',
+    normalized: '999,999,999,999.00',
+    wording: '新臺幣玖仟玖佰玖拾玖億玖仟玖佰玖拾玖萬玖仟玖佰玖拾玖元整',
+  },
   { input: '12850.5', purpose: 'accounting', normalized: '12,850.50', wording: '新臺幣壹萬貳仟捌佰伍拾元伍角' },
   { input: '100000000.09', purpose: 'accounting', normalized: '100,000,000.09', wording: '新臺幣壹億元零玖分' },
   { input: '0.5', purpose: 'accounting', normalized: '0.50', wording: '新臺幣零元伍角' },
@@ -220,9 +237,12 @@ export const ntdRejectionVectors = [
   { input: '12,34', purpose: 'accounting', code: 'ambiguous-separator' },
   { input: '12.345', purpose: 'accounting', code: 'too-many-decimals' },
   { input: '12.345', purpose: 'treasury', code: 'too-many-decimals' },
+  { input: '12.345', purpose: 'cheque', code: 'too-many-decimals' },
   { input: '100.5', purpose: 'cheque', code: 'fraction-not-supported' },
   { input: '0.01', purpose: 'cheque', code: 'fraction-not-supported' },
+  { input: '999999999999.4', purpose: 'cheque', code: 'fraction-not-supported' },
   { input: '1000000000000', purpose: 'cheque', code: 'out-of-range' },
   { input: '10000000000000000', purpose: 'accounting', code: 'out-of-range' },
   { input: '10000000000000000', purpose: 'treasury', code: 'out-of-range' },
+  { input: '9999999999999999.5', purpose: 'treasury', code: 'out-of-range' },
 ] as const satisfies readonly NtdRejectionVector[]
