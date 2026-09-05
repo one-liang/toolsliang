@@ -1,4 +1,5 @@
 import { bmiFaq } from './bmi-calculator/content'
+import { ntdFaq } from './ntd-uppercase/content'
 import { hasLocalizedCopy, publishedTools, type LocaleCode, type LocalizedCopy } from './catalog'
 
 /**
@@ -14,6 +15,7 @@ export interface ToolFaqEntry {
 
 const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'bmi-calculator': bmiFaq,
+  'ntd-uppercase': ntdFaq,
 }
 
 const toolFaqIssues = validateToolFaq()

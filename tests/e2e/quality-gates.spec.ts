@@ -4,7 +4,7 @@ import { guardToolContentBoundary } from './support/tool-content-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const TOOL_INPUT = '10001.09'
-const TOOL_OUTPUT = '新臺幣壹萬零壹元玖分'
+const TOOL_OUTPUT = '新臺幣壹萬零壹元零玖分'
 const SECONDARY_TOOL_INPUT = '765432.10'
 const SECONDARY_TOOL_OUTPUT = '新臺幣柒拾陸萬伍仟肆佰參拾貳元壹角'
 const INVALID_TOOL_INPUT = 'quality-invalid-input-8af3'
@@ -50,7 +50,7 @@ test('工具進頁即可操作，並在功能後提供清楚的使用說明', as
   await expect(beforeYouStart).toBeVisible()
 
   await expect(page.locator('.tool-heading__icon')).toHaveCount(0)
-  await expect(page.getByText('輸入與結果只在此裝置處理。')).toHaveCount(0)
+  await expect(page.getByText('金額、用途與轉換結果只在此裝置處理。')).toHaveCount(0)
   await expect(page.getByText('轉換只在此瀏覽器執行。', { exact: false })).toHaveCount(0)
 
   const referenceTable = page.getByRole('table', { name: '數字與國字大寫對照' })
@@ -64,7 +64,8 @@ test('英文頁以英文說明輸入錯誤', async ({ page }) => {
   await page.locator('[data-capability-ready="true"]').waitFor()
   await page.getByLabel('Amount (NTD)').fill(INVALID_TOOL_INPUT)
 
-  await expect(page.getByRole('alert')).toHaveText('Enter an amount of zero or more with up to two decimal places.')
+  await expect(page.getByRole('alert'))
+    .toHaveText('Enter digits only; a decimal point and thousands separators are allowed, for example 1,234.56.')
 })
 
 test('複製按鈕以淺色圖文呈現，且符合一般文字對比', async ({ page }) => {
@@ -125,7 +126,7 @@ test('代表性工具的內容留在裝置，且核心流程可用鍵盤完成',
   await pressFocusForward(page, testInfo)
   await expect(page.getByRole('button', { name: '清除' })).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(page.locator('.result-panel')).toContainText('—')
+  await expect(page.locator('.result-panel')).toContainText('選好用途並輸入金額')
   expect(await amount.evaluate(element => (element as HTMLInputElement).value)).toBe('')
 
 })
@@ -186,6 +187,8 @@ for (const viewport of [
 
     const coreTargets = [
       amount,
+      // The purpose is chosen by tapping its label, which is what carries the target size.
+      page.locator('.ntd-purposes__option').first(),
       page.getByRole('button', { name: '加入常用' }),
       page.getByRole('button', { name: '複製結果' }),
       page.getByRole('button', { name: '清除' }),

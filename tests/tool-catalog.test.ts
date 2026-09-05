@@ -17,6 +17,7 @@ import {
   type PublishedToolDefinition,
 } from '@/features/tools/catalog'
 import { bmiContentReview } from '@/features/tools/bmi-calculator/domain/sources'
+import { ntdContentReview } from '@/features/tools/ntd-uppercase/domain/sources'
 
 describe('tool catalog', () => {
   it('accepts the registered catalog contract', () => {
@@ -68,16 +69,16 @@ describe('tool catalog', () => {
         en: ['Taiwan dollar uppercase', 'Chinese amount wording'],
       },
       keywords: {
-        'zh-tw': ['支票', '會計', '金額'],
-        en: ['cheque', 'accounting', 'amount'],
+        'zh-tw': ['支票', '會計', '國庫', '金額'],
+        en: ['cheque', 'accounting', 'treasury', 'amount'],
       },
       acceptedInput: {
-        'zh-tw': '新臺幣數字金額',
-        en: 'A numeric New Taiwan dollar amount',
+        'zh-tw': '一筆新臺幣數字金額，小數點後最多兩位',
+        en: 'One New Taiwan dollar amount, with at most two decimal places',
       },
       localProcessingStatement: {
-        'zh-tw': '輸入與結果只在此裝置處理。',
-        en: 'Input and results are processed only on this device.',
+        'zh-tw': '金額、用途與轉換結果只在此裝置處理。',
+        en: 'The amount, the purpose, and the wording are processed only on this device.',
       },
       pagePresentation: {
         showHeadingIcon: false,
@@ -87,25 +88,9 @@ describe('tool catalog', () => {
         contentKey: 'ntd-uppercase',
         title: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },
       },
-      contentReview: {
-        reviewedAt: '2026-09-03',
-        sourceEdition: {
-          'zh-tw': '國庫支票管理辦法（民國 102 年 7 月 31 日修正）',
-          en: 'Regulations Governing Treasury Checks (amended July 31, 2013)',
-        },
-        sourceEffectiveAt: '2013-07-31',
-        sources: [
-          {
-            title: { 'zh-tw': '財政部主管法規查詢系統', en: 'Ministry of Finance Laws and Regulations' },
-            url: 'https://law-out.mof.gov.tw/LawContent.aspx?KeyWord=&id=FL005816',
-          },
-          {
-            title: { 'zh-tw': '財政部國庫署', en: 'National Treasury Administration' },
-            url: 'https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296',
-          },
-        ],
-      },
     })
+    expect(tool.contentReview, '換寫規則的來源必須沿用 T10 鎖定的審閱結果').toBe(ntdContentReview)
+    expect(tool.seo.answer['zh-tw'], '工具頁必須說明三種用途要自己選').toContain('國庫付款憑單')
   })
 
   it('registers the BMI tool against its reviewed health source', () => {
