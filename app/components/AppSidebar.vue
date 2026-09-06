@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight, LayoutGrid, PanelLeftClose, Star } from '@lucide/vue'
+import { ChevronRight, HardDrive, LayoutGrid, PanelLeftClose, Star } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { copy, publishedToolCategories, toolsByCategory } from '@/features/tools/catalog'
 
@@ -11,6 +11,9 @@ const { savedViewPath, showingSaved } = useSavedToolsView()
 const route = useRoute()
 const toolsIndexPath = computed(() => withLocale('/tools/').replace(/\/$/, ''))
 const onToolsIndex = computed(() => route.path.replace(/\/$/, '') === toolsIndexPath.value)
+const storagePath = computed(() => withLocale('/storage/'))
+const onStorage = computed(() => route.path.replace(/\/$/, '') === storagePath.value.replace(/\/$/, ''))
+const storageLabel = computed(() => locale.value === 'en' ? 'Local assets' : '本機資產')
 const toggleLabel = computed(() => props.collapsed
   ? (locale.value === 'en' ? 'Expand sidebar' : '展開側邊欄')
   : (locale.value === 'en' ? 'Collapse sidebar' : '收合側邊欄'))
@@ -51,6 +54,14 @@ const toggleLabel = computed(() => props.collapsed
         >
           <Star :size="20" aria-hidden="true" />
           <span :class="{ 'sr-only': props.collapsed }">{{ locale === 'en' ? 'Saved' : '常用工具' }}</span>
+        </NuxtLink>
+        <NuxtLink
+          :class="['sidebar-primary-link', 'sidebar-primary-link--storage', { 'sidebar-primary-link--active': onStorage }]"
+          :to="storagePath"
+          :title="props.collapsed ? storageLabel : undefined"
+        >
+          <HardDrive :size="20" aria-hidden="true" />
+          <span :class="{ 'sr-only': props.collapsed }">{{ storageLabel }}</span>
         </NuxtLink>
       </div>
 

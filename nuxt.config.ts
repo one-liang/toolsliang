@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 import { join } from 'node:path'
 import { buildServiceWorker } from './scripts/build-service-worker.mjs'
-import { offlineRoutes } from './app/features/pwa/cache-policy'
+import { offlineRoutes, storageRoutes } from './app/features/pwa/cache-policy'
 import { manifestPaths } from './app/features/pwa/manifest'
 import { themeBootstrapScript } from './app/features/shell/theme'
 import { getPublicPageRoutes, getPublicToolRoutes } from './app/features/tools/catalog'
@@ -28,6 +28,7 @@ export default defineNuxtConfig({
         ...getPublicPageRoutes(),
         ...getPublicToolRoutes(),
         ...offlineRoutes(),
+        ...storageRoutes(),
         ...manifestPaths(),
         '/sitemap.xml',
       ],

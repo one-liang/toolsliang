@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LayoutList, X } from '@lucide/vue'
+import { HardDrive, LayoutList, X } from '@lucide/vue'
 import {
   DialogClose, DialogContent, DialogDescription, DialogOverlay,
   DialogPortal, DialogRoot, DialogTitle, DialogTrigger,
@@ -70,6 +70,11 @@ watch(() => route.fullPath, () => {
               <ToolStatusBadge v-if="tool.status" :status="tool.status" :locale="locale" />
             </NuxtLink>
           </section>
+
+          <NuxtLink class="drawer-storage-link" :to="withLocale('/storage/')">
+            <HardDrive :size="19" aria-hidden="true" />
+            <span class="drawer-storage-link__name">{{ locale === 'en' ? 'Local assets' : '本機資產' }}</span>
+          </NuxtLink>
         </div>
       </DialogContent>
     </DialogPortal>

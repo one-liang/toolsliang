@@ -122,6 +122,15 @@ export function offlineRoutes(): string[] {
 }
 
 /**
+ * The local asset manager. What it shows depends entirely on the device, so it
+ * is never indexed, but it is precached: reviewing, exporting and clearing
+ * device-local assets has to keep working with no connection.
+ */
+export function storageRoutes(): string[] {
+  return supportedLocales.map(locale => `/${locale}/storage/`)
+}
+
+/**
  * The minimum App Shell: both locales of the landing page, the tool directory,
  * the offline explanation, and the tools that already run from the cache. A
  * tool that needs a first-use download is deliberately absent — an installed
@@ -134,7 +143,7 @@ export function buildShellPrecacheUrls(): string[] {
     ...publishedTools.filter(tool => tool.offlineMode === 'ready').map(tool => `/${locale}/tools/${tool.slug}/`),
   ])
 
-  return [...new Set([...urls, ...offlineRoutes()])]
+  return [...new Set([...urls, ...offlineRoutes(), ...storageRoutes()])]
 }
 
 /**
