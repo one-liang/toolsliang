@@ -3,7 +3,8 @@ import {
   createLocalAssetRepository,
   type LocalAssetStore,
 } from '@/features/shell/local-assets/repository'
-import { createLocalAssetRecord, type LocalAssetRecord } from '@/features/shell/local-assets/schema'
+import { MemoryAssetStore } from './support/memory-asset-store'
+import { createLocalAssetRecord } from '@/features/shell/local-assets/schema'
 import { serializeLocalAssets } from '@/features/shell/local-assets/transfer'
 
 const now = new Date('2026-09-07T02:00:00Z')
@@ -12,35 +13,7 @@ function signatureDraft(name = '主要簽名', size = 4) {
   return { kind: 'signature', name, payload: { format: 'binary', mediaType: 'image/png', bytes: new Uint8Array(size) } } as const
 }
 
-class MemoryStore implements LocalAssetStore {
-  rows = new Map<string, unknown>()
-  estimateValue: { usage: number, quota: number } | null = null
-  putError: unknown = null
-
-  async list() {
-    return [...this.rows.values()]
-  }
-
-  async putAll(records: LocalAssetRecord[]) {
-    if (this.putError) throw this.putError
-    // One transaction: either every record lands or none of them do.
-    for (const record of records) this.rows.set(record.id, record)
-  }
-
-  async remove(id: string) {
-    this.rows.delete(id)
-  }
-
-  async clear() {
-    this.rows.clear()
-  }
-
-  async estimate() {
-    return this.estimateValue
-  }
-}
-
-let store: MemoryStore
+let store: MemoryAssetStore
 let ids = 0
 
 function repository(open: () => Promise<LocalAssetStore> = async () => store) {
@@ -48,7 +21,7 @@ function repository(open: () => Promise<LocalAssetStore> = async () => store) {
 }
 
 beforeEach(() => {
-  store = new MemoryStore()
+  store = new MemoryAssetStore()
   ids = 0
 })
 
@@ -225,12 +198,80 @@ describe('export and import', () => {
   })
 })
 
+describe('the single asset a tool owns', () => {
+  const calendarDraft = {
+    kind: 'calendar',
+    name: '自訂行事曆',
+    payload: { format: 'text', mediaType: 'application/json', text: '{"entries":[]}' },
+  } as const
+
+  it('writes under the id the tool chose, so the tool can find its own document again', async () => {
+    const written = await repository().put('custom-calendar', calendarDraft)
+
+    expect(written.ok && written.value.records).toMatchObject([{ id: 'custom-calendar', kind: 'calendar' }])
+  })
+
+  it('replaces the document in place, keeping when it was first saved', async () => {
+    const owner = repository()
+    await owner.put('custom-calendar', calendarDraft)
+
+    const updated = await owner.put('custom-calendar', {
+      ...calendarDraft,
+      payload: { format: 'text', mediaType: 'application/json', text: '{"entries":[1,2]}' },
+    })
+    const record = updated.ok ? updated.value.records[0]! : null
+
+    expect(updated.ok && updated.value.records).toHaveLength(1)
+    expect(record).toMatchObject({ id: 'custom-calendar', createdAt: now.toISOString(), bytes: 17 })
+  })
+
+  it('charges only what a rewrite adds, so editing a document is not refused for space it already holds', async () => {
+    const owner = repository()
+    await owner.put('custom-calendar', {
+      ...calendarDraft,
+      payload: { format: 'text', mediaType: 'application/json', text: 'x'.repeat(100_000) },
+    })
+    store.estimateValue = { usage: 900_000, quota: 1_000_000 }
+
+    const rewritten = await owner.put('custom-calendar', {
+      ...calendarDraft,
+      payload: { format: 'text', mediaType: 'application/json', text: 'y'.repeat(100_000) },
+    })
+
+    expect(rewritten.ok, '覆寫同一份文件不得被當成新增容量').toBe(true)
+  })
+
+  it('refuses a rewrite that no longer fits, leaving the saved document alone', async () => {
+    const owner = repository()
+    await owner.put('custom-calendar', calendarDraft)
+    store.estimateValue = { usage: 990_000, quota: 1_000_000 }
+
+    const refused = await owner.put('custom-calendar', {
+      ...calendarDraft,
+      payload: { format: 'text', mediaType: 'application/json', text: 'y'.repeat(200_000) },
+    })
+
+    expect(refused).toEqual({ ok: false, code: 'quota-exceeded' })
+    const listing = await owner.list()
+    expect(listing.ok && listing.value.records[0]!.bytes, '被拒絕的寫入不得改動既有文件').toBe(14)
+  })
+
+  it('refuses to overwrite a document this build cannot read, so nothing is lost silently', async () => {
+    const owner = repository()
+    store.rows.set('custom-calendar', { id: 'custom-calendar', version: 99, kind: 'calendar', name: '自訂行事曆' })
+
+    expect(await owner.put('custom-calendar', calendarDraft)).toEqual({ ok: false, code: 'unsupported-version' })
+    expect(store.rows.get('custom-calendar'), '較新版本的紀錄必須原封不動').toMatchObject({ version: 99 })
+  })
+})
+
 describe('device boundary', () => {
   async function exerciseEveryOperation() {
     const owner = repository()
     await owner.save(signatureDraft())
     await owner.list()
     await owner.rename('asset-1', '改名後')
+    await owner.put('owned-document', { kind: 'calendar', name: '自訂行事曆', payload: { format: 'text', mediaType: 'application/json', text: '{}' } })
     const exported = await owner.exportBundle()
     await owner.importBundle(exported.ok ? exported.value.contents : '')
     await owner.remove('asset-1')

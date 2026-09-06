@@ -1,3 +1,4 @@
+import { customCalendarFaq } from './custom-calendar/content'
 import { deviceTimeFaq } from './device-time/content'
 import { bmiFaq } from './bmi-calculator/content'
 import { ntdFaq } from './ntd-uppercase/content'
@@ -22,6 +23,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'random-picker': randomPickerFaq,
   'taiwan-calendar': taiwanCalendarFaq,
   'device-time': deviceTimeFaq,
+  'custom-calendar': customCalendarFaq,
 }
 
 const toolFaqIssues = validateToolFaq()

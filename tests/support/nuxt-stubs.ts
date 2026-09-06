@@ -13,6 +13,7 @@ import ToolSearchComponent from '@/components/ToolSearch.vue'
 import ToolStatusBadgeComponent from '@/components/ToolStatusBadge.vue'
 import { Button as ButtonComponent } from '@/components/ui/button'
 import { useAppLocale } from '@/composables/useAppLocale'
+import { useCustomCalendar } from '@/composables/useCustomCalendar'
 import { useLocalAssets } from '@/composables/useLocalAssets'
 import { useOfflineAsset } from '@/composables/useOfflineAsset'
 import { useSavedTools } from '@/composables/useSavedTools'
@@ -57,6 +58,7 @@ export function installNuxtStubs() {
   vi.stubGlobal('definePageMeta', () => {})
   vi.stubGlobal('usePageSeo', () => {})
   vi.stubGlobal('useAppLocale', useAppLocale)
+  vi.stubGlobal('useCustomCalendar', useCustomCalendar)
   vi.stubGlobal('useLocalAssets', useLocalAssets)
   vi.stubGlobal('useOfflineAsset', useOfflineAsset)
   vi.stubGlobal('useSavedTools', useSavedTools)

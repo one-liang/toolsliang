@@ -47,7 +47,7 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
@@ -133,6 +133,26 @@ describe('tool catalog', () => {
     expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明名單留在裝置').toContain('此裝置')
   })
 
+  it('registers the custom calendar as a local-asset tool over the official calendar', () => {
+    const tool = getTool('custom-calendar')!
+
+    expect(tool).toMatchObject({
+      category: 'time-calendar',
+      processingClass: 'instant',
+      routeComponentKey: 'CustomCalendarWorkspace',
+      offlineMode: 'ready',
+      capabilities: ['javascript'],
+      pagePresentation: {
+        showHeadingIcon: false,
+        showLocalProcessingStatement: true,
+      },
+      seo: { contentKey: 'custom-calendar' },
+    })
+    expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明自訂項目留在裝置').toContain('這台裝置')
+    expect(tool.seo.answer['zh-tw'], '工具頁必須說明資料可能因瀏覽器清除而消失').toContain('匯出')
+    expect(tool.acceptedInput['zh-tw'], '可接受輸入必須說明只收自訂項目').toContain('自訂')
+  })
+
   it('expires NEW status from its registered date range', () => {
     const tool = getTool('ntd-uppercase')!
 
@@ -154,11 +174,13 @@ describe('tool catalog', () => {
       '/zh-tw/tools/ntd-uppercase/',
       '/zh-tw/tools/random-picker/',
       '/zh-tw/tools/taiwan-calendar/',
+      '/zh-tw/tools/custom-calendar/',
       '/en/tools/device-time/',
       '/en/tools/bmi-calculator/',
       '/en/tools/ntd-uppercase/',
       '/en/tools/random-picker/',
       '/en/tools/taiwan-calendar/',
+      '/en/tools/custom-calendar/',
     ])
     expect(isSupportedLocale('tw')).toBe(false)
   })

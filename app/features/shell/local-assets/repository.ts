@@ -2,6 +2,7 @@ import {
   createLocalAssetRecord,
   readStoredAsset,
   renameLocalAssetRecord,
+  rewriteLocalAssetRecord,
   type LocalAssetDraft,
   type LocalAssetRecord,
 } from './schema'
@@ -29,6 +30,7 @@ export type LocalAssetErrorCode =
   | 'blocked'
   | 'quota-exceeded'
   | 'unsupported-version'
+  | 'corrupt-asset'
   | 'missing-asset'
   | 'invalid-bundle'
   | 'empty-bundle'
@@ -159,6 +161,31 @@ export function createLocalAssetRepository(
       return withStore(async (store) => {
         const record = createLocalAssetRecord(draft, { id: createId(), now: now() })
         return commit(store, await readListing(store), [record])
+      })
+    },
+
+    /**
+     * Writes the one asset a tool owns, under an id that tool chose itself. A
+     * tool keeping a single document — a custom calendar, say — has to find the
+     * same record again on the next visit, so it addresses it by name instead of
+     * searching for whatever it wrote last time. A record this build cannot read
+     * is never overwritten: data that might still be recoverable outranks the
+     * convenience of writing over it.
+     */
+    put(id: string, draft: LocalAssetDraft): Promise<LocalAssetResult<LocalAssetListing>> {
+      return withStore(async (store) => {
+        const listing = await readListing(store)
+        const unreadable = listing.unreadable.find(item => item.id === id)
+        if (unreadable) {
+          throw new LocalAssetOperationError(unreadable.reason === 'corrupt' ? 'corrupt-asset' : 'unsupported-version')
+        }
+
+        const existing = listing.records.find(record => record.id === id)
+        const record = existing
+          ? rewriteLocalAssetRecord(existing, draft, now())
+          : createLocalAssetRecord(draft, { id, now: now() })
+
+        return commit(store, listing, [record])
       })
     },
 
