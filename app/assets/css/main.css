@@ -73,6 +73,8 @@
   --button-primary-fg: var(--color-primary-foreground);
   --button-primary-hover-bg: var(--color-primary-hover);
   --button-primary-active-bg: var(--color-primary-active);
+  --button-destructive-bg: var(--color-destructive);
+  --button-destructive-fg: var(--neutral-0);
   --button-contrast-bg: var(--orange-800);
   --button-contrast-fg: var(--neutral-0);
   --button-contrast-hover-bg: var(--orange-700);
@@ -113,6 +115,8 @@
   --color-warning-surface: #3c281f;
   --color-destructive: #ff9aa5;
   --color-destructive-surface: #3a1e23;
+  /* The dark destructive colour is a light one, so its button carries dark text. */
+  --button-destructive-fg: var(--neutral-950);
 }
 
 * { box-sizing: border-box; }
@@ -192,7 +196,7 @@ code { font-family: var(--font-mono); }
 .ui-button--secondary { background: var(--color-surface-subtle); border-color: var(--color-border); }
 .ui-button--outline { background: var(--color-surface); border-color: var(--color-border-strong); }
 .ui-button--ghost { color: var(--color-muted-foreground); }
-.ui-button--destructive { background: var(--color-destructive); color: var(--neutral-0); }
+.ui-button--destructive { background: var(--button-destructive-bg); color: var(--button-destructive-fg); }
 .ui-button--size-sm { min-height: 36px; padding-inline: 12px; }
 .ui-button--size-lg { min-height: 48px; padding-inline: 22px; }
 .ui-button--size-icon { width: 44px; padding: 0; }
@@ -337,6 +341,50 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 @media (hover: hover) and (pointer: fine) {
   .saved-tool__link:hover { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
 }
+
+/* local assets */
+.local-assets { display: grid; gap: 20px; }
+.local-assets__boundary { display: flex; align-items: flex-start; gap: 9px; margin: 0; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); font-size: .85rem; line-height: 1.7; }
+.local-assets__boundary svg { flex: none; margin-top: 3px; color: var(--color-success); }
+.local-assets__error { display: flex; align-items: flex-start; gap: 9px; padding: 14px 16px; border: 1px solid var(--color-destructive); border-radius: var(--radius-md); background: var(--color-destructive-surface); font-size: .85rem; line-height: 1.65; }
+.local-assets__error svg { flex: none; margin-top: 3px; color: var(--color-destructive); }
+.local-assets__error p { margin: 0; }
+.local-assets__error-title { margin-bottom: 4px; font-weight: 700; }
+.local-assets__usage { padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.local-assets__usage h2, .local-assets__list h2, .local-assets__unreadable h2 { margin: 0 0 10px; font-size: 1.125rem; font-weight: 650; line-height: 1.35; }
+.local-assets__total { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 700; }
+.local-assets__total svg { flex: none; color: var(--color-primary-strong); }
+.local-assets__kinds { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 0; padding: 0; list-style: none; color: var(--color-muted-foreground); font-size: .83rem; line-height: 1.6; }
+.local-assets__quota { margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .83rem; line-height: 1.6; }
+.local-assets__quota-bar { height: 8px; margin-top: 8px; overflow: hidden; border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); background: var(--color-surface-subtle); }
+.local-assets__quota-bar span { display: block; height: 100%; background: var(--color-primary); }
+.local-assets__actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(248px, 1fr)); gap: 18px 20px; align-items: start; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.local-assets__action { display: grid; justify-items: start; gap: 4px; }
+.local-assets__action .field-help { margin: 0; }
+/* The native control names its own button in the browser's language, so the label carries the product wording and the input keeps the keyboard behaviour. */
+.local-assets__import { position: relative; }
+.local-assets__import label { min-height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); font-size: .875rem; font-weight: 700; cursor: pointer; }
+.local-assets__import input { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+.local-assets__import:focus-within label { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .local-assets__import label:hover { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
+}
+.local-assets__confirm { display: grid; gap: 10px; margin-top: 10px; padding: 14px 16px; border: 1px solid var(--color-destructive); border-radius: var(--radius-md); background: var(--color-destructive-surface); font-size: .85rem; line-height: 1.6; }
+.local-assets__confirm p { margin: 0; }
+.local-assets__confirm-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.local-assets__status { min-height: 22px; margin: 0; color: var(--color-success); font-size: .84rem; font-weight: 700; line-height: 1.6; }
+.local-assets__list ul, .local-assets__unreadable ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.local-assets__empty { margin: 0; padding: clamp(20px, 5vw, 28px); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-lg); color: var(--color-muted-foreground); line-height: 1.7; }
+.local-asset { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.local-asset:focus-within { border-color: var(--color-primary-strong); }
+.local-asset__body { min-width: 0; }
+.local-asset__name { margin: 0; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
+.local-asset__meta { margin: 4px 0 0; color: var(--color-muted-foreground); font-size: .8rem; line-height: 1.55; }
+.local-asset__actions { display: flex; align-items: center; gap: 6px; }
+.local-asset__rename { grid-column: 1 / -1; display: grid; gap: 6px; padding-top: 4px; }
+.local-asset__rename label { font-size: .78rem; font-weight: 700; color: var(--color-muted-foreground); }
+.local-asset__rename-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.local-asset .local-assets__confirm { grid-column: 1 / -1; }
 
 /* app shell */
 .app-shell { min-height: 100vh; }
@@ -607,8 +655,9 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .drawer-category__description { margin: 0 0 12px; color: var(--color-muted-foreground); font-size: .8rem; line-height: 1.5; }
 .drawer-tool-link { min-height: 52px; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); font-size: .89rem; font-weight: 650; }
 .drawer-tool-link + .drawer-tool-link { margin-top: 8px; }
-.drawer-tool-link__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.drawer-tool-link.router-link-exact-active { border-color: var(--color-primary-strong); background: var(--sidebar-active-bg); color: var(--sidebar-active-fg); }
+.drawer-tool-link__name, .drawer-storage-link__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drawer-storage-link { min-height: 52px; display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: 10px; margin-top: 8px; padding: 9px 12px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-subtle); font-size: .89rem; font-weight: 650; }
+.drawer-storage-link.router-link-exact-active, .drawer-tool-link.router-link-exact-active { border-color: var(--color-primary-strong); background: var(--sidebar-active-bg); color: var(--sidebar-active-fg); }
 @keyframes drawer-enter { from { translate: 0 16px; } }
 @media (hover: hover) and (pointer: fine) {
   .calendar-day:hover, .calendar-agenda__button:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); }

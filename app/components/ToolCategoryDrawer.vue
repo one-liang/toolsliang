@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { LayoutList, X } from '@lucide/vue'
+import { HardDrive, LayoutList, X } from '@lucide/vue'
 import {
   DialogClose, DialogContent, DialogDescription, DialogOverlay,
   DialogPortal, DialogRoot, DialogTitle, DialogTrigger,
 } from 'reka-ui'
 import { ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
+import { localAssetCopy } from '@/features/shell/local-assets/content'
 import { copy, publishedToolCategories, toolsByCategory } from '@/features/tools/catalog'
 
 const { locale, withLocale } = useAppLocale()
@@ -70,6 +71,11 @@ watch(() => route.fullPath, () => {
               <ToolStatusBadge v-if="tool.status" :status="tool.status" :locale="locale" />
             </NuxtLink>
           </section>
+
+          <NuxtLink class="drawer-storage-link" :to="withLocale('/storage/')">
+            <HardDrive :size="19" aria-hidden="true" />
+            <span class="drawer-storage-link__name">{{ localAssetCopy(locale).title }}</span>
+          </NuxtLink>
         </div>
       </DialogContent>
     </DialogPortal>
