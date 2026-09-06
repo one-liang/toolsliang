@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { computed, nextTick, ref } from 'vue'
 import { Pencil, Trash2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { localAssetCopy } from '@/features/shell/local-assets/content'
 import type { LocaleCode } from '@/features/tools/catalog'
-import { computed, nextTick, ref } from 'vue'
 
 /**
  * One deletable row of the asset manager, whether the record is readable or
@@ -24,6 +24,7 @@ const emit = defineEmits<{ ask: [], confirm: [], cancel: [], rename: [name: stri
 const copy = computed(() => localAssetCopy(props.locale))
 const editing = ref(false)
 const draftName = ref('')
+const nameField = ref<HTMLInputElement | null>(null)
 const fieldId = computed(() => `local-asset-name-${props.id}`)
 const canSave = computed(() => draftName.value.trim().length > 0)
 
@@ -31,7 +32,7 @@ async function startRename() {
   draftName.value = props.name
   editing.value = true
   await nextTick()
-  document.getElementById(fieldId.value)?.focus()
+  nameField.value?.focus()
 }
 
 /** Reached from both the submit event and the button click; the guard keeps it to one rename. */
@@ -75,6 +76,7 @@ function saveName() {
       <label :for="fieldId">{{ copy.nameFieldLabel }}</label>
       <input
         :id="fieldId"
+        ref="nameField"
         v-model="draftName"
         class="ui-input"
         data-asset-field="name"

@@ -6,6 +6,7 @@ import {
 } from 'reka-ui'
 import { ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
+import { localAssetCopy } from '@/features/shell/local-assets/content'
 import { copy, publishedToolCategories, toolsByCategory } from '@/features/tools/catalog'
 
 const { locale, withLocale } = useAppLocale()
@@ -73,7 +74,7 @@ watch(() => route.fullPath, () => {
 
           <NuxtLink class="drawer-storage-link" :to="withLocale('/storage/')">
             <HardDrive :size="19" aria-hidden="true" />
-            <span class="drawer-storage-link__name">{{ locale === 'en' ? 'Local assets' : '本機資產' }}</span>
+            <span class="drawer-storage-link__name">{{ localAssetCopy(locale).title }}</span>
           </NuxtLink>
         </div>
       </DialogContent>

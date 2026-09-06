@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronRight, HardDrive, LayoutGrid, PanelLeftClose, Star } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { localAssetCopy } from '@/features/shell/local-assets/content'
 import { copy, publishedToolCategories, toolsByCategory } from '@/features/tools/catalog'
 
 const props = defineProps<{ collapsed: boolean }>()
@@ -13,7 +14,7 @@ const toolsIndexPath = computed(() => withLocale('/tools/').replace(/\/$/, ''))
 const onToolsIndex = computed(() => route.path.replace(/\/$/, '') === toolsIndexPath.value)
 const storagePath = computed(() => withLocale('/storage/'))
 const onStorage = computed(() => route.path.replace(/\/$/, '') === storagePath.value.replace(/\/$/, ''))
-const storageLabel = computed(() => locale.value === 'en' ? 'Local assets' : '本機資產')
+const storageLabel = computed(() => localAssetCopy(locale.value).title)
 const toggleLabel = computed(() => props.collapsed
   ? (locale.value === 'en' ? 'Expand sidebar' : '展開側邊欄')
   : (locale.value === 'en' ? 'Collapse sidebar' : '收合側邊欄'))

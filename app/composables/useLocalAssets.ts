@@ -47,6 +47,14 @@ export function useLocalAssets() {
     }
   }
 
+  /** Answers whether the device accepted the change, so the interface only announces what happened. */
+  async function commit(operation: () => Promise<LocalAssetResult<LocalAssetListing>>): Promise<boolean> {
+    const listing = await run(operation)
+    if (listing) applyListing(listing)
+
+    return listing !== null
+  }
+
   async function refresh() {
     const listing = await run(() => repository.list())
     if (listing) applyListing(listing)
@@ -64,19 +72,16 @@ export function useLocalAssets() {
     ready,
     refresh,
 
-    async remove(id: string) {
-      const listing = await run(() => repository.remove(id))
-      if (listing) applyListing(listing)
+    remove(id: string) {
+      return commit(() => repository.remove(id))
     },
 
-    async rename(id: string, name: string) {
-      const listing = await run(() => repository.rename(id, name))
-      if (listing) applyListing(listing)
+    rename(id: string, name: string) {
+      return commit(() => repository.rename(id, name))
     },
 
-    async clearAll() {
-      const listing = await run(() => repository.clear())
-      if (listing) applyListing(listing)
+    clearAll() {
+      return commit(() => repository.clear())
     },
 
     /** Produces the backup file on this device and hands it to the browser's own download. */

@@ -4,9 +4,9 @@ import {
   LOCAL_ASSET_BUNDLE_FORMAT,
   LOCAL_ASSET_BUNDLE_VERSION,
   localAssetBundleFileName,
-  mergeImportedAssets,
   parseLocalAssetBundle,
   serializeLocalAssets,
+  summarizeImport,
 } from '@/features/shell/local-assets/transfer'
 
 const exportedAt = new Date('2026-09-07T02:00:00Z')
@@ -79,19 +79,12 @@ describe('importing a bundle', () => {
   })
 })
 
-describe('merging an imported bundle into the device', () => {
-  it('adds assets the device does not have and keeps the existing order', () => {
-    const merged = mergeImportedAssets([signature], [calendar])
-
-    expect(merged.records.map(record => record.id)).toEqual(['asset-1', 'asset-2'])
-    expect(merged).toMatchObject({ added: 1, replaced: 0 })
+describe('summarising what an import will do', () => {
+  it('counts an asset the device does not have as added', () => {
+    expect(summarizeImport([signature], [calendar])).toEqual({ added: 1, replaced: 0 })
   })
 
-  it('replaces an asset with the same identity in place', () => {
-    const updated = { ...signature, name: '新的簽名' }
-    const merged = mergeImportedAssets([signature, calendar], [updated])
-
-    expect(merged.records.map(record => record.name)).toEqual(['新的簽名', '排班'])
-    expect(merged).toMatchObject({ added: 0, replaced: 1 })
+  it('counts an asset sharing an identity as replaced', () => {
+    expect(summarizeImport([signature, calendar], [{ ...signature, name: '新的簽名' }])).toEqual({ added: 0, replaced: 1 })
   })
 })

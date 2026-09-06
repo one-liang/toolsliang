@@ -7,9 +7,9 @@ import {
 } from './schema'
 import {
   localAssetBundleFileName,
-  mergeImportedAssets,
   parseLocalAssetBundle,
   serializeLocalAssets,
+  summarizeImport,
 } from './transfer'
 import {
   fitsInQuota,
@@ -29,6 +29,7 @@ export type LocalAssetErrorCode =
   | 'blocked'
   | 'quota-exceeded'
   | 'unsupported-version'
+  | 'missing-asset'
   | 'invalid-bundle'
   | 'empty-bundle'
   | 'unknown'
@@ -113,20 +114,37 @@ export function createLocalAssetRepository(
       if (reading.status === 'upgraded') upgraded.push(reading.record)
     }
 
-    // An upgraded record is written back once, so the next read costs nothing.
-    if (upgraded.length) await store.putAll(upgraded)
+    // Writing an upgraded record back saves the next read from repeating the
+    // work, but a device too full to accept it must still show what it holds —
+    // otherwise the visitor loses the controls that free the space.
+    if (upgraded.length) {
+      try {
+        await store.putAll(upgraded)
+      }
+      catch {
+        // Kept in memory for this session instead.
+      }
+    }
 
     return { records, usage: summarizeLocalAssets(records, await store.estimate()), unreadable }
   }
 
-  /** Writes only after the browser's own estimate says the bytes still fit. */
+/**
+ * Writes only after the browser's own estimate says the bytes still fit. A
+ * record that replaces one already on the device costs only the difference, so
+ * re-importing your own backup is never refused for space it already occupies.
+ */
   async function commit(
     store: LocalAssetStore,
     listing: LocalAssetListing,
     incoming: LocalAssetRecord[],
-    incomingBytes: number,
   ): Promise<LocalAssetListing> {
-    if (!fitsInQuota(listing.usage, incomingBytes)) throw new QuotaError()
+    const addedBytes = incoming.reduce((total, record) => {
+      const replaced = listing.records.find(item => item.id === record.id)
+      return total + Math.max(0, record.bytes - (replaced?.bytes ?? 0))
+    }, 0)
+
+    if (!fitsInQuota(listing.usage, addedBytes)) throw new LocalAssetOperationError('quota-exceeded')
 
     await store.putAll(incoming)
     return readListing(store)
@@ -140,7 +158,7 @@ export function createLocalAssetRepository(
     save(draft: LocalAssetDraft): Promise<LocalAssetResult<LocalAssetListing>> {
       return withStore(async (store) => {
         const record = createLocalAssetRecord(draft, { id: createId(), now: now() })
-        return commit(store, await readListing(store), [record], record.bytes)
+        return commit(store, await readListing(store), [record])
       })
     },
 
@@ -148,7 +166,8 @@ export function createLocalAssetRepository(
       return withStore(async (store) => {
         const listing = await readListing(store)
         const record = listing.records.find(item => item.id === id)
-        if (!record) return listing
+        // Another tab may have deleted it since this list was rendered.
+        if (!record) throw new LocalAssetOperationError('missing-asset')
 
         await store.putAll([renameLocalAssetRecord(record, name, now())])
         return readListing(store)
@@ -172,7 +191,7 @@ export function createLocalAssetRepository(
     exportBundle(): Promise<LocalAssetResult<ExportedBundle>> {
       return withStore(async (store) => {
         const listing = await readListing(store)
-        if (!listing.records.length) throw new EmptyBundleError()
+        if (!listing.records.length) throw new LocalAssetOperationError('empty-bundle')
 
         const stamp = now()
         return { fileName: localAssetBundleFileName(stamp), contents: serializeLocalAssets(listing.records, stamp) }
@@ -182,17 +201,12 @@ export function createLocalAssetRepository(
     importBundle(raw: string): Promise<LocalAssetResult<ImportOutcome>> {
       return withStore(async (store) => {
         const reading = parseLocalAssetBundle(raw)
-        if (!reading.ok) throw new BundleError(reading.code)
+        if (!reading.ok) throw new LocalAssetOperationError(reading.code)
 
         const listing = await readListing(store)
-        const merge = mergeImportedAssets(listing.records, reading.records)
-        const incomingBytes = reading.records.reduce((total, record) => total + record.bytes, 0)
+        const summary = summarizeImport(listing.records, reading.records)
 
-        return {
-          listing: await commit(store, listing, reading.records, incomingBytes),
-          added: merge.added,
-          replaced: merge.replaced,
-        }
+        return { listing: await commit(store, listing, reading.records), ...summary }
       })
     },
   }
@@ -200,15 +214,8 @@ export function createLocalAssetRepository(
 
 export type LocalAssetRepository = ReturnType<typeof createLocalAssetRepository>
 
-class QuotaError extends Error {
-  readonly code: LocalAssetErrorCode = 'quota-exceeded'
-}
-
-class EmptyBundleError extends Error {
-  readonly code: LocalAssetErrorCode = 'empty-bundle'
-}
-
-class BundleError extends Error {
+/** The outcomes this module decides itself, carried the same way a browser failure is. */
+class LocalAssetOperationError extends Error {
   constructor(readonly code: LocalAssetErrorCode) {
     super(code)
   }
@@ -220,7 +227,7 @@ class BundleError extends Error {
  * dressed up as a cause the product has not verified.
  */
 export function classifyStorageError(error: unknown): LocalAssetErrorCode {
-  if (error instanceof QuotaError || error instanceof EmptyBundleError || error instanceof BundleError) return error.code
+  if (error instanceof LocalAssetOperationError) return error.code
 
   const name = typeof error === 'object' && error !== null && 'name' in error ? String((error as { name: unknown }).name) : ''
 

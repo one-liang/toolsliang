@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createLocalAssetRecord, type LocalAssetKind, type LocalAssetRecord } from '@/features/shell/local-assets/schema'
 import {
   fitsInQuota,
-  formatAssetBytes,
+  formatStoredSize,
   remainingQuotaBytes,
   summarizeLocalAssets,
 } from '@/features/shell/local-assets/usage'
@@ -75,10 +75,10 @@ describe('local asset usage', () => {
   })
 
   it('writes sizes people can compare at a glance in both languages', () => {
-    expect(formatAssetBytes(0, 'zh-tw')).toBe('0 KB')
-    expect(formatAssetBytes(900, 'zh-tw')).toBe('0.9 KB')
-    expect(formatAssetBytes(1_048_576, 'zh-tw')).toBe('1 MB')
-    expect(formatAssetBytes(1_572_864, 'en')).toBe('1.5 MB')
-    expect(formatAssetBytes(2_147_483_648, 'en')).toBe('2 GB')
+    expect(formatStoredSize(0, 'zh-tw')).toBe('0 KB')
+    expect(formatStoredSize(900, 'zh-tw')).toBe('0.9 KB')
+    expect(formatStoredSize(1_048_576, 'zh-tw')).toBe('1 MB')
+    expect(formatStoredSize(1_572_864, 'en')).toBe('1.5 MB')
+    expect(formatStoredSize(2_147_483_648, 'en')).toBe('2 GB')
   })
 })

@@ -62,6 +62,10 @@ describe('saving and reading local assets', () => {
     expect(listing.ok && listing.value.usage.totalBytes).toBe(4)
   })
 
+  it('reports a rename of an asset this device no longer holds', async () => {
+    expect(await repository().rename('asset-404', '新名稱')).toEqual({ ok: false, code: 'missing-asset' })
+  })
+
   it('renames and deletes one asset without touching the others', async () => {
     const owner = repository()
     await owner.save(signatureDraft('簽名一'))
@@ -134,6 +138,18 @@ describe('recoverable failures', () => {
     ])
   })
 
+  it('still lists and deletes assets when the device is too full to rewrite an upgraded record', async () => {
+    const { version: _version, ...unversioned } = createLocalAssetRecord(signatureDraft('舊簽名'), { id: 'legacy', now })
+    store.rows.set('legacy', unversioned)
+    store.putError = new DOMException('full', 'QuotaExceededError')
+
+    const listing = await repository().list()
+    expect(listing.ok && listing.value.records.map(record => record.name), '寫回失敗不得讓整份清單讀不到').toEqual(['舊簽名'])
+
+    const removed = await repository().remove('legacy')
+    expect(removed.ok, '空間不足時仍要能刪除').toBe(true)
+  })
+
   it('upgrades a record stored before the version field and keeps it', async () => {
     const { version: _version, ...unversioned } = createLocalAssetRecord(signatureDraft('舊簽名'), { id: 'legacy', now })
     store.rows.set('legacy', unversioned)
@@ -190,6 +206,16 @@ describe('export and import', () => {
     expect(listing.ok && listing.value.records.map(item => item.id)).toEqual(['asset-1'])
   })
 
+  it('counts only what an import adds, so re-importing your own backup is not refused', async () => {
+    const owner = repository()
+    await owner.save(signatureDraft('大簽名', 100_000))
+    const exported = await owner.exportBundle()
+    store.estimateValue = { usage: 900_000, quota: 1_000_000 }
+
+    const reimported = await owner.importBundle(exported.ok ? exported.value.contents : '')
+    expect(reimported.ok && reimported.value, '覆蓋既有資產不佔用額外空間').toMatchObject({ added: 0, replaced: 1 })
+  })
+
   it('refuses an import that does not fit in the remaining quota', async () => {
     store.estimateValue = { usage: 900_000, quota: 1_000_000 }
     const bundle = serializeLocalAssets([createLocalAssetRecord(signatureDraft('大簽名', 100_000), { id: 'imported', now })], now)
@@ -200,17 +226,38 @@ describe('export and import', () => {
 })
 
 describe('device boundary', () => {
+  async function exerciseEveryOperation() {
+    const owner = repository()
+    await owner.save(signatureDraft())
+    await owner.list()
+    await owner.rename('asset-1', '改名後')
+    const exported = await owner.exportBundle()
+    await owner.importBundle(exported.ok ? exported.value.contents : '')
+    await owner.remove('asset-1')
+    await owner.clear()
+  }
+
   it('never reaches the network while saving, reading or clearing assets', async () => {
     const fetchSpy = vi.fn()
     vi.stubGlobal('fetch', fetchSpy)
 
-    const owner = repository()
-    await owner.save(signatureDraft())
-    await owner.list()
-    await owner.exportBundle()
-    await owner.clear()
+    await exerciseEveryOperation()
 
     expect(fetchSpy).not.toHaveBeenCalled()
     vi.unstubAllGlobals()
+  })
+
+  /**
+   * Cloud preferences live in the `localStorage` namespace this module never
+   * touches. Keeping the two apart in code is what makes the promise in the
+   * interface true: a preference that syncs can never carry an asset with it.
+   */
+  it('never writes to the preference namespace', async () => {
+    const localWrite = vi.spyOn(Storage.prototype, 'setItem')
+
+    await exerciseEveryOperation()
+
+    expect(localWrite, '本機資產不得寫入偏好命名空間').not.toHaveBeenCalled()
+    localWrite.mockRestore()
   })
 })

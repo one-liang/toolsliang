@@ -76,8 +76,10 @@ const BYTE_UNITS = ['KB', 'MB', 'GB'] as const
 /**
  * Sizes are written in the unit a person would compare, starting at KB: a
  * saved asset measured in bytes reads as noise next to a megabyte-sized frame.
+ * The download formatter of `features/pwa/offline-assets` is deliberately not
+ * reused — it always says MB, which reads wrong for a 2 KB signature.
  */
-export function formatAssetBytes(bytes: number, locale: LocaleCode): string {
+export function formatStoredSize(bytes: number, locale: LocaleCode): string {
   let value = Math.max(0, bytes) / 1024
   let unit: string = BYTE_UNITS[0]
 
@@ -87,7 +89,7 @@ export function formatAssetBytes(bytes: number, locale: LocaleCode): string {
     unit = candidate
   }
 
-  const formatted = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'zh-TW', {
+  const formatted = new Intl.NumberFormat(locale === 'en' ? 'en' : 'zh-TW', {
     maximumFractionDigits: value < 10 ? 1 : 0,
   }).format(value)
 

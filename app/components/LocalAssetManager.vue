@@ -5,7 +5,7 @@ import LocalAssetRow from '@/components/LocalAssetRow.vue'
 import { Button } from '@/components/ui/button'
 import { localAssetCopy, localAssetErrorMessage, localAssetKindLabel } from '@/features/shell/local-assets/content'
 import type { LocalAssetRecord } from '@/features/shell/local-assets/schema'
-import { formatAssetBytes } from '@/features/shell/local-assets/usage'
+import { formatStoredSize } from '@/features/shell/local-assets/usage'
 import type { LocaleCode } from '@/features/tools/catalog'
 
 const props = defineProps<{ locale: LocaleCode }>()
@@ -22,9 +22,10 @@ const status = ref('')
 const pendingDelete = ref<string | null>(null)
 const pendingClear = ref(false)
 const statusRegion = ref<HTMLElement | null>(null)
+const region = ref<HTMLElement | null>(null)
 
 function size(bytes: number) {
-  return formatAssetBytes(bytes, props.locale)
+  return formatStoredSize(bytes, props.locale)
 }
 
 function describeAsset(record: LocalAssetRecord) {
@@ -51,9 +52,10 @@ async function askClear() {
   await focusConfirmation('confirm-clear')
 }
 
+/** Scoped to this manager, so one instance never moves focus inside another. */
 async function focusConfirmation(action: string) {
   await nextTick()
-  document.querySelector<HTMLElement>(`[data-asset-action="${action}"]`)?.focus()
+  region.value?.querySelector<HTMLElement>(`[data-asset-action="${action}"]`)?.focus()
 }
 
 function cancelPending() {
@@ -68,21 +70,18 @@ async function announce(message: string) {
   statusRegion.value?.focus()
 }
 
-async function confirmDelete(id: string, name: string | null) {
+async function confirmDelete(id: string, name: string) {
   pendingDelete.value = null
-  await remove(id)
-  await announce(name ? copy.value.statusDeleted(name) : copy.value.statusCleared)
+  if (await remove(id)) await announce(copy.value.statusDeleted(name))
 }
 
 async function confirmRename(id: string, name: string) {
-  await rename(id, name)
-  await announce(copy.value.statusRenamed(name))
+  if (await rename(id, name)) await announce(copy.value.statusRenamed(name))
 }
 
 async function confirmClear() {
   pendingClear.value = false
-  await clearAll()
-  await announce(copy.value.statusCleared)
+  if (await clearAll()) await announce(copy.value.statusCleared)
 }
 
 async function runExport() {
@@ -103,7 +102,7 @@ async function runImport(event: Event) {
 </script>
 
 <template>
-  <section class="local-assets" :aria-busy="busy ? 'true' : 'false'" :aria-label="copy.title">
+  <section ref="region" class="local-assets" :aria-busy="busy ? 'true' : 'false'" :aria-label="copy.title">
     <p class="local-assets__boundary">
       <ShieldCheck :size="18" aria-hidden="true" />
       <span>{{ copy.boundary }}</span>
@@ -168,6 +167,7 @@ async function runImport(event: Event) {
 
     <div v-if="pendingClear" class="local-assets__confirm">
       <p>{{ copy.clearAllPrompt }}</p>
+      <p v-if="unreadable.length">{{ copy.clearAllUnreadable }}</p>
       <div class="local-assets__confirm-actions">
         <Button variant="destructive" data-asset-action="confirm-clear" @click="confirmClear">{{ copy.clearAllConfirm }}</Button>
         <Button variant="outline" data-asset-action="cancel-clear" @click="cancelPending">{{ copy.deleteCancel }}</Button>

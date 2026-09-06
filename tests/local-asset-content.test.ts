@@ -9,7 +9,7 @@ import type { LocalAssetErrorCode } from '@/features/shell/local-assets/reposito
 import { supportedLocales } from '@/features/tools/catalog'
 
 const errorCodes: LocalAssetErrorCode[] = [
-  'unsupported', 'blocked', 'quota-exceeded', 'unsupported-version', 'invalid-bundle', 'empty-bundle', 'unknown',
+  'unsupported', 'blocked', 'quota-exceeded', 'unsupported-version', 'missing-asset', 'invalid-bundle', 'empty-bundle', 'unknown',
 ]
 
 describe('local asset copy', () => {

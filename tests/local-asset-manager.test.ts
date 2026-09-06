@@ -18,6 +18,7 @@ function asset(id: string, name: string, kind: LocalAssetKind, size: number): Lo
 
 const removed: string[] = []
 const renamed: string[] = []
+let renameSucceeds = true
 const cleared: string[] = []
 const state = {
   records: ref<LocalAssetRecord[]>([]),
@@ -36,15 +37,18 @@ function stubComposable() {
       removed.push(id)
       state.records.value = state.records.value.filter(record => record.id !== id)
       state.usage.value = summarizeLocalAssets(state.records.value)
+      return true
     }),
     clearAll: vi.fn(async () => {
       cleared.push('all')
       state.records.value = []
       state.usage.value = summarizeLocalAssets([])
+      return true
     }),
     rename: vi.fn(async (id: string, name: string) => {
       renamed.push(`${id}:${name}`)
       state.records.value = state.records.value.map(record => record.id === id ? { ...record, name } : record)
+      return renameSucceeds
     }),
     exportAll: vi.fn(async () => 'toolsliang-local-assets-2026-09-07.json'),
     importFile: vi.fn(async () => ({ added: 2, replaced: 1 })),
@@ -64,6 +68,7 @@ beforeEach(() => {
   state.ready.value = true
   removed.length = 0
   renamed.length = 0
+  renameSucceeds = true
   cleared.length = 0
   stubComposable()
 })
@@ -163,6 +168,19 @@ describe('local asset manager', () => {
     expect(wrapper.get('.local-asset__name').text()).toBe('主要簽名')
   })
 
+  it('does not claim a rename the device refused', async () => {
+    state.records.value = [asset('a', '主要簽名', 'signature', 2048)]
+    renameSucceeds = false
+    const wrapper = mountManager()
+
+    await wrapper.get('[data-asset-action="rename"]').trigger('click')
+    await wrapper.get('[data-asset-field="name"]').setValue('備用簽名')
+    await wrapper.get('[data-asset-action="save-name"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.local-assets__status').text(), '失敗時不得宣告成功').toBe('')
+  })
+
   it('does not offer renaming for a record it cannot read', async () => {
     state.unreadable.value = [{ id: 'broken', name: null, reason: 'corrupt' }]
 
@@ -182,6 +200,15 @@ describe('local asset manager', () => {
 
     expect(cleared).toEqual(['all'])
     expect(wrapper.get('.local-assets__status').text()).toContain('已清除')
+  })
+
+  it('says what a backup cannot carry before clearing unreadable records', async () => {
+    state.records.value = [asset('a', '主要簽名', 'signature', 2048)]
+    state.unreadable.value = [{ id: 'broken', name: null, reason: 'corrupt' }]
+    const wrapper = mountManager()
+
+    await wrapper.get('[data-asset-action="clear"]').trigger('click')
+    expect(wrapper.get('.local-assets__confirm').text()).toContain('無法讀取的資料不會出現在匯出檔中')
   })
 
   it('announces an export the visitor triggered, naming the file only', async () => {

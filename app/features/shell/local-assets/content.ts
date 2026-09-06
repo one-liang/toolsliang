@@ -65,6 +65,16 @@ const errorMessages: Record<LocalAssetErrorCode, Record<LocaleCode, LocalAssetEr
       recovery: 'This version will not overwrite it. Reload to pick up the newest release, then open this page again.',
     },
   },
+  'missing-asset': {
+    'zh-tw': {
+      title: '這筆資產已經不在這台裝置上',
+      recovery: '可能在其他分頁刪除了。重新整理後就會看到目前實際保存的資產。',
+    },
+    en: {
+      title: 'That asset is no longer on this device',
+      recovery: 'It may have been deleted in another tab. Reload to see what this device currently holds.',
+    },
+  },
   'invalid-bundle': {
     'zh-tw': {
       title: '這個檔案不是可讀的本機資產匯出檔',
@@ -124,6 +134,7 @@ export interface LocalAssetCopy {
   deleteCancel: string
   clearAll: string
   clearAllPrompt: string
+  clearAllUnreadable: string
   clearAllConfirm: string
   exportAction: string
   exportHint: string
@@ -162,6 +173,7 @@ const zhTw: LocalAssetCopy = {
   deleteCancel: '取消',
   clearAll: '清除全部本機資產',
   clearAllPrompt: '確定要清除這台裝置上的全部本機資產嗎？刪除後無法復原，建議先匯出備份。',
+  clearAllUnreadable: '無法讀取的資料不會出現在匯出檔中，清除後就不會再保留。',
   clearAllConfirm: '確認全部清除',
   exportAction: '匯出備份檔',
   exportHint: '匯出會在這台裝置產生一個 JSON 檔案，由你自己決定存放位置，不會傳送到任何伺服器。',
@@ -200,6 +212,7 @@ const en: LocalAssetCopy = {
   deleteCancel: 'Cancel',
   clearAll: 'Clear all local assets',
   clearAllPrompt: 'Clear every local asset on this device? This cannot be undone, so export a backup first if you may want them later.',
+  clearAllUnreadable: 'Records that cannot be read are not part of an export file, so clearing removes them for good.',
   clearAllConfirm: 'Confirm clear all',
   exportAction: 'Export a backup file',
   exportHint: 'Exporting writes a JSON file on this device that you decide where to keep. Nothing is sent to a server.',

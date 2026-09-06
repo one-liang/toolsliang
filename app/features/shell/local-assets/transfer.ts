@@ -93,31 +93,21 @@ export function parseLocalAssetBundle(raw: string): BundleReading {
   return { ok: true, records }
 }
 
-export interface ImportMerge {
-  records: LocalAssetRecord[]
+export interface ImportSummary {
   added: number
   replaced: number
 }
 
-/** An imported asset replaces the one it shares an identity with, in place. */
-export function mergeImportedAssets(existing: LocalAssetRecord[], incoming: LocalAssetRecord[]): ImportMerge {
-  const merged = [...existing]
-  let added = 0
-  let replaced = 0
+/**
+ * What an import will do to this device: an asset the device does not have is
+ * added, and one sharing an identity replaces what is there. The device store
+ * keys by that identity, so the counts are all the caller needs to report.
+ */
+export function summarizeImport(existing: LocalAssetRecord[], incoming: LocalAssetRecord[]): ImportSummary {
+  const owned = new Set(existing.map(record => record.id))
+  const replaced = incoming.filter(record => owned.has(record.id)).length
 
-  for (const record of incoming) {
-    const index = merged.findIndex(item => item.id === record.id)
-    if (index === -1) {
-      merged.push(record)
-      added += 1
-      continue
-    }
-
-    merged[index] = record
-    replaced += 1
-  }
-
-  return { records: merged, added, replaced }
+  return { added: incoming.length - replaced, replaced }
 }
 
 function serializePayload(payload: LocalAssetPayload): SerializedPayload {

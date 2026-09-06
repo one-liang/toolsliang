@@ -3,7 +3,7 @@
 沿用 Tool App Shell、平面 Card、Button、語意色彩與字型，不新增動畫或遠端資產。
 
 - 頁面標題沿用工具頁的 `tool-heading--with-icon`；`裝置儲存` 為 eyebrow，說明沿用 `body-md`。
-- 邊界說明、儲存用量與操作各自成為一張平面卡片，維持 `radius-lg` 與 `card-shadow: none`。
+- 邊界說明沿用工具頁提示區塊的 `radius-md`；儲存用量與操作各自成為一張平面卡片，使用 `radius-lg` 與 `card-shadow: none`。
 - 儲存用量的配額比例條只是輔助圖形，寬度以百分比呈現並標記 `aria-hidden`；同一組數字必須在相鄰文字寫出，狀態不得只靠顏色或長度。
 - 匯出、匯入與清除放在同一張操作卡片，各自附帶說明文字；卡片以 `auto-fit` 網格排列，窄螢幕自動堆疊。
 - 檔案選擇器的原生按鈕文字由瀏覽器語言決定，因此輸入元素視覺隱藏（保留在無障礙樹），改由 `<label>` 呈現產品文案；`:focus-within` 時 label 顯示 3px focus ring，觸控目標維持 44px。
