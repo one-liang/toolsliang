@@ -9,30 +9,32 @@ import {
   rocEpochOffset,
   rocFirstGregorianYear,
   solarTermNames,
-  taiwanCalendarCoverage,
   taiwanCalendarEditionDiffVectors,
   taiwanCalendarIngestionErrorCodes,
   taiwanCalendarLayers,
   taiwanCalendarLunarVectors,
   taiwanCalendarNoteLabels,
   taiwanCalendarOfficialDayVectors,
-  taiwanCalendarPublishableYears,
   taiwanCalendarRocVectors,
   taiwanCalendarSolarTermVectors,
   taiwanCalendarTimeZone,
   taiwanCalendarUtcOffsetMinutes,
   taiwanCalendarViewErrorCodes,
   type OfficialDayKind,
+  type OfficialHolidayId,
 } from '@/features/tools/taiwan-calendar/domain/reference'
 import {
   taiwanCalendarCaveatKeys,
   taiwanCalendarContentReview,
+  taiwanCalendarCoverage,
   taiwanCalendarDatasets,
+  taiwanCalendarPublishableYears,
   taiwanCalendarReferenceVersion,
 } from '@/features/tools/taiwan-calendar/domain/sources'
 import {
   parseCaveatKeys,
-  parseDatasetIds,
+  parseDatasetCoverage,
+  parseDayKinds,
   parseEditionDiffVectors,
   parseIngestionErrorCodes,
   parseLayerKeys,
@@ -78,7 +80,7 @@ function lunarVectorFor(date: string) {
   return taiwanCalendarLunarVectors.find(vector => vector.date === date)
 }
 
-function officialVectorsWithHoliday(holiday: string) {
+function officialVectorsWithHoliday(holiday: OfficialHolidayId) {
   return taiwanCalendarOfficialDayVectors.filter(vector => vector.holidays.includes(holiday))
 }
 
@@ -94,7 +96,34 @@ describe('civil layer', () => {
   })
 
   it('matches the decision record row for row', () => {
-    expect(parseRocVectors()).toEqual(taiwanCalendarRocVectors.map(({ date, rocYear }) => ({ date, rocYear })))
+    const documented = parseRocVectors()
+
+    expect(documented.length).toBeGreaterThan(0)
+    expect(documented).toEqual(taiwanCalendarRocVectors.map(vector => ({ ...vector })))
+  })
+
+  it('numbers the weekday with Monday as 1 and Sunday as 7, where Date.getDay() says 0', () => {
+    taiwanCalendarRocVectors.forEach((vector) => {
+      expect(vector.isoWeekday).toBe(isoWeekday(vector.date))
+      expect(vector.isoWeekday).toBeGreaterThanOrEqual(1)
+      expect(vector.isoWeekday).toBeLessThanOrEqual(7)
+    })
+
+    const sundays = taiwanCalendarRocVectors.filter(vector => vector.isoWeekday === 7)
+
+    expect(sundays.length).toBeGreaterThan(0)
+    sundays.forEach((vector) => {
+      expect(new Date(`${vector.date}T00:00:00Z`).getUTCDay()).toBe(0)
+    })
+  })
+
+  it('carries a week across the Gregorian year boundary without restarting the weekday count', () => {
+    const lastDay = taiwanCalendarRocVectors.find(vector => vector.date === '2026-12-31')
+    const nextDay = taiwanCalendarRocVectors.find(vector => vector.date === '2027-01-01')
+
+    expect(lastDay?.isoWeekday).toBe(4)
+    expect(nextDay?.isoWeekday).toBe(5)
+    expect(lastDay?.rocYear).not.toBe(nextDay?.rocYear)
   })
 
   it('gives no ROC year before the calendar era begins, rather than a zero or negative year', () => {
@@ -118,7 +147,7 @@ describe('civil layer', () => {
 })
 
 describe('official day contract', () => {
-  it('publishes exactly the researched day kinds', () => {
+  it('publishes the same day kinds as the decision record, in the same order', () => {
     expect([...officialDayKinds]).toEqual([
       'workday',
       'weekend',
@@ -127,6 +156,7 @@ describe('official day contract', () => {
       'bridge-holiday',
       'makeup-workday',
     ])
+    expect(parseDayKinds()).toEqual([...officialDayKinds])
   })
 
   it('accepts only the two flag values the source publishes', () => {
@@ -204,23 +234,48 @@ describe('official day contract', () => {
       })
   })
 
-  it('classifies an unannotated day by its weekday alone', () => {
-    taiwanCalendarOfficialDayVectors
-      .filter(vector => vector.label === '')
-      .forEach((vector) => {
-        const weekend = isoWeekday(vector.date) >= 6
+  it('classifies an unannotated day by its weekday alone, covering both a weekday and a weekend', () => {
+    const unannotated = taiwanCalendarOfficialDayVectors.filter(vector => vector.label === '')
 
-        expect(vector.kind).toBe(weekend ? 'weekend' : 'workday')
-        expect(vector.holidays).toEqual([])
-      })
+    expect(unannotated.map(vector => vector.kind).sort()).toEqual(['weekend', 'workday'])
+    unannotated.forEach((vector) => {
+      const weekend = isoWeekday(vector.date) >= 6
+
+      expect(vector.kind).toBe(weekend ? 'weekend' : 'workday')
+      expect(vector.holidays).toEqual([])
+    })
   })
 
   it('makes the makeup workday the only annotated kind that is still a working day', () => {
-    const workingKinds = taiwanCalendarOfficialDayVectors
-      .filter(vector => vector.label !== '' && vector.kind === 'makeup-workday')
+    const stillWorking = taiwanCalendarOfficialDayVectors
+      .filter(vector => vector.label !== '' && labelFor(vector.label).kind === 'makeup-workday')
 
-    expect(workingKinds.length).toBeGreaterThan(0)
-    workingKinds.forEach(vector => expect(isoWeekday(vector.date)).toBe(6))
+    expect(stillWorking.length).toBeGreaterThan(0)
+    stillWorking.forEach(vector => expect(isoWeekday(vector.date)).toBe(6))
+
+    const otherAnnotated = taiwanCalendarOfficialDayVectors
+      .filter(vector => vector.label !== '' && vector.kind !== 'makeup-workday')
+
+    expect(otherAnnotated.length).toBeGreaterThan(0)
+    otherAnnotated.forEach(vector => expect(annotatedKinds).toContain(vector.kind))
+    expect(otherAnnotated.some(vector => vector.kind === 'workday')).toBe(false)
+  })
+
+  it('carries a substitute holiday for a holiday in the next year, which no single rule derives', () => {
+    const crossYear = taiwanCalendarOfficialDayVectors.find(vector => vector.date === '2027-12-31')
+
+    expect(crossYear).toMatchObject({ kind: 'substitute-holiday', label: '補假' })
+    expect(isoWeekday('2028-01-01')).toBe(6)
+  })
+
+  it('resolves 兒童節 landing on 清明 in both directions, so neither one can be hard-coded', () => {
+    const thursday = taiwanCalendarOfficialDayVectors.find(vector => vector.date === '2024-04-05')
+    const friday = taiwanCalendarOfficialDayVectors.find(vector => vector.date === '2025-04-03')
+
+    expect(thursday?.kind).toBe('substitute-holiday')
+    expect(friday?.kind).toBe('substitute-holiday')
+    expect(isoWeekday('2024-04-04')).toBe(4)
+    expect(isoWeekday('2025-04-04')).toBe(5)
   })
 
   it('places every substitute and bridge holiday on a Monday-to-Friday date', () => {
@@ -394,10 +449,14 @@ describe('year status, coverage and errors', () => {
     })
   })
 
-  it('records a reviewed coverage range for each sourced layer', () => {
+  it('takes each layer coverage from the dataset that supplies it', () => {
     Object.values(taiwanCalendarCoverage).forEach((coverage) => {
+      const dataset = taiwanCalendarDatasets.find(candidate => candidate.id === coverage.datasetId)
+
+      expect(dataset).toBeDefined()
+      expect(coverage.firstYear).toBe(dataset!.coverage.firstYear)
+      expect(coverage.lastYear).toBe(dataset!.coverage.lastYear)
       expect(coverage.firstYear).toBeLessThanOrEqual(coverage.lastYear)
-      expect(taiwanCalendarDatasets.some(dataset => dataset.id === coverage.datasetId)).toBe(true)
     })
   })
 
@@ -414,13 +473,21 @@ describe('year status, coverage and errors', () => {
     expect(taiwanCalendarPublishableYears.lastYear).toBe(taiwanCalendarCoverage.official.lastYear)
   })
 
-  it('covers every vector year with the published range, or with a documented earlier year', () => {
+  it('keeps every official day vector inside the years that layer was confirmed to cover', () => {
+    expect(taiwanCalendarOfficialDayVectors.length).toBeGreaterThan(0)
     taiwanCalendarOfficialDayVectors.forEach((vector) => {
       const year = Number(vector.date.slice(0, 4))
 
       expect(year).toBeGreaterThanOrEqual(taiwanCalendarCoverage.official.firstYear)
       expect(year).toBeLessThanOrEqual(taiwanCalendarCoverage.official.lastYear)
     })
+  })
+
+  it('cross-checks the lunar layer only inside the window the second opinion covers', () => {
+    const secondOpinion = taiwanCalendarDatasets.find(dataset => dataset.id === 'hko-lunar-calendar')!
+
+    expect(secondOpinion.coverage.firstYear).toBeGreaterThan(taiwanCalendarCoverage.astronomical.firstYear)
+    expect(decisionRecord).toContain('這個第二意見有窗口')
   })
 })
 
@@ -466,10 +533,10 @@ describe('edition changes', () => {
   it('carries the later edition into the day vectors, not the superseded one', () => {
     taiwanCalendarEditionDiffVectors.forEach((vector) => {
       const published = taiwanCalendarOfficialDayVectors.find(candidate => candidate.date === vector.date)
-      if (!published) return
 
-      expect(published.kind).toBe(vector.after.kind)
-      expect(published.label).toBe(vector.after.label)
+      expect(published, `${vector.date} changed between editions but has no day vector`).toBeDefined()
+      expect(published!.kind).toBe(vector.after.kind)
+      expect(published!.label).toBe(vector.after.label)
     })
   })
 })
@@ -480,8 +547,12 @@ describe('datasets, sources and caveats', () => {
     expect(taiwanCalendarReferenceVersion).toContain(taiwanCalendarContentReview.reviewedAt)
   })
 
-  it('lists the same dataset ids as the decision record, in the same order', () => {
-    expect(parseDatasetIds()).toEqual(taiwanCalendarDatasets.map(dataset => dataset.id))
+  it('lists the same dataset ids and reviewed coverage as the decision record, in the same order', () => {
+    expect(parseDatasetCoverage()).toEqual(taiwanCalendarDatasets.map(dataset => ({
+      datasetId: dataset.id,
+      firstYear: dataset.coverage.firstYear,
+      lastYear: dataset.coverage.lastYear,
+    })))
   })
 
   it('records the licence, cadence and reviewed coverage of every dataset', () => {
@@ -501,20 +572,6 @@ describe('datasets, sources and caveats', () => {
 
   it('bakes every dataset at build time, so a calendar view makes no third-party request', () => {
     taiwanCalendarDatasets.forEach(dataset => expect(dataset.ingestion).toBe('build-time'))
-  })
-
-  it('records only datasets this review could actually read without an authorisation key', () => {
-    taiwanCalendarDatasets.forEach(dataset => expect(dataset.requiresAuthKey).toBe(false))
-    expect(decisionRecord).toContain('401 Forbidden')
-    expect(decisionRecord).toContain('授權碼屬於維運者，只在建置時使用')
-  })
-
-  it('reviews every dataset against the coverage the contract publishes', () => {
-    Object.values(taiwanCalendarCoverage).forEach((coverage) => {
-      const dataset = taiwanCalendarDatasets.find(candidate => candidate.id === coverage.datasetId)
-
-      expect(dataset?.coverage).toEqual({ firstYear: coverage.firstYear, lastYear: coverage.lastYear })
-    })
   })
 
   it('dates the review and the newest edition it cites', () => {

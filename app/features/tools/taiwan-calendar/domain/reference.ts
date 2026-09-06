@@ -175,40 +175,29 @@ export const taiwanCalendarViewErrorCodes = [
 
 export type TaiwanCalendarViewErrorCode = typeof taiwanCalendarViewErrorCodes[number]
 
-export interface TaiwanCalendarCoverage {
-  datasetId: string
-  /** Years confirmed obtainable on the research date, not years the source claims. */
-  firstYear: number
-  lastYear: number
-}
-
-/**
- * What each sourced layer actually covered on 2026-09-06. The astronomical
- * layer runs a year further than the official one, which is exactly why a year
- * can hold a lunar date and still owe its holidays.
- */
-export const taiwanCalendarCoverage = {
-  official: { datasetId: 'dgpa-office-calendar', firstYear: 2017, lastYear: 2027 },
-  astronomical: { datasetId: 'cwa-calendar-table', firstYear: 2008, lastYear: 2028 },
-} as const satisfies Record<string, TaiwanCalendarCoverage>
-
-/** A year page needs every sourced layer, so the publishable range is their intersection. */
-export const taiwanCalendarPublishableYears = { firstYear: 2017, lastYear: 2027 } as const
-
 export interface RocConversionVector {
   date: string
   /** null before the ROC era begins, rather than a zero or negative year. */
   rocYear: number | null
+  /** 1 is Monday and 7 is Sunday, as the CWA field spec numbers them — not Date.getDay(). */
+  isoWeekday: number
 }
 
+/**
+ * The 2026-12-31 and 2027-01-01 rows are two days of one ISO week: a Gregorian
+ * year boundary does not restart the weekday count. The 1911-12-31 row is the
+ * guard on the era boundary, and every row pins 7 = Sunday, which is where an
+ * implementation reaching for Date.getDay() would be off by one.
+ */
 export const taiwanCalendarRocVectors = [
-  { date: '2017-01-01', rocYear: 106 },
-  { date: '2024-02-29', rocYear: 113 },
-  { date: '2026-01-01', rocYear: 115 },
-  { date: '2026-12-31', rocYear: 115 },
-  { date: '2027-12-31', rocYear: 116 },
-  { date: '1912-01-01', rocYear: 1 },
-  { date: '1911-12-31', rocYear: null },
+  { date: '2017-01-01', rocYear: 106, isoWeekday: 7 },
+  { date: '2024-02-29', rocYear: 113, isoWeekday: 4 },
+  { date: '2026-01-01', rocYear: 115, isoWeekday: 4 },
+  { date: '2026-12-31', rocYear: 115, isoWeekday: 4 },
+  { date: '2027-01-01', rocYear: 116, isoWeekday: 5 },
+  { date: '2027-12-31', rocYear: 116, isoWeekday: 5 },
+  { date: '1912-01-01', rocYear: 1, isoWeekday: 1 },
+  { date: '1911-12-31', rocYear: null, isoWeekday: 7 },
 ] as const satisfies readonly RocConversionVector[]
 
 export interface LunarDateVector {
@@ -311,8 +300,13 @@ export interface OfficialDayVector {
 /**
  * Representative days from the ROC 106–116 editions. The 2025 rows follow the
  * 1141020 revision, not the edition it replaced. 2026 carries no makeup workday
- * at all — the處理要點 deleted them in June 2025 — while 2024 and 2025 still do,
- * which is why the contract has to express both.
+ * at all — the directions deleted them in June 2025 — while 2024 and 2025 still
+ * do, which is why the contract has to express both.
+ *
+ * Three rows exist to defeat a tempting shortcut. 2024-04-05 and 2025-04-03 are
+ * the same situation (Children's Day landing on Tomb Sweeping Day) resolved in
+ * opposite directions by Article 6, and 2027-12-31 is a substitute for a
+ * holiday in the following year, whose office calendar is not announced yet.
  */
 export const taiwanCalendarOfficialDayVectors = [
   { date: '2017-02-18', kind: 'makeup-workday', holidays: [], label: '調整上班' },
@@ -329,6 +323,7 @@ export const taiwanCalendarOfficialDayVectors = [
   },
   { date: '2024-04-05', kind: 'substitute-holiday', holidays: [], label: '補假' },
   { date: '2025-02-08', kind: 'makeup-workday', holidays: [], label: '補行上班' },
+  { date: '2025-04-03', kind: 'substitute-holiday', holidays: [], label: '補假' },
   { date: '2025-09-28', kind: 'national-holiday', holidays: ['teachers-day'], label: '孔子誕辰紀念日' },
   { date: '2025-09-29', kind: 'substitute-holiday', holidays: [], label: '補假' },
   { date: '2025-10-24', kind: 'substitute-holiday', holidays: [], label: '補假' },
@@ -338,6 +333,7 @@ export const taiwanCalendarOfficialDayVectors = [
     holidays: ['retrocession-day'],
     label: '臺灣光復暨金門古寧頭大捷紀念日',
   },
+  { date: '2025-12-25', kind: 'national-holiday', holidays: ['constitution-day'], label: '行憲紀念日' },
   { date: '2026-01-01', kind: 'national-holiday', holidays: ['founding-day'], label: '開國紀念日' },
   { date: '2026-01-02', kind: 'workday', holidays: [], label: '' },
   { date: '2026-01-03', kind: 'weekend', holidays: [], label: '' },
@@ -367,6 +363,7 @@ export const taiwanCalendarOfficialDayVectors = [
   },
   { date: '2026-10-26', kind: 'substitute-holiday', holidays: [], label: '補假' },
   { date: '2026-12-25', kind: 'national-holiday', holidays: ['constitution-day'], label: '行憲紀念日' },
+  { date: '2027-12-31', kind: 'substitute-holiday', holidays: [], label: '補假' },
 ] as const satisfies readonly OfficialDayVector[]
 
 export interface CalendarEditionDiffSide {

@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import type {
   CalendarEditionDiffVector,
   LunarDateVector,
@@ -8,49 +6,14 @@ import type {
   SolarTermVector,
   TaiwanCalendarNoteLabel,
 } from '@/features/tools/taiwan-calendar/domain/reference'
+import { createDecisionRecordReader, parseJsonCell } from './decision-record'
 
-/**
- * The Taiwan calendar decision record is the single source the domain modules
- * answer to. The reference test reads its tables from here so a source, a
- * status or a vector can never change in the document without the module
- * failing, or the other way round.
- */
-export const taiwanCalendarDecisionRecord = readFileSync(
-  resolve(process.cwd(), 'docs/research/004-taiwan-calendar-sources-and-data-contract.md'),
-  'utf8',
-)
+const reader = createDecisionRecordReader('docs/research/004-taiwan-calendar-sources-and-data-contract.md')
 
-/**
- * The document parsed here is the specification, so a table that moved, was
- * renamed or stopped matching has to fail loudly. Every reader below is scoped
- * to one heading and throws when it finds no rows: a silently empty list would
- * turn the comparisons in the reference test into assertions about nothing.
- */
-function sectionBody(heading: string) {
-  const start = taiwanCalendarDecisionRecord.indexOf(`\n${heading}\n`)
-  if (start === -1) throw new Error(`Decision record has no section "${heading}"`)
+/** The record verbatim, for asserting on the ids and URLs the page has to carry. */
+export const taiwanCalendarDecisionRecord = reader.record
 
-  const body = taiwanCalendarDecisionRecord.slice(start + heading.length + 2)
-  const nextHeading = body.search(/^#{2,4} /m)
-
-  return nextHeading === -1 ? body : body.slice(0, nextHeading)
-}
-
-function tableRows(heading: string, pattern: RegExp) {
-  const rows = [...sectionBody(heading).matchAll(pattern)]
-  if (rows.length === 0) throw new Error(`Section "${heading}" has no row matching ${pattern}`)
-
-  return rows
-}
-
-/**
- * Labels and holiday lists are written as JSON in the document so an empty
- * label and an empty holiday list stay distinguishable in a Markdown table,
- * and so a label containing a slash needs no escaping.
- */
-function parseJsonCell<T>(cell: string) {
-  return JSON.parse(cell) as T
-}
+const { parseKeyColumn, tableRows } = reader
 
 /** Key columns stay strings: comparing them against the module is the point. */
 export interface DocumentedNoteLabel extends Omit<TaiwanCalendarNoteLabel, 'kind' | 'holidays'> {
@@ -68,12 +31,22 @@ export interface DocumentedEditionDiffVector extends Omit<CalendarEditionDiffVec
   after: { kind: string, label: string }
 }
 
+export interface DocumentedDatasetCoverage {
+  datasetId: string
+  firstYear: number
+  lastYear: number
+}
+
 export function parseLayerKeys(): string[] {
-  return tableRows('### 4.1 資料層', /^\| `([a-z-]+)` \|/gm).map(([, key]) => key!)
+  return parseKeyColumn('### 4.1 資料層')
+}
+
+export function parseDayKinds(): string[] {
+  return parseKeyColumn('### 4.5 日別')
 }
 
 export function parseStatusKeys(): string[] {
-  return tableRows('### 4.4 年度資料狀態', /^\| `([a-z-]+)` \|/gm).map(([, key]) => key!)
+  return parseKeyColumn('### 4.4 年度資料狀態')
 }
 
 export function parseNoteLabels(): DocumentedNoteLabel[] {
@@ -87,19 +60,20 @@ export function parseNoteLabels(): DocumentedNoteLabel[] {
 }
 
 export function parseIngestionErrorCodes(): string[] {
-  return tableRows('### 5.5 擷取錯誤', /^\| `([a-z-]+)` \|/gm).map(([, code]) => code!)
+  return parseKeyColumn('### 5.5 擷取錯誤')
 }
 
 export function parseViewErrorCodes(): string[] {
-  return tableRows('### 5.6 檢視錯誤', /^\| `([a-z-]+)` \|/gm).map(([, code]) => code!)
+  return parseKeyColumn('### 5.6 檢視錯誤')
 }
 
 export function parseRocVectors(): RocConversionVector[] {
-  const pattern = /^\| `(\d{4}-\d{2}-\d{2})` \| `(\d+|null)` \|/gm
+  const pattern = /^\| `(\d{4}-\d{2}-\d{2})` \| `(\d+|null)` \| `([1-7])` \|/gm
 
-  return tableRows('### 6.1 民國換算向量', pattern).map(([, date, rocYear]) => ({
+  return tableRows('### 6.1 民國與星期換算向量', pattern).map(([, date, rocYear, isoWeekday]) => ({
     date: date!,
     rocYear: rocYear === 'null' ? null : Number(rocYear),
+    isoWeekday: Number(isoWeekday),
   }))
 }
 
@@ -121,7 +95,7 @@ export function parseSolarTermVectors(): SolarTermVector[] {
   const pattern = /^\| `(\S+)` \| `(\d{4}-\d{2}-\d{2})` \| `(\d{2}:\d{2})` \| `(\d{4}-\d{2}-\d{2})` \|/gm
 
   return tableRows('### 6.3 節氣向量', pattern).map(([, name, date, time, utcDate]) => ({
-    name: name!,
+    name: name as SolarTermVector['name'],
     date: date!,
     time: time!,
     utcDate: utcDate!,
@@ -151,10 +125,16 @@ export function parseEditionDiffVectors(): DocumentedEditionDiffVector[] {
 }
 
 export function parseCaveatKeys(): string[] {
-  return tableRows('### 7.1 必須同時呈現的免責內容', /^\| `([a-z-]+)` \|/gm).map(([, key]) => key!)
+  return parseKeyColumn('### 7.1 必須同時呈現的免責內容')
 }
 
-/** Dataset ids in the order the source table lists them. */
-export function parseDatasetIds(): string[] {
-  return tableRows('### 8.1 資料集', /^\| `([a-z0-9-]+)` \|/gm).map(([, id]) => id!)
+/** Dataset ids and the year range this review confirmed for each, in table order. */
+export function parseDatasetCoverage(): DocumentedDatasetCoverage[] {
+  const pattern = /^\| `([a-z0-9-]+)` \|(?:[^|]*\|){4} `(\d{4})–(\d{4})` \|/gm
+
+  return tableRows('### 8.1 資料集', pattern).map(([, datasetId, firstYear, lastYear]) => ({
+    datasetId: datasetId!,
+    firstYear: Number(firstYear),
+    lastYear: Number(lastYear),
+  }))
 }

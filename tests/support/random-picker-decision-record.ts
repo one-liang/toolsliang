@@ -1,48 +1,12 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import type { DuplicatePolicy } from '@/features/tools/random-picker/domain/reference'
+import { createDecisionRecordReader, parseJsonCell } from './decision-record'
 
-/**
- * The random-picker decision record is the single source the domain modules
- * answer to. The reference test reads the tables from here so a rule can never
- * be changed in the document without the module failing, or the other way
- * round.
- */
-export const randomPickerDecisionRecord = readFileSync(
-  resolve(process.cwd(), 'docs/research/003-random-picker-fairness-and-sources.md'),
-  'utf8',
-)
+const reader = createDecisionRecordReader('docs/research/003-random-picker-fairness-and-sources.md')
 
-/**
- * The document parsed here is the specification, so a table that moved, was
- * renamed or stopped matching has to fail loudly. Every reader below is scoped
- * to one heading and throws when it finds no rows: a silently empty list would
- * turn the comparisons in the reference test into assertions about nothing.
- */
-function sectionBody(heading: string) {
-  const start = randomPickerDecisionRecord.indexOf(`\n${heading}\n`)
-  if (start === -1) throw new Error(`Decision record has no section "${heading}"`)
+/** The record verbatim, for asserting on the ids and URLs the page has to carry. */
+export const randomPickerDecisionRecord = reader.record
 
-  const body = randomPickerDecisionRecord.slice(start + heading.length + 2)
-  const nextHeading = body.search(/^#{2,3} /m)
-
-  return nextHeading === -1 ? body : body.slice(0, nextHeading)
-}
-
-function tableRows(heading: string, pattern: RegExp) {
-  const rows = [...sectionBody(heading).matchAll(pattern)]
-  if (rows.length === 0) throw new Error(`Section "${heading}" has no row matching ${pattern}`)
-
-  return rows
-}
-
-/**
- * List text and entries are written as JSON in the document so that whitespace,
- * line breaks and an empty field all stay visible in a Markdown table.
- */
-function parseJsonCell<T>(cell: string) {
-  return JSON.parse(cell) as T
-}
+const { parseKeyColumn, tableRows } = reader
 
 export interface DocumentedListVector {
   input: string
@@ -66,11 +30,11 @@ export function parseListVectors(): DocumentedListVector[] {
 
 /** Error keys in the order the document lists them, which is the check order. */
 export function parseErrorCodes(): string[] {
-  return tableRows('### 5.2 錯誤情境', /^\| `([a-z-]+)` \|/gm).map(([, code]) => code!)
+  return parseKeyColumn('### 5.2 錯誤情境')
 }
 
 export function parseCaveatKeys(): string[] {
-  return tableRows('### 7.1 必須同時呈現的免責內容', /^\| `([a-z-]+)` \|/gm).map(([, key]) => key!)
+  return parseKeyColumn('### 7.1 必須同時呈現的免責內容')
 }
 
 /** The documented ceilings, with the thousands separators the document reads with. */
@@ -88,5 +52,5 @@ export function parsePublishedSourceUrls(): string[] {
 }
 
 export function parseDuplicatePolicies(): DuplicatePolicy[] {
-  return tableRows('### 4.3 重複項目策略', /^\| `([a-z]+)` \|/gm).map(([, key]) => key! as DuplicatePolicy)
+  return parseKeyColumn('### 4.3 重複項目策略') as DuplicatePolicy[]
 }

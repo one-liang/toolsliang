@@ -30,14 +30,15 @@ export interface TaiwanCalendarDataset {
   /** Years confirmed obtainable on the review date, not years the source claims. */
   coverage: { firstYear: number, lastYear: number }
   /**
-   * Whether a free authorisation key is needed. A keyed source can only ever be
-   * read by the build, because a key in the browser would both leak the key and
-   * turn a calendar view into a third-party request.
+   * When the data is read. `build-time` bakes it into a versioned static asset;
+   * `runtime` would have the browser fetch it, which ADR-0001 rules out because
+   * the year a visitor is looking at would then leave their device. The field is
+   * a decision that could have gone the other way, so tests can assert on it.
    */
-  requiresAuthKey: boolean
-  /** Every dataset is baked at build time; the runtime makes no request at all. */
-  ingestion: 'build-time'
+  ingestion: TaiwanCalendarIngestion
 }
+
+export type TaiwanCalendarIngestion = 'build-time' | 'runtime'
 
 /**
  * The three datasets the calendar answers to. The Open Government Data Licence
@@ -67,7 +68,6 @@ export const taiwanCalendarDatasets = [
       en: 'The next year is announced by 30 June, or by 31 August in exceptional cases; an announced year can still be reissued.',
     },
     coverage: { firstYear: 2017, lastYear: 2027 },
-    requiresAuthKey: false,
     ingestion: 'build-time',
   },
   {
@@ -91,14 +91,13 @@ export const taiwanCalendarDatasets = [
       en: 'Lunar dates, solar terms, and leap months for future years are reviewed and republished by the end of February each year.',
     },
     coverage: { firstYear: 2008, lastYear: 2028 },
-    requiresAuthKey: false,
     ingestion: 'build-time',
   },
   {
     id: 'hko-lunar-calendar',
     name: {
-      'zh-tw': '公曆與農曆對照表',
-      en: 'Gregorian-Lunar Calendar Conversion Table',
+      'zh-tw': '公曆與農曆對照表、二十四節氣的日期及時間資料',
+      en: 'Gregorian-Lunar Calendar Conversion Table and the dates and times of the 24 solar terms',
     },
     publisher: {
       'zh-tw': '香港天文台',
@@ -115,10 +114,33 @@ export const taiwanCalendarDatasets = [
       en: 'Updated annually; used here only to cross-check lunar dates, never as the authority.',
     },
     coverage: { firstYear: 2023, lastYear: 2028 },
-    requiresAuthKey: false,
     ingestion: 'build-time',
   },
 ] as const satisfies readonly TaiwanCalendarDataset[]
+
+function coverageOf(id: TaiwanCalendarDatasetId) {
+  const dataset = taiwanCalendarDatasets.find(candidate => candidate.id === id)
+  if (!dataset) throw new Error(`No reviewed dataset ${id}`)
+
+  return { datasetId: dataset.id, ...dataset.coverage }
+}
+
+/**
+ * What each sourced layer actually covered on the review date. The astronomical
+ * layer runs a year further than the official one, which is exactly why a year
+ * can hold a lunar date and still owe its holidays. Both ranges are read back
+ * off the datasets so the years are written down once.
+ */
+export const taiwanCalendarCoverage = {
+  official: coverageOf('dgpa-office-calendar'),
+  astronomical: coverageOf('cwa-calendar-table'),
+} as const
+
+/** A year page needs every sourced layer, so the publishable range is their intersection. */
+export const taiwanCalendarPublishableYears = {
+  firstYear: Math.max(...Object.values(taiwanCalendarCoverage).map(range => range.firstYear)),
+  lastYear: Math.min(...Object.values(taiwanCalendarCoverage).map(range => range.lastYear)),
+} as const
 
 /**
  * Every caveat must appear next to the calendar, in both locales. Four of them
@@ -208,6 +230,13 @@ export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview
         en: 'DATA.GOV.HK: Gregorian-Lunar Calendar Conversion Table',
       },
       url: 'https://data.gov.hk/tc-data/dataset/hk-hko-rss-gregorian-lunar-calendar-conversion-table',
+    },
+    {
+      title: {
+        'zh-tw': '香港天文台：二十四節氣的日期及時間資料',
+        en: 'Hong Kong Observatory: dates and times of the 24 solar terms',
+      },
+      url: 'https://www.hko.gov.hk/tc/gts/astronomy/Solar_Term.htm',
     },
     {
       title: {
