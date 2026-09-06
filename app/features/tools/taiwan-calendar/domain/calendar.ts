@@ -88,7 +88,8 @@ export function addDays(date: string, days: number): string {
  * weeks before Lunar New Year still belongs to the previous animal.
  */
 export function sexagenaryYearOf(date: string, lunarNewYear: string) {
-  const lunarYear = Number(date >= lunarNewYear ? date.slice(0, 4) : Number(date.slice(0, 4)) - 1)
+  const gregorianYear = Number(date.slice(0, 4))
+  const lunarYear = date >= lunarNewYear ? gregorianYear : gregorianYear - 1
   const index = ((lunarYear - 4) % 60 + 60) % 60
 
   return {
@@ -162,11 +163,6 @@ export function getMonthGrid(year: CalendarYear, month: number): CalendarWeek[] 
 
 export function findDay(year: CalendarYear, date: string): CalendarDay | undefined {
   return year.days.find(day => day.date === date)
-}
-
-/** Whether a year is complete enough to show, index and mark up. */
-export function isPublishableYear(layers: CalendarYear['layers']): boolean {
-  return Object.values(layers).every(layer => layer.status === 'published' || layer.status === 'revised')
 }
 
 /** The editions a year is currently built from, deduplicated by source file. */

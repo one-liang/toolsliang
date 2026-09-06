@@ -1,5 +1,5 @@
 import { buildCalendarYear, type CalendarYear } from './calendar'
-import { isCalendarYearDataset, validateCalendarYearDataset, type CalendarYearDataset } from './dataset'
+import type { CalendarYearDataset } from './dataset'
 import type { TaiwanCalendarViewErrorCode } from './reference'
 import { taiwanCalendarCoverage, taiwanCalendarPublishableYears } from './sources'
 
@@ -28,6 +28,24 @@ export const availableYears = Object.keys(yearModules)
   .map(path => Number(path.match(/(\d{4})\.json$/)?.[1]))
   .filter(year => Number.isInteger(year))
   .sort((left, right) => left - right)
+
+/**
+ * Every year worth offering: the published ones, plus the next one when the
+ * astronomical layer already covers it — that year exists only so a visitor
+ * asking "what about next year?" gets the reviewed answer instead of silence.
+ */
+export const selectableYears = [
+  ...availableYears,
+  ...taiwanCalendarPublishableYears.lastYear < taiwanCalendarCoverage.astronomical.lastYear
+    ? [taiwanCalendarPublishableYears.lastYear + 1]
+    : [],
+]
+
+/** The nearest published year, for a starting point that has to be one. */
+export function clampToPublishedYear(year: number) {
+  const { firstYear, lastYear } = taiwanCalendarPublishableYears
+  return Math.min(Math.max(year, firstYear), lastYear)
+}
 
 /**
  * The section 5.6 order: format before range, range before announcement. A year
@@ -86,19 +104,9 @@ export async function loadCalendarYear(
   }
   if (signal?.aborted) return { ok: false, cancelled: true }
 
-  if (!isCalendarYearDataset(dataset) || dataset.year !== year) {
-    // A year that cannot be read is a year this device does not have. Saying so
-    // beats rendering a grid with holes where the source had none.
-    return { ok: false, refusal: { code: 'year-not-downloaded', year } }
-  }
-
-  return { ok: true, calendar: buildCalendarYear(dataset) }
-}
-
-/** Reads a dataset that is already in hand, for tests and for prerendering. */
-export function readCalendarYear(dataset: unknown): CalendarYear {
-  const issues = validateCalendarYearDataset(dataset)
-  if (issues.length) throw new Error(`Invalid calendar year dataset:\n${issues.join('\n')}`)
-
-  return buildCalendarYear(dataset as CalendarYearDataset)
+  // The shape of a shipped year is settled where it can be fixed — the ingestion
+  // refuses to write a year that fails a check, and a unit test validates every
+  // file in the build. Re-litigating it here would only let a visitor be told
+  // "you are offline" about a year that was published wrong.
+  return { ok: true, calendar: buildCalendarYear(dataset as CalendarYearDataset) }
 }

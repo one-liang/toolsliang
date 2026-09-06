@@ -6,13 +6,13 @@ import {
   findDay,
   getMonthDays,
   getMonthGrid,
-  isPublishableYear,
   isoWeekdayOf,
   rocYearOf,
   sexagenaryYearOf,
 } from '@/features/tools/taiwan-calendar/domain/calendar'
 import { validateCalendarYearDataset, type CalendarYearDataset } from '@/features/tools/taiwan-calendar/domain/dataset'
 import {
+  officialDayKinds,
   officialHolidayIds,
   solarTermNames,
   taiwanCalendarLunarVectors,
@@ -91,7 +91,9 @@ describe('the baked years', () => {
     datasets.forEach((dataset) => {
       expect(validateCalendarYearDataset(dataset), String(dataset.year)).toEqual([])
       expect(dataset.rocYear).toBe(dataset.year - 1911)
-      expect(isPublishableYear(dataset.layers)).toBe(true)
+      // A shipped year is complete by construction: nothing else may be published.
+      Object.values(dataset.layers).forEach(layer =>
+        expect(['published', 'revised'], `${dataset.year}:${layer.datasetId}`).toContain(layer.status))
     })
   })
 
@@ -128,6 +130,32 @@ describe('the baked years', () => {
 
     expect(revised.map(dataset => dataset.year)).toEqual([2025])
     expect(revised[0]!.layers.official.edition).toContain('1141020')
+  })
+})
+
+describe('what the published window cannot exercise', () => {
+  /**
+   * Narrowing the astronomical coverage (§3.2) left a few reviewed vectors
+   * outside the years this build ships. They are still checked against the
+   * decision record by tests/taiwan-calendar-reference.test.ts; naming them here
+   * keeps the gap written down instead of quietly filtered away.
+   */
+  it('names every reviewed vector the shipped years cannot check', () => {
+    const outside = [
+      ...taiwanCalendarOfficialDayVectors,
+      ...taiwanCalendarLunarVectors,
+      ...taiwanCalendarSolarTermVectors,
+    ]
+      .map(vector => vector.date)
+      .filter(date => !published(date))
+
+    expect([...new Set(outside)].sort()).toEqual(['2017-02-18', '2028-06-22', '2028-06-23', '2028-07-22'])
+  })
+
+  it('still covers every day kind the whitelist can produce inside the published years', () => {
+    const kinds = new Set([...calendars.values()].flatMap(calendar => calendar.days.map(day => day.official.kind)))
+
+    expect([...kinds].sort()).toEqual([...officialDayKinds].sort())
   })
 })
 
@@ -398,12 +426,6 @@ describe('bringing a year onto the device', () => {
     const load = await loadCalendarYear(2026, { load: () => undefined })
 
     expect(load).toEqual({ ok: false, refusal: { code: 'year-not-announced', year: 2026 } })
-  })
-
-  it('refuses a malformed year rather than rendering a partly readable one', async () => {
-    const load = await loadCalendarYear(2026, { load: () => Promise.resolve({ default: { year: 2026 } }) })
-
-    expect(load).toEqual({ ok: false, refusal: { code: 'year-not-downloaded', year: 2026 } })
   })
 
   it('reports a load the caller has already moved on from instead of painting it', async () => {

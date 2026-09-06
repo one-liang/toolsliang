@@ -214,21 +214,31 @@ describe('what the page has to say about its data', () => {
       .toEqual(expect.arrayContaining([taiwanCalendarDatasets[0].licenceUrl, taiwanCalendarDatasets[0].url]))
   })
 
-  it('carries the permanent disclaimers beside the calendar, not only in the footer', async () => {
+  it('carries every disclaimer beside the calendar, not only in the footer', async () => {
     const wrapper = await mountWorkspace()
     const caveats = wrapper.get('.calendar-caveats').text()
 
-    expect(caveats).toContain(taiwanCalendarCaveats['government-agency-scope']['zh-tw'])
-    expect(caveats).toContain(taiwanCalendarCaveats['no-personal-events']['zh-tw'])
-    expect(caveats).not.toContain(taiwanCalendarCaveats['edition-may-change']['zh-tw'])
+    Object.values(taiwanCalendarCaveats).forEach(caveat => expect(caveats).toContain(caveat['zh-tw']))
+    expect(wrapper.findAll('.calendar-caveats__emphasised')).toHaveLength(0)
+    expect(wrapper.find('.calendar-revised').exists()).toBe(false)
   })
 
-  it('adds the revision warning only on the year the authority reissued', async () => {
+  it('emphasises the revision disclaimer on the year the authority reissued', async () => {
     const wrapper = await mountWorkspace()
     await selectYear(wrapper, 2025)
 
-    expect(wrapper.get('.calendar-caveats').text()).toContain(taiwanCalendarCaveats['edition-may-change']['zh-tw'])
+    expect(wrapper.get('.calendar-caveats__emphasised').text())
+      .toBe(taiwanCalendarCaveats['edition-may-change']['zh-tw'])
     expect(wrapper.get('.calendar-revised').text()).not.toBe('')
+  })
+
+  it('credits every reviewed dataset, including the one it only cross-checks against', async () => {
+    const wrapper = await mountWorkspace()
+    const credited = wrapper.findAll('.calendar-sources [data-dataset]').map(row => row.attributes('data-dataset'))
+
+    expect(credited).toEqual(taiwanCalendarDatasets.map(dataset => dataset.id))
+    expect(wrapper.get('[data-dataset="hko-lunar-calendar"]').text(), '交叉核對來源不得看起來像權威')
+      .toContain('不以它作為權威')
   })
 
   it('offers the year after the last published one and says it is not announced yet', async () => {

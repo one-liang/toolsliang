@@ -19,8 +19,10 @@ import { taiwanCalendarDatasetIds, type TaiwanCalendarDatasetId } from './source
  * refuses to write a year that fails any check in section 5.5 of the decision
  * record, so the browser never talks to a source and never has to guess. What
  * the ingestion cannot express — a file edited by hand, a rename that silently
- * drops a field — is caught here, because a malformed year must read as an
- * unavailable year rather than as a calendar full of blanks.
+ * drops a field — is caught by the check below, which a unit test runs over
+ * every year in the build. It is deliberately not run again in the browser: a
+ * year that was published wrong is a fault to fix here, not a state to describe
+ * to a visitor in words section 5.6 reserves for being offline.
  *
  * Only the days the source annotates are stored. An ordinary day is a weekday
  * question, and the ingestion has already proved the source's 是否放假 column
@@ -79,10 +81,6 @@ export interface CalendarYearDataset {
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
-
-export function isCalendarYearDataset(value: unknown): value is CalendarYearDataset {
-  return validateCalendarYearDataset(value).length === 0
-}
 
 /**
  * Every reason a file cannot be read as a year, all of them at once: a

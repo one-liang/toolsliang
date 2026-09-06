@@ -1,6 +1,7 @@
 import type { LunarDate, OfficialDay, SolarTerm } from './domain/calendar'
 import {
   officialDayKinds,
+  rocEpochOffset,
   officialHolidayIds,
   solarTermNames,
   taiwanCalendarViewErrorCodes,
@@ -72,6 +73,10 @@ const taiwanCalendarCopyEntries = {
   publishedAtLabel: { 'zh-tw': '來源發布或更新日', en: 'Source published' },
   retrievedAtLabel: { 'zh-tw': '本站擷取日', en: 'Retrieved by this site' },
   licenceLabel: { 'zh-tw': '授權', en: 'Licence' },
+  crossCheckLabel: {
+    'zh-tw': '交叉核對來源：用來獨立驗證農曆日序與節氣日期，本站不以它作為權威。',
+    en: 'Cross-check source: used to verify the lunar dates and solar term days independently, never as the authority here.',
+  },
   revisedLabel: { 'zh-tw': '主管機關已發布修正版，本頁採用的是修正後的版本。', en: 'The authority reissued this year; this page uses the reissued edition.' },
   caveatsTitle: { 'zh-tw': '看日期前要知道', en: 'Before you rely on these dates' },
   sourcesTitle: { 'zh-tw': '這一年的資料來源', en: 'Where this year comes from' },
@@ -276,14 +281,17 @@ export function getTaiwanCalendarCopy(locale: LocaleCode): Record<TaiwanCalendar
 }
 
 /**
- * The five permanent disclaimers, plus the revision one when the year on screen
- * really has been reissued. Section 7.1 asks for that emphasis only then, and
- * showing it on every year would make the one year it matters for invisible.
+ * All six disclaimers, always. Section 10.1 of the decision record is explicit
+ * that `edition-may-change` has to be permanently visible — it is the one risk
+ * a visitor cannot discover for themselves — so only its emphasis is
+ * conditional, and section 7.1 asks for that emphasis on a reissued year.
  */
 export function getTaiwanCalendarCaveats(locale: LocaleCode, year: { revised: boolean }) {
-  return taiwanCalendarCaveatKeys
-    .filter(key => key !== 'edition-may-change' || year.revised)
-    .map(key => ({ key, text: taiwanCalendarCaveats[key][locale] }))
+  return taiwanCalendarCaveatKeys.map(key => ({
+    key,
+    text: taiwanCalendarCaveats[key][locale],
+    emphasised: key === 'edition-may-change' && year.revised,
+  }))
 }
 
 export function taiwanCalendarViewErrorMessage(
@@ -295,6 +303,11 @@ export function taiwanCalendarViewErrorMessage(
     .replace('{year}', Number.isFinite(year) ? String(year) : '')
     .replace('{firstYear}', String(firstYear))
     .replace('{lastYear}', String(lastYear))
+}
+
+/** How a year reads in a year picker: Gregorian, and the ROC year beside it. */
+export function describeYearOption(year: number, locale: LocaleCode) {
+  return locale === 'en' ? String(year) : `${year}（民國 ${year - rocEpochOffset} 年）`
 }
 
 /** The Gregorian date and its ROC year, which are one fact and always read together. */
@@ -322,10 +335,8 @@ export function describeLunarDayMark(lunar: LunarDate, locale: LocaleCode) {
 /** The holidays a day carries, or what kind of adjusted day it is — never both. */
 export function describeDayMark(official: OfficialDay, locale: LocaleCode) {
   if (official.kind === 'workday' || official.kind === 'weekend') return ''
-  if (!official.holidays.length) return officialDayKindLabels[official.kind][locale]
 
-  const holidays = official.holidays.map(holiday => officialHolidayLabels[holiday][locale])
-  return holidays.join(locale === 'en' ? ' & ' : '、')
+  return holidayNames(official, locale) || officialDayKindLabels[official.kind][locale]
 }
 
 export function describeLunarDate(lunar: LunarDate, locale: LocaleCode) {
@@ -347,10 +358,17 @@ export function describeLunarDate(lunar: LunarDate, locale: LocaleCode) {
  */
 export function describeOfficialDay(official: OfficialDay, locale: LocaleCode) {
   const kind = officialDayKindLabels[official.kind][locale]
-  if (!official.holidays.length) return kind
+  const holidays = holidayNames(official, locale)
+  if (!holidays) return kind
 
-  const holidays = official.holidays.map(holiday => officialHolidayLabels[holiday][locale])
-  return locale === 'en' ? `${holidays.join(' and ')} (${kind})` : `${holidays.join('、')}（${kind}）`
+  return locale === 'en' ? `${holidays} (${kind})` : `${holidays}（${kind}）`
+}
+
+/** The reviewed names of the holidays a day carries, never the source's 備註. */
+function holidayNames(official: OfficialDay, locale: LocaleCode) {
+  return official.holidays
+    .map(holiday => officialHolidayLabels[holiday][locale])
+    .join(locale === 'en' ? ' and ' : '、')
 }
 
 export function describeSolarTerm(term: SolarTerm, locale: LocaleCode) {

@@ -9,6 +9,7 @@ import {
   describeLunarDayMark,
   describeOfficialDay,
   describeSolarTerm,
+  describeYearOption,
   getTaiwanCalendarCaveats,
   getTaiwanCalendarCopy,
   officialDayKindLabels,
@@ -27,14 +28,14 @@ import {
 import { officialDayKinds } from '@/features/tools/taiwan-calendar/domain/reference'
 import {
   taiwanCalendarContentReview,
-  taiwanCalendarCoverage,
   taiwanCalendarDatasets,
-  taiwanCalendarPublishableYears,
   taiwanCalendarReferenceVersion,
 } from '@/features/tools/taiwan-calendar/domain/sources'
 import {
   availableYears,
+  clampToPublishedYear,
   loadCalendarYear,
+  selectableYears,
   type YearRefusal,
 } from '@/features/tools/taiwan-calendar/domain/years'
 
@@ -50,14 +51,7 @@ import {
  */
 
 /** Prerendering has no device clock, so the reviewed year is what a first paint shows. */
-const REVIEWED_YEAR = clampYear(Number(taiwanCalendarContentReview.reviewedAt.slice(0, 4)))
-/** One year past the office calendar exists only to answer "what about next year?". */
-const selectableYears = [
-  ...availableYears,
-  ...taiwanCalendarPublishableYears.lastYear < taiwanCalendarCoverage.astronomical.lastYear
-    ? [taiwanCalendarPublishableYears.lastYear + 1]
-    : [],
-]
+const REVIEWED_YEAR = clampToPublishedYear(Number(taiwanCalendarContentReview.reviewedAt.slice(0, 4)))
 
 const { locale } = useAppLocale()
 const text = computed(() => getTaiwanCalendarCopy(locale.value))
@@ -85,7 +79,20 @@ const markedDays = computed(() => monthDays.value.filter(day =>
   day.solarTerm || (day.official.kind !== 'workday' && day.official.kind !== 'weekend')))
 const revised = computed(() => Object.values(calendar.value?.layers ?? {}).some(layer => layer.status === 'revised'))
 const caveats = computed(() => getTaiwanCalendarCaveats(locale.value, { revised: revised.value }))
-const editions = computed(() => calendar.value ? citedEditions(calendar.value.layers) : [])
+/**
+ * Every reviewed dataset, paired with what this year cites from it. The licence
+ * makes attribution a condition rather than a courtesy, and the cross-check
+ * source earns its line even though no layer is built from it — a year is only
+ * published because it agreed with that second opinion.
+ */
+const citedSources = computed(() => {
+  const editions = calendar.value ? citedEditions(calendar.value.layers) : []
+
+  return taiwanCalendarDatasets.map(dataset => ({
+    dataset,
+    editions: editions.filter(edition => edition.datasetId === dataset.id),
+  }))
+})
 const legend = computed(() => officialDayKinds.map(kind => ({ kind, label: officialDayKindLabels[kind][locale.value] })))
 const refusalMessage = computed(() => refusal.value
   ? taiwanCalendarViewErrorMessage(refusal.value.code, refusal.value.year, locale.value)
@@ -147,7 +154,7 @@ function showYear(next: number) {
 function showToday() {
   if (!today.value) return
 
-  const target = clampYear(Number(today.value.slice(0, 4)))
+  const target = clampToPublishedYear(Number(today.value.slice(0, 4)))
   if (String(target) !== today.value.slice(0, 4)) return
 
   year.value = target
@@ -251,11 +258,6 @@ function dayMark(day: CalendarDay) {
   return describeDayMark(day.official, locale.value)
 }
 
-function clampYear(value: number) {
-  const { firstYear, lastYear } = taiwanCalendarPublishableYears
-  return Math.min(Math.max(value, firstYear), lastYear)
-}
-
 function pad(value: number) {
   return String(value).padStart(2, '0')
 }
@@ -278,7 +280,7 @@ function pad(value: number) {
           @change="showYear(Number(($event.target as HTMLSelectElement).value))"
         >
           <option v-for="option in selectableYears" :key="option" :value="option">
-            {{ locale === 'en' ? option : `${option}（民國 ${option - 1911} 年）` }}
+            {{ describeYearOption(option, locale) }}
           </option>
         </select>
       </div>
@@ -422,31 +424,30 @@ function pad(value: number) {
       <h2 class="calendar-detail__title">{{ text.caveatsTitle }}</h2>
       <p v-if="revised" class="calendar-revised">{{ text.revisedLabel }}</p>
       <ul>
-        <li v-for="caveat in caveats" :key="caveat.key">{{ caveat.text }}</li>
+        <li
+          v-for="caveat in caveats"
+          :key="caveat.key"
+          :class="{ 'calendar-caveats__emphasised': caveat.emphasised }"
+        >{{ caveat.text }}</li>
       </ul>
     </section>
 
     <section v-if="calendar" class="calendar-sources" :aria-label="text.sourcesTitle">
       <h2 class="calendar-detail__title">{{ text.sourcesTitle }}</h2>
       <dl>
-        <div v-for="edition in editions" :key="edition.checksum + edition.datasetId">
-          <dt>{{ taiwanCalendarDatasets.find(dataset => dataset.id === edition.datasetId)?.publisher[locale] }}</dt>
+        <div v-for="cited in citedSources" :key="cited.dataset.id" :data-dataset="cited.dataset.id">
+          <dt>{{ cited.dataset.publisher[locale] }}</dt>
           <dd>
-            <a
-              :href="taiwanCalendarDatasets.find(dataset => dataset.id === edition.datasetId)?.url"
-              target="_blank"
-              rel="noopener noreferrer"
-            >{{ taiwanCalendarDatasets.find(dataset => dataset.id === edition.datasetId)?.name[locale] }}</a>
-            <span class="calendar-sources__edition">{{ text.dataVersionLabel }}：{{ edition.edition }}</span>
-            <span>{{ text.publishedAtLabel }}：<time :datetime="edition.publishedAt">{{ edition.publishedAt }}</time></span>
-            <span>{{ text.retrievedAtLabel }}：<time :datetime="edition.retrievedAt">{{ edition.retrievedAt }}</time></span>
+            <a :href="cited.dataset.url" target="_blank" rel="noopener noreferrer">{{ cited.dataset.name[locale] }}</a>
+            <span v-for="edition in cited.editions" :key="edition.checksum" class="calendar-sources__edition">
+              {{ text.dataVersionLabel }}：{{ edition.edition }}
+              ・{{ text.publishedAtLabel }} <time :datetime="edition.publishedAt">{{ edition.publishedAt }}</time>
+              ・{{ text.retrievedAtLabel }} <time :datetime="edition.retrievedAt">{{ edition.retrievedAt }}</time>
+            </span>
+            <span v-if="!cited.editions.length">{{ text.crossCheckLabel }}</span>
             <span>
               {{ text.licenceLabel }}：
-              <a
-                :href="taiwanCalendarDatasets.find(dataset => dataset.id === edition.datasetId)?.licenceUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-              >{{ taiwanCalendarDatasets.find(dataset => dataset.id === edition.datasetId)?.licence[locale] }}</a>
+              <a :href="cited.dataset.licenceUrl" target="_blank" rel="noopener noreferrer">{{ cited.dataset.licence[locale] }}</a>
             </span>
           </dd>
         </div>

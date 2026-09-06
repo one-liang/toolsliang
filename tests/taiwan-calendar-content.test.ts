@@ -93,13 +93,21 @@ describe('the disclaimers section 7.1 requires', () => {
     })
   })
 
-  it('shows the five permanent caveats always, and the revision one only on a revised year', () => {
-    const permanent = getTaiwanCalendarCaveats('zh-tw', { revised: false })
+  it('shows every caveat on every year, because the revision risk is the one nobody can see coming', () => {
+    const ordinary = getTaiwanCalendarCaveats('zh-tw', { revised: false })
     const revised = getTaiwanCalendarCaveats('zh-tw', { revised: true })
 
-    expect(permanent.map(caveat => caveat.key)).not.toContain('edition-may-change')
-    expect(permanent).toHaveLength(taiwanCalendarCaveatKeys.length - 1)
+    expect(ordinary.map(caveat => caveat.key)).toEqual([...taiwanCalendarCaveatKeys])
     expect(revised.map(caveat => caveat.key)).toEqual([...taiwanCalendarCaveatKeys])
+  })
+
+  it('emphasises the revision caveat only on the year that was reissued', () => {
+    const emphasised = (revised: boolean) => getTaiwanCalendarCaveats('zh-tw', { revised })
+      .filter(caveat => caveat.emphasised)
+      .map(caveat => caveat.key)
+
+    expect(emphasised(false)).toEqual([])
+    expect(emphasised(true)).toEqual(['edition-may-change'])
   })
 
   it('says the office calendar is not a company or school schedule', () => {

@@ -51,9 +51,12 @@ SOLAR_TERMS = [
     '小暑', '大暑', '立秋', '處暑', '白露', '秋分',
     '寒露', '霜降', '立冬', '小雪', '大雪', '冬至',
 ]
+# The sexagenary cycle is restated here rather than read back from the calendar
+# domain, because its only job in this script is to be an independent second
+# opinion: the value it computes is compared against the 歲次 the source itself
+# prints, so a shared implementation would check nothing.
 HEAVENLY_STEMS = '甲乙丙丁戊己庚辛壬癸'
 EARTHLY_BRANCHES = '子丑寅卯辰巳午未申酉戌亥'
-ZODIAC = '鼠牛虎兔龍蛇馬羊猴雞狗豬'
 
 DGPA_WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
 DGPA_COLUMNS = ['西元日期', '星期', '是否放假', '備註']
@@ -505,9 +508,9 @@ def lunar_on(date: str, months: list[dict]) -> dict:
 # Assembly and the cross-layer checks of section 5.4.
 # --------------------------------------------------------------------------- #
 
-def sexagenary_year(year: int) -> tuple[str, str]:
+def sexagenary_year(year: int) -> str:
     index = (year - 4) % 60
-    return HEAVENLY_STEMS[index % 10] + EARTHLY_BRANCHES[index % 12], ZODIAC[index % 12]
+    return HEAVENLY_STEMS[index % 10] + EARTHLY_BRANCHES[index % 12]
 
 
 @dataclass
@@ -538,7 +541,7 @@ def build_year(year: int, official: OfficialYear, astronomical: AstronomicalYear
         raise IngestionError('incomplete-year', f'{year} has {len(starts)} lunar new years')
     lunar_new_year = starts[0]['start']
 
-    stem_branch, _ = sexagenary_year(year)
+    stem_branch = sexagenary_year(year)
     if stem_branch != astronomical.sexagenary:
         raise IngestionError('cross-layer-conflict', f'{year} is 歲次{stem_branch} here and 歲次{astronomical.sexagenary} there')
 
