@@ -1,0 +1,415 @@
+{
+  "year": 2023,
+  "rocYear": 112,
+  "layers": {
+    "lunar": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 112 年日曆資料表",
+      "publishedAt": "2023-06-01",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-b5fd6479c001893f1aea1fffbe53b56cded41393b7dd48e0b34a5ab4576166fa"
+    },
+    "solarTerm": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 112 年日曆資料表",
+      "publishedAt": "2023-06-01",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-b5fd6479c001893f1aea1fffbe53b56cded41393b7dd48e0b34a5ab4576166fa"
+    },
+    "official": {
+      "status": "published",
+      "datasetId": "dgpa-office-calendar",
+      "edition": "112年中華民國政府行政機關辦公日曆表",
+      "publishedAt": "2026-07-15",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-6cdc13b2e33a38abeabf3ae1e31555f828f2f0f7f9263e531fb36bba531dacea"
+    }
+  },
+  "lunarNewYear": "2023-01-22",
+  "lunarMonths": [
+    {
+      "start": "2023-01-01",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 10
+    },
+    {
+      "start": "2023-01-22",
+      "month": 1,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-02-20",
+      "month": 2,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-03-22",
+      "month": 2,
+      "leapMonth": true,
+      "startDay": 1
+    },
+    {
+      "start": "2023-04-20",
+      "month": 3,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-05-19",
+      "month": 4,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-06-18",
+      "month": 5,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-07-18",
+      "month": 6,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-08-16",
+      "month": 7,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-09-15",
+      "month": 8,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-10-15",
+      "month": 9,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-11-13",
+      "month": 10,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2023-12-13",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 1
+    }
+  ],
+  "solarTerms": [
+    {
+      "name": "小寒",
+      "date": "2023-01-05",
+      "time": "23:05"
+    },
+    {
+      "name": "大寒",
+      "date": "2023-01-20",
+      "time": "16:30"
+    },
+    {
+      "name": "立春",
+      "date": "2023-02-04",
+      "time": "10:43"
+    },
+    {
+      "name": "雨水",
+      "date": "2023-02-19",
+      "time": "06:34"
+    },
+    {
+      "name": "驚蟄",
+      "date": "2023-03-06",
+      "time": "04:36"
+    },
+    {
+      "name": "春分",
+      "date": "2023-03-21",
+      "time": "05:24"
+    },
+    {
+      "name": "清明",
+      "date": "2023-04-05",
+      "time": "09:13"
+    },
+    {
+      "name": "穀雨",
+      "date": "2023-04-20",
+      "time": "16:14"
+    },
+    {
+      "name": "立夏",
+      "date": "2023-05-06",
+      "time": "02:19"
+    },
+    {
+      "name": "小滿",
+      "date": "2023-05-21",
+      "time": "15:09"
+    },
+    {
+      "name": "芒種",
+      "date": "2023-06-06",
+      "time": "06:18"
+    },
+    {
+      "name": "夏至",
+      "date": "2023-06-21",
+      "time": "22:58"
+    },
+    {
+      "name": "小暑",
+      "date": "2023-07-07",
+      "time": "16:31"
+    },
+    {
+      "name": "大暑",
+      "date": "2023-07-23",
+      "time": "09:50"
+    },
+    {
+      "name": "立秋",
+      "date": "2023-08-08",
+      "time": "02:23"
+    },
+    {
+      "name": "處暑",
+      "date": "2023-08-23",
+      "time": "17:01"
+    },
+    {
+      "name": "白露",
+      "date": "2023-09-08",
+      "time": "05:27"
+    },
+    {
+      "name": "秋分",
+      "date": "2023-09-23",
+      "time": "14:50"
+    },
+    {
+      "name": "寒露",
+      "date": "2023-10-08",
+      "time": "21:16"
+    },
+    {
+      "name": "霜降",
+      "date": "2023-10-24",
+      "time": "00:21"
+    },
+    {
+      "name": "立冬",
+      "date": "2023-11-08",
+      "time": "00:36"
+    },
+    {
+      "name": "小雪",
+      "date": "2023-11-22",
+      "time": "22:03"
+    },
+    {
+      "name": "大雪",
+      "date": "2023-12-07",
+      "time": "17:33"
+    },
+    {
+      "name": "冬至",
+      "date": "2023-12-22",
+      "time": "11:27"
+    }
+  ],
+  "officialDays": [
+    {
+      "date": "2023-01-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "founding-day"
+      ],
+      "label": "開國紀念日"
+    },
+    {
+      "date": "2023-01-02",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2023-01-07",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2023-01-20",
+      "kind": "national-holiday",
+      "holidays": [
+        "minor-new-years-eve"
+      ],
+      "label": "小年夜"
+    },
+    {
+      "date": "2023-01-21",
+      "kind": "national-holiday",
+      "holidays": [
+        "lunar-new-years-eve"
+      ],
+      "label": "農曆除夕"
+    },
+    {
+      "date": "2023-01-22",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2023-01-23",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2023-01-24",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2023-01-25",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2023-01-26",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2023-01-27",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2023-02-04",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2023-02-18",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2023-02-27",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2023-02-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "peace-memorial-day"
+      ],
+      "label": "和平紀念日"
+    },
+    {
+      "date": "2023-03-25",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2023-04-03",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2023-04-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "childrens-day"
+      ],
+      "label": "兒童節"
+    },
+    {
+      "date": "2023-04-05",
+      "kind": "national-holiday",
+      "holidays": [
+        "tomb-sweeping-day"
+      ],
+      "label": "民族掃墓節"
+    },
+    {
+      "date": "2023-06-17",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2023-06-22",
+      "kind": "national-holiday",
+      "holidays": [
+        "dragon-boat-festival"
+      ],
+      "label": "端午節"
+    },
+    {
+      "date": "2023-06-23",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2023-09-23",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2023-09-29",
+      "kind": "national-holiday",
+      "holidays": [
+        "mid-autumn-festival"
+      ],
+      "label": "中秋節"
+    },
+    {
+      "date": "2023-10-09",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2023-10-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "national-day"
+      ],
+      "label": "國慶日"
+    }
+  ]
+}

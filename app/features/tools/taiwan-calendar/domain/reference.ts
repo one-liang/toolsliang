@@ -254,9 +254,10 @@ export interface SolarTermVector {
 }
 
 /**
- * A whole year of terms from the CWA calendar table for ROC 115, agreeing to
- * the minute with the Hong Kong Observatory table, plus 清明 for the
- * neighbouring years. 民族掃墓節 falls on 清明 rather than on a fixed date, so
+ * A whole year of terms from the CWA calendar table for ROC 115, whose days the
+ * Hong Kong Observatory table confirms — two terms' minutes differ between the
+ * two, which is the leap-second rounding the CWA field spec warns about, so the
+ * authority's value stands — plus 清明 for the neighbouring years. 民族掃墓節 falls on 清明 rather than on a fixed date, so
  * hard-coding 4 April or 5 April is wrong in half of these four years.
  */
 export const taiwanCalendarSolarTermVectors = [
@@ -271,7 +272,7 @@ export const taiwanCalendarSolarTermVectors = [
   { name: '立夏', date: '2026-05-05', time: '19:49', utcDate: '2026-05-05' },
   { name: '小滿', date: '2026-05-21', time: '08:37', utcDate: '2026-05-21' },
   { name: '芒種', date: '2026-06-05', time: '23:48', utcDate: '2026-06-05' },
-  { name: '夏至', date: '2026-06-21', time: '16:25', utcDate: '2026-06-21' },
+  { name: '夏至', date: '2026-06-21', time: '16:24', utcDate: '2026-06-21' },
   { name: '小暑', date: '2026-07-07', time: '09:57', utcDate: '2026-07-07' },
   { name: '大暑', date: '2026-07-23', time: '03:13', utcDate: '2026-07-22' },
   { name: '立秋', date: '2026-08-07', time: '19:43', utcDate: '2026-08-07' },
@@ -282,10 +283,10 @@ export const taiwanCalendarSolarTermVectors = [
   { name: '霜降', date: '2026-10-23', time: '17:38', utcDate: '2026-10-23' },
   { name: '立冬', date: '2026-11-07', time: '17:52', utcDate: '2026-11-07' },
   { name: '小雪', date: '2026-11-22', time: '15:23', utcDate: '2026-11-22' },
-  { name: '大雪', date: '2026-12-07', time: '10:53', utcDate: '2026-12-07' },
+  { name: '大雪', date: '2026-12-07', time: '10:52', utcDate: '2026-12-07' },
   { name: '冬至', date: '2026-12-22', time: '04:50', utcDate: '2026-12-21' },
   { name: '清明', date: '2024-04-04', time: '15:02', utcDate: '2024-04-04' },
-  { name: '清明', date: '2025-04-04', time: '20:49', utcDate: '2025-04-04' },
+  { name: '清明', date: '2025-04-04', time: '20:48', utcDate: '2025-04-04' },
   { name: '清明', date: '2027-04-05', time: '08:17', utcDate: '2027-04-05' },
 ] as const satisfies readonly SolarTermVector[]
 

@@ -1,6 +1,7 @@
 import { bmiContentReview } from './bmi-calculator/domain/sources'
 import { ntdContentReview } from './ntd-uppercase/domain/sources'
 import { randomPickerContentReview } from './random-picker/domain/sources'
+import { taiwanCalendarContentReview } from './taiwan-calendar/domain/sources'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -284,6 +285,53 @@ const registeredTools: ToolDefinition[] = [
       },
     },
     contentReview: randomPickerContentReview,
+  },
+  {
+    slug: 'taiwan-calendar', category: 'time-calendar', icon: 'calendar-days',
+    availability: { state: 'published', publishedAt: '2026-09-06' },
+    status: { kind: 'new', startsAt: '2026-09-06', endsAt: '2026-10-06' },
+    name: { 'zh-tw': '台灣行事曆', en: 'Taiwan Calendar' },
+    description: {
+      'zh-tw': '查西元、民國、農曆、節氣、放假日與補班日。',
+      en: 'Look up Gregorian and ROC dates, lunar dates, solar terms, holidays, and makeup workdays.',
+    },
+    aliases: {
+      'zh-tw': ['國曆農曆對照', '放假日查詢', '民國年對照'],
+      en: ['Taiwan holidays', 'lunar calendar', 'ROC year converter'],
+    },
+    keywords: {
+      'zh-tw': ['農曆', '節氣', '國定假日', '補班', '民國'],
+      en: ['lunar', 'solar term', 'public holiday', 'makeup workday', 'ROC year'],
+    },
+    processingClass: 'instant',
+    routeComponentKey: 'TaiwanCalendarWorkspace',
+    offlineMode: 'ready',
+    capabilities: ['javascript'],
+    acceptedInput: {
+      'zh-tw': '一個西元年份與月份；不需要也不接受任何個人行程',
+      en: 'A Gregorian year and month; no personal event is needed or accepted',
+    },
+    pagePresentation: {
+      showHeadingIcon: false,
+      showLocalProcessingStatement: true,
+    },
+    localProcessingStatement: {
+      'zh-tw': '行事曆資料已隨網站打包，你選的年份與日期只留在這台裝置，不會送出。',
+      en: 'The calendar data ships with the site; the year and day you pick stay on this device and are never sent.',
+    },
+    seo: {
+      contentKey: 'taiwan-calendar',
+      title: { 'zh-tw': '台灣行事曆', en: 'Taiwan Calendar' },
+      description: {
+        'zh-tw': '在瀏覽器查台灣的西元與民國日期、農曆、節氣、國定放假日與補班日，每一年都標出採用的官方資料版本，離線也能看。',
+        en: 'Look up Taiwan\'s Gregorian and ROC dates, lunar dates, solar terms, national holidays, and makeup workdays in your browser, with the official dataset edition shown for every year, offline included.',
+      },
+      answer: {
+        'zh-tw': '放假日與補班日採用行政院人事行政總處公告的政府行政機關辦公日曆表，農曆與節氣採用中央氣象署的日曆資料表，兩者都在建置時烘焙成靜態資料並標出版本；主管機關尚未公告的年度會直說尚未公告，不以推算補足。',
+        en: 'Holidays and makeup workdays come from the government agency office calendar announced by the Directorate-General of Personnel Administration, and lunar dates and solar terms from the Central Weather Administration calendar tables; both are baked in at build time with their edition shown, and a year the authority has not announced says so instead of being estimated.',
+      },
+    },
+    contentReview: taiwanCalendarContentReview,
   },
   {
     slug: 'document-counter', category: 'document', icon: 'file-text',

@@ -1,0 +1,347 @@
+{
+  "year": 2022,
+  "rocYear": 111,
+  "layers": {
+    "lunar": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 111 年日曆資料表",
+      "publishedAt": "2021-11-02",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-6af1eca2bfd9a03dda145a2021e559bc4de1e64fa16f5d1fcea1d839f34df8be"
+    },
+    "solarTerm": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 111 年日曆資料表",
+      "publishedAt": "2021-11-02",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-6af1eca2bfd9a03dda145a2021e559bc4de1e64fa16f5d1fcea1d839f34df8be"
+    },
+    "official": {
+      "status": "published",
+      "datasetId": "dgpa-office-calendar",
+      "edition": "111年中華民國政府行政機關辦公日曆表",
+      "publishedAt": "2026-07-15",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-8dc31b7e0ceb9ab90856be82bab7be8947606eec2c8f01728d0e165e079ed5df"
+    }
+  },
+  "lunarNewYear": "2022-02-01",
+  "lunarMonths": [
+    {
+      "start": "2022-01-01",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 29
+    },
+    {
+      "start": "2022-01-03",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-02-01",
+      "month": 1,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-03-03",
+      "month": 2,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-04-01",
+      "month": 3,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-05-01",
+      "month": 4,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-05-30",
+      "month": 5,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-06-29",
+      "month": 6,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-07-29",
+      "month": 7,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-08-27",
+      "month": 8,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-09-26",
+      "month": 9,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-10-25",
+      "month": 10,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-11-24",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2022-12-23",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    }
+  ],
+  "solarTerms": [
+    {
+      "name": "小寒",
+      "date": "2022-01-05",
+      "time": "17:14"
+    },
+    {
+      "name": "大寒",
+      "date": "2022-01-20",
+      "time": "10:39"
+    },
+    {
+      "name": "立春",
+      "date": "2022-02-04",
+      "time": "04:51"
+    },
+    {
+      "name": "雨水",
+      "date": "2022-02-19",
+      "time": "00:43"
+    },
+    {
+      "name": "驚蟄",
+      "date": "2022-03-05",
+      "time": "22:44"
+    },
+    {
+      "name": "春分",
+      "date": "2022-03-20",
+      "time": "23:33"
+    },
+    {
+      "name": "清明",
+      "date": "2022-04-05",
+      "time": "03:20"
+    },
+    {
+      "name": "穀雨",
+      "date": "2022-04-20",
+      "time": "10:24"
+    },
+    {
+      "name": "立夏",
+      "date": "2022-05-05",
+      "time": "20:26"
+    },
+    {
+      "name": "小滿",
+      "date": "2022-05-21",
+      "time": "09:23"
+    },
+    {
+      "name": "芒種",
+      "date": "2022-06-06",
+      "time": "00:26"
+    },
+    {
+      "name": "夏至",
+      "date": "2022-06-21",
+      "time": "17:14"
+    },
+    {
+      "name": "小暑",
+      "date": "2022-07-07",
+      "time": "10:38"
+    },
+    {
+      "name": "大暑",
+      "date": "2022-07-23",
+      "time": "04:07"
+    },
+    {
+      "name": "立秋",
+      "date": "2022-08-07",
+      "time": "20:29"
+    },
+    {
+      "name": "處暑",
+      "date": "2022-08-23",
+      "time": "11:16"
+    },
+    {
+      "name": "白露",
+      "date": "2022-09-07",
+      "time": "23:32"
+    },
+    {
+      "name": "秋分",
+      "date": "2022-09-23",
+      "time": "09:04"
+    },
+    {
+      "name": "寒露",
+      "date": "2022-10-08",
+      "time": "15:22"
+    },
+    {
+      "name": "霜降",
+      "date": "2022-10-23",
+      "time": "18:36"
+    },
+    {
+      "name": "立冬",
+      "date": "2022-11-07",
+      "time": "18:45"
+    },
+    {
+      "name": "小雪",
+      "date": "2022-11-22",
+      "time": "16:20"
+    },
+    {
+      "name": "大雪",
+      "date": "2022-12-07",
+      "time": "11:46"
+    },
+    {
+      "name": "冬至",
+      "date": "2022-12-22",
+      "time": "05:48"
+    }
+  ],
+  "officialDays": [
+    {
+      "date": "2022-01-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "founding-day"
+      ],
+      "label": "開國紀念日"
+    },
+    {
+      "date": "2022-01-22",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2022-01-31",
+      "kind": "national-holiday",
+      "holidays": [
+        "lunar-new-years-eve"
+      ],
+      "label": "農曆除夕"
+    },
+    {
+      "date": "2022-02-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2022-02-02",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2022-02-03",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2022-02-04",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2022-02-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "peace-memorial-day"
+      ],
+      "label": "和平紀念日"
+    },
+    {
+      "date": "2022-04-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "childrens-day"
+      ],
+      "label": "兒童節"
+    },
+    {
+      "date": "2022-04-05",
+      "kind": "national-holiday",
+      "holidays": [
+        "tomb-sweeping-day"
+      ],
+      "label": "民族掃墓節"
+    },
+    {
+      "date": "2022-06-03",
+      "kind": "national-holiday",
+      "holidays": [
+        "dragon-boat-festival"
+      ],
+      "label": "端午節"
+    },
+    {
+      "date": "2022-09-09",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2022-09-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "mid-autumn-festival"
+      ],
+      "label": "中秋節"
+    },
+    {
+      "date": "2022-10-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "national-day"
+      ],
+      "label": "國慶日"
+    }
+  ]
+}

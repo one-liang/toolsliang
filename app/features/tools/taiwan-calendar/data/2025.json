@@ -1,0 +1,378 @@
+{
+  "year": 2025,
+  "rocYear": 114,
+  "layers": {
+    "lunar": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 114 年日曆資料表",
+      "publishedAt": "2024-02-07",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-785f9ea9465f5508d723a1b83bf7df1bc65fa3a8798709f9688ed553d7f356fb"
+    },
+    "solarTerm": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 114 年日曆資料表",
+      "publishedAt": "2024-02-07",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-785f9ea9465f5508d723a1b83bf7df1bc65fa3a8798709f9688ed553d7f356fb"
+    },
+    "official": {
+      "status": "revised",
+      "datasetId": "dgpa-office-calendar",
+      "edition": "114年中華民國政府行政機關辦公日曆表(1141020更新)",
+      "publishedAt": "2026-07-15",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-b4bd40d4d1f4ffc20cb724a07bf3b7c5c1b32a9100e55dcf216f329af3513ca6"
+    }
+  },
+  "lunarNewYear": "2025-01-29",
+  "lunarMonths": [
+    {
+      "start": "2025-01-01",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 2
+    },
+    {
+      "start": "2025-01-29",
+      "month": 1,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-02-28",
+      "month": 2,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-03-29",
+      "month": 3,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-04-28",
+      "month": 4,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-05-27",
+      "month": 5,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-06-25",
+      "month": 6,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-07-25",
+      "month": 6,
+      "leapMonth": true,
+      "startDay": 1
+    },
+    {
+      "start": "2025-08-23",
+      "month": 7,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-09-22",
+      "month": 8,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-10-21",
+      "month": 9,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-11-20",
+      "month": 10,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2025-12-20",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 1
+    }
+  ],
+  "solarTerms": [
+    {
+      "name": "小寒",
+      "date": "2025-01-05",
+      "time": "10:33"
+    },
+    {
+      "name": "大寒",
+      "date": "2025-01-20",
+      "time": "04:00"
+    },
+    {
+      "name": "立春",
+      "date": "2025-02-03",
+      "time": "22:10"
+    },
+    {
+      "name": "雨水",
+      "date": "2025-02-18",
+      "time": "18:07"
+    },
+    {
+      "name": "驚蟄",
+      "date": "2025-03-05",
+      "time": "16:07"
+    },
+    {
+      "name": "春分",
+      "date": "2025-03-20",
+      "time": "17:01"
+    },
+    {
+      "name": "清明",
+      "date": "2025-04-04",
+      "time": "20:48"
+    },
+    {
+      "name": "穀雨",
+      "date": "2025-04-20",
+      "time": "03:56"
+    },
+    {
+      "name": "立夏",
+      "date": "2025-05-05",
+      "time": "13:57"
+    },
+    {
+      "name": "小滿",
+      "date": "2025-05-21",
+      "time": "02:55"
+    },
+    {
+      "name": "芒種",
+      "date": "2025-06-05",
+      "time": "17:56"
+    },
+    {
+      "name": "夏至",
+      "date": "2025-06-21",
+      "time": "10:42"
+    },
+    {
+      "name": "小暑",
+      "date": "2025-07-07",
+      "time": "04:05"
+    },
+    {
+      "name": "大暑",
+      "date": "2025-07-22",
+      "time": "21:29"
+    },
+    {
+      "name": "立秋",
+      "date": "2025-08-07",
+      "time": "13:52"
+    },
+    {
+      "name": "處暑",
+      "date": "2025-08-23",
+      "time": "04:34"
+    },
+    {
+      "name": "白露",
+      "date": "2025-09-07",
+      "time": "16:52"
+    },
+    {
+      "name": "秋分",
+      "date": "2025-09-23",
+      "time": "02:19"
+    },
+    {
+      "name": "寒露",
+      "date": "2025-10-08",
+      "time": "08:41"
+    },
+    {
+      "name": "霜降",
+      "date": "2025-10-23",
+      "time": "11:51"
+    },
+    {
+      "name": "立冬",
+      "date": "2025-11-07",
+      "time": "12:04"
+    },
+    {
+      "name": "小雪",
+      "date": "2025-11-22",
+      "time": "09:36"
+    },
+    {
+      "name": "大雪",
+      "date": "2025-12-07",
+      "time": "05:05"
+    },
+    {
+      "name": "冬至",
+      "date": "2025-12-21",
+      "time": "23:03"
+    }
+  ],
+  "officialDays": [
+    {
+      "date": "2025-01-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "founding-day"
+      ],
+      "label": "開國紀念日"
+    },
+    {
+      "date": "2025-01-27",
+      "kind": "national-holiday",
+      "holidays": [
+        "minor-new-years-eve"
+      ],
+      "label": "小年夜"
+    },
+    {
+      "date": "2025-01-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "lunar-new-years-eve"
+      ],
+      "label": "農曆除夕"
+    },
+    {
+      "date": "2025-01-29",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2025-01-30",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2025-01-31",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2025-02-08",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2025-02-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "peace-memorial-day"
+      ],
+      "label": "和平紀念日"
+    },
+    {
+      "date": "2025-04-03",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2025-04-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "childrens-day",
+        "tomb-sweeping-day"
+      ],
+      "label": "兒童節及民族掃墓節"
+    },
+    {
+      "date": "2025-05-30",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2025-05-31",
+      "kind": "national-holiday",
+      "holidays": [
+        "dragon-boat-festival"
+      ],
+      "label": "端午節"
+    },
+    {
+      "date": "2025-09-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "teachers-day"
+      ],
+      "label": "孔子誕辰紀念日"
+    },
+    {
+      "date": "2025-09-29",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2025-10-06",
+      "kind": "national-holiday",
+      "holidays": [
+        "mid-autumn-festival"
+      ],
+      "label": "中秋節"
+    },
+    {
+      "date": "2025-10-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "national-day"
+      ],
+      "label": "國慶日"
+    },
+    {
+      "date": "2025-10-24",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2025-10-25",
+      "kind": "national-holiday",
+      "holidays": [
+        "retrocession-day"
+      ],
+      "label": "臺灣光復暨金門古寧頭大捷紀念日"
+    },
+    {
+      "date": "2025-12-25",
+      "kind": "national-holiday",
+      "holidays": [
+        "constitution-day"
+      ],
+      "label": "行憲紀念日"
+    }
+  ]
+}

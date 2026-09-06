@@ -47,13 +47,13 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['bmi-calculator', 'ntd-uppercase', 'random-picker'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
     expect(getTool('image-resizer')).toBeUndefined()
     expect(toolsByCategory('image-commerce')).toEqual([])
-    expect(publishedToolCategories.map(category => category.id)).toEqual(['calculation', 'random-selection', 'document'])
+    expect(publishedToolCategories.map(category => category.id)).toEqual(['calculation', 'time-calendar', 'random-selection', 'document'])
   })
 
   it('provides the complete public route and content contract from one registration', () => {
@@ -152,9 +152,11 @@ describe('tool catalog', () => {
       '/zh-tw/tools/bmi-calculator/',
       '/zh-tw/tools/ntd-uppercase/',
       '/zh-tw/tools/random-picker/',
+      '/zh-tw/tools/taiwan-calendar/',
       '/en/tools/bmi-calculator/',
       '/en/tools/ntd-uppercase/',
       '/en/tools/random-picker/',
+      '/en/tools/taiwan-calendar/',
     ])
     expect(isSupportedLocale('tw')).toBe(false)
   })

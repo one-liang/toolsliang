@@ -1,0 +1,399 @@
+{
+  "year": 2026,
+  "rocYear": 115,
+  "layers": {
+    "lunar": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 115 年日曆資料表",
+      "publishedAt": "2025-02-03",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-88a8ab2a59e7ca51835820ab7b56a71b816299972ba8a970a4cb164ac56a043b"
+    },
+    "solarTerm": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 115 年日曆資料表",
+      "publishedAt": "2025-02-03",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-88a8ab2a59e7ca51835820ab7b56a71b816299972ba8a970a4cb164ac56a043b"
+    },
+    "official": {
+      "status": "published",
+      "datasetId": "dgpa-office-calendar",
+      "edition": "115年中華民國政府行政機關辦公日曆表",
+      "publishedAt": "2026-07-15",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-0edd80d368626eb73caa05b6c33400ec9d87691b46834d03936efb91e6a0f00d"
+    }
+  },
+  "lunarNewYear": "2026-02-17",
+  "lunarMonths": [
+    {
+      "start": "2026-01-01",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 13
+    },
+    {
+      "start": "2026-01-19",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-02-17",
+      "month": 1,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-03-19",
+      "month": 2,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-04-17",
+      "month": 3,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-05-17",
+      "month": 4,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-06-15",
+      "month": 5,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-07-14",
+      "month": 6,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-08-13",
+      "month": 7,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-09-11",
+      "month": 8,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-10-10",
+      "month": 9,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-11-09",
+      "month": 10,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2026-12-09",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 1
+    }
+  ],
+  "solarTerms": [
+    {
+      "name": "小寒",
+      "date": "2026-01-05",
+      "time": "16:23"
+    },
+    {
+      "name": "大寒",
+      "date": "2026-01-20",
+      "time": "09:45"
+    },
+    {
+      "name": "立春",
+      "date": "2026-02-04",
+      "time": "04:02"
+    },
+    {
+      "name": "雨水",
+      "date": "2026-02-18",
+      "time": "23:52"
+    },
+    {
+      "name": "驚蟄",
+      "date": "2026-03-05",
+      "time": "21:59"
+    },
+    {
+      "name": "春分",
+      "date": "2026-03-20",
+      "time": "22:46"
+    },
+    {
+      "name": "清明",
+      "date": "2026-04-05",
+      "time": "02:40"
+    },
+    {
+      "name": "穀雨",
+      "date": "2026-04-20",
+      "time": "09:39"
+    },
+    {
+      "name": "立夏",
+      "date": "2026-05-05",
+      "time": "19:49"
+    },
+    {
+      "name": "小滿",
+      "date": "2026-05-21",
+      "time": "08:37"
+    },
+    {
+      "name": "芒種",
+      "date": "2026-06-05",
+      "time": "23:48"
+    },
+    {
+      "name": "夏至",
+      "date": "2026-06-21",
+      "time": "16:24"
+    },
+    {
+      "name": "小暑",
+      "date": "2026-07-07",
+      "time": "09:57"
+    },
+    {
+      "name": "大暑",
+      "date": "2026-07-23",
+      "time": "03:13"
+    },
+    {
+      "name": "立秋",
+      "date": "2026-08-07",
+      "time": "19:43"
+    },
+    {
+      "name": "處暑",
+      "date": "2026-08-23",
+      "time": "10:19"
+    },
+    {
+      "name": "白露",
+      "date": "2026-09-07",
+      "time": "22:41"
+    },
+    {
+      "name": "秋分",
+      "date": "2026-09-23",
+      "time": "08:05"
+    },
+    {
+      "name": "寒露",
+      "date": "2026-10-08",
+      "time": "14:29"
+    },
+    {
+      "name": "霜降",
+      "date": "2026-10-23",
+      "time": "17:38"
+    },
+    {
+      "name": "立冬",
+      "date": "2026-11-07",
+      "time": "17:52"
+    },
+    {
+      "name": "小雪",
+      "date": "2026-11-22",
+      "time": "15:23"
+    },
+    {
+      "name": "大雪",
+      "date": "2026-12-07",
+      "time": "10:52"
+    },
+    {
+      "name": "冬至",
+      "date": "2026-12-22",
+      "time": "04:50"
+    }
+  ],
+  "officialDays": [
+    {
+      "date": "2026-01-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "founding-day"
+      ],
+      "label": "開國紀念日"
+    },
+    {
+      "date": "2026-02-15",
+      "kind": "national-holiday",
+      "holidays": [
+        "minor-new-years-eve"
+      ],
+      "label": "小年夜"
+    },
+    {
+      "date": "2026-02-16",
+      "kind": "national-holiday",
+      "holidays": [
+        "lunar-new-years-eve"
+      ],
+      "label": "農曆除夕"
+    },
+    {
+      "date": "2026-02-17",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2026-02-18",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2026-02-19",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2026-02-20",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2026-02-27",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2026-02-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "peace-memorial-day"
+      ],
+      "label": "和平紀念日"
+    },
+    {
+      "date": "2026-04-03",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2026-04-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "childrens-day"
+      ],
+      "label": "兒童節"
+    },
+    {
+      "date": "2026-04-05",
+      "kind": "national-holiday",
+      "holidays": [
+        "tomb-sweeping-day"
+      ],
+      "label": "清明節"
+    },
+    {
+      "date": "2026-04-06",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2026-05-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "labour-day"
+      ],
+      "label": "勞動節"
+    },
+    {
+      "date": "2026-06-19",
+      "kind": "national-holiday",
+      "holidays": [
+        "dragon-boat-festival"
+      ],
+      "label": "端午節"
+    },
+    {
+      "date": "2026-09-25",
+      "kind": "national-holiday",
+      "holidays": [
+        "mid-autumn-festival"
+      ],
+      "label": "中秋節"
+    },
+    {
+      "date": "2026-09-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "teachers-day"
+      ],
+      "label": "孔子誕辰紀念日/教師節"
+    },
+    {
+      "date": "2026-10-09",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2026-10-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "national-day"
+      ],
+      "label": "國慶日"
+    },
+    {
+      "date": "2026-10-25",
+      "kind": "national-holiday",
+      "holidays": [
+        "retrocession-day"
+      ],
+      "label": "臺灣光復暨金門古寧頭大捷紀念日"
+    },
+    {
+      "date": "2026-10-26",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2026-12-25",
+      "kind": "national-holiday",
+      "holidays": [
+        "constitution-day"
+      ],
+      "label": "行憲紀念日"
+    }
+  ]
+}
