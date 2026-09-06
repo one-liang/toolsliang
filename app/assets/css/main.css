@@ -66,6 +66,9 @@
   --sidebar-collapsed: 76px;
 
   /* Component tokens */
+  --device-clock-font-size: clamp(2rem, 4vw, 3.5rem);
+  --device-clock-font-weight: 750;
+  --device-clock-line-height: 1.35;
   --button-primary-bg: var(--color-primary);
   --button-primary-fg: var(--color-primary-foreground);
   --button-primary-hover-bg: var(--color-primary-hover);
@@ -360,6 +363,10 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .app-topbar { position: sticky; z-index: 20; top: 0; min-height: 64px; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-background) 92%, transparent); backdrop-filter: blur(14px); }
 .app-topbar__brand { margin-right: auto; }
 .app-topbar__search { color: var(--color-muted-foreground); }
+@media (max-width: 479px) {
+  .app-topbar__search { min-width: 44px; padding-inline: 0; }
+  .app-topbar__search-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 .workspace-page { width: min(1160px, 100%); margin: auto; padding: 36px 20px 116px; }
 .workspace-heading { max-width: 760px; margin-bottom: 28px; }
 .workspace-heading h1 { margin-bottom: 10px; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.04; letter-spacing: -.05em; text-wrap: balance; }

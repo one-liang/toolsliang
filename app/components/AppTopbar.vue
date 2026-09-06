@@ -11,7 +11,7 @@ const { locale, withLocale } = useAppLocale()
     <Button as-child variant="ghost" class="app-topbar__search">
       <NuxtLink :to="withLocale('/tools/')">
         <Search :size="19" aria-hidden="true" />
-        {{ locale === 'en' ? 'Find a tool' : '尋找工具' }}
+        <span class="app-topbar__search-label">{{ locale === 'en' ? 'Find a tool' : '尋找工具' }}</span>
       </NuxtLink>
     </Button>
     <ThemeLocaleControls />

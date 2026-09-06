@@ -58,4 +58,6 @@ Pull Request 與 `develop` 更新會執行 `.github/workflows/quality.yml`。流
 
 ## 人工驗證邊界
 
+裝置時間專屬驗證位於 `tests/device-time.test.ts`、`tests/device-time-page.test.ts` 與 `tests/e2e/device-time.spec.ts`。以注入時間驗證跨年、閏日、DST、非整點 UTC offset 與 Intl 降級；透過雙語公開工具頁驗證秒／分鐘邊界更新、背景暫停、前景校正、剪貼簿拒絕與重試、可聚焦的等待狀態、SSR FAQ 與 metadata、無工具讀值傳輸或保存。三瀏覽器另檢查 320／375／768／1024／1440px、文字間距覆寫、200% CSS zoom、light／dark 的 axe 與單次更新 16ms 預算；離線重啟與快取無讀值的 Service Worker 驗證僅在 Chromium 執行。
+
 axe 與 headless 瀏覽器不能取代螢幕閱讀器、完整鍵盤、200% zoom、文字間距與實機觸控檢查；release candidate 仍須完成規格中的人工 checklist。本機效能 smoke budget 也不等於正式環境的 p75 Web Vitals。
