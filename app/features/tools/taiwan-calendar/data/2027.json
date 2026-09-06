@@ -1,0 +1,417 @@
+{
+  "year": 2027,
+  "rocYear": 116,
+  "layers": {
+    "lunar": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 116 年日曆資料表",
+      "publishedAt": "2026-05-22",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-dffe2cf2668d56da40847df53361b21320d0aece08202185d0910f7382433eb2"
+    },
+    "solarTerm": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 116 年日曆資料表",
+      "publishedAt": "2026-05-22",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-dffe2cf2668d56da40847df53361b21320d0aece08202185d0910f7382433eb2"
+    },
+    "official": {
+      "status": "published",
+      "datasetId": "dgpa-office-calendar",
+      "edition": "116年中華民國政府行政機關辦公日曆表",
+      "publishedAt": "2026-07-15",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-e30df188649bf5347db3ec43fa989af2cc8d93d793fbe5c9891601e6cce4acf3"
+    }
+  },
+  "lunarNewYear": "2027-02-06",
+  "lunarMonths": [
+    {
+      "start": "2027-01-01",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 24
+    },
+    {
+      "start": "2027-01-08",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-02-06",
+      "month": 1,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-03-08",
+      "month": 2,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-04-07",
+      "month": 3,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-05-06",
+      "month": 4,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-06-05",
+      "month": 5,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-07-04",
+      "month": 6,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-08-02",
+      "month": 7,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-09-01",
+      "month": 8,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-09-30",
+      "month": 9,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-10-29",
+      "month": 10,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-11-28",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2027-12-28",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    }
+  ],
+  "solarTerms": [
+    {
+      "name": "小寒",
+      "date": "2027-01-05",
+      "time": "22:10"
+    },
+    {
+      "name": "大寒",
+      "date": "2027-01-20",
+      "time": "15:30"
+    },
+    {
+      "name": "立春",
+      "date": "2027-02-04",
+      "time": "09:46"
+    },
+    {
+      "name": "雨水",
+      "date": "2027-02-19",
+      "time": "05:33"
+    },
+    {
+      "name": "驚蟄",
+      "date": "2027-03-06",
+      "time": "03:40"
+    },
+    {
+      "name": "春分",
+      "date": "2027-03-21",
+      "time": "04:25"
+    },
+    {
+      "name": "清明",
+      "date": "2027-04-05",
+      "time": "08:17"
+    },
+    {
+      "name": "穀雨",
+      "date": "2027-04-20",
+      "time": "15:18"
+    },
+    {
+      "name": "立夏",
+      "date": "2027-05-06",
+      "time": "01:25"
+    },
+    {
+      "name": "小滿",
+      "date": "2027-05-21",
+      "time": "14:18"
+    },
+    {
+      "name": "芒種",
+      "date": "2027-06-06",
+      "time": "05:26"
+    },
+    {
+      "name": "夏至",
+      "date": "2027-06-21",
+      "time": "22:11"
+    },
+    {
+      "name": "小暑",
+      "date": "2027-07-07",
+      "time": "15:37"
+    },
+    {
+      "name": "大暑",
+      "date": "2027-07-23",
+      "time": "09:05"
+    },
+    {
+      "name": "立秋",
+      "date": "2027-08-08",
+      "time": "01:27"
+    },
+    {
+      "name": "處暑",
+      "date": "2027-08-23",
+      "time": "16:14"
+    },
+    {
+      "name": "白露",
+      "date": "2027-09-08",
+      "time": "04:28"
+    },
+    {
+      "name": "秋分",
+      "date": "2027-09-23",
+      "time": "14:02"
+    },
+    {
+      "name": "寒露",
+      "date": "2027-10-08",
+      "time": "20:17"
+    },
+    {
+      "name": "霜降",
+      "date": "2027-10-23",
+      "time": "23:33"
+    },
+    {
+      "name": "立冬",
+      "date": "2027-11-07",
+      "time": "23:39"
+    },
+    {
+      "name": "小雪",
+      "date": "2027-11-22",
+      "time": "21:16"
+    },
+    {
+      "name": "大雪",
+      "date": "2027-12-07",
+      "time": "16:38"
+    },
+    {
+      "name": "冬至",
+      "date": "2027-12-22",
+      "time": "10:42"
+    }
+  ],
+  "officialDays": [
+    {
+      "date": "2027-01-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "founding-day"
+      ],
+      "label": "開國紀念日"
+    },
+    {
+      "date": "2027-02-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "minor-new-years-eve"
+      ],
+      "label": "小年夜"
+    },
+    {
+      "date": "2027-02-05",
+      "kind": "national-holiday",
+      "holidays": [
+        "lunar-new-years-eve"
+      ],
+      "label": "農曆除夕"
+    },
+    {
+      "date": "2027-02-06",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2027-02-07",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2027-02-08",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2027-02-09",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2027-02-10",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2027-02-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "peace-memorial-day"
+      ],
+      "label": "和平紀念日"
+    },
+    {
+      "date": "2027-03-01",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2027-04-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "childrens-day"
+      ],
+      "label": "兒童節"
+    },
+    {
+      "date": "2027-04-05",
+      "kind": "national-holiday",
+      "holidays": [
+        "tomb-sweeping-day"
+      ],
+      "label": "清明節"
+    },
+    {
+      "date": "2027-04-06",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2027-04-30",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2027-05-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "labour-day"
+      ],
+      "label": "勞動節"
+    },
+    {
+      "date": "2027-06-09",
+      "kind": "national-holiday",
+      "holidays": [
+        "dragon-boat-festival"
+      ],
+      "label": "端午節"
+    },
+    {
+      "date": "2027-09-15",
+      "kind": "national-holiday",
+      "holidays": [
+        "mid-autumn-festival"
+      ],
+      "label": "中秋節"
+    },
+    {
+      "date": "2027-09-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "teachers-day"
+      ],
+      "label": "孔子誕辰紀念日/教師節"
+    },
+    {
+      "date": "2027-10-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "national-day"
+      ],
+      "label": "國慶日"
+    },
+    {
+      "date": "2027-10-11",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2027-10-25",
+      "kind": "national-holiday",
+      "holidays": [
+        "retrocession-day"
+      ],
+      "label": "臺灣光復暨金門古寧頭大捷紀念日"
+    },
+    {
+      "date": "2027-12-24",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2027-12-25",
+      "kind": "national-holiday",
+      "holidays": [
+        "constitution-day"
+      ],
+      "label": "行憲紀念日"
+    },
+    {
+      "date": "2027-12-31",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    }
+  ]
+}

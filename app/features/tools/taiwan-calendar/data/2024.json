@@ -1,0 +1,354 @@
+{
+  "year": 2024,
+  "rocYear": 113,
+  "layers": {
+    "lunar": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 113 年日曆資料表",
+      "publishedAt": "2023-06-01",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-9e802ffab3a5b951830bc119adf38ac64e87e23686a612d383c9cb776fbbd18c"
+    },
+    "solarTerm": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 113 年日曆資料表",
+      "publishedAt": "2023-06-01",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-9e802ffab3a5b951830bc119adf38ac64e87e23686a612d383c9cb776fbbd18c"
+    },
+    "official": {
+      "status": "published",
+      "datasetId": "dgpa-office-calendar",
+      "edition": "113年中華民國政府行政機關辦公日曆表",
+      "publishedAt": "2026-07-15",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-365de663017f123a9f8100fec47706bdbae67ed7810a995659fa4743d89bbee8"
+    }
+  },
+  "lunarNewYear": "2024-02-10",
+  "lunarMonths": [
+    {
+      "start": "2024-01-01",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 20
+    },
+    {
+      "start": "2024-01-11",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-02-10",
+      "month": 1,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-03-10",
+      "month": 2,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-04-09",
+      "month": 3,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-05-08",
+      "month": 4,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-06-06",
+      "month": 5,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-07-06",
+      "month": 6,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-08-04",
+      "month": 7,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-09-03",
+      "month": 8,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-10-03",
+      "month": 9,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-11-01",
+      "month": 10,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-12-01",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2024-12-31",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    }
+  ],
+  "solarTerms": [
+    {
+      "name": "小寒",
+      "date": "2024-01-06",
+      "time": "04:49"
+    },
+    {
+      "name": "大寒",
+      "date": "2024-01-20",
+      "time": "22:07"
+    },
+    {
+      "name": "立春",
+      "date": "2024-02-04",
+      "time": "16:27"
+    },
+    {
+      "name": "雨水",
+      "date": "2024-02-19",
+      "time": "12:13"
+    },
+    {
+      "name": "驚蟄",
+      "date": "2024-03-05",
+      "time": "10:23"
+    },
+    {
+      "name": "春分",
+      "date": "2024-03-20",
+      "time": "11:06"
+    },
+    {
+      "name": "清明",
+      "date": "2024-04-04",
+      "time": "15:02"
+    },
+    {
+      "name": "穀雨",
+      "date": "2024-04-19",
+      "time": "22:00"
+    },
+    {
+      "name": "立夏",
+      "date": "2024-05-05",
+      "time": "08:10"
+    },
+    {
+      "name": "小滿",
+      "date": "2024-05-20",
+      "time": "20:59"
+    },
+    {
+      "name": "芒種",
+      "date": "2024-06-05",
+      "time": "12:10"
+    },
+    {
+      "name": "夏至",
+      "date": "2024-06-21",
+      "time": "04:51"
+    },
+    {
+      "name": "小暑",
+      "date": "2024-07-06",
+      "time": "22:20"
+    },
+    {
+      "name": "大暑",
+      "date": "2024-07-22",
+      "time": "15:44"
+    },
+    {
+      "name": "立秋",
+      "date": "2024-08-07",
+      "time": "08:09"
+    },
+    {
+      "name": "處暑",
+      "date": "2024-08-22",
+      "time": "22:55"
+    },
+    {
+      "name": "白露",
+      "date": "2024-09-07",
+      "time": "11:11"
+    },
+    {
+      "name": "秋分",
+      "date": "2024-09-22",
+      "time": "20:44"
+    },
+    {
+      "name": "寒露",
+      "date": "2024-10-08",
+      "time": "03:00"
+    },
+    {
+      "name": "霜降",
+      "date": "2024-10-23",
+      "time": "06:15"
+    },
+    {
+      "name": "立冬",
+      "date": "2024-11-07",
+      "time": "06:20"
+    },
+    {
+      "name": "小雪",
+      "date": "2024-11-22",
+      "time": "03:56"
+    },
+    {
+      "name": "大雪",
+      "date": "2024-12-06",
+      "time": "23:17"
+    },
+    {
+      "name": "冬至",
+      "date": "2024-12-21",
+      "time": "17:21"
+    }
+  ],
+  "officialDays": [
+    {
+      "date": "2024-01-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "founding-day"
+      ],
+      "label": "開國紀念日"
+    },
+    {
+      "date": "2024-02-08",
+      "kind": "national-holiday",
+      "holidays": [
+        "minor-new-years-eve"
+      ],
+      "label": "小年夜"
+    },
+    {
+      "date": "2024-02-09",
+      "kind": "national-holiday",
+      "holidays": [
+        "lunar-new-years-eve"
+      ],
+      "label": "農曆除夕"
+    },
+    {
+      "date": "2024-02-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2024-02-11",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2024-02-12",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2024-02-13",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2024-02-14",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2024-02-17",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2024-02-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "peace-memorial-day"
+      ],
+      "label": "和平紀念日"
+    },
+    {
+      "date": "2024-04-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "childrens-day",
+        "tomb-sweeping-day"
+      ],
+      "label": "兒童節及民族掃墓節"
+    },
+    {
+      "date": "2024-04-05",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2024-06-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "dragon-boat-festival"
+      ],
+      "label": "端午節"
+    },
+    {
+      "date": "2024-09-17",
+      "kind": "national-holiday",
+      "holidays": [
+        "mid-autumn-festival"
+      ],
+      "label": "中秋節"
+    },
+    {
+      "date": "2024-10-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "national-day"
+      ],
+      "label": "國慶日"
+    }
+  ]
+}

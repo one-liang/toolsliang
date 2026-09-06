@@ -1,0 +1,382 @@
+{
+  "year": 2021,
+  "rocYear": 110,
+  "layers": {
+    "lunar": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 110 年日曆資料表",
+      "publishedAt": "2020-02-13",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-fad71fa0b5ecff563084184d8aef0071782e027260f0298a8c24fe3719fcea52"
+    },
+    "solarTerm": {
+      "status": "published",
+      "datasetId": "cwa-calendar-table",
+      "edition": "中華民國 110 年日曆資料表",
+      "publishedAt": "2020-02-13",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-fad71fa0b5ecff563084184d8aef0071782e027260f0298a8c24fe3719fcea52"
+    },
+    "official": {
+      "status": "published",
+      "datasetId": "dgpa-office-calendar",
+      "edition": "110年中華民國政府行政機關辦公日曆表",
+      "publishedAt": "2026-07-15",
+      "retrievedAt": "2026-09-06",
+      "checksum": "sha256-946631b85f9093977c120b8a53eea8d0146f02bf3a9c4d0c435be0d584879fae"
+    }
+  },
+  "lunarNewYear": "2021-02-12",
+  "lunarMonths": [
+    {
+      "start": "2021-01-01",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 18
+    },
+    {
+      "start": "2021-01-13",
+      "month": 12,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-02-12",
+      "month": 1,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-03-13",
+      "month": 2,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-04-12",
+      "month": 3,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-05-12",
+      "month": 4,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-06-10",
+      "month": 5,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-07-10",
+      "month": 6,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-08-08",
+      "month": 7,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-09-07",
+      "month": 8,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-10-06",
+      "month": 9,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-11-05",
+      "month": 10,
+      "leapMonth": false,
+      "startDay": 1
+    },
+    {
+      "start": "2021-12-04",
+      "month": 11,
+      "leapMonth": false,
+      "startDay": 1
+    }
+  ],
+  "solarTerms": [
+    {
+      "name": "小寒",
+      "date": "2021-01-05",
+      "time": "11:23"
+    },
+    {
+      "name": "大寒",
+      "date": "2021-01-20",
+      "time": "04:40"
+    },
+    {
+      "name": "立春",
+      "date": "2021-02-03",
+      "time": "22:59"
+    },
+    {
+      "name": "雨水",
+      "date": "2021-02-18",
+      "time": "18:44"
+    },
+    {
+      "name": "驚蟄",
+      "date": "2021-03-05",
+      "time": "16:54"
+    },
+    {
+      "name": "春分",
+      "date": "2021-03-20",
+      "time": "17:37"
+    },
+    {
+      "name": "清明",
+      "date": "2021-04-04",
+      "time": "21:35"
+    },
+    {
+      "name": "穀雨",
+      "date": "2021-04-20",
+      "time": "04:33"
+    },
+    {
+      "name": "立夏",
+      "date": "2021-05-05",
+      "time": "14:47"
+    },
+    {
+      "name": "小滿",
+      "date": "2021-05-21",
+      "time": "03:37"
+    },
+    {
+      "name": "芒種",
+      "date": "2021-06-05",
+      "time": "18:52"
+    },
+    {
+      "name": "夏至",
+      "date": "2021-06-21",
+      "time": "11:32"
+    },
+    {
+      "name": "小暑",
+      "date": "2021-07-07",
+      "time": "05:05"
+    },
+    {
+      "name": "大暑",
+      "date": "2021-07-22",
+      "time": "22:26"
+    },
+    {
+      "name": "立秋",
+      "date": "2021-08-07",
+      "time": "14:54"
+    },
+    {
+      "name": "處暑",
+      "date": "2021-08-23",
+      "time": "05:35"
+    },
+    {
+      "name": "白露",
+      "date": "2021-09-07",
+      "time": "17:53"
+    },
+    {
+      "name": "秋分",
+      "date": "2021-09-23",
+      "time": "03:21"
+    },
+    {
+      "name": "寒露",
+      "date": "2021-10-08",
+      "time": "09:39"
+    },
+    {
+      "name": "霜降",
+      "date": "2021-10-23",
+      "time": "12:51"
+    },
+    {
+      "name": "立冬",
+      "date": "2021-11-07",
+      "time": "12:59"
+    },
+    {
+      "name": "小雪",
+      "date": "2021-11-22",
+      "time": "10:34"
+    },
+    {
+      "name": "大雪",
+      "date": "2021-12-07",
+      "time": "05:57"
+    },
+    {
+      "name": "冬至",
+      "date": "2021-12-21",
+      "time": "23:59"
+    }
+  ],
+  "officialDays": [
+    {
+      "date": "2021-01-01",
+      "kind": "national-holiday",
+      "holidays": [
+        "founding-day"
+      ],
+      "label": "開國紀念日"
+    },
+    {
+      "date": "2021-02-10",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2021-02-11",
+      "kind": "national-holiday",
+      "holidays": [
+        "lunar-new-years-eve"
+      ],
+      "label": "農曆除夕"
+    },
+    {
+      "date": "2021-02-12",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2021-02-13",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2021-02-14",
+      "kind": "national-holiday",
+      "holidays": [
+        "spring-festival"
+      ],
+      "label": "春節"
+    },
+    {
+      "date": "2021-02-15",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2021-02-16",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2021-02-20",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2021-02-28",
+      "kind": "national-holiday",
+      "holidays": [
+        "peace-memorial-day"
+      ],
+      "label": "和平紀念日"
+    },
+    {
+      "date": "2021-03-01",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2021-04-02",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2021-04-04",
+      "kind": "national-holiday",
+      "holidays": [
+        "childrens-day",
+        "tomb-sweeping-day"
+      ],
+      "label": "兒童節及民族掃墓節"
+    },
+    {
+      "date": "2021-04-05",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2021-06-14",
+      "kind": "national-holiday",
+      "holidays": [
+        "dragon-boat-festival"
+      ],
+      "label": "端午節"
+    },
+    {
+      "date": "2021-09-11",
+      "kind": "makeup-workday",
+      "holidays": [],
+      "label": "補行上班"
+    },
+    {
+      "date": "2021-09-20",
+      "kind": "bridge-holiday",
+      "holidays": [],
+      "label": "調整放假"
+    },
+    {
+      "date": "2021-09-21",
+      "kind": "national-holiday",
+      "holidays": [
+        "mid-autumn-festival"
+      ],
+      "label": "中秋節"
+    },
+    {
+      "date": "2021-10-10",
+      "kind": "national-holiday",
+      "holidays": [
+        "national-day"
+      ],
+      "label": "國慶日"
+    },
+    {
+      "date": "2021-10-11",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    },
+    {
+      "date": "2021-12-31",
+      "kind": "substitute-holiday",
+      "holidays": [],
+      "label": "補假"
+    }
+  ]
+}

@@ -46,4 +46,10 @@ npx playwright install chromium firefox webkit
 
 品質閘門的範圍、失敗判讀與人工驗證邊界請見 [前端品質閘門](./docs/QUALITY_GATES.md)。
 
+台灣行事曆的年度資料由維運者以下列指令擷取後提交，執行期與 CI 都不連到任何來源（需要 Python 3 與 `pdfminer`）：
+
+```bash
+python3 scripts/ingest_taiwan_calendar.py
+```
+
 工具搜尋與工具內容處理只在瀏覽器執行，不得加入會傳送工具內容的伺服器 API、分析事件或第三方服務。

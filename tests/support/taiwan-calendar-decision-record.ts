@@ -138,3 +138,57 @@ export function parseDatasetCoverage(): DocumentedDatasetCoverage[] {
     lastYear: Number(lastYear),
   }))
 }
+
+export interface DocumentedSentence {
+  key: string
+  'zh-tw': string
+  en: string
+}
+
+/** The disclaimer wording section 7.1 requires next to the calendar, in both locales. */
+export function parseCaveatSentences(): DocumentedSentence[] {
+  const pattern = /^\| `([a-z-]+)` \| (.+?) \| (.+?) \|$/gm
+
+  return tableRows('### 7.1 必須同時呈現的免責內容', pattern).map(([, key, zh, en]) => ({
+    key: key!,
+    'zh-tw': zh!.trim(),
+    en: en!.trim(),
+  }))
+}
+
+/** The sentences section 5.6 approves for a refused year, in both locales. */
+export function parseViewErrorSentences(): DocumentedSentence[] {
+  const pattern = /^\| `([a-z-]+)` \| [^|]+ \| (.+?) \| (.+?) \|$/gm
+
+  return tableRows('### 5.6 檢視錯誤', pattern).map(([, key, zh, en]) => ({
+    key: key!,
+    'zh-tw': zh!.trim(),
+    en: en!.trim(),
+  }))
+}
+
+/**
+ * The questions section 7.4 approves as the only source of both the visible FAQ
+ * and the FAQPage markup. The third column cites the section behind the answer,
+ * which is also what tells a data row apart from the table's own heading.
+ */
+export function parseFaqQuestions(): Array<{ 'zh-tw': string, en: string }> {
+  const pattern = /^\| ([^|]+?) \| ([^|]+?) \| ((?:§|ADR)[^|]*) \|$/gm
+
+  return tableRows('### 7.4 AEO 問答依據', pattern).map(([, zh, en]) => ({
+    'zh-tw': zh!.trim(),
+    en: en!.trim(),
+  }))
+}
+
+/** Every wording section 7.3 forbids, Chinese and English alike. */
+export function parseForbiddenWording(): string[] {
+  const body = reader.sectionBody('### 7.3 禁止用語')
+  const listed = body.slice(0, body.indexOf('。', body.indexOf('不得出現')))
+
+  return listed
+    .replace(/^[\s\S]*?不得出現：/, '')
+    .split(/[、，,]|以及/)
+    .map(term => term.replace(/等對應說法$/, '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+}

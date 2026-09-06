@@ -90,7 +90,7 @@ export const taiwanCalendarDatasets = [
       'zh-tw': '未來年次的農曆日序、節氣與閏月時點每年 2 月底前滾動檢核並公布。',
       en: 'Lunar dates, solar terms, and leap months for future years are reviewed and republished by the end of February each year.',
     },
-    coverage: { firstYear: 2008, lastYear: 2028 },
+    coverage: { firstYear: 2020, lastYear: 2028 },
     ingestion: 'build-time',
   },
   {
@@ -159,12 +159,17 @@ export const taiwanCalendarCaveatKeys = [
 
 export type TaiwanCalendarCaveatKey = typeof taiwanCalendarCaveatKeys[number]
 
-/** Fills the catalog entry's content review once the tool page is built in T14. */
+/**
+ * The catalog entry's content review. The editions named here are the ones the
+ * ingestion actually baked, which is narrower than what the sources publish:
+ * the astronomical layer is only taken where its table can be read and checked
+ * field by field (see §3.2 of the decision record).
+ */
 export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview'] = {
   reviewedAt: '2026-09-06',
   sourceEdition: {
-    'zh-tw': '中華民國 106 至 116 年政府行政機關辦公日曆表（政府資料開放平臺 2026-07-15 更新）與中央氣象署中華民國 97 至 117 年日曆資料表',
-    en: 'Government agency office calendars for ROC years 106–116 (data.gov.tw, updated 15 July 2026) and Central Weather Administration calendar data tables for ROC years 97–117',
+    'zh-tw': '中華民國 109 至 116 年政府行政機關辦公日曆表（政府資料開放平臺 2026-07-15 更新，114 年採 1141020 修正版）與中央氣象署中華民國 109 至 116 年日曆資料表',
+    en: 'Government agency office calendars for ROC years 109–116 (data.gov.tw, updated 15 July 2026; ROC 114 as reissued on 20 October 2025) and Central Weather Administration calendar data tables for ROC years 109–116',
   },
   sourceEffectiveAt: '2026-07-15',
   sources: [

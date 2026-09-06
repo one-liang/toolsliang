@@ -1,6 +1,7 @@
 import { bmiFaq } from './bmi-calculator/content'
 import { ntdFaq } from './ntd-uppercase/content'
 import { randomPickerFaq } from './random-picker/content'
+import { taiwanCalendarFaq } from './taiwan-calendar/content'
 import { hasLocalizedCopy, publishedTools, type LocaleCode, type LocalizedCopy } from './catalog'
 
 /**
@@ -18,6 +19,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'bmi-calculator': bmiFaq,
   'ntd-uppercase': ntdFaq,
   'random-picker': randomPickerFaq,
+  'taiwan-calendar': taiwanCalendarFaq,
 }
 
 const toolFaqIssues = validateToolFaq()
