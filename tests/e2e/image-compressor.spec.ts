@@ -1,9 +1,14 @@
+import { imageCompressorCanaries } from '../support/image-compressor-canaries'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import { gotoHydrated } from './support/hydration'
 import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
 
-guardToolContentBoundary([{ label: '圖片檔名', value: 'private-image-canary.png' }, { label: 'WebP 素材檔名', value: 'transparent.webp' }, { label: '改名 HEIC 素材', value: 'renamed.jpg' }, { label: '輸出檔名', value: 'compressed-image.png' }], { allowedOrigins: ['http://127.0.0.1:4173'] })
+guardToolContentBoundary(imageCompressorCanaries, { allowedOrigins: ['http://127.0.0.1:4173'] })
+
+test.beforeEach(({ page }) => {
+  page.on('console', message => { expect(imageCompressorCanaries.some(canary => message.text().includes(canary.value)), '主控台不得包含圖片內容').toBe(false) })
+})
 
 test('PNG 本機壓縮、縮放、透明度與下載', async ({ page }, testInfo) => {
   await gotoHydrated(page, '/en/tools/image-compressor/')

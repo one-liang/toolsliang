@@ -46,3 +46,9 @@ Issue：#19。測試介面經使用者確認為 Tool Engine、工具工作區與
 ## 驗證範圍與限制
 
 測試只使用程式合成素材。三瀏覽器執行格式、方向、像素、品質、錯誤、資源釋放、鍵盤、雙語、響應式與無障礙驗證。Service Worker 生命週期僅在 Chromium 驗證，沿用專案品質閘門。12 MP 效能以本機 headless 瀏覽器記錄；不能等同正式產品參考手機或正式環境 p75 Web Vitals。螢幕閱讀器與實機觸控仍屬 release candidate 的人工 checklist。
+
+## Standards／Spec 審查
+
+固定點為包含 #22／PR #51 的 `cafebfc`。Standards 與 Spec 由兩個獨立審查者檢查，Spec 未發現功能偏差。Standards 發現網路邊界 canary 只有檔名，已補齊合成 WebP 內容、EXIF、HEIC、三種格式的輸出特徵、全部下載檔名及每個 console channel；23 項回歸測試驗證同源 GET 夾帶無檔名內容也會失敗。Standards 複查後無未解決問題。
+
+Spec 審查另確認：參考手機的實機效能尚未量測，不能以桌面硬體上的手機版面代替。依正式規格的 tool-specific budget gate，關閉 Issue 前仍需實機證據或使用者明確核准例外；PR 建立與合併均維持使用者指定的確認流程。
