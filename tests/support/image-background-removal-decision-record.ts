@@ -37,6 +37,7 @@ export interface MeasuredCandidate {
   sha256: string
   precision: string
   licence: string
+  licenceVerified: boolean
   licenceUrl: string
   transfer: { bytes: number, brotliBytes: number }
 }
@@ -60,6 +61,9 @@ export interface MeasuredRun {
   candidateId: string
   provider: string
   configuration: string
+  inputWidth?: number
+  inputHeight?: number
+  sessionWasmBytes?: number
   transferBytes?: number
   sessionCreateMs?: number
   sessionHeapBytes?: number | null
@@ -117,18 +121,20 @@ export function measuredFixture(run: MeasuredRun, fixture: string): MeasuredFixt
   return found
 }
 
-/** §2.1 candidate table: id, family, scope, precision, licence, licence URL. */
+/** §2.1: id, family, scope, precision, licence, redistributable, licence URL. */
 export function parseCandidates() {
-  const pattern = /^\| `([a-z0-9-.]+)` \| `([a-z0-9-.]+)` \| `([a-z-]+)` \| `([a-z0-9]+)` \| ([^|]+?) \| <(https:\/\/[^>]+)> \|$/gm
+  const pattern = /^\| `([a-z0-9-.]+)` \| `([a-z0-9-.]+)` \| `([a-z-]+)` \| `([a-z0-9]+)` \| ([^|]+?) \| (是|否) \| <(https:\/\/[^>]+)> \|$/gm
 
-  return reader.tableRows('### 2.1 候選', pattern).map(([, id, family, scope, precision, licence, licenceUrl]) => ({
-    id: id!,
-    family: family!,
-    scope: scope!,
-    precision: precision!,
-    licence: licence!.trim(),
-    licenceUrl: licenceUrl!,
-  }))
+  return reader.tableRows('### 2.1 候選', pattern)
+    .map(([, id, family, scope, precision, licence, redistributable, licenceUrl]) => ({
+      id: id!,
+      family: family!,
+      scope: scope!,
+      precision: precision!,
+      licence: licence!.trim(),
+      redistributable: redistributable === '是',
+      licenceUrl: licenceUrl!,
+    }))
 }
 
 /** §2.2 exclusions: what was looked at and why it never reached a browser. */

@@ -25,7 +25,7 @@ npm run test:e2e -- --project=chromium
 
 行事曆的年度資料不在執行期擷取：`python3 scripts/ingest_taiwan_calendar.py` 由維運者執行，從人事行政總處、中央氣象署與香港天文台擷取、逐條驗證後寫入 `app/features/tools/taiwan-calendar/data/`，並隨版本控制提交。它需要 Python 3 與 `pdfminer`；擷取失敗時以 `docs/research/004-taiwan-calendar-sources-and-data-contract.md` §5.5 的錯誤 key 中止，不寫出半套年度。CI 與瀏覽器都不會連到任何來源。
 
-圖片去背的候選評估同樣不在執行期或 CI 進行：`node scripts/evaluate_background_removal.mjs` 由維運者執行，把釘選 commit 的模型與 onnxruntime-web 下載到已忽略版本控制的 `artifacts/`、逐檔比對 SHA-256，再開一個可見的 Chromium 視窗量測。它需要可見視窗：headless Chromium 只提供 SwiftShader 介面卡，也不回答 `measureUserAgentSpecificMemory`，量到的會是軟體算圖的時間與空白的記憶體。測試圖片全部由程式繪製，結果寫入 `docs/research/data/007-background-removal-measurements.json` 並隨版本控制提交；CI 只讀這份 JSON，不下載模型也不執行推論。
+圖片去背的候選評估同樣不在執行期或 CI 進行：`node scripts/evaluate-background-removal.mjs` 由維運者執行，把釘選 commit 的模型與 onnxruntime-web 下載到已忽略版本控制的 `artifacts/`、逐檔比對 SHA-256，再開一個可見的 Chromium 視窗量測。它需要可見視窗：headless Chromium 只提供 SwiftShader 介面卡，也不回答 `measureUserAgentSpecificMemory`，量到的會是軟體算圖的時間與空白的記憶體。測試圖片全部由程式繪製，結果寫入 `docs/research/data/007-background-removal-measurements.json` 並隨版本控制提交；CI 只讀這份 JSON，不下載模型也不執行推論。
 
 Service Worker 由 production build 產出到 `/sw.js`，`nuxt dev` 不註冊也不快取；離線與更新行為只能在 `npm run preview` 或 e2e 產出的 production build 上驗證。安裝圖示由 `node scripts/generate-app-icons.mjs` 從 Design System token 產生並提交到版本控制。
 

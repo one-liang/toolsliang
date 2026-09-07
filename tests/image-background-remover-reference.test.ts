@@ -7,9 +7,11 @@ import {
   backgroundRemovalExclusionReasons,
   backgroundRemovalExclusions,
   backgroundRemovalFailureCodes,
+  backgroundRemovalGateKeys,
   backgroundRemovalPermittedLicences,
   backgroundRemovalReferenceVersion,
   backgroundRemovalRuntime,
+  redistributableCandidates,
   type BackgroundRemovalCandidate,
 } from '@/features/tools/image-background-remover/domain/reference'
 import {
@@ -38,7 +40,7 @@ function candidateById(id: string): BackgroundRemovalCandidate {
 }
 
 /** Model assets may be downloaded; nothing about an image ever may be sent. */
-const allowedAssetHosts = ['huggingface.co', 'cdn.jsdelivr.net', 'github.com', 'bria.ai']
+const allowedAssetHosts = ['huggingface.co', 'cdn.jsdelivr.net', 'github.com']
 
 describe('vocabulary matches the decision record', () => {
   it('publishes exactly the documented candidates', () => {
@@ -54,6 +56,7 @@ describe('vocabulary matches the decision record', () => {
       expect(candidate.scope).toBe(row.scope)
       expect(candidate.precision).toBe(row.precision)
       expect(candidate.licence).toBe(row.licence)
+      expect(candidate.licenceVerified).toBe(row.redistributable)
       expect(candidate.licenceUrl).toBe(row.licenceUrl)
     }
   })
@@ -199,10 +202,26 @@ describe('documented numbers come from the measurement file', () => {
 })
 
 describe('the decision follows from the gates', () => {
-  it('selects a candidate that was measured and licensed for redistribution', () => {
-    const selected = candidateById(backgroundRemovalDecision.selectedCandidateId)
-    expect(backgroundRemovalPermittedLicences).toContain(selected.licence)
-    expect(backgroundRemovalExclusions.map(entry => entry.id)).not.toContain(selected.id)
+  it('recommends a candidate that was measured and licensed for redistribution', () => {
+    const recommended = candidateById(backgroundRemovalDecision.recommendedCandidateId)
+    expect(backgroundRemovalPermittedLicences).toContain(recommended.licence)
+    expect(recommended.licenceVerified).toBe(true)
+    expect(redistributableCandidates.map(entry => entry.id)).toContain(recommended.id)
+    expect(backgroundRemovalExclusions.map(entry => entry.id)).not.toContain(recommended.id)
+  })
+
+  it('never lets an unverified licence reach the redistributable list', () => {
+    for (const candidate of backgroundRemovalCandidates) {
+      const listed = redistributableCandidates.some(entry => entry.id === candidate.id)
+      expect(listed, candidate.id).toBe(candidate.licenceVerified
+        && (backgroundRemovalPermittedLicences as readonly string[]).includes(candidate.licence))
+    }
+    /* The one the record calls out: measured, useful as a baseline, not ours to serve. */
+    expect(redistributableCandidates.map(entry => entry.id)).not.toContain('isnet-general-fp16')
+  })
+
+  it('publishes exactly the gate vocabulary the record tabulates', () => {
+    expect([...backgroundRemovalGateKeys]).toEqual(parseGates().map(gate => gate.key))
   })
 
   it('never claims an unconditional go while a gate fails', () => {
@@ -226,7 +245,7 @@ describe('the decision follows from the gates', () => {
 
   it('only leaves the transfer exception empty when the selection fits the budget', () => {
     const selected = measurements.candidates
-      .find(entry => entry.id === backgroundRemovalDecision.selectedCandidateId)
+      .find(entry => entry.id === backgroundRemovalDecision.recommendedCandidateId)
     expect(selected).toBeDefined()
 
     if (backgroundRemovalDecision.transferExceptionBytes === null) {
@@ -240,10 +259,10 @@ describe('the decision follows from the gates', () => {
   })
 
   it('states the narrower scope whenever the selection is not the specified tool', () => {
-    const selected = candidateById(backgroundRemovalDecision.selectedCandidateId)
-    expect(backgroundRemovalDecision.selectedScope).toBe(selected.scope)
+    const selected = candidateById(backgroundRemovalDecision.recommendedCandidateId)
+    expect(backgroundRemovalDecision.recommendedScope).toBe(selected.scope)
     if (backgroundRemovalDecision.status !== 'go') {
-      expect(sectionBody('## 1. 決策摘要')).toContain(backgroundRemovalDecision.selectedCandidateId)
+      expect(sectionBody('## 1. 決策摘要')).toContain(backgroundRemovalDecision.recommendedCandidateId)
     }
   })
 
@@ -251,7 +270,7 @@ describe('the decision follows from the gates', () => {
     const fallback = backgroundRemovalDecision.fallbackCandidateId
     if (fallback === null) return
 
-    const selected = candidateById(backgroundRemovalDecision.selectedCandidateId)
+    const selected = candidateById(backgroundRemovalDecision.recommendedCandidateId)
     expect(candidateById(fallback).family).toBe(selected.family)
     for (const browser of ['chromium', 'firefox', 'webkit']) {
       const run = measuredRun(browser, fallback, 'wasm')
@@ -260,7 +279,7 @@ describe('the decision follows from the gates', () => {
   })
 
   it('never recommends a candidate that failed on the WebAssembly baseline', () => {
-    for (const id of [backgroundRemovalDecision.selectedCandidateId, backgroundRemovalDecision.fallbackCandidateId]) {
+    for (const id of [backgroundRemovalDecision.recommendedCandidateId, backgroundRemovalDecision.fallbackCandidateId]) {
       if (!id) continue
       for (const browser of ['chromium', 'firefox', 'webkit']) {
         const run = measuredRun(browser, id, 'wasm')
@@ -274,8 +293,8 @@ describe('the decision follows from the gates', () => {
 describe('the local boundary is stated and machine checkable', () => {
   it('downloads model and runtime assets from allowed hosts only', () => {
     for (const candidate of backgroundRemovalCandidates) {
-      expect(new URL(candidate.downloadUrl).host).toBe('huggingface.co')
-      expect(candidate.downloadUrl).toContain(candidate.revision)
+      expect(new URL(candidate.provenanceUrl).host).toBe('huggingface.co')
+      expect(candidate.provenanceUrl).toContain(candidate.revision)
     }
     expect(new URL(measurements.runtime.base).host).toBe('cdn.jsdelivr.net')
   })

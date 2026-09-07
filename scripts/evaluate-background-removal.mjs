@@ -8,7 +8,7 @@
  * or result leaves the machine: the only outbound requests are the pinned model
  * and runtime downloads, and they are skipped once the files are on disk.
  *
- *   node scripts/evaluate_background_removal.mjs [--browsers=chromium,firefox,webkit]
+ *   node scripts/evaluate-background-removal.mjs [--browsers=chromium,firefox,webkit]
  */
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
@@ -145,10 +145,12 @@ const LAUNCHERS = {
   webkit: () => webkit.launch(),
 }
 
-function fixturesFor(browser, provider) {
+function fixturesFor(browser) {
   const names = browser === 'chromium' ? FIXTURE_NAMES : CONFIRMATION_FIXTURES
   const set = names.map(name => ({ name, width: FIXTURE_SIZE, height: FIXTURE_SIZE }))
-  if (browser === 'chromium' && provider === 'wasm') set.push(LARGE_FIXTURE)
+  /* The 12 MP case has to run on both providers: the specification's budget is
+   * written for one 12 MP result, and WebGPU is the tier it would run on. */
+  if (browser === 'chromium') set.push(LARGE_FIXTURE)
   return set
 }
 
@@ -174,8 +176,8 @@ async function loadRuns(browser) {
   return runs
 }
 
-function alreadyRun(runs, candidateId, provider, configuration, inputWidth) {
-  return runs.some(run => run.candidateId === candidateId
+function recordedRun(runs, candidateId, provider, configuration, inputWidth) {
+  return runs.find(run => run.candidateId === candidateId
     && run.provider === provider
     && run.configuration === configuration
     && (run.inputWidth ?? null) === inputWidth)
@@ -257,18 +259,21 @@ async function evaluateBrowser(name, port, models) {
           provider,
           threads,
           modelUrl: models.get(candidate.id).url,
-          fixtures: fixturesFor(name, provider),
+          fixtures: fixturesFor(name),
         }
 
-        let last = runs.find(run => run.candidateId === candidate.id
-          && run.provider === provider
-          && (run.inputWidth ?? candidate.input.width) === candidate.input.width)
-
+        /*
+         * A resumed run has to reach the same decisions as an uninterrupted
+         * one: a recorded attempt still ends the loop unless it ran out of
+         * memory, otherwise restarting would start retries the first pass had
+         * already ruled out.
+         */
+        let last = null
         for (const configuration of ['default', 'memory-lean']) {
-          if (alreadyRun(runs, candidate.id, provider, configuration, candidate.input.width)) continue
-          last = await runOnce(browser, port, messages, { ...base, configuration },
+          const recorded = recordedRun(runs, candidate.id, provider, configuration, candidate.input.width)
+          last = recorded ?? await runOnce(browser, port, messages, { ...base, configuration },
             `${name} · ${candidate.id} · ${provider} · ${configuration}`, name)
-          runs.push(last)
+          if (!recorded) runs.push(last)
           if (!ranOutOfMemory(last)) break
         }
 
@@ -280,7 +285,7 @@ async function evaluateBrowser(name, port, models) {
          */
         const degradedWidth = candidate.input.width / 2
         if (name === 'chromium' && last && needsDegradedPass(last)
-          && !alreadyRun(runs, candidate.id, provider, 'memory-lean', degradedWidth)) {
+          && !recordedRun(runs, candidate.id, provider, 'memory-lean', degradedWidth)) {
           runs.push(await runOnce(browser, port, messages, {
             ...base,
             configuration: 'memory-lean',
@@ -319,9 +324,9 @@ async function main() {
 
   process.stdout.write(`onnxruntime-web ${runtime.version}\n`)
   const runtimeFiles = []
-  for (const file of runtime.files) {
+  for (const { file, sha256: expected } of runtime.files) {
     const path = join(WORK, 'ort', file)
-    const digest = await ensureFile(`${runtime.base}${file}`, path, null)
+    const digest = await ensureFile(`${runtime.base}${file}`, path, expected)
     files.set(`/ort/${file}`, path)
     runtimeFiles.push({ file, sha256: digest, ...await transferSizes(path) })
   }

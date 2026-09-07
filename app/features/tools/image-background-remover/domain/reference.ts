@@ -42,16 +42,28 @@ export interface BackgroundRemovalCandidate {
   bytes: number
   sha256: string
   precision: 'fp32' | 'fp16' | 'uint8'
+  /** The identifier the publisher declares, on its own. */
   licence: string
+  /**
+   * Whether the publisher, the upstream weights page and the upstream
+   * repository say the same thing. Only a verified candidate may be served
+   * from this project's own assets, which ADR-0001 requires of every model.
+   */
+  licenceVerified: boolean
   /** The page whose wording the licence column transcribes. */
   licenceUrl: string
-  downloadUrl: string
+  /**
+   * Where the evaluation downloaded the file from. It is provenance, not a
+   * runtime address: §9 of the record requires T19 to serve the weights from
+   * toolsliang's own assets rather than fetch them from this host.
+   */
+  provenanceUrl: string
   /** Preprocessing the record measured; T19 has to reproduce it exactly. */
   input: { width: number, height: number, mean: number[], std: number[], scale: number }
   output: { activation: 'sigmoid' | 'minmax' | 'none' }
 }
 
-function downloadUrl(repo: string, revision: string, file: string) {
+function provenanceUrl(repo: string, revision: string, file: string) {
   return `https://huggingface.co/${repo}/resolve/${revision}/${file}`
 }
 
@@ -67,6 +79,7 @@ const measured = [
     sha256: '5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333',
     precision: 'fp32',
     licence: 'MIT',
+    licenceVerified: true,
     licenceUrl: 'https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE',
     input: { width: 1024, height: 1024, mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225], scale: 1 / 255 },
     output: { activation: 'sigmoid' },
@@ -82,6 +95,7 @@ const measured = [
     sha256: 'd39b897ceb16ae654c1731f3dba0cf9b368d9cae74b5a57459b455cc8bfec402',
     precision: 'fp16',
     licence: 'MIT',
+    licenceVerified: true,
     licenceUrl: 'https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE',
     input: { width: 1024, height: 1024, mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225], scale: 1 / 255 },
     output: { activation: 'sigmoid' },
@@ -96,7 +110,8 @@ const measured = [
     bytes: 176149806,
     sha256: 'cc2c9f5c1751b9737cb81e708ff0c5e9542c2205daed22418a4fd2ab5d4c481a',
     precision: 'fp32',
-    licence: 'MIT（發布者聲明）',
+    licence: 'MIT',
+    licenceVerified: false,
     licenceUrl: 'https://huggingface.co/imgly/isnet-general-onnx',
     input: { width: 1024, height: 1024, mean: [128, 128, 128], std: [256, 256, 256], scale: 1 },
     output: { activation: 'minmax' },
@@ -111,7 +126,8 @@ const measured = [
     bytes: 88152708,
     sha256: '2eb4b5dda7ec41c617e59706e5aafa1f978c9a5f983d2518d9f0ae4d6eb04f20',
     precision: 'fp16',
-    licence: 'MIT（發布者聲明）',
+    licence: 'MIT',
+    licenceVerified: false,
     licenceUrl: 'https://huggingface.co/imgly/isnet-general-onnx',
     input: { width: 1024, height: 1024, mean: [128, 128, 128], std: [256, 256, 256], scale: 1 },
     output: { activation: 'minmax' },
@@ -127,6 +143,7 @@ const measured = [
     sha256: '07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9',
     precision: 'fp32',
     licence: 'Apache-2.0',
+    licenceVerified: true,
     licenceUrl: 'https://github.com/ZHKKKe/MODNet/blob/master/LICENSE',
     input: { width: 512, height: 512, mean: [0.5, 0.5, 0.5], std: [0.5, 0.5, 0.5], scale: 1 / 255 },
     output: { activation: 'none' },
@@ -142,6 +159,7 @@ const measured = [
     sha256: '25f165da9bfd30830a575f1f0490f1acd995975cb349bc02f3d79332e1fe5cf6',
     precision: 'fp16',
     licence: 'Apache-2.0',
+    licenceVerified: true,
     licenceUrl: 'https://github.com/ZHKKKe/MODNet/blob/master/LICENSE',
     input: { width: 512, height: 512, mean: [0.5, 0.5, 0.5], std: [0.5, 0.5, 0.5], scale: 1 / 255 },
     output: { activation: 'none' },
@@ -157,23 +175,28 @@ const measured = [
     sha256: '92e49898c3e05a6d7a944fc67a8cb87c4aad754ffb6ebd949528c7d1105fee3a',
     precision: 'uint8',
     licence: 'Apache-2.0',
+    licenceVerified: true,
     licenceUrl: 'https://github.com/ZHKKKe/MODNet/blob/master/LICENSE',
     input: { width: 512, height: 512, mean: [0.5, 0.5, 0.5], std: [0.5, 0.5, 0.5], scale: 1 / 255 },
     output: { activation: 'none' },
   },
-] as const satisfies readonly Omit<BackgroundRemovalCandidate, 'downloadUrl'>[]
+] as const satisfies readonly Omit<BackgroundRemovalCandidate, 'provenanceUrl'>[]
 
-export const backgroundRemovalCandidates: BackgroundRemovalCandidate[] = measured.map(candidate => ({
+export const backgroundRemovalCandidates: readonly BackgroundRemovalCandidate[] = measured.map(candidate => ({
   ...candidate,
   input: { ...candidate.input, mean: [...candidate.input.mean], std: [...candidate.input.std] },
   output: { ...candidate.output },
-  downloadUrl: downloadUrl(candidate.repo, candidate.revision, candidate.file),
+  provenanceUrl: provenanceUrl(candidate.repo, candidate.revision, candidate.file),
 }))
+
+/** Only these may be served from toolsliang's own assets. */
+export const redistributableCandidates = backgroundRemovalCandidates
+  .filter(candidate => candidate.licenceVerified
+    && (backgroundRemovalPermittedLicences as readonly string[]).includes(candidate.licence))
 
 /** Why a family was screened out before any browser measured it. */
 export const backgroundRemovalExclusionReasons = [
   'non-commercial-licence',
-  'contradictory-licence',
   'copyleft-licence',
   'humans-only-scope',
 ] as const
@@ -188,7 +211,7 @@ export interface BackgroundRemovalExclusion {
   sourceUrl: string
 }
 
-export const backgroundRemovalExclusions: BackgroundRemovalExclusion[] = [
+export const backgroundRemovalExclusions: readonly BackgroundRemovalExclusion[] = [
   { id: 'rmbg-1.4', repo: 'briaai/RMBG-1.4', reason: 'non-commercial-licence', sourceUrl: 'https://huggingface.co/briaai/RMBG-1.4' },
   { id: 'rmbg-2.0', repo: 'briaai/RMBG-2.0', reason: 'non-commercial-licence', sourceUrl: 'https://huggingface.co/briaai/RMBG-2.0' },
   { id: 'isnet-agpl', repo: 'onnx-community/ISNet-ONNX', reason: 'copyleft-licence', sourceUrl: 'https://huggingface.co/onnx-community/ISNet-ONNX' },
@@ -230,20 +253,34 @@ export const backgroundRemovalBudgets = {
 
 export type BackgroundRemovalGateVerdict = 'pass' | 'fail' | 'conditional'
 
+/** The go/no-go criteria, in the order §8 of the record tabulates them. */
+export const backgroundRemovalGateKeys = [
+  'licence',
+  'general-scope',
+  'wasm-baseline',
+  'transfer-budget',
+  'desktop-latency',
+  'memory-headroom',
+  'mask-quality',
+  'privacy',
+] as const
+
+export type BackgroundRemovalGateKey = typeof backgroundRemovalGateKeys[number]
+
 export interface BackgroundRemovalDecision {
   /** `go` needs every gate to pass; anything else has to say what is missing. */
   status: 'go' | 'conditional-go' | 'no-go'
   /** The best candidate that clears licence, budget and the baseline. */
-  selectedCandidateId: string
-  /** What the selection may be used for. It is not the tool §12.8 describes. */
-  selectedScope: BackgroundRemovalScope
+  recommendedCandidateId: string
+  /** What it may be used for. It is not the tool §12.8 describes. */
+  recommendedScope: BackgroundRemovalScope
   /** The tier below the selection, or null when there is nothing to fall back to. */
   fallbackCandidateId: string | null
   /** Compressed bytes an approval would have to cover, null when inside budget. */
   transferExceptionBytes: number | null
   /** Exactly the gates that failed. Empty only when the status is `go`. */
-  blockingGates: string[]
-  gateVerdicts: Record<string, BackgroundRemovalGateVerdict>
+  blockingGates: readonly BackgroundRemovalGateKey[]
+  gateVerdicts: Record<BackgroundRemovalGateKey, BackgroundRemovalGateVerdict>
 }
 
 /**
@@ -255,8 +292,8 @@ export interface BackgroundRemovalDecision {
  */
 export const backgroundRemovalDecision: BackgroundRemovalDecision = {
   status: 'no-go',
-  selectedCandidateId: 'modnet-fp16',
-  selectedScope: 'portrait',
+  recommendedCandidateId: 'modnet-fp16',
+  recommendedScope: 'portrait',
   fallbackCandidateId: 'modnet-fp32',
   transferExceptionBytes: null,
   blockingGates: ['general-scope', 'wasm-baseline', 'transfer-budget'],

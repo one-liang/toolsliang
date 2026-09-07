@@ -9,7 +9,7 @@ Issue：#20。這份紀錄回答一件事：有沒有一個授權可自行散布
 結論是 **no-go**：以目前可取得的候選，無法交付規格 §12.8 描述的「一般用途本機去背」。
 
 - 授權可自行散布、能在 WebAssembly 基準線完成推論、又落在 ≤ 40 MiB 壓縮傳輸預算內的候選，只有 MODNet 家族，而 MODNet 是人像去背模型。
-- `birefnet-lite` 是唯一授權鏈完整的一般用途家族，但它在 Chromium、Firefox 與 WebKit 的 WASM 基準線都把 WebAssembly 線性記憶體推到 4,294,901,760 bytes 後 `std::bad_alloc`；WebGPU 在 Chromium 與 WebKit 都無法在 15 分鐘內建立 session。它的 ONNX 輸入固定為 1024 × 1024，連降低解析度這條退路都被 runtime 直接拒絕。
+- `birefnet-lite` 是唯一授權鏈完整的一般用途家族，但它在三個瀏覽器都無法完成任何一次推論。fp32 在 Chromium、Firefox 與 WebKit 的 WASM 基準線都把 WebAssembly 線性記憶體推到 4.27–4.29 GB（最高 4,294,901,760 bytes）後 `std::bad_alloc`；fp16 在 Chromium 與 WebKit 同樣 `std::bad_alloc`，在 Firefox 則是 15 分鐘內沒有任何結果。WebGPU 在 Chromium 與 WebKit 的兩種精度都無法在 15 分鐘內建立 session。它的 ONNX 輸入固定為 1024 × 1024，連降低解析度這條退路都被 runtime 直接拒絕。
 - `isnet-general` 品質最好（人像 0.9989、細髮 0.9788、商品 0.9949、低對比 0.9888），在三個瀏覽器都跑得動，但授權自相矛盾，不能由 toolsliang 自行散布。即使授權釐清，最小的可用檔案壓縮後仍有 81,267,904 bytes，是預算的 1.94 倍。
 - 量化不是出路：`modnet-uint8` 壓縮後只有 5,163,599 bytes，但商品與低對比案例的 IoU 直接掉到 0，等於整張圖判成背景。
 
@@ -19,6 +19,8 @@ Issue：#20。這份紀錄回答一件事：有沒有一個授權可自行散布
 2. **釐清 ISNet 權重授權並申請傳輸預算例外**：需要取得 imgly 或上游作者對權重再散布的明確授權，再核准約 81 MiB 的壓縮傳輸例外。
 3. **自行匯出 BiRefNet**：MIT 允許再散布與修改，可自行匯出動態尺寸或 int8 權重後重新量測。這是新的工作項目，不在 T18 範圍內。
 
+推薦 `modnet-fp16` 時要一起記住兩件事：它在唯一適用的人像案例上，WebKit 的 IoU 是 0.9487，比 Chromium 的 0.9965 低約 4.8 個百分點，所以同一張圖在不同瀏覽器的邊緣品質不一致；而它在合成商品案例的 0.9967 只說明那張合成圖對模型很容易，不能當成它能處理真實商品照的證據。
+
 在做出決定前，`modnet-fp16` 是這份紀錄唯一推薦的候選，且其適用範圍限定為人像。
 
 ## 2. 候選與授權
@@ -27,17 +29,19 @@ Issue：#20。這份紀錄回答一件事：有沒有一個授權可自行散布
 
 ### 2.1 候選
 
-| 候選 | 家族 | 適用範圍 | 精度 | 授權 | 授權出處 |
-| --- | --- | --- | --- | --- | --- |
-| `birefnet-lite-fp32` | `birefnet-lite` | `general` | `fp32` | MIT | <https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE> |
-| `birefnet-lite-fp16` | `birefnet-lite` | `general` | `fp16` | MIT | <https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE> |
-| `isnet-general-fp32` | `isnet-general` | `general` | `fp32` | MIT（發布者聲明） | <https://huggingface.co/imgly/isnet-general-onnx> |
-| `isnet-general-fp16` | `isnet-general` | `general` | `fp16` | MIT（發布者聲明） | <https://huggingface.co/imgly/isnet-general-onnx> |
-| `modnet-fp32` | `modnet` | `portrait` | `fp32` | Apache-2.0 | <https://github.com/ZHKKKe/MODNet/blob/master/LICENSE> |
-| `modnet-fp16` | `modnet` | `portrait` | `fp16` | Apache-2.0 | <https://github.com/ZHKKKe/MODNet/blob/master/LICENSE> |
-| `modnet-uint8` | `modnet` | `portrait` | `uint8` | Apache-2.0 | <https://github.com/ZHKKKe/MODNet/blob/master/LICENSE> |
+| 候選 | 家族 | 適用範圍 | 精度 | 授權 | 可自行散布 | 授權出處 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `birefnet-lite-fp32` | `birefnet-lite` | `general` | `fp32` | MIT | 是 | <https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE> |
+| `birefnet-lite-fp16` | `birefnet-lite` | `general` | `fp16` | MIT | 是 | <https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE> |
+| `isnet-general-fp32` | `isnet-general` | `general` | `fp32` | MIT | 否 | <https://huggingface.co/imgly/isnet-general-onnx> |
+| `isnet-general-fp16` | `isnet-general` | `general` | `fp16` | MIT | 否 | <https://huggingface.co/imgly/isnet-general-onnx> |
+| `modnet-fp32` | `modnet` | `portrait` | `fp32` | Apache-2.0 | 是 | <https://github.com/ZHKKKe/MODNet/blob/master/LICENSE> |
+| `modnet-fp16` | `modnet` | `portrait` | `fp16` | Apache-2.0 | 是 | <https://github.com/ZHKKKe/MODNet/blob/master/LICENSE> |
+| `modnet-uint8` | `modnet` | `portrait` | `uint8` | Apache-2.0 | 是 | <https://github.com/ZHKKKe/MODNet/blob/master/LICENSE> |
 
 `birefnet-lite` 的來源鏈是三份文件互相指認的：ONNX 匯出宣告 `base_model: ZhengPeng7/BiRefNet_lite` 與 `repo_url`，上游權重頁宣告 MIT，上游程式庫的 LICENSE 檔就是 MIT 全文。`modnet` 的上游 README 明確寫下「程式、模型與 demo 以 Apache License 2.0 釋出」，把權重包含在授權範圍內。
+
+「可自行散布」欄位問的不是「有沒有標授權」，而是「發布者、上游權重頁與上游程式庫是不是說同一件事」。只有這一欄是 `是` 的候選，才可能依 ADR-0001 由 toolsliang 自有網域提供。
 
 `isnet-general` 是反例，也是這次評估最重要的供應鏈發現。imgly 的權重頁只有一行 `license: mit`，沒有說明、沒有上游指認、沒有著作權人；同一套 IS-Net 架構在 `onnx-community/ISNet-ONNX` 被標成 AGPL-3.0；上游 DIS 程式庫的 README 只說「我們的程式與評估指標採用 Apache License 2.0」，權重不在句子裡，資料集另有一份使用條款。三個說法互相衝突，因此它可以量測、可以當比較基準，但不能由 toolsliang 自行散布。
 
@@ -106,6 +110,9 @@ Issue：#20。這份紀錄回答一件事：有沒有一個授權可自行散布
 | `modnet-uint8` | 6,632,188 | 5,163,599 | 383 | 34,930,688 |
 
 ### 5.2 遮罩品質
+
+Chromium 的 WASM 基準線；每一列都是同一個候選在同一組合成素材上的結果。
+
 | 候選 | 人像 IoU | 細髮 IoU | 商品 IoU | 半透明 soft MAE | 低對比 IoU |
 | --- | --- | --- | --- | --- | --- |
 | `birefnet-lite-fp32` | — | — | — | — | — |
@@ -124,52 +131,68 @@ Issue：#20。這份紀錄回答一件事：有沒有一個授權可自行散布
 | `birefnet-lite-fp16` | `wasm` | — | — | — | 4,294,901,760 |
 | `birefnet-lite-fp16` | `webgpu` | — | — | — | — |
 | `isnet-general-fp32` | `wasm` | 2,155 | 2,251 | 2,252 | 665,845,760 |
-| `isnet-general-fp32` | `webgpu` | 397 | 387 | — | 464,322,560 |
+| `isnet-general-fp32` | `webgpu` | 521 | 538 | 631 | 464,322,560 |
 | `isnet-general-fp16` | `wasm` | 2,119 | 2,151 | 2,307 | 835,911,680 |
-| `isnet-general-fp16` | `webgpu` | 373 | 367 | — | 245,366,784 |
+| `isnet-general-fp16` | `webgpu` | 393 | 428 | 577 | 245,366,784 |
 | `modnet-fp32` | `wasm` | 249 | 247 | 320 | 156,368,896 |
-| `modnet-fp32` | `webgpu` | 76 | 77 | — | 90,439,680 |
+| `modnet-fp32` | `webgpu` | 142 | 158 | 282 | 90,439,680 |
 | `modnet-fp16` | `wasm` | 249 | 271 | 332 | 146,604,032 |
-| `modnet-fp16` | `webgpu` | 65 | 65 | — | 48,627,712 |
+| `modnet-fp16` | `webgpu` | 127 | 149 | 159 | 48,627,712 |
 | `modnet-uint8` | `wasm` | 302 | 303 | 358 | 139,591,680 |
-| `modnet-uint8` | `webgpu` | 473 | 457 | — | 158,990,336 |
+| `modnet-uint8` | `webgpu` | 739 | 675 | 778 | 158,990,336 |
 
 ### 5.4 失敗的候選
-| 候選 | provider | 設定 | 輸入邊長 | 失敗 |
-| --- | --- | --- | --- | --- |
-| `birefnet-lite-fp32` | `wasm` | `default` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
-| `birefnet-lite-fp32` | `wasm` | `memory-lean` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
-| `birefnet-lite-fp32` | `wasm` | `memory-lean` | 512 | failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following i |
-| `birefnet-lite-fp32` | `webgpu` | `default` | 1024 | run_timeout_after_900000ms |
-| `birefnet-lite-fp16` | `wasm` | `default` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
-| `birefnet-lite-fp16` | `wasm` | `memory-lean` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
-| `birefnet-lite-fp16` | `wasm` | `memory-lean` | 512 | failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following i |
-| `birefnet-lite-fp16` | `webgpu` | `default` | 1024 | run_timeout_after_900000ms |
+
+三個瀏覽器的每一次失敗，包含逾時。
+
+| 瀏覽器 | 候選 | provider | 設定 | 輸入邊長 | 失敗 |
+| --- | --- | --- | --- | --- | --- |
+| chromium | `birefnet-lite-fp32` | `wasm` | `default` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| chromium | `birefnet-lite-fp32` | `wasm` | `memory-lean` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| chromium | `birefnet-lite-fp32` | `wasm` | `memory-lean` | 512 | failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following i |
+| chromium | `birefnet-lite-fp32` | `webgpu` | `default` | 1024 | run_timeout_after_900000ms |
+| chromium | `birefnet-lite-fp16` | `wasm` | `default` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| chromium | `birefnet-lite-fp16` | `wasm` | `memory-lean` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| chromium | `birefnet-lite-fp16` | `wasm` | `memory-lean` | 512 | failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following i |
+| chromium | `birefnet-lite-fp16` | `webgpu` | `default` | 1024 | run_timeout_after_900000ms |
+| firefox | `birefnet-lite-fp32` | `wasm` | `default` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| firefox | `birefnet-lite-fp32` | `wasm` | `memory-lean` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| firefox | `birefnet-lite-fp16` | `wasm` | `default` | 1024 | run_timeout_after_900000ms |
+| webkit | `birefnet-lite-fp32` | `wasm` | `default` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| webkit | `birefnet-lite-fp32` | `wasm` | `memory-lean` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| webkit | `birefnet-lite-fp32` | `webgpu` | `default` | 1024 | run_timeout_after_900000ms |
+| webkit | `birefnet-lite-fp16` | `wasm` | `default` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| webkit | `birefnet-lite-fp16` | `wasm` | `memory-lean` | 1024 | failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc |
+| webkit | `birefnet-lite-fp16` | `webgpu` | `default` | 1024 | run_timeout_after_900000ms |
 
 ### 5.5 跨瀏覽器確認
-| 瀏覽器 | 候選 | 冷啟 ms | 商品 IoU | 推論時 WASM bytes |
-| --- | --- | --- | --- | --- |
-| chromium | `birefnet-lite-fp32` | — | — | 4,294,901,760 |
-| chromium | `birefnet-lite-fp16` | — | — | 4,294,901,760 |
-| chromium | `isnet-general-fp32` | 2,155 | 0.9949 | 665,845,760 |
-| chromium | `isnet-general-fp16` | 2,119 | 0.9949 | 835,911,680 |
-| chromium | `modnet-fp32` | 249 | 0.9967 | 156,368,896 |
-| chromium | `modnet-fp16` | 249 | 0.9967 | 146,604,032 |
-| chromium | `modnet-uint8` | 302 | 0 | 139,591,680 |
-| firefox | `birefnet-lite-fp32` | — | — | 4,275,896,320 |
-| firefox | `birefnet-lite-fp16` | — | — | — |
-| firefox | `isnet-general-fp32` | 56,272 | 0.9949 | 665,845,760 |
-| firefox | `isnet-general-fp16` | 55,629 | 0.9949 | 841,940,992 |
-| firefox | `modnet-fp32` | 5,984 | 0.9967 | 156,368,896 |
-| firefox | `modnet-fp16` | 6,032 | 0.9967 | 146,604,032 |
-| firefox | `modnet-uint8` | 5,378 | 0 | 139,591,680 |
-| webkit | `birefnet-lite-fp32` | — | — | 4,294,901,760 |
-| webkit | `birefnet-lite-fp16` | — | — | 4,274,978,816 |
-| webkit | `isnet-general-fp32` | 2,046 | 0.9954 | 665,845,760 |
-| webkit | `isnet-general-fp16` | 2,236 | 0.9954 | 845,479,936 |
-| webkit | `modnet-fp32` | 319 | 0.9959 | 156,368,896 |
-| webkit | `modnet-fp16` | 319 | 0.9959 | 152,174,592 |
-| webkit | `modnet-uint8` | 380 | 0 | 139,591,680 |
+
+WASM 基準線的兩個確認案例。人像欄位是必要的：被推薦的 `modnet-fp16` 是人像模型，
+而它的人像品質在 WebKit 上比 Chromium 低約 5 個百分點。
+
+| 瀏覽器 | 候選 | 冷啟 ms | 人像 IoU | 商品 IoU | 推論時 WASM bytes |
+| --- | --- | --- | --- | --- | --- |
+| chromium | `birefnet-lite-fp32` | — | — | — | 4,294,901,760 |
+| chromium | `birefnet-lite-fp16` | — | — | — | 4,294,901,760 |
+| chromium | `isnet-general-fp32` | 2,155 | 0.9989 | 0.9949 | 665,845,760 |
+| chromium | `isnet-general-fp16` | 2,119 | 0.9989 | 0.9949 | 835,911,680 |
+| chromium | `modnet-fp32` | 249 | 0.9959 | 0.9967 | 156,368,896 |
+| chromium | `modnet-fp16` | 249 | 0.9965 | 0.9967 | 146,604,032 |
+| chromium | `modnet-uint8` | 302 | 0.3239 | 0 | 139,591,680 |
+| firefox | `birefnet-lite-fp32` | — | — | — | 4,275,896,320 |
+| firefox | `birefnet-lite-fp16` | — | — | — | — |
+| firefox | `isnet-general-fp32` | 56,272 | 0.999 | 0.9949 | 665,845,760 |
+| firefox | `isnet-general-fp16` | 55,629 | 0.999 | 0.9949 | 841,940,992 |
+| firefox | `modnet-fp32` | 5,984 | 0.9924 | 0.9967 | 156,368,896 |
+| firefox | `modnet-fp16` | 6,032 | 0.9932 | 0.9967 | 146,604,032 |
+| firefox | `modnet-uint8` | 5,378 | 0.3228 | 0 | 139,591,680 |
+| webkit | `birefnet-lite-fp32` | — | — | — | 4,294,901,760 |
+| webkit | `birefnet-lite-fp16` | — | — | — | 4,274,978,816 |
+| webkit | `isnet-general-fp32` | 2,046 | 0.999 | 0.9954 | 665,845,760 |
+| webkit | `isnet-general-fp16` | 2,236 | 0.999 | 0.9954 | 845,479,936 |
+| webkit | `modnet-fp32` | 319 | 0.9493 | 0.9959 | 156,368,896 |
+| webkit | `modnet-fp16` | 319 | 0.9487 | 0.9959 | 152,174,592 |
+| webkit | `modnet-uint8` | 380 | 0.3194 | 0 | 139,591,680 |
 
 ## 6. 能力層級與降級
 
@@ -199,22 +222,34 @@ Issue：#20。這份紀錄回答一件事：有沒有一個授權可自行散布
 
 | 標準 | 門檻 | 量測 | 結果 |
 | --- | --- | --- | --- |
-| `licence` | 權重可由 toolsliang 自有網域再散布 | `birefnet-lite` MIT、`modnet` Apache-2.0 授權鏈完整；`isnet-general` 三方說法互相衝突 | `pass` |
+| `licence` | 被推薦候選的權重可由 toolsliang 自有網域再散布 | `modnet` Apache-2.0 授權鏈完整；`birefnet-lite` MIT 亦完整但無法執行；`isnet-general` 三方說法互相衝突，不可散布 | `pass` |
 | `general-scope` | 有一個可散布的候選能處理商品等一般物件 | 可散布的一般用途家族只有 `birefnet-lite`，而它無法執行 | `fail` |
-| `wasm-baseline` | 可散布的一般用途候選能在 WASM 基準線完成一次推論 | `birefnet-lite` 兩種精度在三個瀏覽器都到 4,294,901,760 bytes 後 `std::bad_alloc` | `fail` |
+| `wasm-baseline` | 可散布的一般用途候選能在 WASM 基準線完成一次推論 | `birefnet-lite` 兩種精度在三個瀏覽器都沒有完成推論：最高到 4,294,901,760 bytes 後 `std::bad_alloc`，Firefox 的 fp16 則是逾時 | `fail` |
 | `transfer-budget` | 壓縮傳輸 ≤ 41,943,040 bytes | 能執行的一般用途候選最小為 81,267,904 bytes；`modnet-fp16` 為 11,847,512 bytes | `fail` |
-| `desktop-latency` | 已快取的一次結果 ≤ 30,000 ms | 能執行的候選最慢是 Firefox 上的 `isnet-general-fp32`，56,272 ms | `conditional` |
+| `desktop-latency` | 已快取的一次結果 ≤ 30,000 ms | 被推薦的 `modnet-fp16` 最慢是 Firefox 的 6,032 ms，12 MP 端到端在 WebGPU 上 159 ms；但 `isnet-general-fp32` 在 Firefox 要 56,272 ms | `conditional` |
 | `memory-headroom` | 推論不得耗盡 WebAssembly 位址空間 | `modnet` 家族 ≤ 156,368,896 bytes；`isnet-general` 達 845,479,936 bytes | `conditional` |
-| `mask-quality` | 代表性案例的遮罩可用 | 合成素材上 `isnet-general` 0.9788–0.9989、`modnet-fp16` 0.6955–0.9967、`modnet-uint8` 低到 0 | `conditional` |
+| `mask-quality` | 代表性案例的遮罩可用 | 合成素材上 `isnet-general` 0.9788–0.9989、`modnet-fp16` 0.6955–0.9967、`modnet-uint8` 低到 0；`modnet-fp16` 的人像 IoU 在 WebKit 掉到 0.9487 | `conditional` |
 | `privacy` | 圖片像素不離開裝置 | 量測期間唯一的對外請求是釘選 commit 的模型與 runtime 下載 | `pass` |
 
-`conditional` 表示這一項在選定的範圍內成立，但附帶必須寫進 T19 的限制：延遲門檻只有在不採用 `isnet-general` 時成立；記憶體餘裕只有 `modnet` 家族有；品質數字來自合成素材，發布前仍要用真實照片人工檢查。
+`conditional` 表示這一項在推薦的範圍內成立，但附帶必須寫進 T19 的限制：延遲門檻只有在不採用 `isnet-general` 時成立；記憶體餘裕只有 `modnet` 家族有；品質數字來自合成素材，且同一個模型的人像品質會隨瀏覽器變動，發布前仍要用真實照片在每個支援的瀏覽器上人工檢查。
 
-## 9. 快取、版本與更新
+## 9. 快取、取消、版本與更新
 
 模型以「版本化的公開靜態資產」處理：檔名帶版本、內容以 SHA-256 驗證、快取鍵包含版本，因此新版本不會覆寫舊版本，也不需要相信 HTTP 快取。ADR-0002 要求重型資源在首次需要時才下載並快取，ADR-0001 要求這些資產由 toolsliang 自有網域提供，所以 T19 不能在執行期直接連 Hugging Face 或任何 CDN：權重與 runtime 都要先納入自有靜態資產。
 
 已經不再使用的舊模型版本要在安全時機清除，避免長期占用裝置空間；工具還有未完成工作時不得靜默更新。
+
+快取這一節是**定義的標準，不是量測結果**。這次評估沒有量測 Cache Storage 配額、離線重跑或快取失效；模型資產以本機伺服器提供，沒有經過 Service Worker。T19 必須自己驗證：11,847,512 bytes 的權重能否在目標裝置的配額內長期保留、離線時能否從快取重跑、以及版本更換後舊檔是否真的被清掉。
+
+### 取消
+
+取消同樣是定義的標準。這次量測沒有執行取消路徑，但候選的執行方式決定了可行的契約，因此必須寫下來：
+
+- onnxruntime-web 的 `session.run()` 一旦進入算子就無法中途中斷，`AbortSignal` 不會讓它提早返回。因此唯一可靠的取消手段是終止執行推論的 Worker，這與 `docs/research/006-image-compressor-engine.md` 對圖片 Worker 的做法一致。
+- 取消必須在下列每個階段都可用：模型下載、解碼、前處理、推論、遮罩後處理、輸出編碼。下載階段以 `AbortController` 取消；推論階段以終止 Worker 取消。
+- 取消後不得交付部分結果，且必須釋放大型緩衝區。以 `modnet-fp16` 為例，推論期間的 WebAssembly 線性記憶體達 146,604,032 bytes；終止 Worker 是唯一能把這塊記憶體還給裝置的方式，因為 WebAssembly 記憶體只會成長、不會縮小。
+- 已下載並通過 SHA-256 驗證的模型不因取消而失效；取消一次工作不應該讓使用者重新下載模型。
+- T19 的驗收必須實測取消：取消後 Worker 結束、記憶體回落、晚到的訊息被忽略、原圖保留。這份紀錄沒有提供這些證據。
 
 ## 10. 隱私邊界
 
@@ -249,7 +284,9 @@ Chromium 與 WebKit 的 WebGPU 數字來自可見視窗中的 Apple 介面卡。
 
 `birefnet-lite` 的 WebGPU 結論是「15 分鐘內沒有完成建立 session」，不是「確定無法執行」。這個上限由量測腳本設定，記錄的是在這個上限內沒有可用結果。
 
-Firefox 與 WebKit 只跑 `portrait-person` 與 `product-bottle` 兩個確認案例；完整的五個案例與 12 MP 案例只在 Chromium 執行。
+Firefox 與 WebKit 只跑 `portrait-person` 與 `product-bottle` 兩個確認案例；完整的五個案例與 12 MP 案例只在 Chromium 的兩個執行提供者上執行。跨瀏覽器表因此只回答「同一個模型在別的瀏覽器跑不跑得動、慢多少、品質有沒有掉」，不回答細髮、半透明與低對比在別的瀏覽器的表現。
+
+12 MP 的數字是前處理、推論與遮罩後處理的總和，不包含檔案解碼與 PNG 編碼；這兩段由 T19 的輸出管線決定，不屬於模型成本。
 
 ## 13. TDD 紀錄
 
@@ -263,4 +300,12 @@ Firefox 與 WebKit 只跑 `portrait-person` 與 `product-bottle` 兩個確認案
 
 ## 14. Standards／Spec 審查
 
-待補：Standards 與 Spec 兩軸審查。
+固定點為 `develop`（`dadd85f`）。Standards 與 Spec 由兩個獨立審查者檢查，兩邊的有效問題都已修正並重新驗證。
+
+Standards 指出三個硬性問題：品質閘門文件宣稱逐檔比對 SHA-256，但 runtime 只記錄摘要沒有比對（已把七個 runtime 檔案的 SHA-256 釘進 `scripts/background-removal/candidates.mjs` 並實際比對）；候選清單在腳本與 domain 模組各存一份且已經漂移，`MIT (publisher claim)` 與 `MIT（發布者聲明）` 不一致（已改成「授權識別碼 + 是否經過查證」兩個欄位，兩邊值相同，並由測試比對文件、模組與量測檔）；腳本檔名用 snake_case 與既有 `.mjs` 慣例不符（已改名為 `scripts/evaluate-background-removal.mjs`）。判斷題採納了四項：go/no-go 門檻改為 `as const` 詞彙並約束型別、`selectedCandidateId` 改名為 `recommendedCandidateId`、`MeasuredRun` 補上實際讀取的欄位、移除測試裡沒有任何 URL 使用的允許網域。
+
+Spec 指出這份紀錄漏掉 issue 明確要求的兩項標準：取消完全沒有定義，快取只有政策沒有註明缺少證據（§9 已補上取消契約與快取的證據缺口說明）。它也指出 WebGPU 沒有任何 12 MP 量測，而 WebGPU 正是能力階梯的最高層（已補量，`modnet-fp16` 的 12 MP 端到端為 159 ms）。事實性錯誤修正兩處：§1 原本寫「三個瀏覽器都到 4,294,901,760 bytes 後 `std::bad_alloc`」，實際上 Firefox 的 fp16 是逾時、各瀏覽器的峰值介於 4.27–4.29 GB；§5.4 原本只列 Chromium 的失敗，現在列出三個瀏覽器的每一次失敗。§5.5 原本只顯示商品 IoU，掩蓋了被推薦模型在 WebKit 的人像品質下降，現已加入人像欄位並寫進決策摘要與品質門檻。
+
+審查另外指出 `isnet-general` 仍留在 T19 會匯入的候選陣列中，只靠授權字串不在允許清單而被擋掉。現在改為明確的 `licenceVerified` 欄位與 `redistributableCandidates` 匯出，並由測試確認未經查證的授權永遠不會進入可散布清單。`downloadUrl` 改名為 `provenanceUrl`，型別註解寫明它是評估時的來源，不是執行期位址。
+
+修正過程中另外發現一個審查沒有找到的缺陷：續跑邏輯在跳過已記錄的設定時，連帶跳過了「成功就停止重試」的判斷，導致重新啟動時會開始第一次執行已經排除的重試。已修正為續跑與一次跑完做出相同判斷。
