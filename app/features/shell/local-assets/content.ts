@@ -65,6 +65,16 @@ const errorMessages: Record<LocalAssetErrorCode, Record<LocaleCode, LocalAssetEr
       recovery: 'This version will not overwrite it. Reload to pick up the newest release, then open this page again.',
     },
   },
+  'corrupt-asset': {
+    'zh-tw': {
+      title: '這台裝置上的這筆資料讀不出來，這次沒有覆寫它',
+      recovery: '為了不蓋掉可能還救得回來的內容，寫入已經停下。可以在本機資產頁把它刪除後重建，或先匯出備份再處理。',
+    },
+    en: {
+      title: 'This device holds a record here that cannot be read, and it was not overwritten',
+      recovery: 'Writing stopped so nothing recoverable is lost. Delete it on the local assets page and start again, or export a backup first.',
+    },
+  },
   'missing-asset': {
     'zh-tw': {
       title: '這筆資產已經不在這台裝置上',

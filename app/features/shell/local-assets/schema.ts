@@ -71,6 +71,27 @@ export function renameLocalAssetRecord(record: LocalAssetRecord, name: string, n
   return { ...record, name: name.trim(), updatedAt: now.toISOString() }
 }
 
+/**
+ * The same asset, rewritten. A tool that keeps one document edits it over and
+ * over, so the record keeps its identity and its original date: only what the
+ * visitor actually changed moves.
+ */
+export function rewriteLocalAssetRecord(
+  record: LocalAssetRecord,
+  draft: LocalAssetDraft,
+  now: Date,
+): LocalAssetRecord {
+  return {
+    ...record,
+    version: LOCAL_ASSET_RECORD_VERSION,
+    kind: draft.kind,
+    name: draft.name.trim(),
+    bytes: payloadBytes(draft.payload),
+    payload: draft.payload,
+    updatedAt: now.toISOString(),
+  }
+}
+
 export type StoredAssetReading =
   | { status: 'ready', record: LocalAssetRecord }
   /** Read from an older record shape and rewritten in the current one. */
