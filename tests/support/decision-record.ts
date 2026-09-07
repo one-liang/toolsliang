@@ -21,6 +21,29 @@ export interface DecisionRecordReader {
   tableRows: (heading: string, pattern: RegExp) => RegExpExecArray[]
   /** The leading backticked key of every row under one heading. */
   parseKeyColumn: (heading: string, pattern?: RegExp) => string[]
+  /**
+   * A keyed table whose last two columns are the same sentence in both locales.
+   * `leadingColumns` counts the columns between the key and the Chinese one.
+   */
+  parseBilingualRows: (heading: string, leadingColumns?: number) => DocumentedSentence[]
+  /** Every wording a 禁止用語 section forbids, Chinese and English alike. */
+  parseForbiddenWording: (heading: string) => string[]
+  /**
+   * The questions an AEO section approves as the only source of both the
+   * visible FAQ and the FAQPage markup. The citation column is what tells a
+   * data row apart from the table's own heading.
+   */
+  parseFaqQuestions: (heading: string) => LocalizedSentence[]
+}
+
+/** One sentence a record fixes in both locales, addressed by its key. */
+export interface DocumentedSentence extends LocalizedSentence {
+  key: string
+}
+
+export interface LocalizedSentence {
+  'zh-tw': string
+  en: string
 }
 
 /** Cells written as JSON keep whitespace, empty strings and lists unambiguous in a Markdown table. */
@@ -50,11 +73,45 @@ export function createDecisionRecordReader(relativePath: string): DecisionRecord
     return rows
   }
 
+  function parseBilingualRows(heading: string, leadingColumns = 0) {
+    const skipped = ' [^|]+ \\|'.repeat(leadingColumns)
+    const pattern = new RegExp(`^\\| \`([a-z-]+)\` \\|${skipped} (.+?) \\| (.+?) \\|$`, 'gm')
+
+    return tableRows(heading, pattern).map(([, key, zh, en]) => ({
+      key: key!,
+      'zh-tw': zh!.trim(),
+      en: en!.trim(),
+    }))
+  }
+
+  function parseForbiddenWording(heading: string) {
+    const body = sectionBody(heading)
+    const listed = body.slice(0, body.indexOf('。', body.indexOf('不得出現')))
+
+    return listed
+      .replace(/^[\s\S]*?不得出現：/, '')
+      .split(/[、，,]|以及/)
+      .map(term => term.replace(/等對應說法$/, '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+  }
+
+  function parseFaqQuestions(heading: string) {
+    const pattern = /^\| ([^|]+?) \| ([^|]+?) \| ((?:§|ADR)[^|]*) \|$/gm
+
+    return tableRows(heading, pattern).map(([, zh, en]) => ({
+      'zh-tw': zh!.trim(),
+      en: en!.trim(),
+    }))
+  }
+
   return {
     record,
     sectionBody,
     tableRows,
     parseKeyColumn: (heading, pattern = keyColumnPattern) =>
       tableRows(heading, pattern).map(([, key]) => key!),
+    parseBilingualRows,
+    parseForbiddenWording,
+    parseFaqQuestions,
   }
 }

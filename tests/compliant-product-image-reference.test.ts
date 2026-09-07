@@ -2,41 +2,30 @@ import { describe, expect, it } from 'vitest'
 import {
   byteUnitFactor,
   compliantImageChannelIds,
-  compliantImageFormats,
   compliantImageIngestionErrorCodes,
   compliantImagePresets,
   compliantImageRegions,
   compliantImageRoles,
   compliantImageViewNoticeCodes,
   constraintKinds,
-  outputCheckVectors,
   presetCoverageLevels,
   presetReviewGraceDays,
   presetReviewIntervalDays,
   presetStatuses,
-  presetStatusVectors,
   ruleAuthorities,
   ruleStates,
-  ruleStateVectors,
   ruleVerifications,
-  type CompliantImageOutput,
   type CompliantImagePreset,
   type CompliantImagePresetRule,
 } from '@/features/tools/compliant-product-image/domain/reference'
-import {
-  automaticConstraintKinds,
-  checkOutputAgainstPreset,
-  findCompliantImagePreset,
-  resolvePresetStatus,
-  resolveRuleState,
-} from '@/features/tools/compliant-product-image/domain/preset'
+import { automaticConstraintKinds } from '@/features/tools/compliant-product-image/domain/preset'
 import {
   compliantImageCaveatKeys,
   compliantImageContentReview,
   compliantImageExcludedChannels,
   compliantImageExclusionReasons,
   compliantImageReferenceVersion,
-  compliantImageSourceRetrievability,
+  compliantImageRetrievabilityLevels,
   compliantImageSources,
   compliantImageSourceTiers,
 } from '@/features/tools/compliant-product-image/domain/sources'
@@ -53,21 +42,18 @@ import {
   parseFaqQuestions,
   parseForbiddenWording,
   parseIngestionErrorCodes,
-  parseOutputCheckVectors,
   parsePresets,
+  parsePresetScopes,
   parsePresetStatusKeys,
-  parsePresetStatusVectors,
   parseRetrievabilityKeys,
   parseRoleKeys,
   parseRules,
   parseRuleStateKeys,
-  parseRuleStateVectors,
   parseSources,
   parseSourceTiers,
   parseVerificationKeys,
   parseViewNoticeCodes,
   parseViewNoticeSentences,
-  type DocumentedOutputCheckVector,
 } from './support/compliant-product-image-decision-record'
 
 /** Every rule of every preset, flattened the way the document tabulates them. */
@@ -76,7 +62,7 @@ const allRules = compliantImagePresets.flatMap(preset =>
 )
 
 function presetById(id: string): CompliantImagePreset {
-  const preset = findCompliantImagePreset(id)
+  const preset = compliantImagePresets.find(candidate => candidate.id === id)
   if (!preset) throw new Error(`No preset ${id}`)
 
   return preset
@@ -87,14 +73,6 @@ function ruleOf(presetId: string, ruleId: string): CompliantImagePresetRule {
   if (!rule) throw new Error(`Preset ${presetId} has no rule ${ruleId}`)
 
   return rule
-}
-
-/** Rejects a documented candidate whose format is outside the published vocabulary. */
-function toOutput(candidate: DocumentedOutputCheckVector['candidate']): CompliantImageOutput {
-  const format = compliantImageFormats.find(known => known === candidate.format)
-  if (!format) throw new Error(`Unknown output format ${candidate.format}`)
-
-  return { ...candidate, format }
 }
 
 describe('vocabulary matches the decision record', () => {
@@ -144,7 +122,7 @@ describe('vocabulary matches the decision record', () => {
 
   it('publishes exactly the documented source tiers and retrievability levels', () => {
     expect([...compliantImageSourceTiers]).toEqual(parseSourceTiers())
-    expect([...compliantImageSourceRetrievability]).toEqual(parseRetrievabilityKeys())
+    expect([...compliantImageRetrievabilityLevels]).toEqual(parseRetrievabilityKeys())
   })
 })
 
@@ -165,17 +143,26 @@ describe('sources', () => {
 
   it('only admits sources a maintainer can re-read without a sign-in or a script block', () => {
     compliantImageSources.forEach((source) => {
-      expect(source.retrievability).toBe('static-html')
+      expect(source.retrievability, source.id).toBe('static-html')
     })
   })
 
-  it('names a publisher and a bilingual title for every source', () => {
+  it('names a publisher, a bilingual title and a licence for every source', () => {
     compliantImageSources.forEach((source) => {
       expect(source.publisher['zh-tw'].length).toBeGreaterThan(0)
       expect(source.publisher.en.length).toBeGreaterThan(0)
       expect(source.title['zh-tw'].length).toBeGreaterThan(0)
       expect(source.title.en.length).toBeGreaterThan(0)
+      expect(source.licence['zh-tw'].length, source.id).toBeGreaterThan(0)
+      expect(source.licence.en.length, source.id).toBeGreaterThan(0)
       expect(source.url.startsWith('https://')).toBe(true)
+    })
+  })
+
+  it('records the same usage basis for every source, because none is openly licensed', () => {
+    compliantImageSources.forEach((source) => {
+      expect(source.usage, source.id).toBe('quotation-and-outbound-link')
+      expect(source.termsUrl === undefined || source.termsUrl.startsWith('https://')).toBe(true)
     })
   })
 
@@ -203,10 +190,10 @@ describe('excluded channels', () => {
   })
 
   it('never lets an excluded channel also ship a preset', () => {
-    const excluded = new Set(compliantImageExcludedChannels.map(channel => channel.id))
+    const excluded = new Set<string>(compliantImageExcludedChannels.map(channel => channel.id))
 
     compliantImagePresets.forEach((preset) => {
-      expect(excluded.has(preset.channelId)).toBe(false)
+      expect(excluded.has(preset.channelId), preset.id).toBe(false)
     })
   })
 
@@ -234,22 +221,35 @@ describe('presets', () => {
     })
   })
 
+  it('carries the documented scope and coverage gaps, in both locales', () => {
+    const documented = parsePresetScopes()
+
+    expect(documented.map(row => row.presetId)).toEqual(compliantImagePresets.map(p => p.id))
+    documented.forEach((row) => {
+      const preset = presetById(row.presetId)
+
+      expect(preset.scope['zh-tw'], row.presetId).toBe(row['zh-tw'])
+      expect(preset.scope.en, row.presetId).toBe(row.en)
+      expect([...preset.coverageGaps], row.presetId).toEqual(row.coverageGaps)
+    })
+  })
+
   it('draws every preset field from the published vocabulary', () => {
     compliantImagePresets.forEach((preset) => {
       expect(compliantImageChannelIds).toContain(preset.channelId)
       expect(compliantImageRoles).toContain(preset.role)
       expect(compliantImageRegions).toContain(preset.region)
       expect(presetCoverageLevels).toContain(preset.coverage)
+      preset.coverageGaps.forEach(gap => expect(constraintKinds).toContain(gap))
     })
   })
 
-  it('points every preset at a source this review actually read', () => {
-    const sourceIds = new Set(compliantImageSources.map(source => source.id))
-
+  it('points every preset at a source this review actually read, on the same day', () => {
     compliantImagePresets.forEach((preset) => {
-      expect(sourceIds.has(preset.sourceId)).toBe(true)
-      expect(preset.reviewedAt)
-        .toBe(compliantImageSources.find(source => source.id === preset.sourceId)!.checkedAt)
+      const source = compliantImageSources.find(candidate => candidate.id === preset.sourceId)
+
+      expect(source, preset.id).toBeDefined()
+      expect(preset.reviewedAt).toBe(source!.checkedAt)
     })
   })
 
@@ -285,6 +285,10 @@ describe('rules', () => {
     })
   })
 
+  it('states the same rule count the handover section promises', () => {
+    expect(decisionRecord).toContain(`6 個 preset 與 ${allRules.length} 條規則`)
+  })
+
   it('draws every rule field from the published vocabulary', () => {
     allRules.forEach(({ rule }) => {
       expect(constraintKinds).toContain(rule.kind)
@@ -297,25 +301,22 @@ describe('rules', () => {
     compliantImagePresets.forEach((preset) => {
       const ids = preset.rules.map(rule => rule.id)
 
-      expect(new Set(ids).size).toBe(ids.length)
+      expect(new Set(ids).size, preset.id).toBe(ids.length)
     })
   })
 
   it('quotes the source sentence behind every rule, so a reworded source fails review', () => {
     allRules.forEach(({ presetId, rule }) => {
       expect(rule.quote.length, `${presetId}/${rule.id}`).toBeGreaterThan(0)
-      expect(decisionRecord).toContain(rule.quote)
+      expect(decisionRecord, `${presetId}/${rule.id}`).toContain(rule.quote)
     })
   })
 
   it('marks a rule automatic only when its constraint kind can be read off one output file', () => {
     allRules.forEach(({ presetId, rule }) => {
-      if (rule.verification === 'automatic') {
-        expect(automaticConstraintKinds, `${presetId}/${rule.id}`).toContain(rule.kind)
-      }
-      else {
-        expect(automaticConstraintKinds).not.toContain(rule.kind)
-      }
+      const isAutomaticKind = automaticConstraintKinds.includes(rule.kind)
+
+      expect(rule.verification === 'automatic', `${presetId}/${rule.id}`).toBe(isAutomaticKind)
     })
   })
 
@@ -350,15 +351,12 @@ describe('rules', () => {
     })
   })
 
-  it('marks a full preset as one whose source states dimensions, capacity and formats', () => {
+  it('calls a preset full exactly when its source left no gap', () => {
     compliantImagePresets.forEach((preset) => {
-      const kinds = new Set(preset.rules.map(rule => rule.kind))
-      const statesEverything = ['dimension-range', 'dimension-exact', 'longest-side-range']
-        .some(kind => kinds.has(kind as CompliantImagePresetRule['kind']))
-        && kinds.has('byte-range')
-        && kinds.has('format-set')
+      const kinds = new Set<string>(preset.rules.map(rule => rule.kind))
 
-      expect(preset.coverage === 'full', preset.id).toBe(statesEverything)
+      expect(preset.coverage === 'full', preset.id).toBe(preset.coverageGaps.length === 0)
+      preset.coverageGaps.forEach(gap => expect(kinds.has(gap), `${preset.id}/${gap}`).toBe(false))
     })
   })
 
@@ -367,203 +365,37 @@ describe('rules', () => {
 
     expect(ruten.rules.some(rule => rule.kind === 'dimension-range')).toBe(false)
     expect(ruten.rules.some(rule => rule.kind === 'dimension-exact')).toBe(false)
-    expect(ruten.coverage).toBe('partial')
+    expect([...ruten.coverageGaps]).toContain('dimension-range')
+  })
+
+  it('carries no safe-area rule, because no reviewed channel publishes one', () => {
+    expect(constraintKinds).toContain('safe-area-inset')
+    expect(allRules.some(({ rule }) => rule.kind === 'safe-area-inset')).toBe(false)
   })
 
   it('keeps Amazon occupancy and background as advice, never as a requirement', () => {
-    const occupancy = ruleOf('amazon-main', 'product-occupancy')
-    const background = ruleOf('amazon-main', 'background')
+    expect(ruleOf('amazon-main', 'product-occupancy').authority).toBe('recommendation')
+    expect(ruleOf('amazon-main', 'background').authority).toBe('recommendation')
+  })
 
-    expect(occupancy.authority).toBe('recommendation')
-    expect(background.authority).toBe('recommendation')
+  it('never reports the momo chroma rule as something one output file proves', () => {
+    ;['momo-store-main', 'momo-store-ad'].forEach((presetId) => {
+      expect(ruleOf(presetId, 'chroma-model').verification, presetId).toBe('assisted')
+    })
   })
 
   it('keeps the same wording apart when two roles of one channel disagree', () => {
-    const mainWatermark = ruleOf('momo-store-main', 'watermark-placement')
-    const adWatermark = ruleOf('momo-store-ad', 'no-watermark')
-
-    expect(mainWatermark.authority).toBe('permission')
-    expect(adWatermark.authority).toBe('requirement')
+    expect(ruleOf('momo-store-main', 'watermark-placement').authority).toBe('permission')
+    expect(ruleOf('momo-store-ad', 'no-watermark').authority).toBe('requirement')
   })
 })
 
-describe('review interval and preset status', () => {
-  it('states a review interval and grace period the document fixes', () => {
+describe('review interval', () => {
+  it('states the interval and grace period the document fixes', () => {
     expect(presetReviewIntervalDays).toBe(90)
     expect(presetReviewGraceDays).toBe(30)
     expect(decisionRecord).toContain(`${presetReviewIntervalDays} 天`)
     expect(decisionRecord).toContain(`${presetReviewGraceDays} 天`)
-  })
-
-  it('reproduces every documented status vector', () => {
-    parsePresetStatusVectors().forEach((vector) => {
-      const preset = { ...presetById(vector.presetId), retiredAt: vector.retiredAt ?? undefined }
-
-      expect(resolvePresetStatus(preset, vector.date), `${vector.presetId} on ${vector.date}`)
-        .toBe(vector.status)
-    })
-  })
-
-  it('turns a preset review-due the day after its interval and expired after the grace period', () => {
-    compliantImagePresets.forEach((preset) => {
-      const dueDay = addDays(preset.reviewedAt, presetReviewIntervalDays)
-      const expiryDay = addDays(preset.reviewedAt, presetReviewIntervalDays + presetReviewGraceDays)
-
-      expect(resolvePresetStatus(preset, dueDay)).toBe('active')
-      expect(resolvePresetStatus(preset, addDays(dueDay, 1))).toBe('review-due')
-      expect(resolvePresetStatus(preset, expiryDay)).toBe('review-due')
-      expect(resolvePresetStatus(preset, addDays(expiryDay, 1))).toBe('expired')
-    })
-  })
-
-  it('lets retirement outrank every date-derived status', () => {
-    const preset = { ...presetById('google-merchant-center-main'), retiredAt: '2026-09-08' }
-
-    expect(resolvePresetStatus(preset, '2026-09-07')).toBe('active')
-    expect(resolvePresetStatus(preset, '2026-09-08')).toBe('retired')
-    expect(resolvePresetStatus(preset, '2030-01-01')).toBe('retired')
-  })
-
-  it('has every preset active on the review date', () => {
-    compliantImagePresets.forEach((preset) => {
-      expect(resolvePresetStatus(preset, preset.reviewedAt)).toBe('active')
-    })
-  })
-})
-
-describe('rule effective dates', () => {
-  it('reproduces every documented rule state vector', () => {
-    parseRuleStateVectors().forEach((vector) => {
-      expect(
-        resolveRuleState(ruleOf(vector.presetId, vector.ruleId), vector.date),
-        `${vector.presetId}/${vector.ruleId} on ${vector.date}`,
-      ).toBe(vector.state)
-    })
-  })
-
-  it('treats a rule without an effective date as always in force', () => {
-    allRules
-      .filter(({ rule }) => rule.effectiveFrom === undefined)
-      .forEach(({ rule }) => {
-        expect(resolveRuleState(rule, '1970-01-01')).toBe('in-force')
-      })
-  })
-})
-
-describe('checking one output against a preset', () => {
-  it('reproduces every documented output check vector', () => {
-    parseOutputCheckVectors().forEach((vector) => {
-      const outcome = checkOutputAgainstPreset(
-        presetById(vector.presetId),
-        toOutput(vector.candidate),
-        vector.date,
-      )
-      const label = `${vector.presetId} on ${vector.date}`
-
-      expect(outcome.result, label).toBe(vector.result)
-      expect([...outcome.failedRuleIds].sort(), label).toEqual([...vector.failedRuleIds].sort())
-    })
-  })
-
-  it('refuses to judge an expired or retired preset instead of using stale rules', () => {
-    const preset = presetById('google-merchant-center-main')
-    const expiredDay = addDays(preset.reviewedAt, presetReviewIntervalDays + presetReviewGraceDays + 1)
-    const good = { width: 1500, height: 1500, format: 'jpeg' as const, bytes: 800_000 }
-
-    const expired = checkOutputAgainstPreset(preset, good, expiredDay)
-    expect(expired.result).toBe('unavailable')
-    expect(expired.notices).toContain('preset-expired')
-    expect(expired.failedRuleIds).toEqual([])
-
-    const retired = checkOutputAgainstPreset(
-      { ...preset, retiredAt: '2026-09-01' },
-      good,
-      '2026-09-07',
-    )
-    expect(retired.result).toBe('unavailable')
-    expect(retired.notices).toContain('preset-retired')
-  })
-
-  it('still judges a review-due preset, but says so', () => {
-    const preset = presetById('google-merchant-center-main')
-    const dueDay = addDays(preset.reviewedAt, presetReviewIntervalDays + 1)
-    const outcome = checkOutputAgainstPreset(
-      preset,
-      { width: 1500, height: 1500, format: 'jpeg', bytes: 800_000 },
-      dueDay,
-    )
-
-    expect(outcome.result).toBe('pass')
-    expect(outcome.notices).toContain('preset-review-due')
-  })
-
-  it('never fails an output on a recommendation, and reports it as advice instead', () => {
-    const outcome = checkOutputAgainstPreset(
-      presetById('google-merchant-center-main'),
-      { width: 800, height: 800, format: 'jpeg', bytes: 400_000 },
-      '2026-09-07',
-    )
-
-    expect(outcome.result).toBe('pass')
-    expect(outcome.failedRuleIds).toEqual([])
-    expect(outcome.advisoryRuleIds).toContain('recommended-dimensions')
-  })
-
-  it('does not enforce a rule before its effective date, and lists it as scheduled', () => {
-    const preset = presetById('google-merchant-center-main')
-    const small = { width: 400, height: 400, format: 'jpeg' as const, bytes: 200_000 }
-
-    const before = checkOutputAgainstPreset(preset, small, '2026-09-07')
-    expect(before.failedRuleIds).not.toContain('min-dimensions')
-    expect(before.scheduledRuleIds).toContain('min-dimensions')
-
-    const after = checkOutputAgainstPreset(
-      { ...preset, reviewedAt: '2027-02-01' },
-      small,
-      '2027-02-01',
-    )
-    expect(after.failedRuleIds).toContain('min-dimensions')
-    expect(after.scheduledRuleIds).not.toContain('min-dimensions')
-  })
-
-  it('lists every rule it could not judge rather than passing silently', () => {
-    const preset = presetById('momo-store-ad')
-    const outcome = checkOutputAgainstPreset(
-      preset,
-      { width: 1000, height: 1000, format: 'jpeg', bytes: 400_000 },
-      '2026-09-07',
-    )
-    const unjudged = [
-      ...outcome.assistedRuleIds,
-      ...outcome.manualRuleIds,
-      ...outcome.outOfScopeRuleIds,
-    ]
-
-    expect(outcome.result).toBe('pass')
-    expect(outcome.notices).toContain('rules-need-your-check')
-    expect(unjudged).toContain('background')
-    expect(unjudged).toContain('no-border')
-  })
-
-  it('accounts for every rule of the preset exactly once', () => {
-    compliantImagePresets.forEach((preset) => {
-      const outcome = checkOutputAgainstPreset(
-        preset,
-        { width: 1000, height: 1000, format: 'jpeg', bytes: 400_000 },
-        preset.reviewedAt,
-      )
-      const accounted = [
-        ...outcome.passedRuleIds,
-        ...outcome.failedRuleIds,
-        ...outcome.advisoryRuleIds,
-        ...outcome.assistedRuleIds,
-        ...outcome.manualRuleIds,
-        ...outcome.outOfScopeRuleIds,
-        ...outcome.scheduledRuleIds,
-      ]
-
-      expect(accounted.sort(), preset.id).toEqual(preset.rules.map(rule => rule.id).sort())
-    })
   })
 })
 
@@ -619,10 +451,13 @@ describe('disclaimers and wording', () => {
 })
 
 describe('the record itself', () => {
-  it('cites every source url and every exclusion evidence url', () => {
-    compliantImageSources.forEach(source => expect(decisionRecord).toContain(source.url))
+  it('cites every source url, terms url and exclusion evidence url', () => {
+    compliantImageSources.forEach((source) => {
+      expect(decisionRecord, source.id).toContain(source.url)
+      if (source.termsUrl) expect(decisionRecord, source.id).toContain(source.termsUrl)
+    })
     compliantImageExcludedChannels
-      .forEach(channel => expect(decisionRecord).toContain(channel.evidenceUrl))
+      .forEach(channel => expect(decisionRecord, channel.id).toContain(channel.evidenceUrl))
   })
 
   it('states that the research touches no product image and no merchant data', () => {
@@ -635,44 +470,5 @@ describe('the record itself', () => {
 
   it('names the stable slug T21 has to publish under', () => {
     expect(decisionRecord).toContain('compliant-product-image')
-  })
-})
-
-/** Adds whole days to an ISO date, staying in UTC so no local zone shifts a boundary. */
-function addDays(date: string, days: number) {
-  const shifted = new Date(`${date}T00:00:00Z`)
-  shifted.setUTCDate(shifted.getUTCDate() + days)
-
-  return shifted.toISOString().slice(0, 10)
-}
-
-describe('vectors cover the decisions that could go wrong', () => {
-  it('exports the same vectors the record tabulates', () => {
-    expect(presetStatusVectors.length).toBe(parsePresetStatusVectors().length)
-    expect(ruleStateVectors.length).toBe(parseRuleStateVectors().length)
-    expect(outputCheckVectors.length).toBe(parseOutputCheckVectors().length)
-  })
-
-  it('checks at least one output against every preset', () => {
-    const covered = new Set(outputCheckVectors.map(vector => vector.presetId))
-
-    compliantImagePresets.forEach(preset => expect(covered.has(preset.id)).toBe(true))
-  })
-
-  it('covers both a passing and a failing output', () => {
-    expect(outputCheckVectors.some(vector => vector.result === 'pass')).toBe(true)
-    expect(outputCheckVectors.some(vector => vector.result === 'fail')).toBe(true)
-  })
-
-  it('reaches every preset status through the status vectors', () => {
-    const reached = new Set(presetStatusVectors.map(vector => vector.status))
-
-    expect([...presetStatuses].every(status => reached.has(status))).toBe(true)
-  })
-
-  it('only names formats the platform can decode or encode', () => {
-    outputCheckVectors.forEach((vector) => {
-      expect(compliantImageFormats).toContain(vector.candidate.format)
-    })
   })
 })

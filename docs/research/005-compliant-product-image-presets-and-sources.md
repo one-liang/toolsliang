@@ -7,13 +7,14 @@
 - 研究日期：2026-09-07（所有來源於同日擷取）
 - 資料契約版本識別碼：`compliant-product-image-2026-09-07`
 - 工具 slug：`compliant-product-image`
-- 狀態：已決策；四項已標示的風險（§10）
+- 狀態：已決策；五項已標示的風險（§10）
 
 本紀錄鎖定合規主圖的通路來源、納入與排除門檻、版本化 preset 資料模型、規則層級與可驗證性、
 更新與過期策略，以及可直接轉為測試的向量。實作與測試以
 `app/features/tools/compliant-product-image/domain/reference.ts`、`preset.ts` 與 `sources.ts`
-引用同一份決策。`tests/compliant-product-image-reference.test.ts` 會逐列比對本文件與模組的
-詞彙、preset、規則、向量、提示 key 與免責文案，任一方改動而未同步即測試失敗。
+引用同一份決策。`tests/compliant-product-image-reference.test.ts` 逐列比對本文件與模組的詞彙、
+preset、規則、提示 key 與免責文案，`tests/compliant-product-image-preset.test.ts` 則驗證版本、
+過期、生效日與輸出檢查的行為；任一方改動而未同步即測試失敗。
 
 本研究只讀取通路自己公開的規格頁，不需要商品圖片，也不需要任何商家帳號或營運資料。
 
@@ -75,7 +76,7 @@ issue #22 的非目標也寫明「不爬取需要登入或禁止自動存取的�
 | id | 發布者 | 標題 | 網址 | 層級 | 可取得性 | 查核日期 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `google-merchant-image-link` | Google | 產品資料規格：圖片連結 [image_link] | https://support.google.com/merchants/answer/6324350 | `policy` | `static-html` | `2026-09-07` |
-| `amazon-product-photos` | Amazon | 6 tips for taking product photos in 2025 | https://sell.amazon.com/blog/product-photos | `editorial` | `static-html` | `2026-09-07` |
+| `amazon-product-photos` | Amazon | 6 tips for taking product photos in 2025（2024-12-04 發佈） | https://sell.amazon.com/blog/product-photos | `editorial` | `static-html` | `2026-09-07` |
 | `momo-store-publish-rules` | 富邦媒體科技 | momo 商店規則中心：如何在 momo 發布商品 | https://rules.momo.com.tw/goods/00021/ | `help` | `static-html` | `2026-09-07` |
 | `ruten-store-faq` | 露天市集 | 幫助中心：賣場經營相關問題 | https://www.ruten.com.tw/help/seller/2883/ | `help` | `static-html` | `2026-09-07` |
 
@@ -86,7 +87,8 @@ issue #22 的非目標也寫明「不爬取需要登入或禁止自動存取的�
 
 Amazon 這一列是第一版唯一的 `editorial` 來源。它的權威層級低於其他三個，因為真正的規範頁
 （Seller Central「Product image guide」G1881）需要賣家登入才看得到內容。處理方式見 §6.1 的
-`amazon-main`：只納入該文章 FAQ 明確標為 requirements 的三條，其餘一律降為建議。
+`amazon-main`：只把該文章 FAQ「All images must be…」清單裡的項目與「至少一張圖」當成規範，
+文章正文的攝影建議（85% 佔比、純白背景、建議六張、建議每邊 1,000 像素）一律降為建議。
 
 ### 3.3 已排除通路
 
@@ -137,6 +139,22 @@ preset，也不得以「即將支援」暗示規格已知。
 | `requires-javascript` | 內文由前端渲染，靜態回應沒有規格文字 | 否 |
 | `requires-sign-in` | 需要帳號才能讀到內文 | 否 |
 | `automated-access-restricted` | 站方明文禁止自動存取，或以人機驗證阻擋 | 否 |
+
+### 3.6 授權與使用方式
+
+四個來源都不是開放授權的資料集，著作權分屬各通路。這一版因此不轉載、不鏡像、不快取任何通路頁面：
+每個 preset 只保留可驗證的數值、§6.7 的單句原文，以及一個外連到原頁的連結，使用基礎統一記為
+`quotation-and-outbound-link`。這也是本站不把通路規格當成「資料集」發佈的原因。
+
+| 來源 | 授權狀態 | 條款頁 |
+| --- | --- | --- |
+| `google-merchant-image-link` | 著作權為 Google 所有，非開放授權 | https://policies.google.com/terms |
+| `amazon-product-photos` | 著作權為 Amazon 所有，非開放授權 | https://www.amazon.com/gp/help/customer/display.html?nodeId=508088 |
+| `momo-store-publish-rules` | 著作權為富邦媒體科技所有，非開放授權 | 未另設公開條款頁；頁尾載明保留所有權利 |
+| `ruten-store-faq` | 著作權為露天市集國際資訊所有，非開放授權 | https://www.ruten.com.tw/help/category/member/policy/ |
+
+與 ADR-0001 的關係：這些是**本站**取得公開規格的邊界，與使用者的商品圖無關。使用者的圖片、裁切
+參數與輸出仍然完全留在裝置上，工具不會為了套用 preset 而連到任何通路。
 
 ## 4. Preset 資料模型
 
@@ -192,9 +210,10 @@ preset，也不得以「即將支援」暗示規格已知。
 | `megapixel-max` | `{ max }` | `automatic` |
 | `byte-range` | `{ min?, max? }` | `automatic` |
 | `format-set` | `{ formats }` | `automatic` |
-| `chroma-model` | `{ model }` | `automatic` |
+| `chroma-model` | `{ model }` | `assisted` |
 | `count-range` | `{ min?, max? }` | `manual` |
 | `occupancy-min` | `{ ratio }` | `assisted` |
+| `safe-area-inset` | `{ top, right, bottom, left }` | `assisted` |
 | `overlay-area-max` | `{ ratio }` | `manual` |
 | `background` | `{ mode, rgb? }` | `assisted` |
 | `metadata-preservation` | `{ tags }` | `manual` |
@@ -202,8 +221,16 @@ preset，也不得以「即將支援」暗示規格已知。
 | `prohibition` | `{}` | `manual` |
 
 `count-range` 說的是一則商品要有幾張圖，不是這一張輸出的性質，所以它是 `manual`：工具送出的是一張
-圖，張數只有使用者在通路後台看得到。`chroma-model` 是 `automatic`，因為 momo 要求的 YCbCr 就是
-JPEG 的色度模型，輸出格式是不是 JPEG 這件事工具知道。
+圖，張數只有使用者在通路後台看得到。
+
+`chroma-model` 一度被當成 `automatic`，理由是「JPEG 就是 YCbCr」。這是錯的：JPEG 也可以是灰階或
+4:4:4，甚至以 RGB 編碼，而輸出的寬、高、格式與位元組不足以判斷色度取樣。工具能做的是預設輸出
+JPEG 並說明這件事，所以它是 `assisted`。把它報成已驗證的 momo 規範，正是本 ticket 目標句要避免的
+誤稱。
+
+`safe-area-inset` 是安全區：四邊各自的留白比例。第一版四個來源都沒有公布安全區——momo 與 Amazon
+以「商品佔比」表達同一件事——所以沒有任何 preset 帶這個限制。它留在模型裡，是因為驗收條件要求
+preset 必須「可表達」安全區，而且下一個公布留白規範的通路不應該被迫改寫成佔比。
 
 ### 4.6 來源涵蓋度
 
@@ -244,7 +271,7 @@ JPEG 的色度模型，輸出格式是不是 JPEG 這件事工具知道。
 - 寬限期：再 **30 天**。寬限期內 preset 仍可用，但必須顯示待重查提示。
 - 逾期後：preset 停用。停用不是刪除——介面仍顯示通路名稱、最後查核日期與停用原因，只是不再拿它判定輸出。
 
-重查的動作是：重新取得 §3.2 的每一個網址，逐條比對 §6.6 的來源原文。原文一字不差就只更新
+重查的動作是：重新取得 §3.2 的每一個網址，逐條比對 §6.7 的來源原文。原文一字不差就只更新
 `checkedAt`；原文改變就必須重新判斷該條規則的層級與數值，並更新版本識別碼。
 
 ### 5.3 狀態判定
@@ -282,6 +309,11 @@ JPEG 的色度模型，輸出格式是不是 JPEG 這件事工具知道。
 3. 層級與用途都相同而數值仍矛盾時，該通路以 `conflicting-sources` 整個排除。不取較嚴格的一方：
    猜錯的代價是使用者被通路退件，而工具卻顯示通過。
 
+第 1 條的降級會產生一個第一版還沒有的情況：一個 preset 的規則來自兩份來源。目前每個 preset 只有
+一個 `sourceId`，因為六個 preset 各自只讀一份頁面；真的發生降級時，`sourceId` 必須先擴充成來源
+清單，規則才有可追溯的出處。這是刻意留下的限制，不是疏漏——現在就加一個永遠等於 preset 來源的
+欄位到 46 條規則上，只會是沒有讀者的重複資料。§10 風險五記錄了這件事。
+
 ### 5.5 重查錯誤
 
 維護者重新查核時用的錯誤 key，依檢查順序排列。它們不會出現在使用者介面，因為任何一個成立時，
@@ -293,7 +325,7 @@ JPEG 的色度模型，輸出格式是不是 JPEG 這件事工具知道。
 | `source-requires-javascript` | 取得到回應，但靜態內文已不含規格文字 |
 | `source-requires-sign-in` | 被導向登入頁 |
 | `automated-access-restricted` | 被人機驗證或站方政策阻擋 |
-| `specification-text-changed` | §6.6 的來源原文與頁面不再一字不差 |
+| `specification-text-changed` | §6.7 的來源原文與頁面不再一字不差 |
 | `unit-ambiguous` | 來源改寫後的容量或尺寸單位無法確定（例如同時出現 MB 與 MiB） |
 | `conflicting-rules` | 同通路同用途的兩份來源給出矛盾數值 |
 | `unknown-constraint-kind` | 來源新增了 §4.5 沒有對應形狀的限制 |
@@ -351,7 +383,7 @@ momo 的商品主圖段落沒有載明可接受的檔案格式（同一頁提到
 | `amazon-main` | `background` | `background` | `recommendation` | `assisted` | `{"mode":"pure-white","rgb":[255,255,255]}` | `null` |
 | `momo-store-main` | `exact-dimensions` | `dimension-exact` | `requirement` | `automatic` | `{"width":1000,"height":1000}` | `null` |
 | `momo-store-main` | `file-size-range` | `byte-range` | `requirement` | `automatic` | `{"min":50000,"max":1000000}` | `null` |
-| `momo-store-main` | `chroma-model` | `chroma-model` | `requirement` | `automatic` | `{"model":"YCbCr"}` | `null` |
+| `momo-store-main` | `chroma-model` | `chroma-model` | `requirement` | `assisted` | `{"model":"YCbCr"}` | `null` |
 | `momo-store-main` | `image-count` | `count-range` | `requirement` | `manual` | `{"min":1,"max":6}` | `null` |
 | `momo-store-main` | `product-occupancy` | `occupancy-min` | `requirement` | `assisted` | `{"ratio":0.8}` | `null` |
 | `momo-store-main` | `overlay-area-max` | `overlay-area-max` | `requirement` | `manual` | `{"ratio":0.2}` | `null` |
@@ -361,7 +393,7 @@ momo 的商品主圖段落沒有載明可接受的檔案格式（同一頁提到
 | `momo-store-ad` | `exact-dimensions` | `dimension-exact` | `requirement` | `automatic` | `{"width":1000,"height":1000}` | `null` |
 | `momo-store-ad` | `file-size-range` | `byte-range` | `requirement` | `automatic` | `{"min":50000,"max":1000000}` | `null` |
 | `momo-store-ad` | `exact-aspect-ratio` | `aspect-ratio-exact` | `requirement` | `automatic` | `{"ratio":1}` | `null` |
-| `momo-store-ad` | `chroma-model` | `chroma-model` | `requirement` | `automatic` | `{"model":"YCbCr"}` | `null` |
+| `momo-store-ad` | `chroma-model` | `chroma-model` | `requirement` | `assisted` | `{"model":"YCbCr"}` | `null` |
 | `momo-store-ad` | `background` | `background` | `requirement` | `assisted` | `{"mode":"solid"}` | `null` |
 | `momo-store-ad` | `product-occupancy` | `occupancy-min` | `requirement` | `assisted` | `{"ratio":0.8}` | `null` |
 | `momo-store-ad` | `no-border` | `prohibition` | `requirement` | `manual` | `{}` | `null` |
@@ -418,17 +450,34 @@ momo 的商品主圖段落沒有載明可接受的檔案格式（同一頁提到
 | `amazon-main` | `2026-09-07` | `{"width":1600,"height":1600,"format":"jpeg","bytes":900000}` | `pass` | `[]` |
 | `amazon-main` | `2026-09-07` | `{"width":400,"height":400,"format":"webp","bytes":100000}` | `fail` | `["longest-side-range","allowed-formats"]` |
 | `momo-store-main` | `2026-09-07` | `{"width":1000,"height":1000,"format":"jpeg","bytes":400000}` | `pass` | `[]` |
-| `momo-store-main` | `2026-09-07` | `{"width":1200,"height":1000,"format":"png","bytes":30000}` | `fail` | `["exact-dimensions","file-size-range","chroma-model"]` |
+| `momo-store-main` | `2026-09-07` | `{"width":1200,"height":1000,"format":"png","bytes":30000}` | `fail` | `["exact-dimensions","file-size-range"]` |
 | `momo-store-ad` | `2026-09-07` | `{"width":1000,"height":1000,"format":"jpeg","bytes":400000}` | `pass` | `[]` |
 | `momo-store-ad` | `2026-09-07` | `{"width":1200,"height":800,"format":"jpeg","bytes":1500000}` | `fail` | `["exact-dimensions","exact-aspect-ratio","file-size-range"]` |
 | `momo-store-variant` | `2026-09-07` | `{"width":1000,"height":1000,"format":"png","bytes":200000}` | `pass` | `[]` |
 | `ruten-main` | `2026-09-07` | `{"width":1200,"height":900,"format":"jpeg","bytes":900000}` | `pass` | `[]` |
 | `ruten-main` | `2026-09-07` | `{"width":3000,"height":400,"format":"webp","bytes":6000000}` | `fail` | `["allowed-formats","aspect-ratio-range","file-size-range"]` |
 
-`momo-store-variant` 的那一列是刻意的：同樣一張 PNG 在 `momo-store-main` 會因為 `chroma-model`
-不符而失敗，在 `momo-store-variant` 卻通過，因為 momo 只對主圖與廣告用圖寫了 YCbCr。
+`momo-store-variant` 的那一列是刻意的：那張 PNG 通過，因為 momo 的規格圖段落沒有寫任何格式限制，
+工具就不能替它補一個。同一張圖如果送到 `ruten-main` 也會通過，送到 `amazon-main` 則會因為
+`allowed-formats` 而失敗——三種結果來自三份來源各自寫了什麼，不是來自一套共用的預設值。
 
-### 6.6 規則來源原文
+### 6.6 適用範圍與缺少的欄位
+
+`適用範圍` 是這個 preset 管到哪裡；把它寫出來，才不會讓「momo」這三個字被讀成整個 momo 生態系。
+`缺少欄位` 是來源沒有載明、因此 preset 留空的限制種類，介面必須照著說，而不是留白。
+
+| preset | 缺少欄位 | 適用範圍（繁體中文） | Scope (English) |
+| --- | --- | --- | --- |
+| `google-merchant-center-main` | `[]` | Merchant Center 產品資料的主要商品圖片 [image_link]，用於購物廣告與免費產品資訊；不涵蓋 additional_image_link 或其他 Google 版位。 | The main product image [image_link] in Merchant Center product data, used for shopping ads and free listings; not additional_image_link or other Google surfaces. |
+| `amazon-main` | `["byte-range"]` | Amazon 商品頁圖片的公開說明範圍；不涵蓋 Handmade、A+ 內容或個別類別的額外規定。 | What Amazon states publicly about product page images; not Handmade, A+ content, or category-specific extras. |
+| `momo-store-main` | `["format-set"]` | momo 商店由賣家自行上架的商品主圖；不適用 momo 購物網自營供應商。 | The main product image a seller uploads to a momo store; not the momo shopping supplier programme. |
+| `momo-store-ad` | `["format-set"]` | momo 站外廣告、站內推薦版位與分類頁列表使用的廣告用圖；不適用商品頁主圖。 | The ad image momo uses for off-site ads, on-site recommendation slots and category listings; not the product page main image. |
+| `momo-store-variant` | `["format-set"]` | momo 商店的商品規格（款式）選項圖；不適用主圖或廣告用圖。 | The variant option image in a momo store; not the main or ad image. |
+| `ruten-main` | `["dimension-range"]` | 露天市集刊登單品時上傳的商品圖片；來源未區分主圖與其他圖片。 | Product images uploaded when listing a single item on Ruten; the source does not separate a main image from the rest. |
+
+`缺少欄位` 為空與 `coverage` 是 `full` 是同一件事，模組以測試綁住兩者，避免只改一邊。
+
+### 6.7 規則來源原文
 
 重查時逐字比對這一欄。原文改變即觸發 `specification-text-changed`。
 
@@ -505,9 +554,13 @@ momo 規格圖的三條「建議您」開頭的項目（正方形、純色背景
 ### 7.2 來源顯名
 
 每個 preset 旁邊必須看得到：通路名稱、來源標題、可點擊的來源網址、查核日期、目前狀態與涵蓋度。
-來源網址是外連，開新分頁；本站不代為擷取或轉載通路頁面內容，只引用可驗證數值與 §6.6 的原文片段。
+來源網址是外連，開新分頁；本站不代為擷取或轉載通路頁面內容，只引用可驗證數值與 §6.7 的原文片段。
 
-`partial` 涵蓋度必須寫出缺哪一項，例如「露天市集未公開最小尺寸」，而不是留白讓人以為沒有限制。
+`partial` 涵蓋度必須寫出缺哪一項。文案不必手寫：§6.6 的 `缺少欄位` 就是那份清單，例如
+`ruten-main` 的 `dimension-range` 對應「露天市集未公開最小尺寸」。留白讓人以為沒有限制。
+
+每個 preset 的適用範圍（§6.6）也必須看得見，否則「momo」會被讀成整個 momo 生態系，而規則其實
+只涵蓋賣家自行上架的商店商品。
 
 ### 7.3 禁止用語
 
@@ -533,17 +586,24 @@ official certification、guaranteed approval、platform approved、compliance gu
 
 T21 可以直接使用而不需要重新研究的東西：
 
-- `compliantImagePresets`：6 個 preset 與 45 條規則，每條都帶層級、可驗證性與來源原文。
-- `resolvePresetStatus` 與 `resolveRuleState`：版本、過期與生效日的判定，含 §6.3、§6.4 的向量。
-- `checkOutputAgainstPreset`：把一張輸出分成通過、未通過、建議、輔助、人工、不在範圍與未生效七類，
-  並在 preset 停用時回傳 `unavailable` 而不是判定結果。
+- `compliantImagePresets`：6 個 preset 與 46 條規則，每條都帶層級、可驗證性與來源原文，
+  外加每個 preset 的適用範圍與缺少欄位（§6.6）。
+- `resolvePresetStatus`、`resolveRuleState` 與 `presetReviewDeadlines`：版本、過期與生效日的判定，
+  含 §6.3、§6.4 的向量；`presetReviewDeadlines` 讓介面可以直接顯示「有效到哪一天」。
+- `checkOutputAgainstPreset`：把一張輸出分成 `ruleDispositions` 的七類——通過、未通過、建議、輔助、
+  人工、不在範圍與未生效——並在 preset 停用時回傳 `unavailable` 而不是判定結果。它放在這裡而不是
+  留給 T21，是因為「preset 可表達什麼」只有在有人能把它算出來時才是可驗證的主張；它不碰像素，
+  只讀寬、高、格式與位元組。
 - `compliantImageViewNoticeCodes` 與 §5.6 的雙語句子：介面提示的唯一來源。
 - `compliantImageCaveatKeys` 與 §7.1 的雙語句子：免責文案的唯一來源。
 - `compliantImageExcludedChannels`：排除名單與重新評估日期，讓介面能誠實回答「為什麼沒有蝦皮」。
 - `compliantImageContentReview`：可直接填進 Tool Definition 的 `contentReview`。
 
-T21 仍要自己決定的事：裁切與縮放的互動、安全區疊層的畫法、Worker 的進度與取消、輸出編碼參數，
-以及 `assisted` 規則要用什麼視覺輔助。本紀錄只保證那些輔助不會被描述成自動檢查。
+- `compliantImageSources`：每個來源的層級、可取得性、授權狀態與條款頁（§3.6），供來源顯名使用。
+
+T21 仍要自己決定的事：裁切與縮放的互動、佔比與安全區疊層的畫法、Worker 的進度與取消、輸出編碼
+參數，以及 `assisted` 規則要用什麼視覺輔助。本紀錄只保證那些輔助不會被描述成自動檢查；第一版沒有
+任何通路公布留白式安全區，所以疊層只能以 `occupancy-min` 為依據，並標明它是佔比而不是留白。
 
 ## 9. 已收斂問題
 
@@ -571,7 +631,9 @@ T21 仍要自己決定的事：裁切與縮放的互動、安全區疊層的畫�
 3. **容量單位是詮釋而不是原文。** 來源寫 `16MB`、`1000 kb`、`5MB`，沒有指明十進位或二進位。本契約
    一律以十進位換算，對上限而言是較嚴格的一邊，對 momo 的 50 kb 下限而言則是較寬鬆的一邊。若日後
    有使用者回報 momo 退件在 50–51.2 kb 之間，這裡就是要改的地方。
-4. **Google 要求保留 AI 生成圖的 IPTC 中繼資料，與圖片壓縮工具的中繼資料清除相反。** 規格
+4. **同一個 preset 若引用兩個來源，目前無法逐條追溯出處。** §5.4 第 1 條的降級策略一旦真的觸發，
+   `sourceId` 要先擴充成來源清單；在那之前，規則的出處靠 §6.7 的原文辨識。第一版沒有這種 preset。
+5. **Google 要求保留 AI 生成圖的 IPTC 中繼資料，與圖片壓縮工具的中繼資料清除相反。** 規格
    12.7 節要求圖片壓縮移除中繼資料。同一張圖先壓縮再送 Google 購物，可能因此失去
    `DigitalSourceType` 標記。這條以 `manual` 納入並在介面提醒；跨工具的一致處理留給商品圖工作台
    （T25）決定，不在本 ticket 內解。

@@ -25,14 +25,22 @@ export type CompliantImageSourceTier = typeof compliantImageSourceTiers[number]
  * `static-html` clears the bar: the other three cannot be re-checked without
  * signing in or working around the channel's own access rules.
  */
-export const compliantImageSourceRetrievability = [
+export const compliantImageRetrievabilityLevels = [
   'static-html',
   'requires-javascript',
   'requires-sign-in',
   'automated-access-restricted',
 ] as const
 
-export type CompliantImageSourceRetrievability = typeof compliantImageSourceRetrievability[number]
+export type CompliantImageRetrievability = typeof compliantImageRetrievabilityLevels[number]
+
+/**
+ * None of these pages is published under an open licence, so the only lawful
+ * basis for using them is the one every row records: cite the verifiable
+ * numbers, quote the single sentence each rule came from, and link out. The
+ * tool never reproduces, mirrors or caches a channel's page.
+ */
+export const compliantImageSourceUsage = 'quotation-and-outbound-link' as const
 
 export interface CompliantImageSource {
   id: string
@@ -40,7 +48,12 @@ export interface CompliantImageSource {
   title: LocalizedCopy
   url: string
   tier: CompliantImageSourceTier
-  retrievability: CompliantImageSourceRetrievability
+  retrievability: CompliantImageRetrievability
+  /** What the publisher allows. Recorded per source because it is not derivable. */
+  licence: LocalizedCopy
+  /** The publisher's terms page, only where this review could open one. */
+  termsUrl?: string
+  usage: typeof compliantImageSourceUsage
   /** The day the page was read end to end, not the day the channel published it. */
   checkedAt: string
 }
@@ -61,18 +74,30 @@ export const compliantImageSources = [
     url: 'https://support.google.com/merchants/answer/6324350',
     tier: 'policy',
     retrievability: 'static-html',
+    licence: {
+      'zh-tw': '著作權為 Google 所有，非開放授權；適用 Google 服務條款。',
+      en: 'Copyright Google, not openly licensed; the Google Terms of Service apply.',
+    },
+    termsUrl: 'https://policies.google.com/terms',
+    usage: compliantImageSourceUsage,
     checkedAt: '2026-09-07',
   },
   {
     id: 'amazon-product-photos',
     publisher: { 'zh-tw': 'Amazon', en: 'Amazon' },
     title: {
-      'zh-tw': '6 tips for taking product photos in 2025（商品攝影建議與規定）',
-      en: '6 tips for taking product photos in 2025',
+      'zh-tw': 'Amazon 商品攝影建議與規定（原題「6 tips for taking product photos in 2025」，2024-12-04 發佈）',
+      en: '6 tips for taking product photos in 2025 (published 4 December 2024)',
     },
     url: 'https://sell.amazon.com/blog/product-photos',
     tier: 'editorial',
     retrievability: 'static-html',
+    licence: {
+      'zh-tw': '著作權為 Amazon 所有，非開放授權；適用 Amazon 使用條件。',
+      en: 'Copyright Amazon, not openly licensed; the Amazon Conditions of Use apply.',
+    },
+    termsUrl: 'https://www.amazon.com/gp/help/customer/display.html?nodeId=508088',
+    usage: compliantImageSourceUsage,
     checkedAt: '2026-09-07',
   },
   {
@@ -88,6 +113,11 @@ export const compliantImageSources = [
     url: 'https://rules.momo.com.tw/goods/00021/',
     tier: 'help',
     retrievability: 'static-html',
+    licence: {
+      'zh-tw': '著作權為富邦媒體科技所有，非開放授權；頁面頁尾載明保留所有權利，未另設公開條款頁。',
+      en: 'Copyright Fubon Multimedia Technology, not openly licensed; the page footer reserves all rights and publishes no separate terms page.',
+    },
+    usage: compliantImageSourceUsage,
     checkedAt: '2026-09-07',
   },
   {
@@ -100,9 +130,18 @@ export const compliantImageSources = [
     url: 'https://www.ruten.com.tw/help/seller/2883/',
     tier: 'help',
     retrievability: 'static-html',
+    licence: {
+      'zh-tw': '著作權為露天市集國際資訊所有，非開放授權；適用露天市集網站條款。',
+      en: 'Copyright Ruten, not openly licensed; the Ruten site policies apply.',
+    },
+    termsUrl: 'https://www.ruten.com.tw/help/category/member/policy/',
+    usage: compliantImageSourceUsage,
     checkedAt: '2026-09-07',
   },
 ] as const satisfies readonly CompliantImageSource[]
+
+/** The ids above, so a preset cannot cite a source this review never read. */
+export type CompliantImageSourceId = typeof compliantImageSources[number]['id']
 
 /**
  * Why a channel is not in the first version. `conflicting-sources` and

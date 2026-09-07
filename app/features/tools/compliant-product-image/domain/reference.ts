@@ -1,3 +1,6 @@
+import type { LocalizedCopy } from '@/features/tools/catalog'
+import type { CompliantImageSourceId } from './sources'
+
 /**
  * Data contract for the compliant product image tool: the channels whose public
  * specifications survived the inclusion bar, the vocabulary a preset rule is
@@ -78,6 +81,7 @@ export const constraintKinds = [
   'chroma-model',
   'count-range',
   'occupancy-min',
+  'safe-area-inset',
   'overlay-area-max',
   'background',
   'metadata-preservation',
@@ -136,6 +140,14 @@ export interface ConstraintValueByKind {
   'chroma-model': { model: 'YCbCr' }
   'count-range': { min?: number, max?: number }
   'occupancy-min': { ratio: number }
+  /**
+   * A keep-out margin on each side, as a fraction of that side's length. No
+   * channel in this review publishes one — momo and Amazon express the same
+   * concern as an occupancy ratio instead — but the acceptance criteria require
+   * a preset to be able to state a safe area, and a future channel that does
+   * publish insets must not be forced into an occupancy ratio it never gave.
+   */
+  'safe-area-inset': { top: number, right: number, bottom: number, left: number }
   'overlay-area-max': { ratio: number }
   'background': { mode: 'solid' | 'pure-white', rgb?: readonly [number, number, number] }
   'metadata-preservation': { tags: readonly string[] }
@@ -166,8 +178,16 @@ export interface CompliantImagePreset {
   channelId: CompliantImageChannelId
   role: CompliantImageRole
   region: CompliantImageRegion
-  sourceId: string
+  sourceId: CompliantImageSourceId
+  /** Which listings this preset governs, so it is not read as the whole channel. */
+  scope: LocalizedCopy
   coverage: PresetCoverage
+  /**
+   * The constraint kinds the source does not state. Named rather than left
+   * blank, so the page can say which aspect has no basis instead of implying
+   * the channel has no limit there.
+   */
+  coverageGaps: readonly ConstraintKind[]
   /** The day the source behind this preset was last read end to end. */
   reviewedAt: string
   /** Set only when the preset is deliberately taken out of service. */
@@ -188,7 +208,12 @@ export const compliantImagePresets = [
     role: 'main',
     region: 'global',
     sourceId: 'google-merchant-image-link',
+    scope: {
+      'zh-tw': 'Merchant Center 產品資料的主要商品圖片 [image_link]，用於購物廣告與免費產品資訊；不涵蓋 additional_image_link 或其他 Google 版位。',
+      en: 'The main product image [image_link] in Merchant Center product data, used for shopping ads and free listings; not additional_image_link or other Google surfaces.',
+    },
     coverage: 'full',
+    coverageGaps: [],
     reviewedAt: '2026-09-07',
     rules: [
       {
@@ -272,7 +297,12 @@ export const compliantImagePresets = [
     role: 'main',
     region: 'global',
     sourceId: 'amazon-product-photos',
+    scope: {
+      'zh-tw': 'Amazon 商品頁圖片的公開說明範圍；不涵蓋 Handmade、A+ 內容或個別類別的額外規定。',
+      en: 'What Amazon states publicly about product page images; not Handmade, A+ content, or category-specific extras.',
+    },
     coverage: 'partial',
+    coverageGaps: ['byte-range'],
     reviewedAt: '2026-09-07',
     rules: [
       {
@@ -347,7 +377,12 @@ export const compliantImagePresets = [
     role: 'main',
     region: 'tw',
     sourceId: 'momo-store-publish-rules',
+    scope: {
+      'zh-tw': 'momo 商店由賣家自行上架的商品主圖；不適用 momo 購物網自營供應商。',
+      en: 'The main product image a seller uploads to a momo store; not the momo shopping supplier programme.',
+    },
     coverage: 'partial',
+    coverageGaps: ['format-set'],
     reviewedAt: '2026-09-07',
     rules: [
       {
@@ -370,7 +405,7 @@ export const compliantImagePresets = [
         id: 'chroma-model',
         kind: 'chroma-model',
         authority: 'requirement',
-        verification: 'automatic',
+        verification: 'assisted',
         value: { model: 'YCbCr' },
         quote: '主圖需調整為YCbCr type並檢核',
       },
@@ -430,7 +465,12 @@ export const compliantImagePresets = [
     role: 'ad',
     region: 'tw',
     sourceId: 'momo-store-publish-rules',
+    scope: {
+      'zh-tw': 'momo 站外廣告、站內推薦版位與分類頁列表使用的廣告用圖；不適用商品頁主圖。',
+      en: 'The ad image momo uses for off-site ads, on-site recommendation slots and category listings; not the product page main image.',
+    },
     coverage: 'partial',
+    coverageGaps: ['format-set'],
     reviewedAt: '2026-09-07',
     rules: [
       {
@@ -461,7 +501,7 @@ export const compliantImagePresets = [
         id: 'chroma-model',
         kind: 'chroma-model',
         authority: 'requirement',
-        verification: 'automatic',
+        verification: 'assisted',
         value: { model: 'YCbCr' },
         quote: '廣告用圖需調整為YCbCr type並檢核',
       },
@@ -521,7 +561,12 @@ export const compliantImagePresets = [
     role: 'variant',
     region: 'tw',
     sourceId: 'momo-store-publish-rules',
+    scope: {
+      'zh-tw': 'momo 商店的商品規格（款式）選項圖；不適用主圖或廣告用圖。',
+      en: 'The variant option image in a momo store; not the main or ad image.',
+    },
     coverage: 'partial',
+    coverageGaps: ['format-set'],
     reviewedAt: '2026-09-07',
     rules: [
       {
@@ -580,7 +625,12 @@ export const compliantImagePresets = [
     role: 'main',
     region: 'tw',
     sourceId: 'ruten-store-faq',
+    scope: {
+      'zh-tw': '露天市集刊登單品時上傳的商品圖片；來源未區分主圖與其他圖片。',
+      en: 'Product images uploaded when listing a single item on Ruten; the source does not separate a main image from the rest.',
+    },
     coverage: 'partial',
+    coverageGaps: ['dimension-range'],
     reviewedAt: '2026-09-07',
     rules: [
       {
@@ -760,7 +810,7 @@ export const outputCheckVectors = [
     date: '2026-09-07',
     candidate: { width: 1200, height: 1000, format: 'png', bytes: 30_000 },
     result: 'fail',
-    failedRuleIds: ['exact-dimensions', 'file-size-range', 'chroma-model'],
+    failedRuleIds: ['exact-dimensions', 'file-size-range'],
   },
   {
     presetId: 'momo-store-ad',

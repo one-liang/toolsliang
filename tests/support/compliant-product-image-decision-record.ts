@@ -1,4 +1,9 @@
-import { createDecisionRecordReader, parseJsonCell } from './decision-record'
+import {
+  createDecisionRecordReader,
+  parseJsonCell,
+  type DocumentedSentence,
+  type LocalizedSentence,
+} from './decision-record'
 
 const reader = createDecisionRecordReader(
   'docs/research/005-compliant-product-image-presets-and-sources.md',
@@ -71,12 +76,6 @@ export interface DocumentedOutputCheckVector {
   failedRuleIds: string[]
 }
 
-export interface DocumentedSentence {
-  key: string
-  'zh-tw': string
-  en: string
-}
-
 export function parseChannelIds(): string[] {
   return parseKeyColumn('### 4.1 通路')
 }
@@ -123,13 +122,7 @@ export function parseViewNoticeCodes(): string[] {
 
 /** The sentences section 5.6 approves for each notice, in both locales. */
 export function parseViewNoticeSentences(): DocumentedSentence[] {
-  const pattern = /^\| `([a-z-]+)` \| [^|]+ \| (.+?) \| (.+?) \|$/gm
-
-  return tableRows('### 5.6 檢視提示', pattern).map(([, key, zh, en]) => ({
-    key: key!,
-    'zh-tw': zh!.trim(),
-    en: en!.trim(),
-  }))
+  return reader.parseBilingualRows('### 5.6 檢視提示', 1)
 }
 
 export function parseSources(): DocumentedSource[] {
@@ -232,43 +225,42 @@ export function parseOutputCheckVectors(): DocumentedOutputCheckVector[] {
     }))
 }
 
+export interface DocumentedPresetScope extends LocalizedSentence {
+  presetId: string
+  coverageGaps: string[]
+}
+
+/** Each preset's scope of application and the constraint kinds its source omits. */
+export function parsePresetScopes(): DocumentedPresetScope[] {
+  const pattern = /^\| `([a-z-]+)` \| `(\[[^\]]*\])` \| (.+?) \| (.+?) \|$/gm
+
+  return tableRows('### 6.6 適用範圍與缺少的欄位', pattern)
+    .map(([, presetId, coverageGaps, zh, en]) => ({
+      presetId: presetId!,
+      coverageGaps: parseJsonCell<string[]>(coverageGaps!),
+      'zh-tw': zh!.trim(),
+      en: en!.trim(),
+    }))
+}
+
 export function parseCaveatKeys(): string[] {
   return parseKeyColumn('### 7.1 必須同時呈現的免責內容')
 }
 
 /** The disclaimer wording section 7.1 requires next to every preset, in both locales. */
 export function parseCaveatSentences(): DocumentedSentence[] {
-  const pattern = /^\| `([a-z-]+)` \| (.+?) \| (.+?) \|$/gm
-
-  return tableRows('### 7.1 必須同時呈現的免責內容', pattern).map(([, key, zh, en]) => ({
-    key: key!,
-    'zh-tw': zh!.trim(),
-    en: en!.trim(),
-  }))
+  return reader.parseBilingualRows('### 7.1 必須同時呈現的免責內容')
 }
 
 /** Every wording section 7.3 forbids, Chinese and English alike. */
 export function parseForbiddenWording(): string[] {
-  const body = reader.sectionBody('### 7.3 禁止用語')
-  const listed = body.slice(0, body.indexOf('。', body.indexOf('不得出現')))
-
-  return listed
-    .replace(/^[\s\S]*?不得出現：/, '')
-    .split(/[、，,]|以及/)
-    .map(term => term.replace(/等對應說法$/, '').replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
+  return reader.parseForbiddenWording('### 7.3 禁止用語')
 }
 
 /**
  * The questions section 7.4 approves as the only source of both the visible FAQ
- * and the FAQPage markup. The third column cites the section behind the answer,
- * which is also what tells a data row apart from the table's own heading.
+ * and the FAQPage markup.
  */
-export function parseFaqQuestions(): Array<{ 'zh-tw': string, en: string }> {
-  const pattern = /^\| ([^|]+?) \| ([^|]+?) \| ((?:§|ADR)[^|]*) \|$/gm
-
-  return tableRows('### 7.4 AEO 問答依據', pattern).map(([, zh, en]) => ({
-    'zh-tw': zh!.trim(),
-    en: en!.trim(),
-  }))
+export function parseFaqQuestions(): LocalizedSentence[] {
+  return reader.parseFaqQuestions('### 7.4 AEO 問答依據')
 }
