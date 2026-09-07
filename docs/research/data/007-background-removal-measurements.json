@@ -1,0 +1,4520 @@
+{
+  "measuredAt": "2026-09-07",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpus": 10
+  },
+  "runtime": {
+    "id": "onnxruntime-web",
+    "version": "1.29.0",
+    "licence": "MIT",
+    "base": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/",
+    "files": [
+      {
+        "file": "ort.all.min.mjs",
+        "sha256": "e7a1ea699f25bdeeb3d9b9ff7ea26edb660fd15cab380e2fe479809d422f5e8b",
+        "bytes": 819520,
+        "brotliBytes": 176632
+      },
+      {
+        "file": "ort-wasm-simd-threaded.mjs",
+        "sha256": "5a15f1fd086b3f6c2baf1f35105b8f502653b567e165cef80028870b39748747",
+        "bytes": 24218,
+        "brotliBytes": 8753
+      },
+      {
+        "file": "ort-wasm-simd-threaded.wasm",
+        "sha256": "ec8580a9d7b9476ceee52e10a7f94124e4dc71a019d666ed6d4726697c109a4d",
+        "bytes": 13961845,
+        "brotliBytes": 2753946
+      },
+      {
+        "file": "ort-wasm-simd-threaded.jsep.mjs",
+        "sha256": "3d68fa7af88c48894d4b0c8629de12018ab73b77519bc0b05dc8d908ad82749f",
+        "bytes": 46676,
+        "brotliBytes": 15055
+      },
+      {
+        "file": "ort-wasm-simd-threaded.jsep.wasm",
+        "sha256": "db816fadbab47a755170c08f933961e231412ac17f5981f9a62e519708a44dea",
+        "bytes": 27797172,
+        "brotliBytes": 4783272
+      },
+      {
+        "file": "ort-wasm-simd-threaded.asyncify.mjs",
+        "sha256": "5d25483158d53d8f34d0e9c06a654d56c8dca4ebdf370ea0982ef11315a00e0e",
+        "bytes": 51407,
+        "brotliBytes": 17803
+      },
+      {
+        "file": "ort-wasm-simd-threaded.asyncify.wasm",
+        "sha256": "503d17cb7411b79781b9fad1cf0978f03cf06b050c7d399c730e914f473bf549",
+        "bytes": 25749873,
+        "brotliBytes": 4723943
+      }
+    ]
+  },
+  "fixtures": {
+    "size": 768,
+    "names": [
+      "portrait-person",
+      "fine-hair",
+      "product-bottle",
+      "semi-transparent-glass",
+      "low-contrast-box"
+    ],
+    "large": {
+      "name": "product-bottle",
+      "width": 4000,
+      "height": 3000
+    },
+    "confirmation": [
+      "portrait-person",
+      "product-bottle"
+    ]
+  },
+  "candidates": [
+    {
+      "id": "birefnet-lite-fp32",
+      "family": "birefnet-lite",
+      "scope": "general",
+      "repo": "onnx-community/BiRefNet_lite-ONNX",
+      "revision": "de15b22ba131738a16dff04aab8bdf8dc32e3ac1",
+      "file": "onnx/model.onnx",
+      "bytes": 224005088,
+      "sha256": "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333",
+      "precision": "fp32",
+      "licence": "MIT",
+      "licenceUrl": "https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE",
+      "input": {
+        "width": 1024,
+        "height": 1024,
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "scale": 0.00392156862745098
+      },
+      "output": {
+        "activation": "sigmoid"
+      },
+      "transfer": {
+        "bytes": 224005088,
+        "brotliBytes": 164222662
+      }
+    },
+    {
+      "id": "birefnet-lite-fp16",
+      "family": "birefnet-lite",
+      "scope": "general",
+      "repo": "onnx-community/BiRefNet_lite-ONNX",
+      "revision": "de15b22ba131738a16dff04aab8bdf8dc32e3ac1",
+      "file": "onnx/model_fp16.onnx",
+      "bytes": 114538221,
+      "sha256": "d39b897ceb16ae654c1731f3dba0cf9b368d9cae74b5a57459b455cc8bfec402",
+      "precision": "fp16",
+      "licence": "MIT",
+      "licenceUrl": "https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE",
+      "input": {
+        "width": 1024,
+        "height": 1024,
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "scale": 0.00392156862745098
+      },
+      "output": {
+        "activation": "sigmoid"
+      },
+      "transfer": {
+        "bytes": 114538221,
+        "brotliBytes": 81588550
+      }
+    },
+    {
+      "id": "isnet-general-fp32",
+      "family": "isnet-general",
+      "scope": "general",
+      "repo": "imgly/isnet-general-onnx",
+      "revision": "440dea96dd4a3b06bbbf5abec3e26569dd7ec49f",
+      "file": "onnx/model.onnx",
+      "bytes": 176149806,
+      "sha256": "cc2c9f5c1751b9737cb81e708ff0c5e9542c2205daed22418a4fd2ab5d4c481a",
+      "precision": "fp32",
+      "licence": "MIT (publisher claim)",
+      "licenceUrl": "https://huggingface.co/imgly/isnet-general-onnx",
+      "input": {
+        "width": 1024,
+        "height": 1024,
+        "mean": [
+          128,
+          128,
+          128
+        ],
+        "std": [
+          256,
+          256,
+          256
+        ],
+        "scale": 1
+      },
+      "output": {
+        "activation": "minmax"
+      },
+      "transfer": {
+        "bytes": 176149806,
+        "brotliBytes": 163419214
+      }
+    },
+    {
+      "id": "isnet-general-fp16",
+      "family": "isnet-general",
+      "scope": "general",
+      "repo": "imgly/isnet-general-onnx",
+      "revision": "440dea96dd4a3b06bbbf5abec3e26569dd7ec49f",
+      "file": "onnx/model_fp16.onnx",
+      "bytes": 88152708,
+      "sha256": "2eb4b5dda7ec41c617e59706e5aafa1f978c9a5f983d2518d9f0ae4d6eb04f20",
+      "precision": "fp16",
+      "licence": "MIT (publisher claim)",
+      "licenceUrl": "https://huggingface.co/imgly/isnet-general-onnx",
+      "input": {
+        "width": 1024,
+        "height": 1024,
+        "mean": [
+          128,
+          128,
+          128
+        ],
+        "std": [
+          256,
+          256,
+          256
+        ],
+        "scale": 1
+      },
+      "output": {
+        "activation": "minmax"
+      },
+      "transfer": {
+        "bytes": 88152708,
+        "brotliBytes": 81267904
+      }
+    },
+    {
+      "id": "modnet-fp32",
+      "family": "modnet",
+      "scope": "portrait",
+      "repo": "Xenova/modnet",
+      "revision": "fa2fa546052fba4c08921230a26cc69a333fca12",
+      "file": "onnx/model.onnx",
+      "bytes": 25888640,
+      "sha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+      "precision": "fp32",
+      "licence": "Apache-2.0",
+      "licenceUrl": "https://github.com/ZHKKKe/MODNet/blob/master/LICENSE",
+      "input": {
+        "width": 512,
+        "height": 512,
+        "mean": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "std": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "scale": 0.00392156862745098
+      },
+      "output": {
+        "activation": "none"
+      },
+      "transfer": {
+        "bytes": 25888640,
+        "brotliBytes": 23903254
+      }
+    },
+    {
+      "id": "modnet-fp16",
+      "family": "modnet",
+      "scope": "portrait",
+      "repo": "Xenova/modnet",
+      "revision": "fa2fa546052fba4c08921230a26cc69a333fca12",
+      "file": "onnx/model_fp16.onnx",
+      "bytes": 12984781,
+      "sha256": "25f165da9bfd30830a575f1f0490f1acd995975cb349bc02f3d79332e1fe5cf6",
+      "precision": "fp16",
+      "licence": "Apache-2.0",
+      "licenceUrl": "https://github.com/ZHKKKe/MODNet/blob/master/LICENSE",
+      "input": {
+        "width": 512,
+        "height": 512,
+        "mean": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "std": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "scale": 0.00392156862745098
+      },
+      "output": {
+        "activation": "none"
+      },
+      "transfer": {
+        "bytes": 12984781,
+        "brotliBytes": 11847512
+      }
+    },
+    {
+      "id": "modnet-uint8",
+      "family": "modnet",
+      "scope": "portrait",
+      "repo": "Xenova/modnet",
+      "revision": "fa2fa546052fba4c08921230a26cc69a333fca12",
+      "file": "onnx/model_quantized.onnx",
+      "bytes": 6632188,
+      "sha256": "92e49898c3e05a6d7a944fc67a8cb87c4aad754ffb6ebd949528c7d1105fee3a",
+      "precision": "uint8",
+      "licence": "Apache-2.0",
+      "licenceUrl": "https://github.com/ZHKKKe/MODNet/blob/master/LICENSE",
+      "input": {
+        "width": 512,
+        "height": 512,
+        "mean": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "std": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "scale": 0.00392156862745098
+      },
+      "output": {
+        "activation": "none"
+      },
+      "transfer": {
+        "bytes": 6632188,
+        "brotliBytes": 5163599
+      }
+    }
+  ],
+  "browsers": [
+    {
+      "browser": "chromium",
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+        "memoryApi": "not-answered",
+        "hardwareConcurrency": 10,
+        "deviceMemory": 16,
+        "crossOriginIsolated": true,
+        "sharedArrayBuffer": true,
+        "webgpu": {
+          "available": true,
+          "fp16": true,
+          "vendor": "apple",
+          "architecture": "metal-3",
+          "maxBufferBytes": 4294967292
+        },
+        "ortVersion": "1.29.0"
+      },
+      "threads": 4,
+      "providers": [
+        "wasm",
+        "webgpu"
+      ],
+      "pageErrors": [],
+      "runs": [
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 25,
+              "preprocessMs": 10,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3922984960
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4292083712
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4292083712
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 12,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 12,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 239,
+              "preprocessMs": 13,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 224005088,
+          "fetchMs": 345,
+          "sessionCreateMs": 2028,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 226849617,
+          "sessionWasmBytes": 693567488,
+          "wallClockMs": 19646
+        },
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 16,
+              "preprocessMs": 10,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3954769920
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 15,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 12,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 12,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 173,
+              "preprocessMs": 12,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 224005088,
+          "fetchMs": 245,
+          "sessionCreateMs": 1901,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 226489885,
+          "sessionWasmBytes": 693567488,
+          "wallClockMs": 18173
+        },
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 15,
+              "preprocessMs": 5,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 693567488
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 2,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 693567488
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 8,
+              "preprocessMs": 5,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 693567488
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 3,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 693567488
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 5,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 693567488
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 160,
+              "preprocessMs": 8,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 693567488
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 224005088,
+          "fetchMs": 241,
+          "sessionCreateMs": 1895,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 226486157,
+          "sessionWasmBytes": 693567488,
+          "wallClockMs": 12424
+        },
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "webgpu",
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "fixtures": [],
+          "failure": {
+            "stage": "run",
+            "message": "run_timeout_after_900000ms"
+          },
+          "wallClockMs": 900005
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 16,
+              "preprocessMs": 10,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3824418816
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 20,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 24,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 167,
+              "preprocessMs": 14,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 114538221,
+          "fetchMs": 137,
+          "sessionCreateMs": 2309,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 116651504,
+          "sessionWasmBytes": 448135168,
+          "wallClockMs": 381405
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 15,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3774087168
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 17,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 41,
+              "preprocessMs": 14,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 8,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 185,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 114538221,
+          "fetchMs": 159,
+          "sessionCreateMs": 2313,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 116761632,
+          "sessionWasmBytes": 448135168,
+          "wallClockMs": 387168
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 38,
+              "preprocessMs": 8,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 448135168
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 15,
+              "preprocessMs": 3,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 448135168
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 5,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 448135168
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 5,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 448135168
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 2,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 448135168
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 155,
+              "preprocessMs": 8,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 2, ERROR_MESSAGE: Got invalid dimensions for input: input_image for the following indices\n index: 2 Got: 512 Expected: 1024\n index: 3 Got: 512 Expected: 1024\n Please fix either the inputs/outputs or the model.",
+              "peakWasmBytes": 448135168
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 114538221,
+          "fetchMs": 166,
+          "sessionCreateMs": 2419,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 116137542,
+          "sessionWasmBytes": 448135168,
+          "wallClockMs": 22890
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "webgpu",
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "fixtures": [],
+          "failure": {
+            "stage": "run",
+            "message": "run_timeout_after_900000ms"
+          },
+          "wallClockMs": 900014
+        },
+        {
+          "candidateId": "isnet-general-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 17,
+              "preprocessMs": 16,
+              "inferenceMs": 2291,
+              "warmInferenceMs": 2827,
+              "postprocessMs": 27,
+              "iou": 0.9989,
+              "mae": 0.0013,
+              "boundaryMae": 0.0383,
+              "softAlphaMae": 0.1216,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 17,
+              "preprocessMs": 15,
+              "inferenceMs": 2805,
+              "warmInferenceMs": 2701,
+              "postprocessMs": 19,
+              "iou": 0.9788,
+              "mae": 0.0112,
+              "boundaryMae": 0.1165,
+              "softAlphaMae": 0.1399,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0006,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 12,
+              "inferenceMs": 2648,
+              "warmInferenceMs": 2729,
+              "postprocessMs": 24,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0726,
+              "softAlphaMae": 0.2096,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 234465762
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 24,
+              "preprocessMs": 18,
+              "inferenceMs": 1936,
+              "warmInferenceMs": 2224,
+              "postprocessMs": 19,
+              "iou": 0.146,
+              "mae": 0.1189,
+              "boundaryMae": 0.3064,
+              "softAlphaMae": 0.6037,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 15,
+              "inferenceMs": 2524,
+              "warmInferenceMs": 2574,
+              "postprocessMs": 27,
+              "iou": 0.9888,
+              "mae": 0.0038,
+              "boundaryMae": 0.2072,
+              "softAlphaMae": 0.2828,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.001,
+              "foregroundRecall": 0.9989,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 227,
+              "preprocessMs": 12,
+              "inferenceMs": 2463,
+              "warmInferenceMs": 2586,
+              "postprocessMs": 96,
+              "iou": 0.9968,
+              "mae": 0.0021,
+              "boundaryMae": 0.2657,
+              "softAlphaMae": 0.2063,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0.0007,
+              "foregroundRecall": 0.9996,
+              "peakWasmBytes": 665845760,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 362884496
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 176149806,
+          "fetchMs": 232,
+          "sessionCreateMs": 319,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 177579452,
+          "sessionWasmBytes": 464322560,
+          "wallClockMs": 63487
+        },
+        {
+          "candidateId": "isnet-general-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 28,
+              "preprocessMs": 14,
+              "inferenceMs": 2039,
+              "warmInferenceMs": 2077,
+              "postprocessMs": 21,
+              "iou": 0.9989,
+              "mae": 0.0013,
+              "boundaryMae": 0.0383,
+              "softAlphaMae": 0.1216,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 11,
+              "inferenceMs": 2125,
+              "warmInferenceMs": 2141,
+              "postprocessMs": 17,
+              "iou": 0.9788,
+              "mae": 0.0112,
+              "boundaryMae": 0.1165,
+              "softAlphaMae": 0.1399,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0006,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 10,
+              "inferenceMs": 2155,
+              "warmInferenceMs": 2251,
+              "postprocessMs": 22,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0726,
+              "softAlphaMae": 0.2096,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 234392817
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 23,
+              "preprocessMs": 17,
+              "inferenceMs": 2010,
+              "warmInferenceMs": 2100,
+              "postprocessMs": 17,
+              "iou": 0.146,
+              "mae": 0.1189,
+              "boundaryMae": 0.3064,
+              "softAlphaMae": 0.6037,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 12,
+              "inferenceMs": 2110,
+              "warmInferenceMs": 2154,
+              "postprocessMs": 23,
+              "iou": 0.9888,
+              "mae": 0.0038,
+              "boundaryMae": 0.2072,
+              "softAlphaMae": 0.2828,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.001,
+              "foregroundRecall": 0.9989,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 239,
+              "preprocessMs": 14,
+              "inferenceMs": 2152,
+              "warmInferenceMs": 2178,
+              "postprocessMs": 86,
+              "iou": 0.9968,
+              "mae": 0.0021,
+              "boundaryMae": 0.2657,
+              "softAlphaMae": 0.2063,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0.0007,
+              "foregroundRecall": 0.9996,
+              "peakWasmBytes": 665845760,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 362854003
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 176149806,
+          "fetchMs": 235,
+          "sessionCreateMs": 372,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 177589636,
+          "sessionWasmBytes": 464322560,
+          "wallClockMs": 60545
+        },
+        {
+          "candidateId": "isnet-general-fp32",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 26,
+              "preprocessMs": 17,
+              "inferenceMs": 836,
+              "warmInferenceMs": 405,
+              "postprocessMs": 17,
+              "iou": 0.9989,
+              "mae": 0.0013,
+              "boundaryMae": 0.0383,
+              "softAlphaMae": 0.1216,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 11,
+              "inferenceMs": 399,
+              "warmInferenceMs": 416,
+              "postprocessMs": 14,
+              "iou": 0.9788,
+              "mae": 0.0112,
+              "boundaryMae": 0.1165,
+              "softAlphaMae": 0.1399,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0006,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 10,
+              "inferenceMs": 426,
+              "warmInferenceMs": 429,
+              "postprocessMs": 16,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0726,
+              "softAlphaMae": 0.2096,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 231530138
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 33,
+              "preprocessMs": 19,
+              "inferenceMs": 411,
+              "warmInferenceMs": 390,
+              "postprocessMs": 28,
+              "iou": 0.146,
+              "mae": 0.1189,
+              "boundaryMae": 0.3064,
+              "softAlphaMae": 0.6037,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 12,
+              "inferenceMs": 394,
+              "warmInferenceMs": 386,
+              "postprocessMs": 16,
+              "iou": 0.9888,
+              "mae": 0.0038,
+              "boundaryMae": 0.2072,
+              "softAlphaMae": 0.2828,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.001,
+              "foregroundRecall": 0.9989,
+              "peakWasmBytes": 464322560
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 176149806,
+          "fetchMs": 224,
+          "sessionCreateMs": 464,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 177980960,
+          "sessionWasmBytes": 464322560,
+          "wallClockMs": 33089
+        },
+        {
+          "candidateId": "isnet-general-fp32",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 31,
+              "preprocessMs": 15,
+              "inferenceMs": 503,
+              "warmInferenceMs": 393,
+              "postprocessMs": 19,
+              "iou": 0.9989,
+              "mae": 0.0013,
+              "boundaryMae": 0.0383,
+              "softAlphaMae": 0.1216,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 11,
+              "inferenceMs": 396,
+              "warmInferenceMs": 388,
+              "postprocessMs": 14,
+              "iou": 0.9788,
+              "mae": 0.0112,
+              "boundaryMae": 0.1165,
+              "softAlphaMae": 0.1399,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0006,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 10,
+              "inferenceMs": 397,
+              "warmInferenceMs": 387,
+              "postprocessMs": 16,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0726,
+              "softAlphaMae": 0.2096,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 232328729
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 25,
+              "preprocessMs": 16,
+              "inferenceMs": 418,
+              "warmInferenceMs": 385,
+              "postprocessMs": 28,
+              "iou": 0.146,
+              "mae": 0.1189,
+              "boundaryMae": 0.3064,
+              "softAlphaMae": 0.6037,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 13,
+              "inferenceMs": 398,
+              "warmInferenceMs": 389,
+              "postprocessMs": 19,
+              "iou": 0.9888,
+              "mae": 0.0038,
+              "boundaryMae": 0.2072,
+              "softAlphaMae": 0.2828,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.001,
+              "foregroundRecall": 0.9989,
+              "peakWasmBytes": 464322560
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 176149806,
+          "fetchMs": 225,
+          "sessionCreateMs": 461,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 177980908,
+          "sessionWasmBytes": 464322560,
+          "wallClockMs": 31657
+        },
+        {
+          "candidateId": "isnet-general-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 27,
+              "preprocessMs": 13,
+              "inferenceMs": 2299,
+              "warmInferenceMs": 2062,
+              "postprocessMs": 19,
+              "iou": 0.9989,
+              "mae": 0.0013,
+              "boundaryMae": 0.0383,
+              "softAlphaMae": 0.1216,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 835911680
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 10,
+              "inferenceMs": 2096,
+              "warmInferenceMs": 2134,
+              "postprocessMs": 16,
+              "iou": 0.9788,
+              "mae": 0.0112,
+              "boundaryMae": 0.1165,
+              "softAlphaMae": 0.1399,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0006,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 835911680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 12,
+              "inferenceMs": 2119,
+              "warmInferenceMs": 2151,
+              "postprocessMs": 18,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0727,
+              "softAlphaMae": 0.2096,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 835911680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 153337064
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 25,
+              "preprocessMs": 16,
+              "inferenceMs": 2037,
+              "warmInferenceMs": 2090,
+              "postprocessMs": 17,
+              "iou": 0.146,
+              "mae": 0.1189,
+              "boundaryMae": 0.3064,
+              "softAlphaMae": 0.6037,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 835911680
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 9,
+              "inferenceMs": 2131,
+              "warmInferenceMs": 2183,
+              "postprocessMs": 21,
+              "iou": 0.9888,
+              "mae": 0.0038,
+              "boundaryMae": 0.2072,
+              "softAlphaMae": 0.2828,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.001,
+              "foregroundRecall": 0.9989,
+              "peakWasmBytes": 835911680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 177,
+              "preprocessMs": 14,
+              "inferenceMs": 2209,
+              "warmInferenceMs": 2211,
+              "postprocessMs": 84,
+              "iou": 0.9968,
+              "mae": 0.0021,
+              "boundaryMae": 0.2658,
+              "softAlphaMae": 0.2064,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0.0007,
+              "foregroundRecall": 0.9996,
+              "peakWasmBytes": 835911680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 274910313
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 88152708,
+          "fetchMs": 130,
+          "sessionCreateMs": 373,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 89604266,
+          "sessionWasmBytes": 424083456,
+          "wallClockMs": 60523
+        },
+        {
+          "candidateId": "isnet-general-fp16",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 28,
+              "preprocessMs": 14,
+              "inferenceMs": 448,
+              "warmInferenceMs": 311,
+              "postprocessMs": 38,
+              "iou": 0.9989,
+              "mae": 0.0011,
+              "boundaryMae": 0.0382,
+              "softAlphaMae": 0.1215,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 245366784
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 11,
+              "inferenceMs": 301,
+              "warmInferenceMs": 308,
+              "postprocessMs": 31,
+              "iou": 0.9788,
+              "mae": 0.0112,
+              "boundaryMae": 0.1163,
+              "softAlphaMae": 0.1396,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0006,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 245366784
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 16,
+              "preprocessMs": 10,
+              "inferenceMs": 373,
+              "warmInferenceMs": 367,
+              "postprocessMs": 20,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0722,
+              "softAlphaMae": 0.2095,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 245366784,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 149684396
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 26,
+              "preprocessMs": 19,
+              "inferenceMs": 437,
+              "warmInferenceMs": 400,
+              "postprocessMs": 40,
+              "iou": 0.1461,
+              "mae": 0.1189,
+              "boundaryMae": 0.3062,
+              "softAlphaMae": 0.6037,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 245366784
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 13,
+              "inferenceMs": 378,
+              "warmInferenceMs": 377,
+              "postprocessMs": 11,
+              "iou": 0.9889,
+              "mae": 0.0038,
+              "boundaryMae": 0.2075,
+              "softAlphaMae": 0.2831,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.001,
+              "foregroundRecall": 0.9989,
+              "peakWasmBytes": 245366784
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 88152708,
+          "fetchMs": 116,
+          "sessionCreateMs": 368,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 89996503,
+          "sessionWasmBytes": 245366784,
+          "wallClockMs": 30356
+        },
+        {
+          "candidateId": "modnet-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 29,
+              "preprocessMs": 9,
+              "inferenceMs": 266,
+              "warmInferenceMs": 221,
+              "postprocessMs": 7,
+              "iou": 0.9959,
+              "mae": 0.0038,
+              "boundaryMae": 0.1001,
+              "softAlphaMae": 0.1696,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9973,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 5,
+              "inferenceMs": 246,
+              "warmInferenceMs": 261,
+              "postprocessMs": 6,
+              "iou": 0.6947,
+              "mae": 0.1218,
+              "boundaryMae": 0.4657,
+              "softAlphaMae": 0.636,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0003,
+              "foregroundRecall": 0.7756,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 3,
+              "inferenceMs": 233,
+              "warmInferenceMs": 232,
+              "postprocessMs": 5,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0879,
+              "softAlphaMae": 0.2058,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 156368896,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 71862169
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 29,
+              "preprocessMs": 7,
+              "inferenceMs": 242,
+              "warmInferenceMs": 229,
+              "postprocessMs": 4,
+              "iou": 0.0595,
+              "mae": 0.0796,
+              "boundaryMae": 0.4436,
+              "softAlphaMae": 0.3849,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0.1684,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 3,
+              "inferenceMs": 213,
+              "warmInferenceMs": 234,
+              "postprocessMs": 5,
+              "iou": 0.7129,
+              "mae": 0.0574,
+              "boundaryMae": 0.3193,
+              "softAlphaMae": 0.4248,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.0011,
+              "foregroundRecall": 0.7207,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 199,
+              "preprocessMs": 5,
+              "inferenceMs": 214,
+              "warmInferenceMs": 234,
+              "postprocessMs": 55,
+              "iou": 0.9942,
+              "mae": 0.002,
+              "boundaryMae": 0.3333,
+              "softAlphaMae": 0.2354,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0.0014,
+              "foregroundRecall": 0.9998,
+              "peakWasmBytes": 156368896,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 298374483
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 25888640,
+          "fetchMs": 46,
+          "sessionCreateMs": 280,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 27326835,
+          "sessionWasmBytes": 90439680,
+          "wallClockMs": 36586
+        },
+        {
+          "candidateId": "modnet-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 25,
+              "preprocessMs": 8,
+              "inferenceMs": 304,
+              "warmInferenceMs": 263,
+              "postprocessMs": 8,
+              "iou": 0.9959,
+              "mae": 0.0038,
+              "boundaryMae": 0.1001,
+              "softAlphaMae": 0.1696,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9973,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 5,
+              "inferenceMs": 262,
+              "warmInferenceMs": 248,
+              "postprocessMs": 6,
+              "iou": 0.6947,
+              "mae": 0.1218,
+              "boundaryMae": 0.4657,
+              "softAlphaMae": 0.636,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0003,
+              "foregroundRecall": 0.7756,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 5,
+              "inferenceMs": 249,
+              "warmInferenceMs": 247,
+              "postprocessMs": 4,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0879,
+              "softAlphaMae": 0.2058,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 156368896,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 59611573
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 33,
+              "preprocessMs": 8,
+              "inferenceMs": 257,
+              "warmInferenceMs": 268,
+              "postprocessMs": 5,
+              "iou": 0.0595,
+              "mae": 0.0796,
+              "boundaryMae": 0.4436,
+              "softAlphaMae": 0.3849,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0.1684,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 5,
+              "inferenceMs": 252,
+              "warmInferenceMs": 221,
+              "postprocessMs": 7,
+              "iou": 0.7129,
+              "mae": 0.0574,
+              "boundaryMae": 0.3193,
+              "softAlphaMae": 0.4248,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.0011,
+              "foregroundRecall": 0.7207,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 215,
+              "preprocessMs": 9,
+              "inferenceMs": 259,
+              "warmInferenceMs": 246,
+              "postprocessMs": 52,
+              "iou": 0.9942,
+              "mae": 0.002,
+              "boundaryMae": 0.3333,
+              "softAlphaMae": 0.2354,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0.0014,
+              "foregroundRecall": 0.9998,
+              "peakWasmBytes": 156368896,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 193658058
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 25888640,
+          "fetchMs": 63,
+          "sessionCreateMs": 295,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 27326671,
+          "sessionWasmBytes": 90439680,
+          "wallClockMs": 42675
+        },
+        {
+          "candidateId": "modnet-fp32",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 25,
+              "preprocessMs": 7,
+              "inferenceMs": 366,
+              "warmInferenceMs": 78,
+              "postprocessMs": 8,
+              "iou": 0.9959,
+              "mae": 0.0038,
+              "boundaryMae": 0.1001,
+              "softAlphaMae": 0.1696,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9973,
+              "peakWasmBytes": 90439680
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 3,
+              "inferenceMs": 94,
+              "warmInferenceMs": 78,
+              "postprocessMs": 4,
+              "iou": 0.6947,
+              "mae": 0.1218,
+              "boundaryMae": 0.4657,
+              "softAlphaMae": 0.636,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0003,
+              "foregroundRecall": 0.7756,
+              "peakWasmBytes": 90439680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 3,
+              "inferenceMs": 76,
+              "warmInferenceMs": 76,
+              "postprocessMs": 8,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0879,
+              "softAlphaMae": 0.2058,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 90439680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 54304369
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 26,
+              "preprocessMs": 6,
+              "inferenceMs": 108,
+              "warmInferenceMs": 79,
+              "postprocessMs": 24,
+              "iou": 0.0595,
+              "mae": 0.0796,
+              "boundaryMae": 0.4436,
+              "softAlphaMae": 0.3849,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0.1684,
+              "peakWasmBytes": 90439680
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 3,
+              "inferenceMs": 85,
+              "warmInferenceMs": 77,
+              "postprocessMs": 4,
+              "iou": 0.7129,
+              "mae": 0.0574,
+              "boundaryMae": 0.3194,
+              "softAlphaMae": 0.4249,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.0011,
+              "foregroundRecall": 0.7208,
+              "peakWasmBytes": 90439680
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 25888640,
+          "fetchMs": 49,
+          "sessionCreateMs": 313,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 27685501,
+          "sessionWasmBytes": 90439680,
+          "wallClockMs": 30812
+        },
+        {
+          "candidateId": "modnet-fp32",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 26,
+              "preprocessMs": 7,
+              "inferenceMs": 122,
+              "warmInferenceMs": 78,
+              "postprocessMs": 7,
+              "iou": 0.9959,
+              "mae": 0.0038,
+              "boundaryMae": 0.1001,
+              "softAlphaMae": 0.1696,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9973,
+              "peakWasmBytes": 90439680
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 18,
+              "preprocessMs": 3,
+              "inferenceMs": 77,
+              "warmInferenceMs": 78,
+              "postprocessMs": 5,
+              "iou": 0.6947,
+              "mae": 0.1218,
+              "boundaryMae": 0.4657,
+              "softAlphaMae": 0.636,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0003,
+              "foregroundRecall": 0.7756,
+              "peakWasmBytes": 90439680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 3,
+              "inferenceMs": 76,
+              "warmInferenceMs": 77,
+              "postprocessMs": 8,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0879,
+              "softAlphaMae": 0.2058,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 90439680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 54379360
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 28,
+              "preprocessMs": 6,
+              "inferenceMs": 109,
+              "warmInferenceMs": 79,
+              "postprocessMs": 19,
+              "iou": 0.0595,
+              "mae": 0.0796,
+              "boundaryMae": 0.4436,
+              "softAlphaMae": 0.3849,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0.1684,
+              "peakWasmBytes": 90439680
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 3,
+              "inferenceMs": 86,
+              "warmInferenceMs": 76,
+              "postprocessMs": 4,
+              "iou": 0.7129,
+              "mae": 0.0574,
+              "boundaryMae": 0.3194,
+              "softAlphaMae": 0.4249,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.0011,
+              "foregroundRecall": 0.7208,
+              "peakWasmBytes": 90439680
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 25888640,
+          "fetchMs": 52,
+          "sessionCreateMs": 316,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 27675237,
+          "sessionWasmBytes": 90439680,
+          "wallClockMs": 24602
+        },
+        {
+          "candidateId": "modnet-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 43,
+              "preprocessMs": 7,
+              "inferenceMs": 301,
+              "warmInferenceMs": 265,
+              "postprocessMs": 9,
+              "iou": 0.9965,
+              "mae": 0.0036,
+              "boundaryMae": 0.0998,
+              "softAlphaMae": 0.1693,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9979,
+              "peakWasmBytes": 146604032
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 5,
+              "inferenceMs": 286,
+              "warmInferenceMs": 266,
+              "postprocessMs": 7,
+              "iou": 0.6955,
+              "mae": 0.1215,
+              "boundaryMae": 0.4657,
+              "softAlphaMae": 0.636,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0003,
+              "foregroundRecall": 0.7764,
+              "peakWasmBytes": 146604032
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 2,
+              "inferenceMs": 249,
+              "warmInferenceMs": 271,
+              "postprocessMs": 5,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0879,
+              "softAlphaMae": 0.2058,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 146604032,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 59078349
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 28,
+              "preprocessMs": 9,
+              "inferenceMs": 258,
+              "warmInferenceMs": 260,
+              "postprocessMs": 5,
+              "iou": 0.0597,
+              "mae": 0.0795,
+              "boundaryMae": 0.4434,
+              "softAlphaMae": 0.3848,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0.17,
+              "peakWasmBytes": 146604032
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 5,
+              "inferenceMs": 273,
+              "warmInferenceMs": 251,
+              "postprocessMs": 5,
+              "iou": 0.6991,
+              "mae": 0.0602,
+              "boundaryMae": 0.3266,
+              "softAlphaMae": 0.4264,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.0011,
+              "foregroundRecall": 0.7069,
+              "peakWasmBytes": 146604032
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 212,
+              "preprocessMs": 7,
+              "inferenceMs": 268,
+              "warmInferenceMs": 256,
+              "postprocessMs": 57,
+              "iou": 0.9942,
+              "mae": 0.002,
+              "boundaryMae": 0.3333,
+              "softAlphaMae": 0.2353,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0.0014,
+              "foregroundRecall": 0.9998,
+              "peakWasmBytes": 146604032,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 180640955
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 12984781,
+          "fetchMs": 33,
+          "sessionCreateMs": 329,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 14457756,
+          "sessionWasmBytes": 70647808,
+          "wallClockMs": 36826
+        },
+        {
+          "candidateId": "modnet-fp16",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 31,
+              "preprocessMs": 7,
+              "inferenceMs": 494,
+              "warmInferenceMs": 72,
+              "postprocessMs": 7,
+              "iou": 0.993,
+              "mae": 0.0046,
+              "boundaryMae": 0.1015,
+              "softAlphaMae": 0.1716,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9944,
+              "peakWasmBytes": 48627712
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 3,
+              "inferenceMs": 83,
+              "warmInferenceMs": 66,
+              "postprocessMs": 5,
+              "iou": 0.6934,
+              "mae": 0.1223,
+              "boundaryMae": 0.4658,
+              "softAlphaMae": 0.636,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0003,
+              "foregroundRecall": 0.7742,
+              "peakWasmBytes": 48627712
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 2,
+              "inferenceMs": 65,
+              "warmInferenceMs": 65,
+              "postprocessMs": 7,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0876,
+              "softAlphaMae": 0.2061,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 48627712,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 41495185
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 44,
+              "preprocessMs": 4,
+              "inferenceMs": 82,
+              "warmInferenceMs": 66,
+              "postprocessMs": 20,
+              "iou": 0.0582,
+              "mae": 0.0796,
+              "boundaryMae": 0.444,
+              "softAlphaMae": 0.385,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0.1599,
+              "peakWasmBytes": 48627712
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 3,
+              "inferenceMs": 69,
+              "warmInferenceMs": 64,
+              "postprocessMs": 7,
+              "iou": 0.6587,
+              "mae": 0.068,
+              "boundaryMae": 0.3407,
+              "softAlphaMae": 0.4292,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0.0009,
+              "foregroundRecall": 0.6656,
+              "peakWasmBytes": 48627712
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 12984781,
+          "fetchMs": 33,
+          "sessionCreateMs": 337,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 14808986,
+          "sessionWasmBytes": 48627712,
+          "wallClockMs": 23847
+        },
+        {
+          "candidateId": "modnet-uint8",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 32,
+              "preprocessMs": 5,
+              "inferenceMs": 426,
+              "warmInferenceMs": 372,
+              "postprocessMs": 7,
+              "iou": 0.3239,
+              "mae": 0.2401,
+              "boundaryMae": 0.3339,
+              "softAlphaMae": 0.3871,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.324,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 3,
+              "inferenceMs": 348,
+              "warmInferenceMs": 295,
+              "postprocessMs": 6,
+              "iou": 0.6352,
+              "mae": 0.1528,
+              "boundaryMae": 0.2684,
+              "softAlphaMae": 0.3308,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0016,
+              "foregroundRecall": 0.6459,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 6,
+              "inferenceMs": 300,
+              "warmInferenceMs": 283,
+              "postprocessMs": 12,
+              "iou": 0,
+              "mae": 0.2046,
+              "boundaryMae": 0.519,
+              "softAlphaMae": 0.3848,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 30608502
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 32,
+              "preprocessMs": 5,
+              "inferenceMs": 295,
+              "warmInferenceMs": 282,
+              "postprocessMs": 8,
+              "iou": 0,
+              "mae": 0.0816,
+              "boundaryMae": 0.4829,
+              "softAlphaMae": 0.392,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 2,
+              "inferenceMs": 273,
+              "warmInferenceMs": 291,
+              "postprocessMs": 5,
+              "iou": 0,
+              "mae": 0.1947,
+              "boundaryMae": 0.5235,
+              "softAlphaMae": 0.4174,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 225,
+              "preprocessMs": 6,
+              "inferenceMs": 277,
+              "warmInferenceMs": 293,
+              "postprocessMs": 62,
+              "iou": 0,
+              "mae": 0.2046,
+              "boundaryMae": 0.4983,
+              "softAlphaMae": 0.5068,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 174494276
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 6632188,
+          "fetchMs": 26,
+          "sessionCreateMs": 382,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 8335283,
+          "sessionWasmBytes": 34930688,
+          "wallClockMs": 45933
+        },
+        {
+          "candidateId": "modnet-uint8",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 41,
+              "preprocessMs": 5,
+              "inferenceMs": 447,
+              "warmInferenceMs": 377,
+              "postprocessMs": 8,
+              "iou": 0.3239,
+              "mae": 0.2401,
+              "boundaryMae": 0.3339,
+              "softAlphaMae": 0.3871,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.324,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 3,
+              "inferenceMs": 375,
+              "warmInferenceMs": 321,
+              "postprocessMs": 6,
+              "iou": 0.6352,
+              "mae": 0.1528,
+              "boundaryMae": 0.2684,
+              "softAlphaMae": 0.3308,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0016,
+              "foregroundRecall": 0.6459,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 15,
+              "preprocessMs": 2,
+              "inferenceMs": 302,
+              "warmInferenceMs": 303,
+              "postprocessMs": 4,
+              "iou": 0,
+              "mae": 0.2046,
+              "boundaryMae": 0.519,
+              "softAlphaMae": 0.3848,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 39666978
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 27,
+              "preprocessMs": 4,
+              "inferenceMs": 295,
+              "warmInferenceMs": 285,
+              "postprocessMs": 5,
+              "iou": 0,
+              "mae": 0.0816,
+              "boundaryMae": 0.4829,
+              "softAlphaMae": 0.392,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 3,
+              "inferenceMs": 298,
+              "warmInferenceMs": 307,
+              "postprocessMs": 8,
+              "iou": 0,
+              "mae": 0.1947,
+              "boundaryMae": 0.5235,
+              "softAlphaMae": 0.4174,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 4000,
+              "height": 3000,
+              "fixtureMs": 165,
+              "preprocessMs": 8,
+              "inferenceMs": 295,
+              "warmInferenceMs": 296,
+              "postprocessMs": 55,
+              "iou": 0,
+              "mae": 0.2046,
+              "boundaryMae": 0.4983,
+              "softAlphaMae": 0.5068,
+              "softAlphaPixels": 1715,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 174520443
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 6632188,
+          "fetchMs": 22,
+          "sessionCreateMs": 383,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 8072656,
+          "sessionWasmBytes": 34930688,
+          "wallClockMs": 41458
+        },
+        {
+          "candidateId": "modnet-uint8",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 36,
+              "preprocessMs": 5,
+              "inferenceMs": 572,
+              "warmInferenceMs": 448,
+              "postprocessMs": 7,
+              "iou": 0.3239,
+              "mae": 0.2401,
+              "boundaryMae": 0.3338,
+              "softAlphaMae": 0.3869,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.3241,
+              "peakWasmBytes": 158990336
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 3,
+              "inferenceMs": 451,
+              "warmInferenceMs": 465,
+              "postprocessMs": 4,
+              "iou": 0.6361,
+              "mae": 0.1527,
+              "boundaryMae": 0.2682,
+              "softAlphaMae": 0.3305,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0016,
+              "foregroundRecall": 0.6469,
+              "peakWasmBytes": 158990336
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 15,
+              "preprocessMs": 6,
+              "inferenceMs": 449,
+              "warmInferenceMs": 437,
+              "postprocessMs": 7,
+              "iou": 0,
+              "mae": 0.2046,
+              "boundaryMae": 0.519,
+              "softAlphaMae": 0.3848,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 158990336,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 27333254
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 33,
+              "preprocessMs": 5,
+              "inferenceMs": 471,
+              "warmInferenceMs": 435,
+              "postprocessMs": 12,
+              "iou": 0,
+              "mae": 0.0816,
+              "boundaryMae": 0.483,
+              "softAlphaMae": 0.392,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 158990336
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 18,
+              "preprocessMs": 5,
+              "inferenceMs": 463,
+              "warmInferenceMs": 413,
+              "postprocessMs": 8,
+              "iou": 0,
+              "mae": 0.1947,
+              "boundaryMae": 0.5235,
+              "softAlphaMae": 0.4174,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 158990336
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 6632188,
+          "fetchMs": 26,
+          "sessionCreateMs": 415,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 8443142,
+          "sessionWasmBytes": 34930688,
+          "wallClockMs": 31339
+        },
+        {
+          "candidateId": "modnet-uint8",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 37,
+              "preprocessMs": 5,
+              "inferenceMs": 552,
+              "warmInferenceMs": 459,
+              "postprocessMs": 7,
+              "iou": 0.3239,
+              "mae": 0.2401,
+              "boundaryMae": 0.3338,
+              "softAlphaMae": 0.3869,
+              "softAlphaPixels": 1496,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.3241,
+              "peakWasmBytes": 158990336
+            },
+            {
+              "fixture": "fine-hair",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 3,
+              "inferenceMs": 452,
+              "warmInferenceMs": 455,
+              "postprocessMs": 4,
+              "iou": 0.6361,
+              "mae": 0.1527,
+              "boundaryMae": 0.2682,
+              "softAlphaMae": 0.3305,
+              "softAlphaPixels": 29597,
+              "backgroundLeakRate": 0.0016,
+              "foregroundRecall": 0.6469,
+              "peakWasmBytes": 158990336
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 5,
+              "inferenceMs": 473,
+              "warmInferenceMs": 457,
+              "postprocessMs": 7,
+              "iou": 0,
+              "mae": 0.2046,
+              "boundaryMae": 0.519,
+              "softAlphaMae": 0.3848,
+              "softAlphaPixels": 1506,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 158990336,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": 24987673
+            },
+            {
+              "fixture": "semi-transparent-glass",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 31,
+              "preprocessMs": 5,
+              "inferenceMs": 479,
+              "warmInferenceMs": 446,
+              "postprocessMs": 13,
+              "iou": 0,
+              "mae": 0.0816,
+              "boundaryMae": 0.483,
+              "softAlphaMae": 0.392,
+              "softAlphaPixels": 115436,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 158990336
+            },
+            {
+              "fixture": "low-contrast-box",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 18,
+              "preprocessMs": 4,
+              "inferenceMs": 475,
+              "warmInferenceMs": 441,
+              "postprocessMs": 8,
+              "iou": 0,
+              "mae": 0.1947,
+              "boundaryMae": 0.5235,
+              "softAlphaMae": 0.4174,
+              "softAlphaPixels": 1406,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 158990336
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 6632188,
+          "fetchMs": 23,
+          "sessionCreateMs": 430,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": 8445706,
+          "sessionWasmBytes": 34930688,
+          "wallClockMs": 29410
+        }
+      ]
+    },
+    {
+      "browser": "firefox",
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Gecko/20100101 Firefox/153.0",
+        "memoryApi": "unavailable",
+        "hardwareConcurrency": 10,
+        "deviceMemory": null,
+        "crossOriginIsolated": true,
+        "sharedArrayBuffer": true,
+        "webgpu": {
+          "available": false
+        },
+        "ortVersion": "1.29.0"
+      },
+      "threads": 4,
+      "providers": [
+        "wasm"
+      ],
+      "pageErrors": [],
+      "runs": [
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 8,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3923116032
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 10,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4292214784
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 224005088,
+          "fetchMs": 359,
+          "sessionCreateMs": 10750,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 693567488,
+          "wallClockMs": 106159
+        },
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 8,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3906732032
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 23,
+              "preprocessMs": 17,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4275896320
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 224005088,
+          "fetchMs": 255,
+          "sessionCreateMs": 10820,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 693567488,
+          "wallClockMs": 129915
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "wasm",
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "fixtures": [],
+          "failure": {
+            "stage": "run",
+            "message": "run_timeout_after_900000ms"
+          },
+          "wallClockMs": 899988
+        },
+        {
+          "candidateId": "isnet-general-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 10,
+              "inferenceMs": 43689,
+              "warmInferenceMs": 49161,
+              "postprocessMs": 20,
+              "iou": 0.999,
+              "mae": 0.0013,
+              "boundaryMae": 0.0386,
+              "softAlphaMae": 0.121,
+              "softAlphaPixels": 1490,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 17,
+              "preprocessMs": 14,
+              "inferenceMs": 56272,
+              "warmInferenceMs": 55808,
+              "postprocessMs": 24,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0725,
+              "softAlphaMae": 0.2109,
+              "softAlphaPixels": 1505,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 176149806,
+          "fetchMs": 211,
+          "sessionCreateMs": 997,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 464322560,
+          "wallClockMs": 206412
+        },
+        {
+          "candidateId": "isnet-general-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 12,
+              "inferenceMs": 55888,
+              "warmInferenceMs": 56147,
+              "postprocessMs": 17,
+              "iou": 0.999,
+              "mae": 0.0013,
+              "boundaryMae": 0.0386,
+              "softAlphaMae": 0.1211,
+              "softAlphaPixels": 1490,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 841940992
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 16,
+              "inferenceMs": 55629,
+              "warmInferenceMs": 54571,
+              "postprocessMs": 17,
+              "iou": 0.9949,
+              "mae": 0.0012,
+              "boundaryMae": 0.0726,
+              "softAlphaMae": 0.2109,
+              "softAlphaPixels": 1505,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 841940992,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 88152708,
+          "fetchMs": 108,
+          "sessionCreateMs": 1455,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 424083456,
+          "wallClockMs": 224082
+        },
+        {
+          "candidateId": "modnet-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 2,
+              "inferenceMs": 5915,
+              "warmInferenceMs": 5989,
+              "postprocessMs": 6,
+              "iou": 0.9924,
+              "mae": 0.0051,
+              "boundaryMae": 0.1014,
+              "softAlphaMae": 0.1719,
+              "softAlphaPixels": 1490,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9936,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 3,
+              "inferenceMs": 5984,
+              "warmInferenceMs": 6106,
+              "postprocessMs": 8,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0879,
+              "softAlphaMae": 0.2073,
+              "softAlphaPixels": 1505,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 156368896,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 25888640,
+          "fetchMs": 24,
+          "sessionCreateMs": 1111,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 90439680,
+          "wallClockMs": 25339
+        },
+        {
+          "candidateId": "modnet-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 2,
+              "inferenceMs": 6041,
+              "warmInferenceMs": 6063,
+              "postprocessMs": 8,
+              "iou": 0.9932,
+              "mae": 0.0048,
+              "boundaryMae": 0.1011,
+              "softAlphaMae": 0.1717,
+              "softAlphaPixels": 1490,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9945,
+              "peakWasmBytes": 146604032
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 3,
+              "inferenceMs": 6032,
+              "warmInferenceMs": 6161,
+              "postprocessMs": 5,
+              "iou": 0.9967,
+              "mae": 0.0015,
+              "boundaryMae": 0.0879,
+              "softAlphaMae": 0.2073,
+              "softAlphaPixels": 1505,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 146604032,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 12984781,
+          "fetchMs": 24,
+          "sessionCreateMs": 1275,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 70647808,
+          "wallClockMs": 25806
+        },
+        {
+          "candidateId": "modnet-uint8",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 2,
+              "inferenceMs": 4895,
+              "warmInferenceMs": 4974,
+              "postprocessMs": 8,
+              "iou": 0.3228,
+              "mae": 0.2411,
+              "boundaryMae": 0.3234,
+              "softAlphaMae": 0.3751,
+              "softAlphaPixels": 1490,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.3229,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 14,
+              "preprocessMs": 3,
+              "inferenceMs": 5378,
+              "warmInferenceMs": 6176,
+              "postprocessMs": 7,
+              "iou": 0,
+              "mae": 0.2046,
+              "boundaryMae": 0.519,
+              "softAlphaMae": 0.3839,
+              "softAlphaPixels": 1505,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 6632188,
+          "fetchMs": 8,
+          "sessionCreateMs": 1755,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 34930688,
+          "wallClockMs": 23425
+        }
+      ]
+    },
+    {
+      "browser": "webkit",
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15",
+        "memoryApi": "unavailable",
+        "hardwareConcurrency": 8,
+        "deviceMemory": null,
+        "crossOriginIsolated": true,
+        "sharedArrayBuffer": true,
+        "webgpu": {
+          "available": true,
+          "fp16": true,
+          "vendor": "apple",
+          "architecture": "apple",
+          "maxBufferBytes": 2147483644
+        },
+        "ortVersion": "1.29.0"
+      },
+      "threads": 4,
+      "providers": [
+        "wasm",
+        "webgpu"
+      ],
+      "pageErrors": [],
+      "runs": [
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 39,
+              "preprocessMs": 17,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3948150784
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 18,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 224005088,
+          "fetchMs": 335,
+          "sessionCreateMs": 5646,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 693567488,
+          "wallClockMs": 20173
+        },
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 27,
+              "preprocessMs": 16,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3954769920
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 11,
+              "preprocessMs": 7,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 224005088,
+          "fetchMs": 367,
+          "sessionCreateMs": 5268,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 693567488,
+          "wallClockMs": 17499
+        },
+        {
+          "candidateId": "birefnet-lite-fp32",
+          "provider": "webgpu",
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "fixtures": [],
+          "failure": {
+            "stage": "run",
+            "message": "run_timeout_after_900000ms"
+          },
+          "wallClockMs": 899991
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 9,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3812163584
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 7,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4294901760
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 114538221,
+          "fetchMs": 135,
+          "sessionCreateMs": 3222,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 448135168,
+          "wallClockMs": 403300
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 11,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 3803840512
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 12,
+              "preprocessMs": 7,
+              "failure": "failed to call OrtRun(). ERROR_CODE: 6, ERROR_MESSAGE: std::bad_alloc",
+              "peakWasmBytes": 4274978816
+            }
+          ],
+          "configuration": "memory-lean",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 114538221,
+          "fetchMs": 136,
+          "sessionCreateMs": 4947,
+          "inputNames": [
+            "input_image"
+          ],
+          "outputNames": [
+            "output_image"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input_image",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 448135168,
+          "wallClockMs": 415879
+        },
+        {
+          "candidateId": "birefnet-lite-fp16",
+          "provider": "webgpu",
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "fixtures": [],
+          "failure": {
+            "stage": "run",
+            "message": "run_timeout_after_900000ms"
+          },
+          "wallClockMs": 900019
+        },
+        {
+          "candidateId": "isnet-general-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 35,
+              "preprocessMs": 10,
+              "inferenceMs": 2295,
+              "warmInferenceMs": 2046,
+              "postprocessMs": 28,
+              "iou": 0.999,
+              "mae": 0.0012,
+              "boundaryMae": 0.0347,
+              "softAlphaMae": 0.1191,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 6,
+              "inferenceMs": 2046,
+              "warmInferenceMs": 2083,
+              "postprocessMs": 19,
+              "iou": 0.9954,
+              "mae": 0.0011,
+              "boundaryMae": 0.0629,
+              "softAlphaMae": 0.189,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 665845760,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 176149806,
+          "fetchMs": 205,
+          "sessionCreateMs": 283,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 464322560,
+          "wallClockMs": 9155
+        },
+        {
+          "candidateId": "isnet-general-fp32",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 9,
+              "inferenceMs": 987,
+              "warmInferenceMs": 731,
+              "postprocessMs": 34,
+              "iou": 0.999,
+              "mae": 0.0012,
+              "boundaryMae": 0.0347,
+              "softAlphaMae": 0.1191,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 7,
+              "inferenceMs": 736,
+              "warmInferenceMs": 720,
+              "postprocessMs": 14,
+              "iou": 0.9954,
+              "mae": 0.0011,
+              "boundaryMae": 0.0629,
+              "softAlphaMae": 0.189,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 464322560,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 176149806,
+          "fetchMs": 198,
+          "sessionCreateMs": 350,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 464322560,
+          "wallClockMs": 3908
+        },
+        {
+          "candidateId": "isnet-general-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 11,
+              "inferenceMs": 2560,
+              "warmInferenceMs": 2184,
+              "postprocessMs": 27,
+              "iou": 0.999,
+              "mae": 0.0012,
+              "boundaryMae": 0.0347,
+              "softAlphaMae": 0.1191,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 845479936
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 8,
+              "preprocessMs": 5,
+              "inferenceMs": 2236,
+              "warmInferenceMs": 2207,
+              "postprocessMs": 19,
+              "iou": 0.9954,
+              "mae": 0.0011,
+              "boundaryMae": 0.0629,
+              "softAlphaMae": 0.1891,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 845479936,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 88152708,
+          "fetchMs": 102,
+          "sessionCreateMs": 356,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 424083456,
+          "wallClockMs": 9828
+        },
+        {
+          "candidateId": "isnet-general-fp16",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 11,
+              "inferenceMs": 663,
+              "warmInferenceMs": 560,
+              "postprocessMs": 27,
+              "iou": 0.999,
+              "mae": 0.001,
+              "boundaryMae": 0.0346,
+              "softAlphaMae": 0.1189,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 245366784
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 10,
+              "inferenceMs": 566,
+              "warmInferenceMs": 556,
+              "postprocessMs": 15,
+              "iou": 0.9954,
+              "mae": 0.0011,
+              "boundaryMae": 0.0627,
+              "softAlphaMae": 0.1893,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 245366784,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 1024,
+          "inputHeight": 1024,
+          "transferBytes": 88152708,
+          "fetchMs": 98,
+          "sessionCreateMs": 361,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                1,
+                3,
+                1024,
+                1024
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 245366784,
+          "wallClockMs": 3001
+        },
+        {
+          "candidateId": "modnet-fp32",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 16,
+              "preprocessMs": 7,
+              "inferenceMs": 367,
+              "warmInferenceMs": 323,
+              "postprocessMs": 8,
+              "iou": 0.9493,
+              "mae": 0.0198,
+              "boundaryMae": 0.1128,
+              "softAlphaMae": 0.201,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9507,
+              "peakWasmBytes": 156368896
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 3,
+              "inferenceMs": 319,
+              "warmInferenceMs": 310,
+              "postprocessMs": 4,
+              "iou": 0.9959,
+              "mae": 0.0014,
+              "boundaryMae": 0.0851,
+              "softAlphaMae": 0.2204,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 156368896,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 25888640,
+          "fetchMs": 34,
+          "sessionCreateMs": 253,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 90439680,
+          "wallClockMs": 1749
+        },
+        {
+          "candidateId": "modnet-fp32",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 15,
+              "preprocessMs": 5,
+              "inferenceMs": 750,
+              "warmInferenceMs": 160,
+              "postprocessMs": 7,
+              "iou": 0.9493,
+              "mae": 0.0198,
+              "boundaryMae": 0.1128,
+              "softAlphaMae": 0.201,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9507,
+              "peakWasmBytes": 90439680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 5,
+              "inferenceMs": 162,
+              "warmInferenceMs": 161,
+              "postprocessMs": 4,
+              "iou": 0.9959,
+              "mae": 0.0014,
+              "boundaryMae": 0.0852,
+              "softAlphaMae": 0.2204,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 90439680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 25888640,
+          "fetchMs": 36,
+          "sessionCreateMs": 294,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 90439680,
+          "wallClockMs": 1700
+        },
+        {
+          "candidateId": "modnet-fp16",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 19,
+              "preprocessMs": 6,
+              "inferenceMs": 439,
+              "warmInferenceMs": 353,
+              "postprocessMs": 8,
+              "iou": 0.9487,
+              "mae": 0.0201,
+              "boundaryMae": 0.113,
+              "softAlphaMae": 0.2012,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9501,
+              "peakWasmBytes": 152174592
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 10,
+              "preprocessMs": 2,
+              "inferenceMs": 319,
+              "warmInferenceMs": 338,
+              "postprocessMs": 10,
+              "iou": 0.9959,
+              "mae": 0.0014,
+              "boundaryMae": 0.0851,
+              "softAlphaMae": 0.2205,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 152174592,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 12984781,
+          "fetchMs": 20,
+          "sessionCreateMs": 340,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 84148224,
+          "wallClockMs": 1971
+        },
+        {
+          "candidateId": "modnet-fp16",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 13,
+              "preprocessMs": 4,
+              "inferenceMs": 624,
+              "warmInferenceMs": 127,
+              "postprocessMs": 6,
+              "iou": 0.9299,
+              "mae": 0.0265,
+              "boundaryMae": 0.116,
+              "softAlphaMae": 0.2037,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0.0001,
+              "foregroundRecall": 0.9313,
+              "peakWasmBytes": 48627712
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 3,
+              "inferenceMs": 127,
+              "warmInferenceMs": 127,
+              "postprocessMs": 3,
+              "iou": 0.9959,
+              "mae": 0.0014,
+              "boundaryMae": 0.0846,
+              "softAlphaMae": 0.2204,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 1,
+              "peakWasmBytes": 48627712,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 12984781,
+          "fetchMs": 18,
+          "sessionCreateMs": 328,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 48627712,
+          "wallClockMs": 1484
+        },
+        {
+          "candidateId": "modnet-uint8",
+          "provider": "wasm",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 23,
+              "preprocessMs": 6,
+              "inferenceMs": 563,
+              "warmInferenceMs": 388,
+              "postprocessMs": 9,
+              "iou": 0.3194,
+              "mae": 0.2404,
+              "boundaryMae": 0.2972,
+              "softAlphaMae": 0.3524,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0.0002,
+              "foregroundRecall": 0.3193,
+              "peakWasmBytes": 139591680
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 8,
+              "preprocessMs": 2,
+              "inferenceMs": 380,
+              "warmInferenceMs": 403,
+              "postprocessMs": 5,
+              "iou": 0,
+              "mae": 0.2047,
+              "boundaryMae": 0.5178,
+              "softAlphaMae": 0.3765,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 139591680,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 6632188,
+          "fetchMs": 11,
+          "sessionCreateMs": 419,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 34930688,
+          "wallClockMs": 2324
+        },
+        {
+          "candidateId": "modnet-uint8",
+          "provider": "webgpu",
+          "fixtures": [
+            {
+              "fixture": "portrait-person",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 26,
+              "preprocessMs": 21,
+              "inferenceMs": 992,
+              "warmInferenceMs": 630,
+              "postprocessMs": 8,
+              "iou": 0.3197,
+              "mae": 0.2404,
+              "boundaryMae": 0.2975,
+              "softAlphaMae": 0.3524,
+              "softAlphaPixels": 1492,
+              "backgroundLeakRate": 0.0002,
+              "foregroundRecall": 0.3196,
+              "peakWasmBytes": 158990336
+            },
+            {
+              "fixture": "product-bottle",
+              "width": 768,
+              "height": 768,
+              "fixtureMs": 9,
+              "preprocessMs": 3,
+              "inferenceMs": 616,
+              "warmInferenceMs": 604,
+              "postprocessMs": 4,
+              "iou": 0,
+              "mae": 0.2047,
+              "boundaryMae": 0.5178,
+              "softAlphaMae": 0.3765,
+              "softAlphaPixels": 1534,
+              "backgroundLeakRate": 0,
+              "foregroundRecall": 0,
+              "peakWasmBytes": 158990336,
+              "peakHeapBytes": null,
+              "peakJsHeapBytes": null
+            }
+          ],
+          "configuration": "default",
+          "inputWidth": 512,
+          "inputHeight": 512,
+          "transferBytes": 6632188,
+          "fetchMs": 8,
+          "sessionCreateMs": 493,
+          "inputNames": [
+            "input"
+          ],
+          "outputNames": [
+            "output"
+          ],
+          "inputMetadata": [
+            {
+              "name": "input",
+              "shape": [
+                "batch_size",
+                3,
+                "height",
+                "width"
+              ]
+            }
+          ],
+          "sessionHeapBytes": null,
+          "sessionJsHeapBytes": null,
+          "sessionWasmBytes": 34930688,
+          "wallClockMs": 3514
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Background removal evaluation harness</title>
+</head>
+<body>
+<p id="state">idle</p>
+<script>
+/*
+ * Installed before onnxruntime-web loads. `measureUserAgentSpecificMemory` only
+ * answers at the next garbage collection and only in Chromium, but the number
+ * that decides whether a model fits is the WebAssembly linear memory, and that
+ * can be read directly in every browser by keeping a reference to each memory
+ * as it is created.
+ */
+window.__wasmMemories = []
+
+const NativeMemory = WebAssembly.Memory
+function TrackedMemory(descriptor) {
+  const memory = new NativeMemory(descriptor)
+  window.__wasmMemories.push(memory)
+  return memory
+}
+TrackedMemory.prototype = NativeMemory.prototype
+WebAssembly.Memory = TrackedMemory
+
+function collectExportedMemory(result) {
+  const exported = result && result.instance && result.instance.exports && result.instance.exports.memory
+  if (exported && !window.__wasmMemories.includes(exported)) window.__wasmMemories.push(exported)
+  return result
+}
+
+const nativeInstantiate = WebAssembly.instantiate.bind(WebAssembly)
+WebAssembly.instantiate = (...args) => nativeInstantiate(...args).then(collectExportedMemory)
+
+if (WebAssembly.instantiateStreaming) {
+  const nativeStreaming = WebAssembly.instantiateStreaming.bind(WebAssembly)
+  WebAssembly.instantiateStreaming = (...args) => nativeStreaming(...args).then(collectExportedMemory)
+}
+
+window.__wasmBytes = () => window.__wasmMemories.reduce((total, memory) => {
+  try {
+    return total + memory.buffer.byteLength
+  }
+  catch {
+    return total
+  }
+}, 0)
+</script>
+<script type="module">
+import * as ort from '/ort/ort.all.min.mjs'
+
+/*
+ * Browser side of the T18 evaluation. It builds every fixture from code, so no
+ * photograph, user file or third-party image is ever loaded, runs one candidate
+ * under one execution provider per call, and returns plain JSON numbers.
+ */
+
+ort.env.wasm.wasmPaths = '/ort/'
+ort.env.logLevel = 'error'
+
+const state = document.getElementById('state')
+
+/** Deterministic noise: the same fixture bytes on every machine and every run. */
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function canvasOf(width, height) {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  return canvas
+}
+
+function grain(context, width, height, seed, amount) {
+  const random = mulberry32(seed)
+  const image = context.getImageData(0, 0, width, height)
+  const data = image.data
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = (random() - 0.5) * amount
+    data[i] = Math.max(0, Math.min(255, data[i] + noise))
+    data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise))
+    data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise))
+  }
+  context.putImageData(image, 0, 0)
+}
+
+function studioBackground(context, width, height, seed, tone) {
+  const gradient = context.createLinearGradient(0, 0, 0, height)
+  gradient.addColorStop(0, tone[0])
+  gradient.addColorStop(1, tone[1])
+  context.fillStyle = gradient
+  context.fillRect(0, 0, width, height)
+  grain(context, width, height, seed, 10)
+}
+
+function roomBackground(context, width, height, seed) {
+  const gradient = context.createRadialGradient(width * 0.3, height * 0.25, width * 0.05, width * 0.5, height * 0.5, width * 0.8)
+  gradient.addColorStop(0, '#8fa3b8')
+  gradient.addColorStop(1, '#33414f')
+  context.fillStyle = gradient
+  context.fillRect(0, 0, width, height)
+  const random = mulberry32(seed)
+  context.strokeStyle = 'rgba(255,255,255,0.08)'
+  context.lineWidth = Math.max(2, width / 200)
+  for (let i = 0; i < 24; i += 1) {
+    const x = random() * width
+    context.beginPath()
+    context.moveTo(x, 0)
+    context.lineTo(x + random() * width * 0.2 - width * 0.1, height)
+    context.stroke()
+  }
+  grain(context, width, height, seed + 1, 14)
+}
+
+function drawPerson(context, width, height, options = {}) {
+  const cx = width * 0.5
+  const headR = width * 0.16
+  const headY = height * 0.32
+  context.fillStyle = '#c8916b'
+  context.beginPath()
+  context.ellipse(cx, headY, headR * 0.82, headR, 0, 0, Math.PI * 2)
+  context.fill()
+  context.fillRect(cx - headR * 0.3, headY + headR * 0.7, headR * 0.6, headR * 0.6)
+  context.fillStyle = '#3f5a74'
+  context.beginPath()
+  context.moveTo(cx - width * 0.34, height)
+  context.quadraticCurveTo(cx - width * 0.3, height * 0.56, cx - headR * 0.75, height * 0.5)
+  context.lineTo(cx + headR * 0.75, height * 0.5)
+  context.quadraticCurveTo(cx + width * 0.3, height * 0.56, cx + width * 0.34, height)
+  context.closePath()
+  context.fill()
+  context.fillStyle = '#2c2118'
+  context.beginPath()
+  context.ellipse(cx, headY - headR * 0.18, headR * 0.86, headR * 0.9, 0, Math.PI, Math.PI * 2)
+  context.fill()
+
+  if (!options.strands) return
+  const random = mulberry32(options.seed ?? 7)
+  context.lineCap = 'round'
+  for (let i = 0; i < options.strands; i += 1) {
+    const angle = Math.PI + random() * Math.PI
+    const startX = cx + Math.cos(angle) * headR * 0.85
+    const startY = headY - headR * 0.18 + Math.sin(angle) * headR * 0.88
+    const length = headR * (0.35 + random() * 1.1)
+    const drift = (random() - 0.5) * headR * 0.9
+    context.strokeStyle = `rgba(44,33,24,${0.35 + random() * 0.5})`
+    context.lineWidth = Math.max(0.6, (width / 768) * (0.6 + random() * 1.1))
+    context.beginPath()
+    context.moveTo(startX, startY)
+    context.quadraticCurveTo(startX + drift * 0.5, startY - length * 0.7, startX + drift, startY - length)
+    context.stroke()
+  }
+}
+
+function drawBottle(context, width, height) {
+  const cx = width * 0.5
+  const bodyW = width * 0.3
+  const top = height * 0.16
+  const bottom = height * 0.9
+  const gradient = context.createLinearGradient(cx - bodyW / 2, 0, cx + bodyW / 2, 0)
+  gradient.addColorStop(0, '#1f6f5c')
+  gradient.addColorStop(0.35, '#4fbf9d')
+  gradient.addColorStop(0.6, '#e9fff7')
+  gradient.addColorStop(1, '#166152')
+  context.fillStyle = gradient
+  context.beginPath()
+  context.moveTo(cx - bodyW / 2, bottom - height * 0.04)
+  context.lineTo(cx - bodyW / 2, top + height * 0.24)
+  context.quadraticCurveTo(cx - bodyW / 2, top + height * 0.1, cx - bodyW * 0.16, top + height * 0.06)
+  context.lineTo(cx - bodyW * 0.16, top)
+  context.lineTo(cx + bodyW * 0.16, top)
+  context.lineTo(cx + bodyW * 0.16, top + height * 0.06)
+  context.quadraticCurveTo(cx + bodyW / 2, top + height * 0.1, cx + bodyW / 2, top + height * 0.24)
+  context.lineTo(cx + bodyW / 2, bottom - height * 0.04)
+  context.quadraticCurveTo(cx + bodyW / 2, bottom, cx + bodyW * 0.38, bottom)
+  context.lineTo(cx - bodyW * 0.38, bottom)
+  context.quadraticCurveTo(cx - bodyW / 2, bottom, cx - bodyW / 2, bottom - height * 0.04)
+  context.closePath()
+  context.fill()
+  context.fillStyle = '#f3f0e6'
+  context.fillRect(cx - bodyW / 2, height * 0.45, bodyW, height * 0.22)
+  context.fillStyle = '#1f6f5c'
+  context.fillRect(cx - bodyW * 0.34, height * 0.5, bodyW * 0.68, height * 0.03)
+  context.fillRect(cx - bodyW * 0.26, height * 0.57, bodyW * 0.52, height * 0.02)
+  context.fillStyle = '#123c33'
+  context.fillRect(cx - bodyW * 0.17, top - height * 0.04, bodyW * 0.34, height * 0.05)
+}
+
+function drawGlass(context, width, height) {
+  const cx = width * 0.5
+  const bodyW = width * 0.34
+  const top = height * 0.22
+  const bottom = height * 0.86
+  context.fillStyle = 'rgba(214,238,244,0.34)'
+  context.beginPath()
+  context.moveTo(cx - bodyW / 2, top)
+  context.lineTo(cx - bodyW * 0.38, bottom)
+  context.lineTo(cx + bodyW * 0.38, bottom)
+  context.lineTo(cx + bodyW / 2, top)
+  context.closePath()
+  context.fill()
+  context.strokeStyle = 'rgba(236,250,255,0.95)'
+  context.lineWidth = Math.max(2, width / 190)
+  context.stroke()
+  context.fillStyle = 'rgba(255,255,255,0.55)'
+  context.fillRect(cx - bodyW * 0.34, top + height * 0.06, bodyW * 0.08, (bottom - top) * 0.7)
+  context.fillStyle = 'rgba(180,214,226,0.72)'
+  context.beginPath()
+  context.ellipse(cx, bottom, bodyW * 0.38, height * 0.02, 0, 0, Math.PI * 2)
+  context.fill()
+}
+
+function drawLowContrastBox(context, width, height) {
+  const cx = width * 0.5
+  const cy = height * 0.55
+  const w = width * 0.42
+  const h = height * 0.4
+  context.fillStyle = '#b9bcc0'
+  context.beginPath()
+  context.moveTo(cx - w / 2, cy - h / 2)
+  context.lineTo(cx + w / 2, cy - h / 2)
+  context.lineTo(cx + w / 2, cy + h / 2)
+  context.lineTo(cx - w / 2, cy + h / 2)
+  context.closePath()
+  context.fill()
+  context.fillStyle = '#b4b7bb'
+  context.beginPath()
+  context.moveTo(cx - w / 2, cy - h / 2)
+  context.lineTo(cx - w / 2 + w * 0.18, cy - h / 2 - h * 0.16)
+  context.lineTo(cx + w / 2 + w * 0.18, cy - h / 2 - h * 0.16)
+  context.lineTo(cx + w / 2, cy - h / 2)
+  context.closePath()
+  context.fill()
+}
+
+/** Every fixture: a foreground drawn on transparency, then composited. */
+const fixtures = {
+  'portrait-person': (width, height) => ({
+    background: (context) => roomBackground(context, width, height, 11),
+    foreground: (context) => drawPerson(context, width, height),
+  }),
+  'fine-hair': (width, height) => ({
+    background: (context) => roomBackground(context, width, height, 23),
+    foreground: (context) => drawPerson(context, width, height, { strands: 900, seed: 23 }),
+  }),
+  'product-bottle': (width, height) => ({
+    background: (context) => studioBackground(context, width, height, 31, ['#ffffff', '#e6e8ea']),
+    foreground: (context) => drawBottle(context, width, height),
+  }),
+  'semi-transparent-glass': (width, height) => ({
+    background: (context) => studioBackground(context, width, height, 41, ['#f6f1e7', '#cfc3ad']),
+    foreground: (context) => drawGlass(context, width, height),
+  }),
+  'low-contrast-box': (width, height) => ({
+    background: (context) => studioBackground(context, width, height, 53, ['#c3c6ca', '#adb1b5']),
+    foreground: (context) => drawLowContrastBox(context, width, height),
+  }),
+}
+
+function buildFixture(name, width, height) {
+  const recipe = fixtures[name](width, height)
+  const foregroundCanvas = canvasOf(width, height)
+  const foregroundContext = foregroundCanvas.getContext('2d', { willReadFrequently: true })
+  recipe.foreground(foregroundContext)
+
+  const truth = new Float32Array(width * height)
+  const foregroundData = foregroundContext.getImageData(0, 0, width, height).data
+  for (let i = 0; i < truth.length; i += 1) truth[i] = foregroundData[i * 4 + 3] / 255
+
+  const canvas = canvasOf(width, height)
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  recipe.background(context)
+  context.drawImage(foregroundCanvas, 0, 0)
+
+  return { canvas, truth, width, height }
+}
+
+function fromFloat16(bits) {
+  const sign = bits & 0x8000 ? -1 : 1
+  const exponent = (bits & 0x7c00) >> 10
+  const mantissa = bits & 0x03ff
+  if (exponent === 0) return sign * 2 ** -14 * (mantissa / 1024)
+  if (exponent === 31) return mantissa ? NaN : sign * Infinity
+  return sign * 2 ** (exponent - 15) * (1 + mantissa / 1024)
+}
+
+function preprocess(fixture, input) {
+  const resized = canvasOf(input.width, input.height)
+  const context = resized.getContext('2d', { willReadFrequently: true })
+  context.drawImage(fixture.canvas, 0, 0, input.width, input.height)
+  const data = context.getImageData(0, 0, input.width, input.height).data
+  const pixels = input.width * input.height
+  const planar = new Float32Array(pixels * 3)
+  for (let i = 0; i < pixels; i += 1) {
+    for (let channel = 0; channel < 3; channel += 1) {
+      planar[channel * pixels + i] = (data[i * 4 + channel] * input.scale - input.mean[channel]) / input.std[channel]
+    }
+  }
+  /*
+   * Even the fp16 exports declare float32 inputs and outputs: the conversion
+   * halves the weights and keeps the graph boundary at full precision. Feeding
+   * float16 here is rejected by the runtime, so the tensor is always float32
+   * and only the mask may come back as half precision.
+   */
+  return new ort.Tensor('float32', planar, [1, 3, input.height, input.width])
+}
+
+/** The mask output is the rank-4, single-channel tensor with the most pixels. */
+function pickMask(results) {
+  let best = null
+  for (const value of Object.values(results)) {
+    const dims = value.dims
+    if (dims.length !== 4 || dims[1] !== 1) continue
+    const pixels = dims[2] * dims[3]
+    if (!best || pixels > best.dims[2] * best.dims[3]) best = value
+  }
+  return best
+}
+
+function maskToFloats(tensor) {
+  if (tensor.type !== 'float16') return Float32Array.from(tensor.data)
+  const out = new Float32Array(tensor.data.length)
+  for (let i = 0; i < out.length; i += 1) out[i] = fromFloat16(tensor.data[i])
+  return out
+}
+
+function activate(values, activation) {
+  if (activation === 'sigmoid') {
+    for (let i = 0; i < values.length; i += 1) values[i] = 1 / (1 + Math.exp(-values[i]))
+    return values
+  }
+  if (activation === 'minmax') {
+    let min = Infinity
+    let max = -Infinity
+    for (const value of values) {
+      if (value < min) min = value
+      if (value > max) max = value
+    }
+    const span = max - min || 1
+    for (let i = 0; i < values.length; i += 1) values[i] = (values[i] - min) / span
+    return values
+  }
+  for (let i = 0; i < values.length; i += 1) values[i] = Math.max(0, Math.min(1, values[i]))
+  return values
+}
+
+function resampleMask(values, from, to) {
+  const source = canvasOf(from.width, from.height)
+  const sourceContext = source.getContext('2d', { willReadFrequently: true })
+  const image = sourceContext.createImageData(from.width, from.height)
+  for (let i = 0; i < values.length; i += 1) {
+    const level = Math.round(Math.max(0, Math.min(1, values[i])) * 255)
+    image.data[i * 4] = level
+    image.data[i * 4 + 1] = level
+    image.data[i * 4 + 2] = level
+    image.data[i * 4 + 3] = 255
+  }
+  sourceContext.putImageData(image, 0, 0)
+
+  const target = canvasOf(to.width, to.height)
+  const targetContext = target.getContext('2d', { willReadFrequently: true })
+  targetContext.drawImage(source, 0, 0, to.width, to.height)
+  const scaled = targetContext.getImageData(0, 0, to.width, to.height).data
+  const out = new Float32Array(to.width * to.height)
+  for (let i = 0; i < out.length; i += 1) out[i] = scaled[i * 4] / 255
+  return out
+}
+
+/** Pixels whose 7×7 neighbourhood in the truth mask contains both sides. */
+function boundaryBand(truth, width, height) {
+  const band = new Uint8Array(truth.length)
+  const radius = 3
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      let min = 1
+      let max = 0
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        const yy = y + dy
+        if (yy < 0 || yy >= height) continue
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          const xx = x + dx
+          if (xx < 0 || xx >= width) continue
+          const value = truth[yy * width + xx]
+          if (value < min) min = value
+          if (value > max) max = value
+        }
+      }
+      if (min < 0.5 && max >= 0.5) band[y * width + x] = 1
+    }
+  }
+  return band
+}
+
+function score(prediction, truth, width, height) {
+  let intersection = 0
+  let union = 0
+  let absolute = 0
+  let softCount = 0
+  let softError = 0
+  let backgroundCount = 0
+  let backgroundLeak = 0
+  let foregroundCount = 0
+  let foregroundHit = 0
+  for (let i = 0; i < truth.length; i += 1) {
+    const p = prediction[i]
+    const t = truth[i]
+    const pf = p >= 0.5
+    const tf = t >= 0.5
+    if (pf && tf) intersection += 1
+    if (pf || tf) union += 1
+    absolute += Math.abs(p - t)
+    if (t > 0.05 && t < 0.95) {
+      softCount += 1
+      softError += Math.abs(p - t)
+    }
+    if (t < 0.02) {
+      backgroundCount += 1
+      if (pf) backgroundLeak += 1
+    }
+    if (t > 0.98) {
+      foregroundCount += 1
+      if (pf) foregroundHit += 1
+    }
+  }
+  const band = boundaryBand(truth, width, height)
+  let bandCount = 0
+  let bandError = 0
+  for (let i = 0; i < band.length; i += 1) {
+    if (!band[i]) continue
+    bandCount += 1
+    bandError += Math.abs(prediction[i] - truth[i])
+  }
+  const round = value => Math.round(value * 10000) / 10000
+  return {
+    iou: round(union ? intersection / union : 0),
+    mae: round(absolute / truth.length),
+    boundaryMae: round(bandCount ? bandError / bandCount : 0),
+    softAlphaMae: round(softCount ? softError / softCount : 0),
+    softAlphaPixels: softCount,
+    backgroundLeakRate: round(backgroundCount ? backgroundLeak / backgroundCount : 0),
+    foregroundRecall: round(foregroundCount ? foregroundHit / foregroundCount : 0),
+  }
+}
+
+/*
+ * Chromium answers `measureUserAgentSpecificMemory` at its next garbage
+ * collection and counts WebAssembly memory in the total, which is the only
+ * number here that reflects what a model really costs. It can also never
+ * answer — a hidden page may not collect — so every sample is bounded and a
+ * miss is recorded as null rather than hanging the run.
+ */
+const MEMORY_SAMPLE_TIMEOUT_MS = 10000
+
+async function heapBytes() {
+  const fallback = performance.memory?.usedJSHeapSize ?? null
+  const wasmBytes = window.__wasmBytes()
+  if (!self.crossOriginIsolated || !performance.measureUserAgentSpecificMemory) return { bytes: null, jsHeapBytes: fallback, wasmBytes }
+  try {
+    const measured = await Promise.race([
+      performance.measureUserAgentSpecificMemory(),
+      new Promise(resolve => setTimeout(() => resolve(null), MEMORY_SAMPLE_TIMEOUT_MS)),
+    ])
+    return { bytes: measured ? measured.bytes : null, jsHeapBytes: performance.memory?.usedJSHeapSize ?? fallback, wasmBytes: window.__wasmBytes() }
+  }
+  catch {
+    return { bytes: null, jsHeapBytes: fallback, wasmBytes }
+  }
+}
+
+window.__environment = async () => {
+  let gpu = null
+  if (navigator.gpu) {
+    try {
+      const adapter = await navigator.gpu.requestAdapter()
+      gpu = adapter
+        ? {
+            available: true,
+            fp16: adapter.features.has('shader-f16'),
+            vendor: adapter.info?.vendor ?? null,
+            architecture: adapter.info?.architecture ?? null,
+            maxBufferBytes: adapter.limits.maxBufferSize,
+          }
+        : { available: false }
+    }
+    catch (error) {
+      gpu = { available: false, reason: String(error && error.message ? error.message : error) }
+    }
+  }
+  let memory = 'unavailable'
+  if (performance.measureUserAgentSpecificMemory) {
+    const sample = await heapBytes()
+    memory = sample.bytes === null ? 'not-answered' : 'available'
+  }
+
+  return {
+    userAgent: navigator.userAgent,
+    memoryApi: memory,
+    hardwareConcurrency: navigator.hardwareConcurrency ?? null,
+    deviceMemory: navigator.deviceMemory ?? null,
+    crossOriginIsolated: self.crossOriginIsolated === true,
+    sharedArrayBuffer: typeof SharedArrayBuffer !== 'undefined',
+    webgpu: gpu,
+    ortVersion: ort.env.versions?.common ?? null,
+  }
+}
+
+window.__run = async (job) => {
+  state.textContent = `${job.candidate.id} · ${job.provider}`
+  const report = { candidateId: job.candidate.id, provider: job.provider, fixtures: [] }
+  const baseline = await heapBytes()
+
+  /*
+   * The runner decides which configuration a page uses and always opens a fresh
+   * page, because WebAssembly memory only ever grows: a session left behind by
+   * an earlier candidate would make the next one look like it ran out of room.
+   */
+  const options = job.configuration === 'memory-lean'
+    ? { graphOptimizationLevel: 'all', enableMemPattern: false, enableCpuMemArena: false }
+    : { graphOptimizationLevel: 'all' }
+
+  ort.env.wasm.numThreads = job.threads
+  const input = { ...job.candidate.input, ...job.input }
+  report.configuration = job.configuration
+  report.inputWidth = input.width
+  report.inputHeight = input.height
+
+  let session = null
+  try {
+    const fetchStart = performance.now()
+    const response = await fetch(job.modelUrl, { cache: 'force-cache' })
+    const weights = await response.arrayBuffer()
+    report.transferBytes = weights.byteLength
+    report.fetchMs = Math.round(performance.now() - fetchStart)
+
+    const createStart = performance.now()
+    session = await ort.InferenceSession.create(weights, { executionProviders: [job.provider], ...options })
+    report.sessionCreateMs = Math.round(performance.now() - createStart)
+    report.inputNames = session.inputNames
+    report.outputNames = session.outputNames
+    report.inputMetadata = session.inputMetadata?.map(entry => ({ name: entry.name, shape: entry.shape ?? null })) ?? null
+  }
+  catch (error) {
+    report.failure = { stage: 'session', message: String(error && error.message ? error.message : error).slice(0, 400) }
+    return report
+  }
+
+  const afterSession = await heapBytes()
+  report.sessionHeapBytes = afterSession.bytes !== null && baseline.bytes !== null ? afterSession.bytes - baseline.bytes : null
+  report.sessionJsHeapBytes = afterSession.jsHeapBytes !== null && baseline.jsHeapBytes !== null
+    ? afterSession.jsHeapBytes - baseline.jsHeapBytes
+    : null
+  report.sessionWasmBytes = afterSession.wasmBytes
+
+  for (const request of job.fixtures) {
+    const entry = { fixture: request.name, width: request.width, height: request.height }
+    try {
+      const buildStart = performance.now()
+      const fixture = buildFixture(request.name, request.width, request.height)
+      entry.fixtureMs = Math.round(performance.now() - buildStart)
+
+      const preStart = performance.now()
+      const tensor = preprocess(fixture, input)
+      entry.preprocessMs = Math.round(performance.now() - preStart)
+
+      const feeds = { [session.inputNames[0]]: tensor }
+      const runStart = performance.now()
+      const results = await session.run(feeds)
+      entry.inferenceMs = Math.round(performance.now() - runStart)
+
+      const warmStart = performance.now()
+      await session.run(feeds)
+      entry.warmInferenceMs = Math.round(performance.now() - warmStart)
+
+      const mask = pickMask(results)
+      if (!mask) throw new Error('no rank-4 single-channel output')
+      const postStart = performance.now()
+      const values = activate(maskToFloats(mask), job.candidate.output.activation)
+      const prediction = resampleMask(
+        values,
+        { width: mask.dims[3], height: mask.dims[2] },
+        { width: fixture.width, height: fixture.height },
+      )
+      entry.postprocessMs = Math.round(performance.now() - postStart)
+      Object.assign(entry, score(prediction, fixture.truth, fixture.width, fixture.height))
+      /*
+       * Memory is only sampled on the reference cases: the measurement waits
+       * for garbage collection, which costs more wall clock than the inference
+       * it is measuring.
+       */
+      entry.peakWasmBytes = window.__wasmBytes()
+      if (job.memoryFixtures.includes(request.name)) {
+        const peak = await heapBytes()
+        entry.peakHeapBytes = peak.bytes
+        entry.peakJsHeapBytes = peak.jsHeapBytes
+      }
+      tensor.dispose?.()
+      for (const value of Object.values(results)) value.dispose?.()
+    }
+    catch (error) {
+      entry.failure = String(error && error.message ? error.message : error).slice(0, 400)
+      entry.peakWasmBytes = window.__wasmBytes()
+    }
+    report.fixtures.push(entry)
+  }
+
+  await session.release()
+  return report
+}
+
+state.textContent = 'ready'
+window.__ready = true
+</script>
+</body>
+</html>
