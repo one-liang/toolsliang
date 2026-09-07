@@ -85,7 +85,10 @@ async function selectDay(wrapper: Workspace, date: string) {
 
 beforeEach(() => {
   store = new MemoryAssetStore()
-  vi.stubGlobal('useCustomCalendar', () => useCustomCalendar(async () => store))
+  vi.stubGlobal('useCustomCalendar', () => useCustomCalendar({
+    defaultName: () => '自訂行事曆',
+    openStore: async () => store,
+  }))
   vi.useFakeTimers({ shouldAdvanceTime: true })
   vi.setSystemTime(new Date('2026-09-07T09:00:00+08:00'))
 })
@@ -255,6 +258,7 @@ describe('what the workspace says', () => {
     const wrapper = await mountWorkspace()
 
     expect(wrapper.get('.custom-calendar-boundary').text()).toContain('這台裝置')
+    expect(wrapper.get('.custom-calendar-boundary').text(), '不重複工具頁已經印過的那句本機處理說明').toContain('辦公日曆表')
     for (const caveat of Object.values(customCalendarCaveats)) {
       expect(wrapper.get('.custom-calendar-caveats').text()).toContain(caveat['zh-tw'])
     }
@@ -266,7 +270,7 @@ describe('what the workspace says', () => {
     await selectDay(wrapper, '2026-09-18')
 
     expect(wrapper.get('.custom-calendar-boundary').text()).toContain('this device')
-    expect(wrapper.get('.custom-calendar-layers__custom').text()).toContain('Day off')
+    expect(wrapper.get('.custom-calendar-layers__custom').text()).toContain('Custom day off')
     expect(wrapper.get('.custom-calendar-entry').text()).toContain('Company day off')
   })
 })

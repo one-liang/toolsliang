@@ -35,10 +35,11 @@ const { firstYear, lastYear } = taiwanCalendarPublishableYears
 
 const customCalendarCopyEntries = {
   boundaryNote: {
-    'zh-tw': '自訂項目只保存在這台裝置的瀏覽器資料庫，不會上傳，也不會隨雲端偏好同步。',
-    en: 'Your entries stay in this browser\'s database on this device. They are never uploaded and never sync as cloud preferences.',
+    'zh-tw': '你加的項目只疊在辦公日曆表之上，不會改寫官方公告的日別，也只保存在這台裝置。',
+    en: 'Your entries sit on top of the office calendar without rewriting what it announces, and they stay on this device.',
   },
-  layersLabel: { 'zh-tw': '兩層資料', en: 'Two layers' },
+  /** The name this device's document carries in the local assets list. */
+  assetName: { 'zh-tw': '自訂行事曆', en: 'Custom calendar' },
   officialLayerLabel: { 'zh-tw': '辦公日曆表', en: 'Office calendar' },
   customLayerLabel: { 'zh-tw': '我的自訂', en: 'My entries' },
   changedLabel: { 'zh-tw': '與辦公日曆表不同', en: 'Differs from the office calendar' },
@@ -117,7 +118,6 @@ const customCalendarCopyEntries = {
   rebuildConfirm: { 'zh-tw': '確認重建', en: 'Confirm and start again' },
   downloadRaw: { 'zh-tw': '下載原始檔', en: 'Download the raw file' },
   caveatsTitle: { 'zh-tw': '保存前要知道', en: 'Before you rely on this' },
-  entriesCountLabel: { 'zh-tw': '自訂項目', en: 'Entries' },
   sizeLabel: { 'zh-tw': '佔用空間', en: 'Size on this device' },
   updatedLabel: { 'zh-tw': '最後儲存', en: 'Last saved' },
 } satisfies Record<string, LocalizedCopy>
@@ -128,9 +128,9 @@ export const customCalendarCopy: Record<CustomCalendarCopyKey, LocalizedCopy> = 
 
 /** The three things an entry can say about a day, and the short mark a cell shows. */
 export const customEntryMarkLabels: Record<CustomEntryMark, LocalizedCopy> = {
-  note: { 'zh-tw': '只是備註', en: 'Note only' },
-  'day-off': { 'zh-tw': '自訂放假', en: 'Day off' },
-  workday: { 'zh-tw': '自訂上班', en: 'Working day' },
+  note: { 'zh-tw': '自訂備註', en: 'Custom note' },
+  'day-off': { 'zh-tw': '自訂放假', en: 'Custom day off' },
+  workday: { 'zh-tw': '自訂上班', en: 'Custom working day' },
 }
 
 export const customEntryMarkHints: Record<CustomEntryMark, LocalizedCopy> = {
@@ -232,6 +232,16 @@ const customCalendarFileErrorCopy: Record<CustomCalendarFileErrorCode, Record<Lo
     en: {
       title: 'That backup file holds no entries',
       recovery: 'Try a backup file that has entries in it. Nothing on this device changed.',
+    },
+  },
+  'refused-entry': {
+    'zh-tw': {
+      title: '備份檔裡有不符合目前規則的項目',
+      recovery: `整份都沒有匯入。項目必須落在 ${firstYear}–${lastYear} 年、名稱最多 ${CUSTOM_ENTRY_TITLE_MAX} 個字、備註最多 ${CUSTOM_ENTRY_NOTE_MAX} 個字，單筆最多 ${CUSTOM_ENTRY_RANGE_MAX_DAYS} 天。`,
+    },
+    en: {
+      title: 'That backup file holds entries this version cannot accept',
+      recovery: `Nothing was imported. An entry has to fall in ${firstYear}–${lastYear}, with a name of at most ${CUSTOM_ENTRY_TITLE_MAX} characters, a note of at most ${CUSTOM_ENTRY_NOTE_MAX}, and a span of at most ${CUSTOM_ENTRY_RANGE_MAX_DAYS} days.`,
     },
   },
   'too-many-entries': {

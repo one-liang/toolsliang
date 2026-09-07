@@ -41,8 +41,6 @@ import { taiwanCalendarPublishableYears } from '@/features/tools/taiwan-calendar
  * convenience of starting again.
  */
 export const CUSTOM_CALENDAR_ASSET_ID = 'custom-calendar'
-/** Shown in the local assets list; a rename made there survives every later write. */
-export const CUSTOM_CALENDAR_ASSET_NAME = '自訂行事曆 Custom Calendar'
 
 export type CustomCalendarDocumentStatus = 'ready' | 'corrupt' | 'unsupported-version'
 
@@ -51,8 +49,18 @@ export type SaveEntryOutcome =
   | { ok: true, entry: CustomCalendarEntry }
   | { ok: false, issues: CustomEntryIssue[] }
 
-export function useCustomCalendar(openStore: () => Promise<LocalAssetStore> = openLocalAssetStore) {
-  const repository = createLocalAssetRepository(openStore)
+export interface CustomCalendarOptions {
+  /**
+   * What the document is called in the local assets list, in the language the
+   * visitor is reading. It is only used when this device has no document yet: a
+   * rename made on the assets page survives every later write.
+   */
+  defaultName: () => string
+  openStore?: () => Promise<LocalAssetStore>
+}
+
+export function useCustomCalendar(options: CustomCalendarOptions) {
+  const repository = createLocalAssetRepository(options.openStore ?? openLocalAssetStore)
   const entries = ref<CustomCalendarEntry[]>([])
   const record = shallowRef<LocalAssetRecord | undefined>()
   const usage = ref<LocalAssetUsage>(summarizeLocalAssets([]))
@@ -85,7 +93,13 @@ export function useCustomCalendar(openStore: () => Promise<LocalAssetStore> = op
     }
   }
 
-  function applyListing(listing: LocalAssetListing) {
+  /** What a read found, beyond the entries themselves. */
+  interface ListingReading {
+    /** The document was written in an older shape and should be stored in the current one. */
+    upgraded: boolean
+  }
+
+  function applyListing(listing: LocalAssetListing): ListingReading {
     usage.value = listing.usage
 
     const unreadable = listing.unreadable.find(item => item.id === CUSTOM_CALENDAR_ASSET_ID)
@@ -94,7 +108,7 @@ export function useCustomCalendar(openStore: () => Promise<LocalAssetStore> = op
       entries.value = []
       rawDocument.value = ''
       documentStatus.value = unreadable.reason === 'corrupt' ? 'corrupt' : 'unsupported-version'
-      return false
+      return { upgraded: false }
     }
 
     const stored = listing.records.find(item => item.id === CUSTOM_CALENDAR_ASSET_ID)
@@ -103,7 +117,7 @@ export function useCustomCalendar(openStore: () => Promise<LocalAssetStore> = op
       entries.value = []
       rawDocument.value = ''
       documentStatus.value = 'ready'
-      return false
+      return { upgraded: false }
     }
 
     const contents = stored.payload.format === 'text' ? stored.payload.text : ''
@@ -113,19 +127,19 @@ export function useCustomCalendar(openStore: () => Promise<LocalAssetStore> = op
     if (reading.status === 'corrupt' || reading.status === 'unsupported-version') {
       entries.value = []
       documentStatus.value = reading.status
-      return false
+      return { upgraded: false }
     }
 
     entries.value = reading.entries
     documentStatus.value = 'ready'
 
     // Storing the upgraded shape saves the next read from repeating the work.
-    return reading.status === 'upgraded'
+    return { upgraded: reading.status === 'upgraded' }
   }
 
   async function refresh() {
     const listing = await run(() => repository.list())
-    if (listing && applyListing(listing)) await write(entries.value)
+    if (listing && applyListing(listing).upgraded) await write(entries.value)
     ready.value = true
   }
 
@@ -133,7 +147,7 @@ export function useCustomCalendar(openStore: () => Promise<LocalAssetStore> = op
   async function write(next: CustomCalendarEntry[]): Promise<boolean> {
     const listing = await run(() => repository.put(CUSTOM_CALENDAR_ASSET_ID, {
       kind: 'calendar',
-      name: record.value?.name ?? CUSTOM_CALENDAR_ASSET_NAME,
+      name: record.value?.name ?? options.defaultName(),
       payload: {
         format: 'text',
         mediaType: 'application/json',
@@ -225,7 +239,7 @@ export function useCustomCalendar(openStore: () => Promise<LocalAssetStore> = op
       fileError.value = null
       if (!writable()) return null
 
-      const reading = parseCustomCalendarFile(await file.text())
+      const reading = parseCustomCalendarFile(await file.text(), taiwanCalendarPublishableYears)
       if (!reading.ok) {
         fileError.value = reading.code
         return null

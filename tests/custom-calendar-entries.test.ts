@@ -7,6 +7,7 @@ import {
   CUSTOM_ENTRY_TITLE_MAX,
   entriesInRange,
   entryDates,
+  isEntryWithinRules,
   updateEntry,
   validateEntryDraft,
   type CustomCalendarEntry,
@@ -90,6 +91,14 @@ describe('validating what a visitor may save', () => {
       { field: 'title', code: 'title-required' },
       { field: 'dates', code: 'end-before-start' },
     ])
+  })
+})
+
+describe('checking an entry that already exists', () => {
+  it('asks the same question of a stored entry that the form asks of a draft', () => {
+    expect(isEntryWithinRules(entry(), coverage)).toBe(true)
+    expect(isEntryWithinRules(entry({ startDate: '2099-01-01', endDate: '2099-01-01' }), coverage)).toBe(false)
+    expect(isEntryWithinRules(entry({ endDate: '2027-12-31' }), coverage), '超過 366 天的期間同樣不接受').toBe(false)
   })
 })
 

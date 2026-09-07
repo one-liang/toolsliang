@@ -35,55 +35,53 @@ import {
   describeSolarTerm,
   describeYearOption,
   getTaiwanCalendarCopy,
-  taiwanCalendarViewErrorMessage,
   weekdayFullNames,
   weekdayNames,
 } from '@/features/tools/taiwan-calendar/content'
-import type { CalendarYear } from '@/features/tools/taiwan-calendar/domain/calendar'
-import { taiwanCalendarContentReview } from '@/features/tools/taiwan-calendar/domain/sources'
-import {
-  availableYears,
-  clampToPublishedYear,
-  loadCalendarYear,
-  type YearRefusal,
-} from '@/features/tools/taiwan-calendar/domain/years'
+import { availableYears } from '@/features/tools/taiwan-calendar/domain/years'
 
 /**
  * The custom calendar draws two layers and never confuses them. The office
- * calendar comes from the Taiwan calendar's baked year modules and is read-only
- * here; the visitor's own entries come from this device's browser database and
- * are the only thing this workspace writes. Every day says what each layer
- * claims, so an override can be seen for what it is: a note this person made,
- * not an announcement.
+ * calendar comes from the shared month view and is read-only here; the
+ * visitor's own entries come from this device's browser database and are the
+ * only thing this workspace writes. Every day says what each layer claims, so
+ * an override can be seen for what it is: a note this person made, not an
+ * announcement.
  *
  * Nothing about the visit leaves the tab. The year is component state rather
  * than a URL, the year modules are static assets of this build, and an entry is
  * only ever written to the device or to a file the visitor asked to download.
  */
 
-/** Prerendering has no device clock, so the reviewed year is what a first paint shows. */
-const REVIEWED_YEAR = clampToPublishedYear(Number(taiwanCalendarContentReview.reviewedAt.slice(0, 4)))
-
 const { locale } = useAppLocale()
-const {
-  entries, record, usage, documentStatus, rawDocument, error, fileError, busy, ready,
-  saveEntry, removeEntry, clearAll, exportFile, exportRaw, importFile,
-} = useCustomCalendar()
-
 const text = computed(() => getCustomCalendarCopy(locale.value))
 const officialText = computed(() => getTaiwanCalendarCopy(locale.value))
 const status = computed(() => customCalendarStatus(locale.value))
 const caveats = computed(() => getCustomCalendarCaveats(locale.value))
 
-const year = ref(REVIEWED_YEAR)
-const month = ref(1)
-const calendar = shallowRef<CalendarYear>()
-const refusal = ref<YearRefusal>()
-const loading = ref(false)
-/** Resolved on the client only: the page is prerendered, the device clock is not. */
-const today = ref('')
-const selectedDate = ref('')
-const focusedDate = ref('')
+const region = ref<ComponentPublicInstance | null>(null)
+
+/** Scoped to this workspace, so one instance never moves focus inside another. */
+function withinWorkspace(): ParentNode {
+  const root = region.value?.$el
+  return root instanceof HTMLElement ? root : document
+}
+
+const {
+  year, month, calendar, refusalMessage, loading, today, selectedDate, days: officialDays,
+  weeks: officialWeeks, monthLabel, state: monthState, canGoBack, canGoForward,
+  readToday, showYear, showToday, stepMonth, selectDate, moveFocus, isTabStop,
+} = useCalendarMonth({
+  locale,
+  years: availableYears,
+  scope: withinWorkspace,
+  onNavigate: () => closeForm(),
+})
+
+const {
+  entries, record, usage, documentStatus, rawDocument, error, fileError, busy, ready,
+  saveEntry, removeEntry, clearAll, exportFile, exportRaw, importFile,
+} = useCustomCalendar({ defaultName: () => text.value.assetName })
 
 const editing = ref<'closed' | 'new' | string>('closed')
 const issues = ref<CustomEntryIssue[]>([])
@@ -91,31 +89,14 @@ const announcement = ref('')
 const pendingDelete = ref<string | null>(null)
 const pendingClear = ref(false)
 const statusRegion = ref<HTMLElement | null>(null)
-const region = ref<ComponentPublicInstance | null>(null)
 
-/** Scoped to this workspace, so one instance never moves focus inside another. */
-function withinWorkspace() {
-  const root = region.value?.$el
-  return root instanceof HTMLElement ? root : document
-}
-
-let pending: AbortController | undefined
-/** A day the grid should focus once it renders, which can be after a year loads. */
-let focusRequest = ''
-
-const monthStart = computed(() => `${year.value}-${pad(month.value)}-01`)
-const monthEnd = computed(() => `${year.value}-${pad(month.value)}-${pad(daysInMonth(year.value, month.value))}`)
-const officialDays = computed(() => calendar.value?.days.filter(day => day.month === month.value) ?? [])
+const monthStart = computed(() => officialDays.value[0]?.date ?? '')
+const monthEnd = computed(() => officialDays.value[officialDays.value.length - 1]?.date ?? '')
 const days = computed(() => applyCustomEntries(officialDays.value, entries.value))
+/** The official grid, with each day carrying whatever this device says about it. */
 const weeks = computed<Array<Array<CustomCalendarDay | null>>>(() => {
-  const cells = days.value
-  if (!cells.length) return []
-
-  const leading = cells[0]!.day.isoWeekday % 7
-  const padded: Array<CustomCalendarDay | null> = [...Array.from({ length: leading }, () => null), ...cells]
-  while (padded.length % 7) padded.push(null)
-
-  return Array.from({ length: padded.length / 7 }, (_, week) => padded.slice(week * 7, week * 7 + 7))
+  const byDate = new Map(days.value.map(day => [day.day.date, day]))
+  return officialWeeks.value.map(week => week.map(day => day ? byDate.get(day.date) ?? null : null))
 })
 const selectedDay = computed(() => days.value.find(day => day.day.date === selectedDate.value))
 const monthEntries = computed(() => entriesInRange(entries.value, monthStart.value, monthEnd.value))
@@ -130,155 +111,10 @@ const savedAt = computed(() => record.value
   ? new Intl.DateTimeFormat(locale.value === 'en' ? 'en' : 'zh-TW', { dateStyle: 'medium', timeStyle: 'short' })
       .format(new Date(record.value.updatedAt))
   : '')
-const monthLabel = computed(() => locale.value === 'en'
-  ? `${new Date(Date.UTC(year.value, month.value - 1, 1)).toLocaleString('en', { month: 'long', timeZone: 'UTC' })} ${year.value}`
-  : `${year.value} 年 ${month.value} 月`)
-/** What the workspace is doing, so a test and an end-to-end run wait on the same signal. */
-const state = computed(() => loading.value || !ready.value ? 'loading' : calendar.value ? 'ready' : 'unavailable')
-const canGoBack = computed(() => monthExists(year.value, month.value, -1))
-const canGoForward = computed(() => monthExists(year.value, month.value, 1))
-const refusalMessage = computed(() => refusal.value
-  ? taiwanCalendarViewErrorMessage(refusal.value.code, refusal.value.year, locale.value)
-  : '')
+/** The device has to be read before the workspace can promise anything about it. */
+const state = computed(() => ready.value ? monthState.value : 'loading')
 
-onMounted(() => {
-  const now = new Date()
-  today.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  showToday()
-})
-
-onBeforeUnmount(() => pending?.abort())
-
-watch(year, loadYear, { immediate: true })
-watch(weeks, () => nextTick(applyFocusRequest), { flush: 'post' })
-
-/**
- * Only one year is ever in flight: switching year abandons the previous load so
- * a slow module cannot paint over the year that is on screen now.
- */
-async function loadYear() {
-  pending?.abort()
-  const controller = new AbortController()
-  pending = controller
-  loading.value = true
-
-  const load = await loadCalendarYear(year.value, { signal: controller.signal })
-  if (controller.signal.aborted || !load.ok && 'cancelled' in load) return
-
-  loading.value = false
-  if (load.ok) {
-    calendar.value = load.calendar
-    refusal.value = undefined
-    return
-  }
-
-  calendar.value = undefined
-  refusal.value = load.refusal
-}
-
-function showYear(next: number) {
-  if (next === year.value) return
-
-  year.value = next
-  month.value = 1
-  closeForm()
-  selectedDate.value = ''
-  focusedDate.value = ''
-}
-
-function showToday() {
-  if (!today.value) return
-
-  const target = clampToPublishedYear(Number(today.value.slice(0, 4)))
-  if (String(target) !== today.value.slice(0, 4)) return
-
-  year.value = target
-  month.value = Number(today.value.slice(5, 7))
-  selectedDate.value = today.value
-  focusedDate.value = today.value
-  requestFocus(today.value)
-}
-
-function stepMonth(step: number) {
-  if (!monthExists(year.value, month.value, step)) return
-
-  const next = month.value + step
-  if (next < 1 || next > 12) {
-    year.value += step
-    month.value = next < 1 ? 12 : 1
-  }
-  else {
-    month.value = next
-  }
-  closeForm()
-  focusedDate.value = ''
-}
-
-function monthExists(fromYear: number, fromMonth: number, step: number) {
-  const next = fromMonth + step
-  if (next >= 1 && next <= 12) return true
-
-  return availableYears.includes(fromYear + step)
-}
-
-function selectDay(day: CustomCalendarDay) {
-  selectDate(day.day.date)
-}
-
-/** Opening an entry from the month list moves the grid to the day it starts on. */
-function selectDate(date: string) {
-  const targetYear = Number(date.slice(0, 4))
-  if (!availableYears.includes(targetYear)) return
-
-  if (targetYear !== year.value) year.value = targetYear
-  month.value = Number(date.slice(5, 7))
-  selectedDate.value = date
-  focusedDate.value = date
-  closeForm()
-}
-
-/**
- * One day holds the tab stop and the arrow keys move it, so Tab always leaves
- * the grid instead of walking through a month one day at a time.
- */
-function moveFocus(from: CustomCalendarDay, key: string) {
-  const steps: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
-  const step = steps[key]
-  if (step === undefined) return
-
-  const target = shiftDate(from.day.date, step)
-  const targetYear = Number(target.slice(0, 4))
-  if (!availableYears.includes(targetYear)) return
-
-  focusedDate.value = target
-  if (targetYear !== year.value) year.value = targetYear
-  month.value = Number(target.slice(5, 7))
-  requestFocus(target)
-}
-
-/**
- * Focus is asked for, not taken: the day may belong to a year that is still
- * loading, so the request waits for the grid that will hold it.
- */
-function requestFocus(date: string) {
-  focusRequest = date
-  nextTick(applyFocusRequest)
-}
-
-function applyFocusRequest() {
-  if (!focusRequest) return
-
-  const cell = withinWorkspace().querySelector<HTMLButtonElement>(`.calendar-day[data-date="${focusRequest}"]`)
-  if (!cell) return
-
-  focusRequest = ''
-  cell.focus()
-}
-
-/** The one day the grid keeps in the tab order: the focused day, else the first. */
-function isTabStop(day: CustomCalendarDay) {
-  return day.day.date === (focusedDate.value || days.value[0]?.day.date)
-}
+onMounted(readToday)
 
 function openNew() {
   if (!selectedDate.value) return
@@ -331,14 +167,14 @@ async function announce(message: string) {
 }
 
 async function submitEntry(draft: CustomCalendarEntryDraft) {
-  const id = editing.value === 'new' ? undefined : editing.value
-  const outcome = await saveEntry(draft, id === 'closed' ? undefined : id)
+  const editingId = editing.value === 'new' || editing.value === 'closed' ? undefined : editing.value
+  const outcome = await saveEntry(draft, editingId)
   issues.value = outcome.ok ? [] : outcome.issues
   if (!outcome.ok) return
 
   closeForm()
-  selectedDate.value = outcome.entry.startDate
-  await announce(id ? status.value.updated(outcome.entry.title) : status.value.saved(outcome.entry.title))
+  selectDate(outcome.entry.startDate)
+  await announce(editingId ? status.value.updated(outcome.entry.title) : status.value.saved(outcome.entry.title))
 }
 
 async function confirmDelete(entry: CustomCalendarEntry) {
@@ -372,31 +208,29 @@ function dayFootnote(day: CustomCalendarDay) {
   return day.day.solarTerm ? day.day.solarTerm.name : describeLunarDayMark(day.day.lunar, locale.value)
 }
 
+/**
+ * What this device says about a day, in the cell itself. A day carrying only
+ * notes still gets a word, so the tinted border is never the only sign that
+ * something was saved there.
+ */
+function customDayMark(day: CustomCalendarDay) {
+  if (day.override) return customEntryMarkLabels[day.override][locale.value]
+
+  return day.entries.length ? customEntryMarkLabels.note[locale.value] : ''
+}
+
 function dayLabel(day: CustomCalendarDay) {
-  const custom = day.entries.map(entry => entry.title)
   const parts = [
     describeCivilDate(day.day.date, day.day.rocYear, locale.value),
     weekdayFullNames[locale.value][day.day.isoWeekday % 7]!,
     describeOfficialDay(day.day.official, locale.value),
-    day.override ? `${text.value.customLayerLabel}：${customEntryMarkLabels[day.override][locale.value]}` : '',
+    day.entries.length ? `${text.value.customLayerLabel}：${customDayMark(day)}` : '',
     day.changed ? text.value.changedLabel : '',
-    custom.join(locale.value === 'en' ? ', ' : '、'),
+    day.entries.map(entry => entry.title).join(locale.value === 'en' ? ', ' : '、'),
     day.day.date === today.value ? officialText.value.todayBadge : '',
   ]
 
   return parts.filter(Boolean).join(locale.value === 'en' ? ', ' : '，')
-}
-
-function daysInMonth(fromYear: number, fromMonth: number) {
-  return new Date(Date.UTC(fromYear, fromMonth, 0)).getUTCDate()
-}
-
-function shiftDate(date: string, days_: number) {
-  return new Date(Date.parse(`${date}T00:00:00Z`) + days_ * 86_400_000).toISOString().slice(0, 10)
-}
-
-function pad(value: number) {
-  return String(value).padStart(2, '0')
 }
 </script>
 
@@ -523,22 +357,19 @@ function pad(value: number) {
                 :data-kind="day.day.official.kind"
                 :data-custom="day.override ?? (day.entries.length ? 'note' : undefined)"
                 :data-changed="day.changed ? 'true' : undefined"
-                :tabindex="isTabStop(day) ? 0 : -1"
+                :tabindex="isTabStop(day.day.date) ? 0 : -1"
                 :aria-label="dayLabel(day)"
                 :aria-pressed="day.day.date === selectedDate"
                 :aria-current="day.day.date === today ? 'date' : undefined"
-                @click="selectDay(day)"
-                @keydown.left.right.up.down.prevent="moveFocus(day, ($event as KeyboardEvent).key)"
+                @click="selectDate(day.day.date)"
+                @keydown.left.right.up.down.prevent="moveFocus(day.day.date, ($event as KeyboardEvent).key)"
               >
                 <span class="calendar-day__number">{{ day.day.dayOfMonth }}</span>
                 <span class="calendar-day__lunar">{{ dayFootnote(day) }}</span>
                 <span v-if="describeDayMark(day.day.official, locale)" class="calendar-day__mark">
                   {{ describeDayMark(day.day.official, locale) }}
                 </span>
-                <span v-if="day.override" class="calendar-day__custom">
-                  {{ customEntryMarkLabels[day.override][locale] }}
-                </span>
-                <span v-for="entry in day.entries" :key="entry.id" class="calendar-day__entry">{{ entry.title }}</span>
+                <span v-if="customDayMark(day)" class="calendar-day__custom">{{ customDayMark(day) }}</span>
               </button>
             </td>
           </tr>
@@ -678,7 +509,10 @@ function pad(value: number) {
           </Button>
           <p class="field-help">{{ text.exportHint }}</p>
         </div>
-        <div class="custom-calendar-storage__action custom-calendar-storage__import">
+        <div
+          class="custom-calendar-storage__action custom-calendar-storage__import"
+          :class="{ 'custom-calendar-storage__import--disabled': documentStatus !== 'ready' }"
+        >
           <label for="custom-calendar-import">
             <Upload :size="17" aria-hidden="true" />
             {{ text.importAction }}

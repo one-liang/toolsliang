@@ -100,7 +100,7 @@ test('新增、編輯、刪除自訂項目，並在重新載入後保留', async
   const response = await gotoTool(page)
   expect(response?.ok(), `${TOOL_ROUTE} 應成功載入`).toBe(true)
 
-  await expect(page.locator('.custom-calendar-boundary')).toContainText('只保存在這台裝置');
+  await expect(page.locator('.custom-calendar-boundary')).toContainText('只保存在這台裝置')
   await expect(page.locator('.custom-calendar-storage')).toContainText('這台裝置還沒有自訂行事曆內容')
 
   await openDay(page, '2026-09-18')
@@ -151,6 +151,11 @@ test('官方日別與自訂項目分成兩層，差異寫成文字', async ({ pa
   const cell = day(page, '2026-09-18')
   await expect(cell.locator('.calendar-day__custom'), '格子內要有文字，而不是只有顏色').toHaveText('自訂放假')
   await expect(cell).toHaveAttribute('data-changed', 'true')
+
+  // 只留備註的日子同樣要有文字，否則格子的底色就成了唯一線索。
+  await openDay(page, '2026-09-21')
+  await addEntry(page, { title: `${ENTRY_TITLE}-3`, mark: 'note' })
+  await expect(day(page, '2026-09-21').locator('.calendar-day__custom')).toHaveText('自訂備註')
 
   // 中秋節仍照辦公日曆表顯示，自訂上班不會改寫它。
   await openDay(page, '2026-09-25')
@@ -216,6 +221,23 @@ test('匯出由使用者觸發、檔名只帶日期，匯入後恢復同一份�
   await expect(page.locator('.custom-calendar-status')).toContainText('已匯入 1 筆新項目')
   await openDay(page, '2026-09-18')
   await expect(page.locator('.custom-calendar-entry')).toContainText(IMPORTED_TITLE)
+})
+
+test('備份檔裡不符合規則的項目整份拒絕，不寫入畫不出來的年度', async ({ page }) => {
+  await gotoTool(page)
+
+  await page.setInputFiles('#custom-calendar-import', {
+    name: 'out-of-range.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(backupFile([
+      { id: 'canary-2099', title: IMPORTED_TITLE, startDate: '2099-01-01', endDate: '2099-01-01', mark: 'day-off' },
+    ]), 'utf8'),
+  })
+
+  const alert = page.locator('.custom-calendar-error')
+  await expect(alert).toContainText('不符合目前規則')
+  await expect(alert).toContainText('整份都沒有匯入')
+  await expect(page.locator('.custom-calendar-storage')).toContainText('這台裝置還沒有自訂行事曆內容')
 })
 
 test('讀不到的匯入檔不改變裝置上的項目', async ({ page }) => {
@@ -361,7 +383,7 @@ test('英文頁以英文說明與拒絕', async ({ page }) => {
   await page.locator('input[name="custom-entry-mark"][value="day-off"]').check()
   await page.locator('[data-entry-action="save"]').click()
 
-  await expect(page.locator('.custom-calendar-layers__custom')).toContainText('Day off')
+  await expect(page.locator('.custom-calendar-layers__custom')).toContainText('Custom day off')
   await expect(page.locator('.custom-calendar-caveats')).toContainText('never sync as cloud preferences')
 })
 

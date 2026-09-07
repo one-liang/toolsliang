@@ -13,67 +13,38 @@ import {
   getTaiwanCalendarCaveats,
   getTaiwanCalendarCopy,
   officialDayKindLabels,
-  taiwanCalendarViewErrorMessage,
   weekdayFullNames,
   weekdayNames,
 } from '@/features/tools/taiwan-calendar/content'
-import {
-  addDays,
-  citedEditions,
-  findDay,
-  getMonthGrid,
-  type CalendarDay,
-  type CalendarYear,
-} from '@/features/tools/taiwan-calendar/domain/calendar'
+import { citedEditions, type CalendarDay } from '@/features/tools/taiwan-calendar/domain/calendar'
 import { officialDayKinds } from '@/features/tools/taiwan-calendar/domain/reference'
 import {
-  taiwanCalendarContentReview,
   taiwanCalendarDatasets,
   taiwanCalendarReferenceVersion,
 } from '@/features/tools/taiwan-calendar/domain/sources'
-import {
-  availableYears,
-  clampToPublishedYear,
-  loadCalendarYear,
-  selectableYears,
-  type YearRefusal,
-} from '@/features/tools/taiwan-calendar/domain/years'
+import { selectableYears } from '@/features/tools/taiwan-calendar/domain/years'
 
 /**
  * The calendar reads a baked year and shows it. It decides nothing about dates:
  * every kind, lunar date and solar term on screen came out of the year module,
  * and a year the module cannot supply is refused in the reviewed words rather
- * than drawn as an empty grid.
+ * than drawn as an empty grid. Moving between months, years and days is the
+ * shared month view, so both calendar tools navigate identically.
  *
  * Nothing about the visit leaves the tab. The year is component state, never a
  * URL, and the year modules are static assets of this build, so opening a year
  * makes no request that could say which year someone is looking at.
  */
 
-/** Prerendering has no device clock, so the reviewed year is what a first paint shows. */
-const REVIEWED_YEAR = clampToPublishedYear(Number(taiwanCalendarContentReview.reviewedAt.slice(0, 4)))
-
 const { locale } = useAppLocale()
 const text = computed(() => getTaiwanCalendarCopy(locale.value))
-const year = ref(REVIEWED_YEAR)
-const month = ref(1)
-const calendar = shallowRef<CalendarYear>()
-const refusal = ref<YearRefusal>()
-const loading = ref(false)
-/** Resolved on the client only: the page is prerendered, the device clock is not. */
-const today = ref('')
-const selectedDate = ref('')
-const focusedDate = ref('')
+const {
+  year, month, calendar, refusalMessage, loading, today, selectedDate, selectedDay, weeks,
+  monthLabel, state, canGoBack, canGoForward, readToday, showYear, showToday, stepMonth,
+  selectDate, moveFocus, isTabStop,
+} = useCalendarMonth({ locale })
 
-let pending: AbortController | undefined
-/** A day the grid should focus once it renders, which can be after a year loads. */
-let focusRequest = ''
-
-const weeks = computed(() => calendar.value ? getMonthGrid(calendar.value, month.value) : [])
 const monthDays = computed(() => weeks.value.flat().filter((day): day is CalendarDay => Boolean(day)))
-const selectedDay = computed(() => calendar.value && selectedDate.value
-  ? findDay(calendar.value, selectedDate.value)
-  : undefined)
 /** The agenda is the same month read as a list: holidays, adjusted days and terms. */
 const markedDays = computed(() => monthDays.value.filter(day =>
   day.solarTerm || (day.official.kind !== 'workday' && day.official.kind !== 'weekend')))
@@ -94,144 +65,9 @@ const citedSources = computed(() => {
   }))
 })
 const legend = computed(() => officialDayKinds.map(kind => ({ kind, label: officialDayKindLabels[kind][locale.value] })))
-const refusalMessage = computed(() => refusal.value
-  ? taiwanCalendarViewErrorMessage(refusal.value.code, refusal.value.year, locale.value)
-  : '')
-const monthLabel = computed(() => locale.value === 'en'
-  ? `${new Date(Date.UTC(year.value, month.value - 1, 1)).toLocaleString('en', { month: 'long', timeZone: 'UTC' })} ${year.value}`
-  : `${year.value} 年 ${month.value} 月`)
 const gridCaption = computed(() => `${monthLabel.value}・${text.value.gridLabel}`)
-/** What the workspace is doing, so a test and an end-to-end run wait on the same signal. */
-const state = computed(() => loading.value ? 'loading' : calendar.value ? 'ready' : 'unavailable')
-const canGoBack = computed(() => monthExists(year.value, month.value, -1))
-const canGoForward = computed(() => monthExists(year.value, month.value, 1))
 
-onMounted(() => {
-  const now = new Date()
-  today.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  showToday()
-})
-
-onBeforeUnmount(() => pending?.abort())
-
-watch(year, loadYear, { immediate: true })
-watch(weeks, () => nextTick(applyFocusRequest), { flush: 'post' })
-
-/**
- * Only one year is ever in flight: switching year abandons the previous load so
- * a slow module cannot paint over the year that is on screen now.
- */
-async function loadYear() {
-  pending?.abort()
-  const controller = new AbortController()
-  pending = controller
-  loading.value = true
-
-  const load = await loadCalendarYear(year.value, { signal: controller.signal })
-  // A newer year is already loading; it owns the loading flag and the screen.
-  if (controller.signal.aborted || !load.ok && 'cancelled' in load) return
-
-  loading.value = false
-  if (load.ok) {
-    calendar.value = load.calendar
-    refusal.value = undefined
-    if (!findDay(load.calendar, focusedDate.value)) focusedDate.value = `${year.value}-${pad(month.value)}-01`
-    return
-  }
-
-  calendar.value = undefined
-  refusal.value = load.refusal
-}
-
-function showYear(next: number) {
-  if (next === year.value) return
-  year.value = next
-  month.value = 1
-  selectedDate.value = ''
-  focusedDate.value = ''
-}
-
-function showToday() {
-  if (!today.value) return
-
-  const target = clampToPublishedYear(Number(today.value.slice(0, 4)))
-  if (String(target) !== today.value.slice(0, 4)) return
-
-  year.value = target
-  month.value = Number(today.value.slice(5, 7))
-  selectedDate.value = today.value
-  focusedDate.value = today.value
-  requestFocus(today.value)
-}
-
-function stepMonth(step: number) {
-  if (!monthExists(year.value, month.value, step)) return
-
-  const next = month.value + step
-  if (next < 1 || next > 12) {
-    year.value += step
-    month.value = next < 1 ? 12 : 1
-  }
-  else {
-    month.value = next
-  }
-  focusedDate.value = ''
-}
-
-function monthExists(fromYear: number, fromMonth: number, step: number) {
-  const next = fromMonth + step
-  if (next >= 1 && next <= 12) return true
-
-  return availableYears.includes(fromYear + step)
-}
-
-function selectDay(day: CalendarDay) {
-  selectedDate.value = day.date
-  focusedDate.value = day.date
-}
-
-/**
- * One day holds the tab stop and the arrow keys move it, so Tab always leaves
- * the grid instead of walking through a month one day at a time.
- */
-function moveFocus(from: CalendarDay, key: string) {
-  const steps: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
-  const step = steps[key]
-  if (step === undefined) return
-
-  const target = addDays(from.date, step)
-  const targetYear = Number(target.slice(0, 4))
-  if (!availableYears.includes(targetYear)) return
-
-  focusedDate.value = target
-  if (targetYear !== year.value) year.value = targetYear
-  month.value = Number(target.slice(5, 7))
-  requestFocus(target)
-}
-
-/**
- * Focus is asked for, not taken: the day may belong to a year that is still
- * loading, so the request waits for the grid that will hold it.
- */
-function requestFocus(date: string) {
-  focusRequest = date
-  nextTick(applyFocusRequest)
-}
-
-function applyFocusRequest() {
-  if (!focusRequest) return
-
-  const cell = document.querySelector<HTMLButtonElement>(`.calendar-day[data-date="${focusRequest}"]`)
-  if (!cell) return
-
-  focusRequest = ''
-  cell.focus()
-}
-
-/** The one day the grid keeps in the tab order: the focused day, else the first. */
-function isTabStop(day: CalendarDay) {
-  return day.date === (focusedDate.value || monthDays.value[0]?.date)
-}
+onMounted(readToday)
 
 function dayLabel(day: CalendarDay) {
   const parts = [
@@ -256,10 +92,6 @@ function dayFootnote(day: CalendarDay) {
 
 function dayMark(day: CalendarDay) {
   return describeDayMark(day.official, locale.value)
-}
-
-function pad(value: number) {
-  return String(value).padStart(2, '0')
 }
 </script>
 
@@ -342,12 +174,12 @@ function pad(value: number) {
                 }"
                 :data-date="day.date"
                 :data-kind="day.official.kind"
-                :tabindex="isTabStop(day) ? 0 : -1"
+                :tabindex="isTabStop(day.date) ? 0 : -1"
                 :aria-label="dayLabel(day)"
                 :aria-pressed="day.date === selectedDate"
                 :aria-current="day.date === today ? 'date' : undefined"
-                @click="selectDay(day)"
-                @keydown.left.right.up.down.prevent="moveFocus(day, ($event as KeyboardEvent).key)"
+                @click="selectDate(day.date)"
+                @keydown.left.right.up.down.prevent="moveFocus(day.date, ($event as KeyboardEvent).key)"
               >
                 <span class="calendar-day__number">{{ day.dayOfMonth }}</span>
                 <span class="calendar-day__lunar">{{ dayFootnote(day) }}</span>
@@ -396,7 +228,7 @@ function pad(value: number) {
           <p v-if="!markedDays.length" class="calendar-detail__empty">{{ text.agendaEmpty }}</p>
           <ul v-else class="calendar-agenda">
             <li v-for="day in markedDays" :key="day.date" class="calendar-agenda__item" :data-date="day.date">
-              <button type="button" class="calendar-agenda__button" @click="selectDay(day)">
+              <button type="button" class="calendar-agenda__button" @click="selectDate(day.date)">
                 <span class="calendar-agenda__date">{{ day.month }}/{{ day.dayOfMonth }}</span>
                 <span class="calendar-agenda__text">
                   <template v-if="day.solarTerm">{{ describeSolarTerm(day.solarTerm, locale) }}</template>

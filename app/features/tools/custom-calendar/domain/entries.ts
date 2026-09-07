@@ -137,6 +137,16 @@ function validateDates(draft: CustomCalendarEntryDraft, limits: CustomEntryLimit
   return []
 }
 
+/**
+ * Whether an entry already in this shape still obeys the reviewed rules. An
+ * imported file goes through the same question the form asks: an entry outside
+ * the covered years, or longer than the limits, would be stored but unreachable
+ * in a grid that only draws those years.
+ */
+export function isEntryWithinRules(entry: CustomCalendarEntry, coverage: { firstYear: number, lastYear: number }): boolean {
+  return validateEntryDraft(entry, { ...coverage, existing: 0 }).length === 0
+}
+
 export function createEntry(
   draft: CustomCalendarEntryDraft,
   options: { id: string, now: Date },
@@ -179,10 +189,6 @@ export function entryDates(entry: CustomCalendarEntry, from?: string, to?: strin
   for (let date = start; date <= end; date = addDays(date, 1)) dates.push(date)
 
   return dates
-}
-
-export function coversDate(entry: CustomCalendarEntry, date: string): boolean {
-  return entry.startDate <= date && date <= entry.endDate
 }
 
 /** Every entry touching a window, in the order a list should read them. */

@@ -1,6 +1,7 @@
 import {
   isCalendarDate,
   isCustomEntryMark,
+  isEntryWithinRules,
   sortEntries,
   type CustomCalendarEntry,
 } from './entries'
@@ -35,7 +36,7 @@ export type CustomCalendarReading =
   | { status: 'unsupported-version' }
   | { status: 'corrupt' }
 
-export const customCalendarFileErrorCodes = ['invalid-file', 'unsupported-file-version', 'empty-file', 'too-many-entries'] as const
+export const customCalendarFileErrorCodes = ['invalid-file', 'unsupported-file-version', 'empty-file', 'refused-entry', 'too-many-entries'] as const
 export type CustomCalendarFileErrorCode = typeof customCalendarFileErrorCodes[number]
 
 export type CustomCalendarFileReading =
@@ -79,9 +80,15 @@ export function readCustomCalendarDocument(raw: string): CustomCalendarReading {
 
 /**
  * All or nothing. One unreadable entry refuses the whole file, so an import can
- * never leave a device holding half of a backup the visitor believed in.
+ * never leave a device holding half of a backup the visitor believed in — and a
+ * readable entry that breaks the reviewed rules is refused just as firmly,
+ * because it would be saved into a year this tool never draws and could then
+ * only be removed by clearing everything.
  */
-export function parseCustomCalendarFile(raw: string): CustomCalendarFileReading {
+export function parseCustomCalendarFile(
+  raw: string,
+  coverage: { firstYear: number, lastYear: number },
+): CustomCalendarFileReading {
   const document = parseDocument(raw)
   if (!document) return { ok: false, code: 'invalid-file' }
   if (document.version > CUSTOM_CALENDAR_DOCUMENT_VERSION) return { ok: false, code: 'unsupported-file-version' }
@@ -89,6 +96,7 @@ export function parseCustomCalendarFile(raw: string): CustomCalendarFileReading 
   const entries = readEntries(document.entries)
   if (!entries) return { ok: false, code: 'invalid-file' }
   if (!entries.length) return { ok: false, code: 'empty-file' }
+  if (entries.some(entry => !isEntryWithinRules(entry, coverage))) return { ok: false, code: 'refused-entry' }
 
   return { ok: true, entries }
 }
@@ -108,15 +116,21 @@ export function mergeImportedEntries(
   existing: CustomCalendarEntry[],
   incoming: CustomCalendarEntry[],
 ): ImportMerge {
+  const owned = new Set(existing.map(entry => entry.id))
   const merged = new Map(existing.map(entry => [entry.id, entry]))
-  let replaced = 0
+  // A file that names one id twice describes one entry, so the counts follow
+  // the ids the device ends up holding rather than the lines in the file.
+  for (const entry of incoming) merged.set(entry.id, entry)
 
-  for (const entry of incoming) {
-    if (merged.has(entry.id)) replaced += 1
-    merged.set(entry.id, entry)
-  }
+  const arriving = new Set(incoming.map(entry => entry.id))
+  const replaced = [...arriving].filter(id => owned.has(id)).length
 
-  return { entries: sortEntries([...merged.values()]), added: incoming.length - replaced, replaced }
+  return { entries: sortEntries([...merged.values()]), added: arriving.size - replaced, replaced }
+}
+
+/** A real instant: the conflict on a day is settled by whichever entry is newer. */
+function isTimestamp(value: unknown): value is string {
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value))
 }
 
 function parseDocument(raw: string): { version: number, entries: unknown[] } | null {
@@ -161,7 +175,7 @@ function readEntry(value: unknown): CustomCalendarEntry | null {
   if (!isCustomEntryMark(entry.mark)) return null
   if (typeof entry.title !== 'string' || !entry.title.trim()) return null
   if (typeof entry.note !== 'string') return null
-  if (typeof entry.updatedAt !== 'string') return null
+  if (!isTimestamp(entry.updatedAt)) return null
 
   return {
     id: entry.id,
