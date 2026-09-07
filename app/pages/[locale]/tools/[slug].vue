@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
 import { getToolFaq } from '@/features/tools/faq'
 import { buildToolStructuredData } from '@/features/tools/structured-data'
-import { resolveToolWorkspace } from '@/features/tools/workspace-resolver'
+import { getToolWorkspaceAssets, resolveToolWorkspace } from '@/features/tools/workspace-resolver'
 
 definePageMeta({
   layout: 'app-shell',
@@ -20,6 +20,8 @@ const saved = computed(() => isSaved(tool.value.slug))
 const category = computed(() => getCategory(tool.value.category)!)
 const workspace = computed(() => resolveToolWorkspace(tool.value.routeComponentKey)!)
 const faq = computed(() => getToolFaq(tool.value.seo.contentKey, locale.value))
+
+useHead(() => ({ link: getToolWorkspaceAssets(tool.value.routeComponentKey).map(href => ({ rel: 'preload', as: 'fetch', href, crossorigin: 'anonymous' as const })) }))
 
 usePageSeo({
   locale,

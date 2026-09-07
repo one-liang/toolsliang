@@ -73,6 +73,7 @@ toolsliang 採「平靜、快速、可信任的工具桌」：淺色優先、低
 | `card-bg` / `card-border` | `surface` / `border` | 平面卡片與清楚邊界 |
 | `card-shadow` | `none` | default 與 hover 都為 none |
 | `input-bg` / `input-border` | `surface` / `border-strong` | 輸入欄位語意 |
+| `image-preview-max-height` | `400px` | 圖片壓縮比較預覽的高度上限，保持比例、不裁切 |
 | `sidebar-active-bg` | `surface-hover` | 目前導覽項目背景 |
 | `sidebar-active-fg` | `primary-strong` | 目前導覽項目文字與 icon |
 

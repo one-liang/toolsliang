@@ -16,8 +16,11 @@ describe('ToolSearch', () => {
       },
     })
 
-    await wrapper.get('input').setValue('圖片')
+    await wrapper.get('input').setValue('image-resizer')
     expect(wrapper.findAll('.tool-search__result')).toHaveLength(0)
+
+    await wrapper.get('input').setValue('圖片')
+    expect(wrapper.get('.tool-search__result').attributes('href')).toBe('/zh-tw/tools/image-compressor/')
 
     await wrapper.get('input').setValue('支票')
     expect(wrapper.get('.tool-search__result').attributes('href')).toBe('/zh-tw/tools/ntd-uppercase/')

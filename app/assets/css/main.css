@@ -62,6 +62,7 @@
   --duration-slow: 360ms;
   --ease-standard: cubic-bezier(.2, 0, 0, 1);
   --ease-enter: cubic-bezier(.16, 1, .3, 1);
+  --image-preview-max-height: 400px;
   --sidebar-width: 248px;
   --sidebar-collapsed: 76px;
 
@@ -931,3 +932,20 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .motion-dot { translate: 0 !important; }
 }
+
+/* Image compressor: part of the precached shell stylesheet, including before hydration. */
+.image-compressor__picker { padding: 24px; border: 1px dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.image-compressor__picker > svg { display: block; margin-bottom: 12px; color: var(--color-primary-strong); }
+.image-compressor__picker input { height: auto; min-height: 44px; max-width: 100%; }
+.image-compressor__picker input::file-selector-button { min-height: 44px; padding: 8px 12px; margin-right: 8px; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-foreground); }
+.image-compressor__filename { overflow-wrap: anywhere; margin: 16px 0; }
+.image-compressor__settings { padding: 0; margin: 24px 0 0; border: 0; min-width: 0; }
+.image-compressor__settings legend { margin-bottom: 16px; font-weight: 700; }
+.image-compressor__status { margin-top: 16px; }
+.image-compressor .field-error { display: flex; align-items: flex-start; gap: 8px; }
+.image-compressor .field-error svg { flex-shrink: 0; }
+.image-compressor__comparison { margin-top: 24px; }
+.image-compressor__comparison figure { min-width: 0; margin: 0; }
+.image-compressor__comparison figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
+.image-compressor__comparison img { width: 100%; height: auto; max-height: var(--image-preview-max-height); object-fit: contain; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+.image-compressor__download { margin-top: 16px; }
