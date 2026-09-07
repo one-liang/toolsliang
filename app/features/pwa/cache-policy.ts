@@ -151,8 +151,9 @@ export function buildShellPrecacheUrls(): string[] {
  * route payload that client-side navigation between shell pages reads. Without
  * the payload an offline visitor can open a page but not navigate to the next.
  */
-export function buildShellAssetUrls(): string[] {
+export function buildShellAssetUrls(buildId?: string): string[] {
   return [
+    ...(buildId ? [`/_nuxt/builds/meta/${encodeURIComponent(buildId)}.json`] : []),
     ...supportedLocales.map(manifestPath),
     ...buildShellPrecacheUrls().map(route => `${route}_payload.json`),
   ]

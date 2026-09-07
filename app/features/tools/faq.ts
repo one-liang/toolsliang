@@ -1,3 +1,4 @@
+import { imageCompressorFaq } from './image-compressor/content'
 import { customCalendarFaq } from './custom-calendar/content'
 import { deviceTimeFaq } from './device-time/content'
 import { bmiFaq } from './bmi-calculator/content'
@@ -23,6 +24,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'random-picker': randomPickerFaq,
   'taiwan-calendar': taiwanCalendarFaq,
   'device-time': deviceTimeFaq,
+  'image-compressor': imageCompressorFaq,
   'custom-calendar': customCalendarFaq,
 }
 

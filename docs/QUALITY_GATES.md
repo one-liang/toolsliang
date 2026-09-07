@@ -63,3 +63,5 @@ Pull Request 與 `develop` 更新會執行 `.github/workflows/quality.yml`。流
 裝置時間專屬驗證位於 `tests/device-time.test.ts`、`tests/device-time-page.test.ts` 與 `tests/e2e/device-time.spec.ts`。以注入時間驗證跨年、閏日、DST、非整點 UTC offset 與 Intl 降級；透過雙語公開工具頁驗證秒／分鐘邊界更新、背景暫停、前景校正、剪貼簿拒絕與重試、可聚焦的等待狀態、SSR FAQ 與 metadata、無工具讀值傳輸或保存。三瀏覽器另檢查 320／375／768／1024／1440px、文字間距覆寫、200% CSS zoom、light／dark 的 axe 與單次更新 16ms 預算；離線重啟與快取無讀值的 Service Worker 驗證僅在 Chromium 執行。
 
 axe 與 headless 瀏覽器不能取代螢幕閱讀器、完整鍵盤、200% zoom、文字間距與實機觸控檢查；release candidate 仍須完成規格中的人工 checklist。本機效能 smoke budget 也不等於正式環境的 p75 Web Vitals。
+
+圖片壓縮專屬驗證位於 `tests/image-compressor-engine.test.ts`、`tests/image-compressor-workspace.test.ts`、`tests/image-compressor-privacy.test.ts` 與 `tests/e2e/image-compressor.spec.ts`。驗證解碼前 HEIC／HEIF 排除、可用編碼格式、PNG 透明像素、JPEG EXIF 方向與中繼資料清理、WebP 轉換、品質極值、容器大小與工作記憶體限制、逐階段取消、能力及編碼錯誤後重試、Blob URL 與 Worker 釋放。三瀏覽器覆蓋雙語頁、320–1440px、200% zoom、文字間距、light/dark axe、鍵盤及 12 MP 桌面／手機版面效能量測；手機版面量測仍使用本機桌面硬體，不代替參考手機實測。Chromium 另停用 HTTP 快取並延後 Service Worker，確認公開 Worker 程式由 PWA 快取、離線重啟可重新處理，且圖片與檔名不在快取／偏好儲存中。合成素材與限制記錄於 `docs/research/006-image-compressor-engine.md`。

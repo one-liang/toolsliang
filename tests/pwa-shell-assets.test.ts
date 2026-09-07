@@ -62,3 +62,8 @@ describe('shell font extraction', () => {
     expect(extractShellFonts('body{color:red}', cssUrl)).toEqual([])
   })
 })
+
+it('公開 Nuxt 建置資訊必須在首次離線前預先快取', async () => {
+  const { buildShellAssetUrls } = await import('@/features/pwa/cache-policy')
+  expect(buildShellAssetUrls('test-build')).toContain('/_nuxt/builds/meta/test-build.json')
+})

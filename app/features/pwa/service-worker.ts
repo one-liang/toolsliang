@@ -82,7 +82,7 @@ async function precacheShell() {
 
   // Route payloads and the install manifest come first: they are small, and a
   // page starts prefetching payloads for its visible links immediately.
-  await inBatches(buildShellAssetUrls(), url => storeStatic(statics, url))
+  await inBatches(buildShellAssetUrls(BUILD_ID), url => storeStatic(statics, url))
 
   const assets = new Set<string>()
   await inBatches(buildShellPrecacheUrls(), async (url) => {
