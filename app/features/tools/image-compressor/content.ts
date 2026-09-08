@@ -1,17 +1,14 @@
 import type { LocalizedCopy } from '../catalog'
 import type { ToolFaqEntry } from '../faq'
+import { heicMessage, imageInputErrors } from '@/features/images/messages'
 
-export const heicMessage = { 'zh-tw': '第一版不支援 iPhone HEIC／HEIF，請先在裝置上轉為 JPEG、PNG 或 WebP。', en: 'HEIC/HEIF from iPhone is not supported in version one. Convert it to JPEG, PNG, or WebP on your device first.' }
+export { heicMessage }
 export const imageErrors: Record<string, LocalizedCopy> = {
-  unsupported_heic: heicMessage,
-  unsupported_format: { 'zh-tw': '請選擇真正的 JPEG、PNG 或 WebP 圖片，修改副檔名不會轉換格式。', en: 'Choose a JPEG, PNG, or WebP image. Renaming an extension does not convert a file.' },
-  too_large: { 'zh-tw': '圖片超過本機處理上限（25 MiB、2,400 萬像素、單邊 8,192 像素）。請先在裝置上縮小圖片。', en: 'This image exceeds the local limits (25 MiB, 24 megapixels, 8,192 pixels per side). Resize it on your device first.' },
+  ...imageInputErrors,
   invalid_options: { 'zh-tw': '品質須為 0–100，寬高須為 1–8,192 的整數。', en: 'Quality must be 0–100; width and height must be whole numbers from 1–8,192.' },
   unsupported_browser: { 'zh-tw': '此瀏覽器無法提供背景圖片處理。請使用支援 Worker 與 OffscreenCanvas 的瀏覽器後重試。', en: 'Background image processing is unavailable. Retry in a browser with Worker and OffscreenCanvas support.' },
   unsupported_encoder: { 'zh-tw': '瀏覽器無法輸出此格式，請改選 PNG 或其他可用格式。原檔仍在此裝置。', en: 'This encoder is unavailable. Choose PNG or another available format. Your original remains on this device.' },
   memory_limit: { 'zh-tw': '預估超過本機記憶體預算，或可用記憶體不足。請縮小輸出尺寸或關閉其他分頁後重試。原檔未變更。', en: 'Not enough memory or the estimated working set exceeds the local budget. Reduce output dimensions or close other tabs and retry. Your original is unchanged.' },
-  corrupt_image: { 'zh-tw': '無法讀取圖片結構，請在裝置上重新匯出 JPEG、PNG 或 WebP 後重試。原檔未變更。', en: 'The image structure could not be read. Re-export JPEG, PNG, or WebP on your device and retry. Your original is unchanged.' },
-  multiple_files: { 'zh-tw': '一次只能處理一張圖片，請重新選擇。', en: 'Choose one image at a time.' },
   failed: { 'zh-tw': '圖片處理未完成。請重試、調低尺寸或在裝置上重新匯出圖片。原檔未變更。', en: 'Processing did not finish. Retry, reduce dimensions, or re-export the image on your device. Your original is unchanged.' },
 }
 export const imageStages: Record<string, LocalizedCopy> = {
