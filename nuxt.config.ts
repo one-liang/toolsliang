@@ -13,6 +13,12 @@ export default defineNuxtConfig({
   css: ['@fontsource-variable/roboto', '~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
+    /**
+     * Workers are emitted as ES modules because the inference runtime is
+     * published as one and reads `import.meta.url`. `createLocalWorker`
+     * instantiates every worker with `{ type: 'module' }` to match.
+     */
+    worker: { format: 'es' },
   },
   shadcn: {
     prefix: '',

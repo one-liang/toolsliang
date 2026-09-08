@@ -14,6 +14,7 @@ const engine: ToolOfflineAsset = {
   version: '2026-09-01',
   url: '/assets/offline/demo-engine-2026-09-01.wasm',
   bytes: 4_000_000,
+  sha256: 'a3f5c1d0b27e4498a6f01d7c9b8e2f3a4c5d6e7f8091a2b3c4d5e6f708192a3b',
   label: { 'zh-tw': '去背模型', en: 'Background removal model' },
 }
 

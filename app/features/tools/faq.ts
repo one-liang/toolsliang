@@ -1,3 +1,4 @@
+import { imageBackgroundRemoverFaq } from './image-background-remover/content'
 import { imageCompressorFaq } from './image-compressor/content'
 import { customCalendarFaq } from './custom-calendar/content'
 import { deviceTimeFaq } from './device-time/content'
@@ -25,6 +26,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'taiwan-calendar': taiwanCalendarFaq,
   'device-time': deviceTimeFaq,
   'image-compressor': imageCompressorFaq,
+  'image-background-remover': imageBackgroundRemoverFaq,
   'custom-calendar': customCalendarFaq,
 }
 

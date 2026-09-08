@@ -9,6 +9,8 @@ const engine: ToolOfflineAsset = {
   version: '2026-09-01',
   url: '/assets/offline/demo-engine-2026-09-01.wasm',
   bytes: 2_000_000,
+  /** SHA-256 of the two million zero bytes the stubbed downloads serve. */
+  sha256: '13aea96040f2133033d103008d5d96cfe98b3361f7202d77bea97b2424a7a6cd',
   label: { 'zh-tw': '去背模型', en: 'Background removal model' },
 }
 
@@ -88,17 +90,19 @@ describe('tool offline status', () => {
     expect(wrapper.text()).toContain('已下載，可離線使用')
   })
 
-  it('explains that a missing asset cannot be downloaded while offline', async () => {
+  it('refuses the download while offline and offers it again once the device is back online', async () => {
     installCacheStorage()
     setOnline(false)
     const wrapper = mountStatus()
 
     await vi.waitFor(() => expect(wrapper.attributes('data-tool-offline')).toBe('blocked-offline'))
     expect(wrapper.text()).toContain('目前離線')
-
-    await wrapper.find('[data-offline-asset] button').trigger('click')
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="blocked-offline"]').exists()).toBe(true))
     expect(wrapper.text()).toContain('還無法下載這個資源')
+    expect(wrapper.find('[data-offline-asset] button').attributes('disabled')).toBeDefined()
+
+    setOnline(true)
+    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset] button').attributes('disabled')).toBeUndefined())
+    expect(wrapper.text()).toContain('尚未下載')
   })
 
   it('announces the phase without repeating every progress tick', async () => {

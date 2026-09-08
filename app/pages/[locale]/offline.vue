@@ -39,8 +39,8 @@ useHead(() => ({
         <h2 id="offline-available">{{ locale === 'en' ? 'Tools that work offline' : '可離線使用的工具' }}</h2>
         <p>
           {{ locale === 'en'
-            ? 'Tools that need a large engine or model download are not available until you are back online.'
-            : '需要下載大型引擎或模型的工具，要等重新連線後才能使用。' }}
+            ? 'Tools that need a large engine or model work offline only once you have downloaded it; otherwise they wait until you are back online.'
+            : '需要下載大型引擎或模型的工具，只有在已經下載過之後才能離線使用，否則要等重新連線。' }}
         </p>
       </div>
       <ul class="offline-page__tools">

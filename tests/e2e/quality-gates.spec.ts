@@ -246,3 +246,23 @@ test('工具頁載入與轉換符合基本效能預算', async ({ page }) => {
   }, { budget: TOOL_RESPONSE_BUDGET_MS, input: TOOL_INPUT, output: TOOL_OUTPUT })
   expect(toolResponseDuration, `工具回應需低於 ${TOOL_RESPONSE_BUDGET_MS}ms`).toBeLessThan(TOOL_RESPONSE_BUDGET_MS)
 })
+
+/**
+ * A page that preloads a build-hashed asset it does not actually ship is a
+ * console error and, worse, a hole in the offline shell. The client and the
+ * server bundle workers separately, so this holds every declared asset to a
+ * response rather than trusting that the two builds agreed on a file name.
+ */
+test('每個工具頁宣告的預載資產都真的存在', async ({ page }) => {
+  const sitemap = await (await page.request.get('/sitemap.xml')).text()
+  const toolPaths = [...sitemap.matchAll(/<loc>[^<]*?(\/zh-tw\/tools\/[^<]*?)<\/loc>/g)].map(match => match[1]!)
+  expect(toolPaths.length).toBeGreaterThan(0)
+
+  for (const path of toolPaths) {
+    const html = await (await page.request.get(path)).text()
+    const preloads = [...html.matchAll(/<link rel="(?:preload|modulepreload)"[^>]*href="([^"]+)"/g)].map(match => match[1]!)
+    for (const href of preloads) {
+      expect((await page.request.get(href)).status(), `${path} 預載 ${href}`).toBe(200)
+    }
+  }
+})

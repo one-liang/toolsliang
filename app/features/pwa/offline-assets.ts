@@ -2,11 +2,15 @@ import type { LocaleCode, ToolOfflineAsset, ToolOfflineMode } from '../tools/cat
 
 export type OfflineAssetPhase = 'unknown' | 'idle' | 'downloading' | 'cached' | 'failed' | 'blocked-offline'
 
+/** Why the last attempt ended, so a corrupted download is not explained as a flaky network. */
+export type OfflineAssetFailureReason = 'download' | 'digest-mismatch'
+
 export interface OfflineAssetState {
   phase: OfflineAssetPhase
   receivedBytes: number
   totalBytes: number
   attempts: number
+  failureReason?: OfflineAssetFailureReason
 }
 
 export type OfflineAssetEvent =
@@ -14,7 +18,7 @@ export type OfflineAssetEvent =
   | { type: 'requested', online: boolean }
   | { type: 'progress', receivedBytes: number, totalBytes?: number }
   | { type: 'completed' }
-  | { type: 'failed' }
+  | { type: 'failed', reason?: OfflineAssetFailureReason }
   | { type: 'cancelled' }
 
 /** A cache entry names one exact version, so an upgraded asset never looks prepared. */
@@ -41,8 +45,8 @@ export function reduceOfflineAsset(state: OfflineAssetState, event: OfflineAsset
 
     case 'requested':
       if (state.phase === 'cached' || state.phase === 'downloading') return state
-      if (!event.online) return { ...state, phase: 'blocked-offline', receivedBytes: 0 }
-      return { ...state, phase: 'downloading', receivedBytes: 0 }
+      if (!event.online) return { ...state, phase: 'blocked-offline', receivedBytes: 0, failureReason: undefined }
+      return { ...state, phase: 'downloading', receivedBytes: 0, failureReason: undefined }
 
     case 'progress':
       if (state.phase !== 'downloading') return state
@@ -58,7 +62,7 @@ export function reduceOfflineAsset(state: OfflineAssetState, event: OfflineAsset
 
     case 'failed':
       if (state.phase !== 'downloading') return state
-      return { ...state, phase: 'failed', receivedBytes: 0, attempts: state.attempts + 1 }
+      return { ...state, phase: 'failed', receivedBytes: 0, attempts: state.attempts + 1, failureReason: event.reason ?? 'download' }
 
     case 'cancelled':
       if (state.phase !== 'downloading') return state

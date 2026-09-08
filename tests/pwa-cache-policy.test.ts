@@ -117,6 +117,11 @@ describe('shell precache list', () => {
     expect(urls).toContain('/en/tools/ntd-uppercase/')
   })
 
+  it('precaches a tool page that first downloads a model, so a prepared device can open it offline', () => {
+    expect(urls).toContain('/zh-tw/tools/image-background-remover/')
+    expect(urls).toContain('/en/tools/image-background-remover/')
+  })
+
   it('lists every offline route so prerendering and the shell cache cannot drift apart', () => {
     for (const route of offlineRoutes()) expect(urls).toContain(route)
   })
