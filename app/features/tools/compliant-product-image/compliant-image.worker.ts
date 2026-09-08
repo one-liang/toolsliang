@@ -2,6 +2,7 @@ import { stripJpegMetadata } from '../../images/jpeg-metadata'
 import { imageDimensions } from '../../images/dimensions'
 import { exceedsImageLimits } from '../../images/limits'
 import { imageSignature } from '../../images/input'
+import { detectEncodableFormats } from '../../images/encoders'
 import { planPlacement } from './domain/placement'
 import type { EncodableMimeType } from './domain/render'
 import type { CompliantRenderInput, CompliantRenderWireOutput } from './types'
@@ -17,20 +18,7 @@ const startQuality = 0.92
 const lowestQuality = 0.05
 const qualitySteps = 7
 
-async function capabilities() {
-  const supportedFormats: EncodableMimeType[] = []
-  if (typeof OffscreenCanvas === 'undefined' || typeof createImageBitmap !== 'function') return { supported: false, formats: supportedFormats }
-  const canvas = new OffscreenCanvas(1, 1)
-  try {
-    if (!canvas.getContext('2d')) return { supported: false, formats: supportedFormats }
-    for (const format of formats) {
-      try { if ((await canvas.convertToBlob({ type: format })).type === format) supportedFormats.push(format) }
-      catch { /* This encoder is unavailable; the page offers the working formats. */ }
-    }
-    return { supported: supportedFormats.length > 0, formats: supportedFormats }
-  }
-  finally { canvas.width = 0; canvas.height = 0 }
-}
+const capabilities = () => detectEncodableFormats(formats)
 
 /**
  * Writes the canvas inside the channel's capacity range.

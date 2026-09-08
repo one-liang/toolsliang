@@ -8,6 +8,7 @@ import { formatReviewDate } from '@/features/tools/catalog'
 import { validateImageInput } from '@/features/images/input'
 import { heicMessage } from '@/features/images/messages'
 import { createCompliantImageRenderer } from '@/features/tools/compliant-product-image/engine'
+import { planPlacement } from '@/features/tools/compliant-product-image/domain/placement'
 import {
   compliantImageCaveats,
   compliantImageChannelLabels,
@@ -81,6 +82,8 @@ const source = shallowRef<File>()
 const result = shallowRef<CompliantRenderOutput>()
 const outputUrl = ref('')
 const previewUrl = ref('')
+const sourceUrl = ref('')
+const sourceSize = shallowRef<{ width: number, height: number }>()
 const width = ref<string | number>(1000)
 const height = ref<string | number>(1000)
 const format = ref<EncodableMimeType>('image/jpeg')
@@ -182,6 +185,53 @@ const canRender = computed(() => Boolean(source.value)
   && !sizeIssue.value
   && formats.value.length > 0)
 
+/**
+ * The canvas the preview frame stands for: the produced output once there is
+ * one, and the settings being edited before that. The frame is built to this
+ * ratio and the guides are inset as a share of it, so a guide always lands on
+ * the pixels it is talking about.
+ */
+const frameSize = computed(() => result.value
+  ? { width: result.value.width, height: result.value.height }
+  : { width: Number(width.value), height: Number(height.value) })
+
+/** Where the source image sits on that canvas, recomputed as the numbers change. */
+const livePlacement = computed(() => sourceSize.value && !sizeIssue.value
+  ? planPlacement({
+      sourceWidth: sourceSize.value.width,
+      sourceHeight: sourceSize.value.height,
+      targetWidth: frameSize.value.width,
+      targetHeight: frameSize.value.height,
+      fit: fit.value,
+      zoom: Number(zoom.value),
+      offsetX: Number(offsetX.value),
+      offsetY: Number(offsetY.value),
+    })
+  : undefined)
+const coverage = computed(() => result.value?.coverage ?? livePlacement.value?.coverage)
+const showsPreview = computed(() => Boolean(result.value || (sourceUrl.value && livePlacement.value)))
+const frameStyle = computed(() => ({
+  '--frame-ratio': String(frameSize.value.width / frameSize.value.height),
+  'aspectRatio': `${frameSize.value.width} / ${frameSize.value.height}`,
+  'background': background.value,
+}))
+const liveImageStyle = computed(() => {
+  const placement = livePlacement.value
+  if (!placement) return undefined
+  const { width: canvasWidth, height: canvasHeight } = frameSize.value
+
+  return {
+    left: `${(placement.x / canvasWidth) * 100}%`,
+    top: `${(placement.y / canvasHeight) * 100}%`,
+    width: `${(placement.width / canvasWidth) * 100}%`,
+    height: `${(placement.height / canvasHeight) * 100}%`,
+  }
+})
+
+/** The one rule §4.5 resolves by defaulting the output format rather than judging it. */
+const chromaRule = computed(() => preset.value.rules.find(rule =>
+  rule.kind === 'chroma-model' && resolveRuleState(rule, evaluationDate.value) === 'in-force'))
+
 const extension = computed(() => result.value?.format === 'image/jpeg' ? 'jpg' : result.value?.format === 'image/webp' ? 'webp' : 'png')
 /** The share of the preview a guide frame occupies, as an inset on all four sides. */
 const guideInset = (ratio: number) => `${((1 - Math.sqrt(ratio)) / 2) * 100}%`
@@ -194,8 +244,32 @@ function bytes(value: number) {
 function percent(value: number) {
   return `${Math.round(value * 100)}%`
 }
+function ruleMeta(rule: CompliantImagePresetRule) {
+  const parts = [ruleAuthorityLabels[rule.authority][locale.value], ruleVerificationLabels[rule.verification][locale.value]]
+  // An announced-but-not-yet-binding rule reads as a live requirement without its date.
+  if (rule.effectiveFrom) parts.push(`${en.value ? 'in force from' : '生效日'} ${rule.effectiveFrom}`)
+
+  return parts.join(' · ')
+}
 function ruleLine(rule: CompliantImagePresetRule) {
   return `${constraintKindLabels[rule.kind][locale.value]}${en.value ? ': ' : '：'}${describeRuleValue(rule, locale.value)}`
+}
+
+/** The source preview outlives a settings change; only choosing another file replaces it. */
+function releaseSource() {
+  if (sourceUrl.value) URL.revokeObjectURL(sourceUrl.value)
+  sourceUrl.value = ''
+  sourceSize.value = undefined
+}
+
+function loadSourcePreview(file: File) {
+  releaseSource()
+  const url = URL.createObjectURL(file)
+  sourceUrl.value = url
+  const image = new Image()
+  image.onload = () => { if (sourceUrl.value === url) sourceSize.value = { width: image.naturalWidth, height: image.naturalHeight } }
+  image.onerror = () => { if (sourceUrl.value === url) sourceSize.value = undefined }
+  image.src = url
 }
 
 function clearResult() {
@@ -242,6 +316,7 @@ async function selectFiles(files: File[]) {
     if (code) { error.value = code; return }
     clearResult()
     source.value = file
+    loadSourcePreview(file)
     message.value = 'selected'
   }
   catch { if (current === generation) error.value = 'read_failed' }
@@ -260,6 +335,7 @@ function choose(event: Event) {
 }
 
 async function produce() {
+  if (presetDisabled.value) { error.value = 'preset_unavailable'; return }
   if (!canRender.value || !source.value) return
   clearResult()
   error.value = ''
@@ -308,6 +384,7 @@ function cancel() {
 
 function reset() {
   cancel()
+  releaseSource()
   source.value = undefined
   error.value = ''
   message.value = ''
@@ -326,6 +403,7 @@ onBeforeUnmount(() => {
   ++generation
   engine.dispose()
   clearResult()
+  releaseSource()
   source.value = undefined
 })
 </script>
@@ -422,7 +500,14 @@ onBeforeUnmount(() => {
             <select id="compliant-format" v-model="format" class="ui-input" aria-describedby="compliant-format-help">
               <option v-for="item in formats" :key="item" :value="formatMimeTypes[item]">{{ item.toUpperCase() }}</option>
             </select>
-            <p id="compliant-format-help" class="field-help">{{ en ? 'Only formats this channel allows and this browser can write.' : '只提供這個通路允許、而且這個瀏覽器寫得出來的格式。' }}</p>
+            <p id="compliant-format-help" class="field-help">
+              {{ en ? 'Only formats this channel allows and this browser can write.' : '只提供這個通路允許、而且這個瀏覽器寫得出來的格式。' }}
+              <template v-if="chromaRule">
+                {{ en
+                  ? `This channel asks for a ${(chromaRule.value as { model: string }).model} chroma model, so JPEG is offered first because it usually encodes that way. Width, height, format and bytes cannot show chroma subsampling, so the tool does not judge it for you.`
+                  : `這個通路要求 ${(chromaRule.value as { model: string }).model} 色度模型，因此預設 JPEG——它通常以此編碼。寬、高、格式與位元組看不出色度取樣，工具不會替你判定。` }}
+              </template>
+            </p>
           </div>
           <div class="field-group">
             <label for="compliant-fit">{{ en ? 'How the image fills the canvas' : '圖片如何填滿畫布' }}</label>
@@ -474,13 +559,25 @@ onBeforeUnmount(() => {
       {{ en ? 'Working locally; you can cancel at any time.' : '正在本機處理，可隨時取消。' }}
     </div>
 
-    <figure v-if="result" data-image-result class="compliant-product-image__result">
+    <figure v-if="showsPreview" :data-image-result="result ? '' : undefined" data-image-preview class="compliant-product-image__result">
       <figcaption>
-        {{ en ? 'Output' : '輸出' }} · {{ result.width }} × {{ result.height }} · {{ bytes(result.blob.size) }}
-        · {{ en ? 'the image covers' : '圖片覆蓋畫布' }} {{ percent(result.coverage) }}
+        <template v-if="result">{{ en ? 'Output' : '輸出' }} · {{ result.width }} × {{ result.height }} · {{ bytes(result.blob.size) }}</template>
+        <template v-else>{{ en ? 'Crop preview' : '裁切預覽' }} · {{ en ? 'target' : '目標' }} {{ frameSize.width }} × {{ frameSize.height }}</template>
+        <template v-if="coverage !== undefined"> · {{ en ? 'the image covers' : '圖片覆蓋畫布' }} {{ percent(coverage) }}</template>
       </figcaption>
-      <div class="compliant-product-image__frame">
-        <img :src="previewUrl" :alt="en ? 'Preview of the produced output' : '輸出結果預覽'">
+      <div class="compliant-product-image__frame" :style="frameStyle">
+        <img
+          v-if="result"
+          class="compliant-product-image__frame-fill"
+          :src="previewUrl"
+          :alt="en ? 'Preview of the produced output' : '輸出結果預覽'"
+        >
+        <img
+          v-else
+          :src="sourceUrl"
+          :style="liveImageStyle"
+          :alt="en ? 'Preview of the crop being set' : '目前裁切設定的預覽'"
+        >
         <div
           v-for="guide in occupancy"
           :key="guide.ruleId"
@@ -501,7 +598,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <p class="field-help">{{ en ? 'The frames are drawn as guidance. This tool cannot see where the product ends, so it does not judge occupancy or the safe area for you.' : '輔助框只是參考。工具看不出商品的邊界，因此不會替你判定佔比或安全區。' }}</p>
-      <p class="field-help">{{ en ? 'Re-encoding does not copy the source EXIF, GPS or IPTC records; keep the original file.' : '重新編碼不會複製原始 EXIF、GPS 或 IPTC 中繼資料，請保留原檔。' }}</p>
+      <p v-if="result" class="field-help">{{ en ? 'Re-encoding does not copy the source EXIF, GPS or IPTC records; keep the original file.' : '重新編碼不會複製原始 EXIF、GPS 或 IPTC 中繼資料，請保留原檔。' }}</p>
     </figure>
 
     <section v-if="check" data-preset-check :data-result="check.result" class="compliant-product-image__check" :aria-label="en ? 'Rule by rule' : '逐條規則結果'">
@@ -516,7 +613,7 @@ onBeforeUnmount(() => {
         <ul>
           <li v-for="rule in group.rules" :key="rule.id">
             <strong>{{ ruleLine(rule) }}</strong>
-            <span class="compliant-product-image__meta">{{ ruleAuthorityLabels[rule.authority][locale] }} · {{ ruleVerificationLabels[rule.verification][locale] }}<template v-if="rule.effectiveFrom"> · {{ en ? 'in force from' : '生效日' }} {{ rule.effectiveFrom }}</template></span>
+            <span class="compliant-product-image__meta">{{ ruleMeta(rule) }}</span>
             <q>{{ rule.quote }}</q>
           </li>
         </ul>
@@ -534,7 +631,7 @@ onBeforeUnmount(() => {
       <ul>
         <li v-for="rule in preset.rules" :key="rule.id">
           <strong>{{ ruleLine(rule) }}</strong>
-          <span class="compliant-product-image__meta">{{ ruleAuthorityLabels[rule.authority][locale] }} · {{ ruleVerificationLabels[rule.verification][locale] }}</span>
+          <span class="compliant-product-image__meta">{{ ruleMeta(rule) }}</span>
           <q>{{ rule.quote }}</q>
         </li>
       </ul>

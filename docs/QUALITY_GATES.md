@@ -50,7 +50,6 @@ Service Worker 由 production build 產出到 `/sw.js`，`nuxt dev` 不註冊也
 - 本機資產：以雙語 `/storage/` 頁驗證匯入、更名、逐筆刪除、全部清除與匯出都由使用者確認並在重新載入後保留；讀不到與較新版本的紀錄可辨識且可刪除；讀取失敗的匯入檔不改變裝置上的資產。另列舉 Cache Storage 項目、`localStorage` 與 `sessionStorage`，證明資產名稱與內容不在網路請求、Service Worker 快取或偏好命名空間出現。375px 另跑 light／dark 的 axe 檢查、觸控目標與鍵盤更名流程；資料庫結構遷移、配額保留、損毀與版本錯誤、匯出入格式與 rollback 由單元測試負責。離線重新啟動同樣只在 Chromium 驗證，理由與 Service Worker 生命週期相同。
 - 去背決策紀錄：`tests/image-background-remover-reference.test.ts` 檢查 `docs/research/007-image-background-removal-model-evaluation.md`、`app/features/tools/image-background-remover/domain/reference.ts` 與量測 JSON 三者一致：候選、排除原因與原因分類、能力層級、失敗代碼、模型 commit 與 SHA-256 都必須逐字相同，文件裡的每個數字都必須等於量測檔中的值，選定方案的授權必須落在可自行散布的清單內，模型下載網址只能指向釘選 commit 的允許來源，且文件必須寫明像素不離開裝置。`tests/image-background-remover-model.test.ts` 再往下一層：版本一實際採用的權重必須就是紀錄推薦的那一個、範圍必須是人像、前處理與授權逐字沿用紀錄，而且 `public/` 裡真正提交的模型與 runtime 檔案要逐一雜湊，位元組數與 SHA-256 都必須等於註冊表宣告的值。
 - 合規主圖：以工具自己的 spec 驗證六個 preset 各自產生的輸出，逐一把下載到的檔案解碼回來，確認寬、高、格式與容量都落在該通路載明的範圍內；並驗證來源標題、網址、查核日期、有效日期、涵蓋度與未公開欄位都看得見，通路頁面只外連而不由本站代取，被排除的通路與原因固定顯示。另驗證輔助框與各類規則結果都有文字而不只有顏色、不可能的輸出尺寸在開始前就說明且可修正、超過本機上限的輸入可恢復且不遺失原檔，以及 12 MP 商品圖在 10 秒預算內完成且主執行緒不被卡住。preset 效期判定依訪客裝置的日期，因此在單元測試以假時鐘跨過寬限期驗證停用行為，瀏覽器只驗證判定所依據的日期與停用政策在上傳前就看得見。
-
 - 預載資產：每個工具頁宣告的 `preload` 與 `modulepreload` 都必須回 200。client 與 server 各自打包一次 Worker，只有純由應用程式碼組成的 Worker 兩邊才會產出相同的雜湊檔名；這個檢查擋下由 SSR 算出、實際不存在的資產網址，因為它同時是主控台錯誤與離線快取的破口。
 - PWA 快取邊界：列舉所有 Cache Storage 名稱與項目，證明只有 `toolsliang-` 前綴的版本化應用資產、沒有查詢字串，也不含任何工具內容 canary。
 

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { hasLocalizedCopy, supportedLocales, type LocaleCode } from '@/features/tools/catalog'
 import { getToolFaq } from '@/features/tools/faq'
@@ -39,6 +40,7 @@ import {
   ruleVerificationLabels,
 } from '@/features/tools/compliant-product-image/content'
 import { compliantProductImageDefinition } from '@/features/tools/compliant-product-image/definition'
+import type { CompliantRenderInput } from '@/features/tools/compliant-product-image/types'
 import {
   parseCaveatSentences,
   parseFaqQuestions,
@@ -46,6 +48,8 @@ import {
   parseViewNoticeSentences,
   compliantImageDecisionRecord,
 } from './support/compliant-product-image-decision-record'
+
+const workspaceSource = readFileSync('app/components/CompliantProductImageWorkspace.vue', 'utf8')
 
 /** Everything a visitor can read on the tool page, in one locale. */
 function visibleCopy(locale: LocaleCode) {
@@ -240,5 +244,39 @@ describe('tool registration', () => {
   it('says on the page that HEIC/HEIF is refused before decoding', () => {
     expect(compliantProductImageDefinition.acceptedInput['zh-tw']).toContain('HEIC')
     expect(compliantImageErrors.unsupported_heic).toBeDefined()
+  })
+})
+
+/**
+ * ADR-0012 splits this output purpose from the brand promo image: a compliant
+ * product image carries no border, Logo, promotional text or price tag. §12.9's
+ * acceptance list names "no forbidden overlay capabilities", so the absence has
+ * to be asserted rather than assumed from the fact that nobody built one.
+ */
+describe('the tool cannot add what a compliant output must not contain', () => {
+  const forbiddenCapabilities = ['logo', 'watermark', 'border', 'frame', 'text', 'caption', 'price', 'badge', 'sticker', 'overlay']
+
+  it('accepts no render option that would compose an overlay', () => {
+    const input: Record<keyof CompliantRenderInput, true> = {
+      file: true, width: true, height: true, format: true, fit: true,
+      zoom: true, offsetX: true, offsetY: true, background: true,
+      minBytes: true, maxBytes: true,
+    }
+
+    Object.keys(input).forEach((option) => {
+      forbiddenCapabilities.forEach(capability =>
+        expect(option.toLowerCase(), option).not.toContain(capability))
+    })
+  })
+
+  it('offers no control for one, and says the promotional purpose lives elsewhere', () => {
+    const controls = [...workspaceSource.matchAll(/<label[^>]*>([\s\S]*?)<\/label>/g)]
+      .map(match => match[1]!.replace(/\{\{[\s\S]*?\}\}/g, ' '))
+
+    expect(controls.length).toBeGreaterThan(0)
+    // Only the guide frame may name a border, and only as something drawn over a preview.
+    expect(workspaceSource).not.toMatch(/v-model="(logo|watermarkText|priceTag|caption|overlayText)/)
+    forbiddenCapabilities.forEach(capability =>
+      controls.forEach(control => expect(control.toLowerCase(), capability).not.toContain(capability)))
   })
 })

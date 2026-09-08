@@ -997,11 +997,17 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .compliant-product-image__color { min-height: 44px; padding: 4px; }
 .compliant-product-image__result { margin: 24px 0 0; }
 .compliant-product-image__result figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
-/* The guides are drawn over the preview, so the preview establishes the frame. */
-.compliant-product-image__frame { position: relative; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
-.compliant-product-image__frame img { display: block; width: 100%; height: auto; max-height: var(--image-preview-max-height); object-fit: contain; }
+/*
+ * The frame is the output canvas, not the image: it takes the target ratio and
+ * the guides are inset as a share of it. A preview that set its own box would
+ * letterbox inside the frame and put every guide somewhere the pixels are not.
+ * `--frame-ratio` caps the height without breaking that ratio at any shape.
+ */
+.compliant-product-image__frame { position: relative; overflow: hidden; width: min(100%, calc(var(--image-preview-max-height) * var(--frame-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); }
+.compliant-product-image__frame img { position: absolute; display: block; }
+.compliant-product-image__frame-fill { inset: 0; width: 100%; height: 100%; }
 .compliant-product-image__guide { position: absolute; display: flex; align-items: flex-start; justify-content: center; border: 2px dashed var(--color-primary-strong); pointer-events: none; }
-.compliant-product-image__guide span { margin-top: -1px; padding: 2px 8px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--color-foreground); color: var(--color-surface); font-size: .7rem; font-weight: 700; }
+.compliant-product-image__guide span { margin-top: -1px; padding: 2px 8px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--color-foreground); color: var(--color-surface); font-size: .75rem; font-weight: 700; }
 .compliant-product-image__check, .compliant-product-image__rules, .compliant-product-image__caveats, .compliant-product-image__excluded { margin-top: 24px; }
 .compliant-product-image__check h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 1rem; }
 .compliant-product-image__check h3 svg { flex-shrink: 0; }

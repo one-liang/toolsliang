@@ -62,6 +62,17 @@ function renders(bytes: number, patch: Record<string, unknown> = {}) {
 
 const jpeg = () => new File([new Uint8Array([255, 216, 255, 224])], 'product.jpg', { type: 'image/jpeg' })
 
+/** happy-dom never loads a blob URL, so the source preview reports a size the way a browser would. */
+function stubSourceImage(naturalWidth = 2400, naturalHeight = 1800) {
+  vi.stubGlobal('Image', class {
+    naturalWidth = naturalWidth
+    naturalHeight = naturalHeight
+    onload?: () => void
+    onerror?: () => void
+    set src(_value: string) { queueMicrotask(() => this.onload?.()) }
+  })
+}
+
 async function mountWorkspace() {
   const wrapper = mount(CompliantProductImageWorkspace)
   mounted.push(wrapper)
@@ -265,4 +276,66 @@ it('只提供這個通路允許、而且這個瀏覽器寫得出來的格式', a
 
   // Ruten allows JPEG and PNG only, and this browser cannot write PNG.
   expect(options).toEqual(['image/jpeg'])
+})
+
+it('選好圖片後就看得到裁切預覽與佔比輔助框，不必先產生輸出', async () => {
+  stubWorker(capable())
+  stubSourceImage()
+  const wrapper = await mountWorkspace()
+  await selectPreset(wrapper, 'momo-store-main')
+  await selectFile(wrapper, jpeg())
+
+  // §4.4 calls occupancy `assisted`: an aid you can only see after committing is not one.
+  const preview = wrapper.find('[data-image-preview]')
+  expect(preview.exists()).toBe(true)
+  expect(preview.text()).toContain('裁切預覽')
+  expect(wrapper.find('[data-image-result]').exists()).toBe(false)
+  expect(wrapper.find('[data-occupancy-guide]').text()).toContain('80%')
+})
+
+it('裁切設定改變時預覽跟著更新，而不是消失到下次產生為止', async () => {
+  stubWorker(capable())
+  stubSourceImage(2000, 1000)
+  const wrapper = await mountWorkspace()
+  await selectPreset(wrapper, 'momo-store-main')
+  await selectFile(wrapper, jpeg())
+  const covered = () => wrapper.find('[data-image-preview]').text()
+
+  expect(covered()).toContain('100%')
+  await wrapper.find('#compliant-fit').setValue('contain')
+  await flushPromises()
+  expect(wrapper.find('[data-image-preview]').exists()).toBe(true)
+  expect(covered()).toContain('50%')
+})
+
+it('已停用的 preset 即使被送出，也只會說明原因而不產生輸出', async () => {
+  vi.setSystemTime(new Date('2027-06-01T09:00:00+08:00'))
+  stubWorker(renders(400_000))
+  stubSourceImage()
+  const wrapper = await mountWorkspace()
+  await selectFile(wrapper, jpeg())
+  await wrapper.find('form').trigger('submit')
+  await flushPromises()
+
+  expect(wrapper.find('#compliant-error').text()).toContain('這個通路規格目前停用')
+  expect(wrapper.find('[data-image-result]').exists()).toBe(false)
+  expect(wrapper.find('a[download]').exists()).toBe(false)
+})
+
+it('一直到規則清單都寫出尚未生效的日期，不讓它讀起來像現行規範', async () => {
+  stubWorker(capable())
+  const wrapper = await mountWorkspace()
+
+  // Google announced a 500 x 500 minimum that only binds from 2027-01-31.
+  expect(wrapper.find('.compliant-product-image__rules').text()).toContain('生效日 2027-01-31')
+})
+
+it('說明為什麼預設輸出 JPEG，且不宣稱已檢查色度模型', async () => {
+  stubWorker(capable())
+  const wrapper = await mountWorkspace()
+  await selectPreset(wrapper, 'momo-store-main')
+  const help = wrapper.find('#compliant-format-help').text()
+
+  expect(help).toContain('YCbCr')
+  expect(help).toContain('工具不會替你判定')
 })

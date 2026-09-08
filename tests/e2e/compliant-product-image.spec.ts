@@ -140,6 +140,47 @@ test('輔助框與未通過項目都有文字，不只用顏色表達', async ({
   await expect(page.locator('[data-rule-group="out-of-scope"]')).toContainText('允許放置於')
 })
 
+test('裁切預覽在產生前就在，輔助框確實蓋在輸出畫布上', async ({ page }, testInfo) => {
+  await gotoHydrated(page, '/zh-tw/tools/compliant-product-image/')
+  await page.getByLabel('通路規格', { exact: true }).selectOption('momo-store-main')
+  await page.getByLabel('選擇商品圖片', { exact: true }).setInputFiles(await productFile(page))
+
+  // §4.4 calls occupancy `assisted`: the frame has to be there while the crop is set.
+  const preview = page.locator('[data-image-preview]')
+  await expect(preview).toContainText('裁切預覽')
+  await expect(page.locator('[data-image-result]')).toHaveCount(0)
+
+  const geometry = async () => {
+    const frame = (await page.locator('.compliant-product-image__frame').boundingBox())!
+    const guide = (await page.locator('[data-occupancy-guide]').boundingBox())!
+    return {
+      frameRatio: frame.width / frame.height,
+      widthShare: guide.width / frame.width,
+      heightShare: guide.height / frame.height,
+      insetLeft: (guide.x - frame.x) / frame.width,
+      insetTop: (guide.y - frame.y) / frame.height,
+    }
+  }
+  // An 80% area guide is a centred box of √0.8 ≈ 0.894 on each side.
+  const side = Math.sqrt(0.8)
+  const before = await geometry()
+  expect(before.frameRatio).toBeCloseTo(1, 2)
+  expect(before.widthShare).toBeCloseTo(side, 2)
+  expect(before.heightShare).toBeCloseTo(side, 2)
+  expect(before.insetLeft).toBeCloseTo((1 - side) / 2, 2)
+  expect(before.insetTop).toBeCloseTo((1 - side) / 2, 2)
+
+  await page.getByRole('button', { name: '產生輸出', exact: true }).click()
+  await expect(page.locator('[data-image-result]')).toBeVisible()
+  const after = await geometry()
+  expect(after.frameRatio).toBeCloseTo(1, 2)
+  expect(after.widthShare).toBeCloseTo(side, 2)
+  expect(after.heightShare).toBeCloseTo(side, 2)
+  if (testInfo.project.name === 'chromium') {
+    await page.locator('[data-image-preview]').screenshot({ path: 'artifacts/compliant-product-image-guide.png' })
+  }
+})
+
 test('不可能的輸出尺寸在開始前就說明，修正後可以繼續', async ({ page }) => {
   await gotoHydrated(page, '/zh-tw/tools/compliant-product-image/')
   await page.getByLabel('通路規格', { exact: true }).selectOption('ruten-main')
