@@ -12,7 +12,9 @@ import type { BackgroundRemovalInput, BackgroundRemovalOutput, BackgroundRemoval
  */
 export function createBackgroundRemover() {
   return createWorkerEngine<BackgroundRemovalInput, BackgroundRemovalWireOutput, BackgroundRemovalOutput>({
-    worker: signal => createLocalWorker(workerUrl, signal),
+    // A module worker: the inference runtime is loaded from a versioned
+    // asset at run time, which a classic worker cannot do.
+    worker: signal => createLocalWorker(workerUrl, signal, 'module'),
     // Preparing a session and compositing a large picture on the WebAssembly
     // baseline is slower than an encode, and the slowest measured browser needs
     // several seconds before the first operator runs.

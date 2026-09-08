@@ -109,6 +109,9 @@ test('先說明只處理人像，並在載入模型前拒絕 HEIC／HEIF', async
 
 test('離線時說明無法下載模型，回到連線後可重試', async ({ page, context }) => {
   await gotoHydrated(page, '/zh-tw/tools/image-background-remover/')
+  // Cutting the connection before the capability check answers would test a
+  // half-loaded page instead of an offline one.
+  await expect(page.getByRole('button', { name: '下載模型' })).toBeEnabled()
   expectOfflineRequests(page)
   await context.setOffline(true)
   await page.evaluate(() => window.dispatchEvent(new Event('offline')))
