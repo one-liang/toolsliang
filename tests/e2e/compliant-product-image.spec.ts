@@ -306,7 +306,15 @@ for (const locale of ['zh-tw', 'en'] as const) {
   })
 }
 
+/**
+ * §12.9 states the budget for a reference desktop, so it is measured once. The
+ * fixture alone is forty-eight million array writes, and running it on three
+ * engines was enough to abort a CI worker and take the next spec's timing
+ * assertions down with it — a third measurement on the same machine costs a
+ * great deal and tells us nothing the first one did not.
+ */
 test('12 MP 商品圖在本機預算內完成，主執行緒保持回應', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', '效能預算以參考桌面量測一次；跨瀏覽器的解碼與編碼由其他案例涵蓋')
   test.setTimeout(90_000)
   await gotoHydrated(page, '/zh-tw/tools/compliant-product-image/')
   await page.getByLabel('通路規格', { exact: true }).selectOption('momo-store-main')
