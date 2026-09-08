@@ -26,11 +26,23 @@ const presets = [
 ] as const
 
 /**
+ * Generating per-pixel noise is the most expensive thing this suite does, and
+ * the bytes are deterministic and browser-independent — they are only ever an
+ * input file. Encoding each size once and reusing it keeps the three-browser
+ * run inside the CI budget.
+ */
+const fixtures = new Map<string, Buffer>()
+
+/**
  * A drawn product on a plain ground, with enough detail that a JPEG of it
  * cannot collapse under a channel's capacity floor. Nothing here is a
  * photograph, and the file name is the canary the boundary guard watches for.
  */
 async function productFile(page: Page, width = 2400, height = 1800) {
+  const key = `${width}x${height}`
+  const cached = fixtures.get(key)
+  if (cached) return { name: 'private-product-canary.png', mimeType: 'image/jpeg', buffer: cached }
+
   const bytes = await page.evaluate(async ([width, height]) => {
     const canvas = new OffscreenCanvas(width!, height!)
     const context = canvas.getContext('2d')!
@@ -50,7 +62,10 @@ async function productFile(page: Page, width = 2400, height = 1800) {
     return [...new Uint8Array(await blob.arrayBuffer())]
   }, [width, height] as const)
 
-  return { name: 'private-product-canary.png', mimeType: 'image/jpeg', buffer: Buffer.from(bytes) }
+  const buffer = Buffer.from(bytes)
+  fixtures.set(key, buffer)
+
+  return { name: 'private-product-canary.png', mimeType: 'image/jpeg', buffer }
 }
 
 /** Reads the produced file back, so the assertion is about bytes and not about the interface. */
@@ -67,8 +82,15 @@ async function readOutput(page: Page) {
   }, url)
 }
 
+/** The tightest preset there is: an exact canvas, a byte floor and a byte ceiling. */
+const representativePreset = 'momo-store-main'
+
 for (const preset of presets) {
-  test(`${preset.id}：依通路規格產生輸出並逐條列出檢查結果`, async ({ page }) => {
+  test(`${preset.id}：依通路規格產生輸出並逐條列出檢查結果`, async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'chromium' && preset.id !== representativePreset,
+      '每個 preset 的數值由單元測試釘住；跨瀏覽器只需驗證編碼與算繪，以最嚴格的 preset 代表',
+    )
     await gotoHydrated(page, '/zh-tw/tools/compliant-product-image/')
     await page.getByLabel('通路規格', { exact: true }).selectOption(preset.id)
     await expect(page.locator('#compliant-width')).toHaveValue(String(preset.width))
