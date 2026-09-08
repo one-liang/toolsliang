@@ -17,8 +17,11 @@ interface BoundaryFindings {
  * Cutting the connection on purpose makes the browser report the requests it
  * could not send. Those messages are the condition under test, not a defect, so
  * a test that goes offline says so and only that class of message is filtered.
+ * `NUXT_E5002` is the app manifest failing to load, which Nuxt itself documents
+ * as a transient network issue; it appears when a test goes offline before the
+ * Service Worker has had a chance to precache that manifest.
  */
-const OFFLINE_NOISE = /ERR_INTERNET_DISCONNECTED|ERR_FAILED|Failed to load resource|NUXT_E7002|NUXT_E7003/
+const OFFLINE_NOISE = /ERR_INTERNET_DISCONNECTED|ERR_FAILED|Failed to load resource|NUXT_E5002|NUXT_E7002|NUXT_E7003/
 const offlineExpectedPages = new WeakSet<Page>()
 
 export function expectOfflineRequests(page: Page) {
