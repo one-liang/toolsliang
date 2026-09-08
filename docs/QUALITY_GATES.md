@@ -25,6 +25,8 @@ npm run test:e2e -- --project=chromium
 
 行事曆的年度資料不在執行期擷取：`python3 scripts/ingest_taiwan_calendar.py` 由維運者執行，從人事行政總處、中央氣象署與香港天文台擷取、逐條驗證後寫入 `app/features/tools/taiwan-calendar/data/`，並隨版本控制提交。它需要 Python 3 與 `pdfminer`；擷取失敗時以 `docs/research/004-taiwan-calendar-sources-and-data-contract.md` §5.5 的錯誤 key 中止，不寫出半套年度。CI 與瀏覽器都不會連到任何來源。
 
+圖片去背的候選評估同樣不在執行期或 CI 進行：`node scripts/evaluate-background-removal.mjs` 由維運者執行，把釘選 commit 的模型與 onnxruntime-web 下載到已忽略版本控制的 `artifacts/`、逐檔比對 SHA-256，再開一個可見的 Chromium 視窗量測。它需要可見視窗：headless Chromium 只提供 SwiftShader 介面卡，也不回答 `measureUserAgentSpecificMemory`，量到的會是軟體算圖的時間與空白的記憶體。測試圖片全部由程式繪製，結果寫入 `docs/research/data/007-background-removal-measurements.json` 並隨版本控制提交；CI 只讀這份 JSON，不下載模型也不執行推論。
+
 Service Worker 由 production build 產出到 `/sw.js`，`nuxt dev` 不註冊也不快取；離線與更新行為只能在 `npm run preview` 或 e2e 產出的 production build 上驗證。安裝圖示由 `node scripts/generate-app-icons.mjs` 從 Design System token 產生並提交到版本控制。
 
 瀏覽器失敗時，截圖、trace 與 HTML report 會寫入已忽略版本控制的 `artifacts/`。
@@ -46,6 +48,7 @@ Service Worker 由 production build 產出到 `/sw.js`，`nuxt dev` 不註冊也
 - 自訂行事曆：以工具自己的 spec 驗證新增、編輯、刪除與確認流程；官方日別與自訂項目分成兩層且差異寫成文字；被拒絕的輸入逐項說明且不寫入裝置；匯出檔名只帶日期、清除後可由匯入還原；讀不到的匯入檔不改變裝置上的項目；重新載入與離線重新啟動後已保存的項目仍在，離線也能新增與刪除。編輯表單與月曆是這個工具特有的介面，因此另在此頁跑 375px light／dark 的 axe 檢查、觸控目標量測與純鍵盤流程，並列舉 Cache Storage、`localStorage` 與 `sessionStorage`，證明自訂項目不在網路請求、快取或偏好命名空間出現。項目驗證規則、文件版本升級、損毀資料、匯出入格式、配額與規格要求的 5,000 筆 500ms 開啟預算由單元測試負責。規格 §12.6 要求的匯入取消與逐筆進度不適用：整份自訂行事曆是單一文件的一次原子寫入，沒有可中途取消的逐筆交易，rollback 由全有全無的解析保證。規格提到的 logout independence 目前沒有登入流程可驗證，以「自訂項目不進入偏好命名空間」的檢查涵蓋同一個不變式。離線重新啟動同樣只在 Chromium 驗證，理由與 Service Worker 生命週期相同。中英文頁各驗證一次。
 - 常用工具：驗證未收藏前不寫入本機儲存、重新載入與離線後仍保留、鍵盤與觸控可完成加入、排序與移除、操作目標至少 44 × 44 CSS px、下架與未知工具會被清除、舊版紀錄可升級，以及中英文切換後指向同一個工具。常用工具檢視在 375px 下另跑 light／dark 的 axe 檢查。離線重新啟動同樣只在 Chromium 驗證，理由與 Service Worker 生命週期相同。
 - 本機資產：以雙語 `/storage/` 頁驗證匯入、更名、逐筆刪除、全部清除與匯出都由使用者確認並在重新載入後保留；讀不到與較新版本的紀錄可辨識且可刪除；讀取失敗的匯入檔不改變裝置上的資產。另列舉 Cache Storage 項目、`localStorage` 與 `sessionStorage`，證明資產名稱與內容不在網路請求、Service Worker 快取或偏好命名空間出現。375px 另跑 light／dark 的 axe 檢查、觸控目標與鍵盤更名流程；資料庫結構遷移、配額保留、損毀與版本錯誤、匯出入格式與 rollback 由單元測試負責。離線重新啟動同樣只在 Chromium 驗證，理由與 Service Worker 生命週期相同。
+- 去背決策紀錄：`tests/image-background-remover-reference.test.ts` 檢查 `docs/research/007-image-background-removal-model-evaluation.md`、`app/features/tools/image-background-remover/domain/reference.ts` 與量測 JSON 三者一致：候選、排除原因與原因分類、能力層級、失敗代碼、模型 commit 與 SHA-256 都必須逐字相同，文件裡的每個數字都必須等於量測檔中的值，選定方案的授權必須落在可自行散布的清單內，模型下載網址只能指向釘選 commit 的允許來源，且文件必須寫明像素不離開裝置。這個工具尚未實作，因此沒有頁面、瀏覽器或無障礙檢查。
 - PWA 快取邊界：列舉所有 Cache Storage 名稱與項目，證明只有 `toolsliang-` 前綴的版本化應用資產、沒有查詢字串，也不含任何工具內容 canary。
 
 離線測試會刻意中斷連線，瀏覽器因此回報無法送出的請求。只有這類網路不可用訊息在明確標記的離線測試中被容許，應用層錯誤仍然是失敗。
