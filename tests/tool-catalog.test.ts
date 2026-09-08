@@ -47,12 +47,12 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
     expect(getTool('image-resizer')).toBeUndefined()
-    expect(toolsByCategory('image-commerce').map(tool => tool.slug)).toEqual(['image-compressor'])
+    expect(toolsByCategory('image-commerce').map(tool => tool.slug)).toEqual(['image-compressor', 'image-background-remover'])
     expect(publishedToolCategories.map(category => category.id)).toEqual(['calculation', 'time-calendar', 'random-selection', 'image-commerce', 'document'])
   })
 
@@ -171,6 +171,7 @@ describe('tool catalog', () => {
     expect(getPublicToolRoutes()).toEqual([
       '/zh-tw/tools/device-time/',
       '/zh-tw/tools/image-compressor/',
+      '/zh-tw/tools/image-background-remover/',
       '/zh-tw/tools/bmi-calculator/',
       '/zh-tw/tools/ntd-uppercase/',
       '/zh-tw/tools/random-picker/',
@@ -178,6 +179,7 @@ describe('tool catalog', () => {
       '/zh-tw/tools/custom-calendar/',
       '/en/tools/device-time/',
       '/en/tools/image-compressor/',
+      '/en/tools/image-background-remover/',
       '/en/tools/bmi-calculator/',
       '/en/tools/ntd-uppercase/',
       '/en/tools/random-picker/',

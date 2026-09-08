@@ -1,5 +1,6 @@
 import { stripJpegMetadata } from '../../images/jpeg-metadata'
 import { imageDimensions } from '../../images/dimensions'
+import { exceedsImageLimits } from '../../images/limits'
 import { imageSignature } from '../../images/input'
 import type { CompressionInput, CompressionWireOutput, ImageFormat } from './types'
 import type { WorkerReply } from '../engine/worker-engine'
@@ -36,14 +37,14 @@ async function compress(input: CompressionInput) {
     const dimensions = imageDimensions(bytes)
     if (!dimensions) { send({ type: 'error', code: 'corrupt_image' }); return }
     const { width, height } = dimensions
-    if (!width || !height || width > 8192 || height > 8192 || width * height > 24_000_000) { send({ type: 'error', code: 'too_large' }); return }
+    if (exceedsImageLimits(width, height)) { send({ type: 'error', code: 'too_large' }); return }
     // Conservative allowance for source/target pixels, codec copies, encoded bytes, and a bounded preview.
     const estimatedBytes = width * height * 8 + Math.min(width * height, input.maxWidth * input.maxHeight) * 8 + bytes.byteLength * 2 + 800 * 800 * 8
     if (estimatedBytes > 384 * 1024 * 1024) { send({ type: 'error', code: 'memory_limit' }); return }
     progress('decoding')
     failure = 'decode_failed'
     bitmap = await createImageBitmap(new Blob([bytes], { type: format }), { imageOrientation: 'from-image' })
-    if (!bitmap.width || !bitmap.height || bitmap.width > 8192 || bitmap.height > 8192 || bitmap.width * bitmap.height > 24_000_000) { send({ type: 'error', code: 'too_large' }); return }
+    if (exceedsImageLimits(bitmap.width, bitmap.height)) { send({ type: 'error', code: 'too_large' }); return }
     const scale = Math.min(1, input.maxWidth / bitmap.width, input.maxHeight / bitmap.height)
     const outWidth = Math.max(1, Math.round(bitmap.width * scale)), outHeight = Math.max(1, Math.round(bitmap.height * scale))
     progress('processing')

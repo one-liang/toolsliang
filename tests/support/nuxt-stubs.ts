@@ -16,7 +16,7 @@ import { useAppLocale } from '@/composables/useAppLocale'
 import { useCalendarMonth } from '@/composables/useCalendarMonth'
 import { useCustomCalendar } from '@/composables/useCustomCalendar'
 import { useLocalAssets } from '@/composables/useLocalAssets'
-import { useOfflineAsset } from '@/composables/useOfflineAsset'
+import { resetOfflineAssetDownloads, useOfflineAsset } from '@/composables/useOfflineAsset'
 import { useSavedTools } from '@/composables/useSavedTools'
 import { useSavedToolsView } from '@/composables/useSavedToolsView'
 import { useWorkspaceDirty } from '@/composables/useWorkspaceDirty'
@@ -41,6 +41,7 @@ export function setTestRoute(patch: Partial<TestRoute> = {}) {
 
 export function resetNuxtStubs() {
   states.clear()
+  resetOfflineAssetDownloads()
   setTestRoute()
   document.documentElement.className = ''
   localStorage.clear()

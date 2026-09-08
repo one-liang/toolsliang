@@ -933,19 +933,43 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
   .motion-dot { translate: 0 !important; }
 }
 
-/* Image compressor: part of the precached shell stylesheet, including before hydration. */
-.image-compressor__picker { padding: 24px; border: 1px dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
-.image-compressor__picker > svg { display: block; margin-bottom: 12px; color: var(--color-primary-strong); }
-.image-compressor__picker input { height: auto; min-height: 44px; max-width: 100%; }
-.image-compressor__picker input::file-selector-button { min-height: 44px; padding: 8px 12px; margin-right: 8px; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-foreground); }
-.image-compressor__filename { overflow-wrap: anywhere; margin: 16px 0; }
+/* Image workspaces: part of the precached shell stylesheet, including before hydration. */
+.image-compressor__picker,
+.image-background-remover__picker { padding: 24px; border: 1px dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.image-compressor__picker > svg,
+.image-background-remover__picker > svg { display: block; margin-bottom: 12px; color: var(--color-primary-strong); }
+.image-compressor__picker input,
+.image-background-remover__picker input { height: auto; min-height: 44px; max-width: 100%; }
+.image-compressor__picker input::file-selector-button,
+.image-background-remover__picker input::file-selector-button { min-height: 44px; padding: 8px 12px; margin-right: 8px; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-foreground); }
+.image-compressor__filename,
+.image-background-remover__filename { overflow-wrap: anywhere; margin: 16px 0; }
+.image-compressor__status,
+.image-background-remover__status { margin-top: 16px; }
+.image-compressor .field-error,
+.image-background-remover .field-error { display: flex; align-items: flex-start; gap: 8px; }
+.image-compressor .field-error svg,
+.image-background-remover .field-error svg { flex-shrink: 0; }
+.image-compressor__comparison figure,
+.image-background-remover__comparison figure { min-width: 0; margin: 0; }
+.image-compressor__comparison figcaption,
+.image-background-remover__comparison figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
+.image-compressor__download,
+.image-background-remover__download { margin-top: 16px; }
 .image-compressor__settings { padding: 0; margin: 24px 0 0; border: 0; min-width: 0; }
 .image-compressor__settings legend { margin-bottom: 16px; font-weight: 700; }
-.image-compressor__status { margin-top: 16px; }
-.image-compressor .field-error { display: flex; align-items: flex-start; gap: 8px; }
-.image-compressor .field-error svg { flex-shrink: 0; }
 .image-compressor__comparison { margin-top: 24px; }
-.image-compressor__comparison figure { min-width: 0; margin: 0; }
-.image-compressor__comparison figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
 .image-compressor__comparison img { width: 100%; height: auto; max-height: var(--image-preview-max-height); object-fit: contain; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
-.image-compressor__download { margin-top: 16px; }
+
+/* Portrait background remover: only what the shared image workspace rules do not cover. */
+.image-background-remover__scope { margin: 16px 0 0; padding: 12px 16px; border-inline-start: 3px solid var(--color-primary-strong); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+.image-background-remover__model { margin: 24px 0; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); display: grid; gap: 12px; }
+.image-background-remover__model-status { margin: 0; line-height: 1.6; }
+.image-background-remover__zoom { margin-top: 24px; }
+.image-background-remover__zoom input[type="range"] { min-height: 44px; padding: 0; }
+.image-background-remover__comparison { margin-top: 16px; }
+/* Zoomed previews scroll inside their frame, so the page itself never does. */
+.image-background-remover__frame { max-height: var(--image-preview-max-height); overflow: auto; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+.image-background-remover__frame img { display: block; height: auto; max-width: none; }
+.image-background-remover__frame--alpha { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.image-background-remover__coverage { font-weight: 600; }

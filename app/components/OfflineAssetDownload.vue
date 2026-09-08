@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Download, RotateCcw, X } from '@lucide/vue'
+import { useOnline } from '@vueuse/core'
 import { computed, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { formatAssetSize } from '@/features/pwa/offline-assets'
@@ -10,11 +11,20 @@ const emit = defineEmits<{ 'update:cached': [key: string | null] }>()
 
 const { cachedKey, cancel, download, progress, state } = useOfflineAsset(props.asset)
 const percent = computed(() => Math.round(progress.value * 100))
+/** A blocked attempt leaves its phase behind; reconnecting has to make the button usable again. */
+const online = useOnline()
 
 watch(cachedKey, key => emit('update:cached', key), { immediate: true })
 
 const statusText = computed(() => {
   const en = props.locale === 'en'
+  // Being offline is the condition, not a phase a past attempt left behind, so
+  // it is answered before anything the visitor did earlier.
+  if (!online.value && state.value.phase !== 'cached') {
+    return en
+      ? 'You are offline, so this resource cannot be downloaded yet.'
+      : '目前離線，還無法下載這個資源。'
+  }
   switch (state.value.phase) {
     case 'cached':
       return en ? 'Downloaded and ready to use offline.' : '已下載，可離線使用。'
@@ -23,13 +33,14 @@ const statusText = computed(() => {
       // announce every tick, only that the phase changed.
       return en ? 'Downloading…' : '下載中…'
     case 'failed':
+      if (state.value.failureReason === 'digest-mismatch') {
+        return en
+          ? 'The downloaded file did not match the published fingerprint, so it was discarded. Try again.'
+          : '下載到的檔案與公布的指紋不符，已捨棄不使用。請重新下載。'
+      }
       return en
         ? 'The download did not finish. Nothing was kept, so you can try again.'
         : '下載未完成，已清除未完成的內容，可以重新嘗試。'
-    case 'blocked-offline':
-      return en
-        ? 'You are offline, so this resource cannot be downloaded yet.'
-        : '目前離線，還無法下載這個資源。'
     default:
       return en
         ? 'Not downloaded yet. Downloading is optional and can be cancelled at any time.'
@@ -69,7 +80,7 @@ const statusText = computed(() => {
       </Button>
       <Button
         v-else-if="state.phase !== 'cached'"
-        :disabled="state.phase === 'blocked-offline'"
+        :disabled="!online"
         @click="download"
       >
         <RotateCcw v-if="state.phase === 'failed'" :size="18" aria-hidden="true" />

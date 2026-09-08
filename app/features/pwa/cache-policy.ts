@@ -140,7 +140,10 @@ export function buildShellPrecacheUrls(): string[] {
   const urls = supportedLocales.flatMap(locale => [
     `/${locale}/`,
     `/${locale}/tools/`,
-    ...publishedTools.filter(tool => tool.offlineMode === 'ready').map(tool => `/${locale}/tools/${tool.slug}/`),
+    // Every published tool page, including one that first downloads a model:
+    // its megabytes live in their own cache, and a visitor who already has them
+    // must still be able to open the page that runs them.
+    ...publishedTools.map(tool => `/${locale}/tools/${tool.slug}/`),
   ])
 
   return [...new Set([...urls, ...offlineRoutes(), ...storageRoutes()])]

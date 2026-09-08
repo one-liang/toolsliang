@@ -12,6 +12,8 @@ export function createWorkerEngine<Input, WireOutput, Output>(adapter: {
   worker: (signal: AbortSignal) => Promise<WorkerLease>
   validate: (input: Input) => Promise<string | undefined>
   output: (wire: WireOutput) => Output
+  /** How long one run may take before it is abandoned as a stuck worker. */
+  timeoutMs?: number
 }): ToolEngine<Input, Output> {
   let disposed = false
   let cancelActive: (() => void) | undefined
@@ -78,7 +80,7 @@ export function createWorkerEngine<Input, WireOutput, Output>(adapter: {
       cancelActive = cancel
       context.signal?.addEventListener('abort', cancel, { once: true })
       const fail = (code: string) => finish({ status: 'error', error: engineError(code) })
-      const timer = setTimeout(() => fail('processing_timeout'), 60_000)
+      const timer = setTimeout(() => fail('processing_timeout'), adapter.timeoutMs ?? 60_000)
       void (async () => {
         let failure = 'read_failed'
         try {

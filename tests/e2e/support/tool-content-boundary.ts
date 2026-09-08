@@ -17,8 +17,13 @@ interface BoundaryFindings {
  * Cutting the connection on purpose makes the browser report the requests it
  * could not send. Those messages are the condition under test, not a defect, so
  * a test that goes offline says so and only that class of message is filtered.
+ * `NUXT_E5002` is the app manifest failing to load, which Nuxt itself documents
+ * as a transient network issue; it appears when a test goes offline before the
+ * Service Worker has had a chance to precache that manifest. A chunk the router
+ * was already prefetching raises the same thing as an uncaught error instead of
+ * a console message, so the filter covers both channels.
  */
-const OFFLINE_NOISE = /ERR_INTERNET_DISCONNECTED|ERR_FAILED|Failed to load resource|NUXT_E7002|NUXT_E7003/
+const OFFLINE_NOISE = /ERR_INTERNET_DISCONNECTED|ERR_FAILED|Failed to load resource|Importing a module script failed|dynamically imported module|NUXT_E5002|NUXT_E7002|NUXT_E7003/
 const offlineExpectedPages = new WeakSet<Page>()
 
 export function expectOfflineRequests(page: Page) {
@@ -69,12 +74,13 @@ export function guardToolContentBoundary(
 
   test.afterEach(({ page }) => {
     const findings = findingsByPage.get(page)!
-    const consoleErrors = offlineExpectedPages.has(page)
-      ? findings.consoleErrors.filter(message => !OFFLINE_NOISE.test(message))
-      : findings.consoleErrors
+    const offline = offlineExpectedPages.has(page)
+    const quiet = (messages: string[]) => offline ? messages.filter(message => !OFFLINE_NOISE.test(message)) : messages
+    const consoleErrors = quiet(findings.consoleErrors)
+    const pageErrors = quiet(findings.pageErrors)
 
     expect(findings.networkFindings, `工具內容網路邊界違規：\n${findings.networkFindings.join('\n')}`).toEqual([])
     expect(consoleErrors, `console errors：\n${consoleErrors.join('\n')}`).toEqual([])
-    expect(findings.pageErrors, `page errors：\n${findings.pageErrors.join('\n')}`).toEqual([])
+    expect(pageErrors, `page errors：\n${pageErrors.join('\n')}`).toEqual([])
   })
 }

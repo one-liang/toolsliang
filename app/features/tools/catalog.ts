@@ -1,3 +1,4 @@
+import { imageBackgroundRemoverDefinition } from './image-background-remover/definition'
 import { imageCompressorDefinition } from './image-compressor/definition'
 import { bmiContentReview } from './bmi-calculator/domain/sources'
 import { ntdContentReview } from './ntd-uppercase/domain/sources'
@@ -45,6 +46,8 @@ export interface ToolOfflineAsset {
   version: string
   url: string
   bytes: number
+  /** Lowercase SHA-256 of the exact file. Bytes that do not match are never cached. */
+  sha256: string
   label: LocalizedCopy
 }
 
@@ -151,6 +154,7 @@ export const toolCategories: ToolCategory[] = [
 const registeredTools: ToolDefinition[] = [
   deviceTimeDefinition,
   imageCompressorDefinition,
+  imageBackgroundRemoverDefinition,
   {
     slug: 'bmi-calculator', category: 'calculation', icon: 'calculator',
     availability: { state: 'published', publishedAt: '2026-09-05' },
@@ -618,6 +622,7 @@ function validateOfflineRegistration(prefix: string, tool: Partial<PublishedTool
       issues.push(`${prefix} offline asset ${asset.id} must serve its version from a first-party versioned URL`)
     }
     if (!(asset.bytes > 0)) issues.push(`${prefix} offline asset ${asset.id} requires a positive size`)
+    if (!/^[0-9a-f]{64}$/.test(asset.sha256 ?? '')) issues.push(`${prefix} offline asset ${asset.id} requires a lowercase SHA-256 digest`)
     if (!asset.label?.['zh-tw']?.trim() || !asset.label.en?.trim()) issues.push(`${prefix} offline asset ${asset.id} requires a localized label`)
   }
 

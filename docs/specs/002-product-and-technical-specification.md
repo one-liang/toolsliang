@@ -254,6 +254,7 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 #### 12.8 Image background remover
 
 - **User story and non-goals:** A user removes a foreground image background locally and downloads a transparent result. It is not manual professional masking, guaranteed hair/detail accuracy, human retouching, or a third-party AI API.
+- **Version one scope:** Portrait matting only, on the WebAssembly baseline. The feasibility study (`docs/research/007-image-background-removal-model-evaluation.md`) found no redistributable general-purpose model that runs in a browser inside the transfer budget, so version one ships the portrait model it recommends and says so in the tool name, the description, and the page itself. WebGPU acceleration, mask refinement, and general object removal are deferred; `docs/research/008-portrait-background-removal-implementation.md` records what was chosen and why.
 - **Local boundary:** Image pixels and masks stay in the worker/device. The versioned model/runtime is fetched only from toolsliang-controlled Cloudflare assets and can be cached for offline reuse.
 - **Module and interface:** A worker engine exposes model capability/download state, version, estimated memory, preprocess, inference, optional local mask refinement, export, cancel, and dispose. WASM is the cross-browser baseline; WebGPU is an optional enhancement with identical result contract.
 - **Route and slug:** `/{locale}/tools/image-background-remover/`; stable slug `image-background-remover`.

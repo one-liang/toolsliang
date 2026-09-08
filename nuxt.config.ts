@@ -13,6 +13,13 @@ export default defineNuxtConfig({
   css: ['@fontsource-variable/roboto', '~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
+    /**
+     * Workers are emitted as ES modules so the one that loads its inference
+     * runtime at run time can use `import()`. A chunk without imports of its
+     * own is still valid classic script, so `createLocalWorker` starts each
+     * worker in the mode it actually needs.
+     */
+    worker: { format: 'es' },
   },
   shadcn: {
     prefix: '',
