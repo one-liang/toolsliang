@@ -1,3 +1,4 @@
+import promoWorkerUrl from './brand-promo-image/promo.worker?worker&url'
 import backgroundRemovalWorkerUrl from './image-background-remover/background-removal.worker?worker&url'
 import compliantImageWorkerUrl from './compliant-product-image/compliant-image.worker?worker&url'
 import imageWorkerUrl from './image-compressor/image.worker?worker&url'
@@ -30,6 +31,7 @@ export function validateToolWorkspaces(tools: PublishedToolDefinition[]) {
  * `tests/e2e/quality-gates.spec.ts` holds every declared asset to a 200.
  */
 export function getToolWorkspaceAssets(componentKey: string): string[] {
+  if (componentKey === 'BrandPromoImageWorkspace') return [promoWorkerUrl, imageWorkerUrl]
   if (componentKey === 'ImageCompressorWorkspace') return [imageWorkerUrl]
   if (componentKey === 'ImageBackgroundRemoverWorkspace') return [backgroundRemovalWorkerUrl]
   if (componentKey === 'CompliantProductImageWorkspace') return [compliantImageWorkerUrl]
