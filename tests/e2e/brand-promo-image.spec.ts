@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { gotoHydrated } from './support/hydration'
-import { guardToolContentBoundary } from './support/tool-content-boundary'
+import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
 
 guardToolContentBoundary([
   { label: '品牌素材檔名', value: 'private-brand-canary.png' },
@@ -65,9 +65,11 @@ test('組合、鍵盤調整、圖層順序、復原重做與 PNG 像素輸出', 
   expect(latency).toBeLessThan(100)
   expect((await new AxeBuilder({ page }).include('.brand-promo').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
   if (info.project.name === 'chromium') {
+    await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: 'artifacts/brand-promo-composed-desktop.png', fullPage: true })
     await page.setViewportSize({ width: 375, height: 900 })
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: 'artifacts/brand-promo-composed-mobile.png', fullPage: true })
   }
 })
@@ -181,4 +183,51 @@ test('HEIC、大圖與輸出失敗可復原，圖層與已保存資產仍在', a
   await page.evaluate(() => sessionStorage.removeItem('simulate-encode'))
   await page.getByRole('button', { name: '產生 PNG', exact: true }).click()
   await expect(page.getByRole('link', { name: '下載 PNG', exact: true })).toBeVisible()
+})
+
+test('離線重新載入可重用素材與輸出，內容不進入快取或偏好', async ({ page, context }, info) => {
+  test.skip(info.project.name !== 'chromium', 'Service Worker 生命週期僅在 Chromium 驗證')
+  await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
+  await add(page, 'logo', '#0000ff')
+  await page.getByRole('button', { name: '保存素材到這台裝置', exact: true }).click()
+  await expect(page.getByRole('button', { name: '加入已保存素材', exact: true })).toHaveCount(1)
+  await page.waitForFunction(async () => {
+    await navigator.serviceWorker.ready
+    const paths = (await Promise.all((await caches.keys()).map(async key => (await (await caches.open(key)).keys()).map(request => request.url)))).flat()
+    return navigator.serviceWorker.controller && paths.some(path => /promo\.worker-.*\.js$/.test(path)) && paths.some(path => /image\.worker-.*\.js$/.test(path))
+  }, undefined, { timeout: 20_000 })
+  expectOfflineRequests(page)
+  await context.setOffline(true)
+  await page.reload()
+  await page.getByRole('button', { name: '加入已保存素材', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: '已加入圖層' })).toBeVisible()
+  await page.getByRole('button', { name: '產生 PNG', exact: true }).click()
+  await expect(page.getByRole('link', { name: '下載 PNG', exact: true })).toBeVisible()
+  const stored = await page.evaluate(async () => ({
+    local: localStorage.length,
+    session: sessionStorage.length,
+    urls: (await Promise.all((await caches.keys()).map(async key => (await (await caches.open(key)).keys()).map(request => request.url)))).flat(),
+  }))
+  expect(stored.local).toBe(0)
+  expect(stored.session).toBe(0)
+  expect(stored.urls.some(url => url.includes('private-brand-canary') || url.startsWith('blob:'))).toBe(false)
+})
+
+test('無效尺寸或位置不會被另一欄編輯清除，修正前禁止輸出', async ({ page }) => {
+  await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
+  await add(page, 'product', '#0000ff')
+  await page.getByLabel('寬度（像素）').fill('9000')
+  await page.getByLabel('高度（像素）').fill('2000')
+  await expect(page.getByLabel('寬度（像素）')).toHaveValue('9000')
+  await expect(page.getByRole('button', { name: '產生 PNG', exact: true })).toBeDisabled()
+  await expect(page.getByLabel('寬度（像素）')).toHaveAttribute('aria-invalid', 'true')
+  await page.getByLabel('寬度（像素）').fill('1000')
+  await page.getByLabel('水平位置（%）').fill('101')
+  await page.getByRole('button', { name: '向上微調', exact: true }).click()
+  await expect(page.getByLabel('水平位置（%）')).toHaveValue('101')
+  await expect(page.getByRole('button', { name: '產生 PNG', exact: true })).toBeDisabled()
+  await page.getByLabel('水平位置（%）').fill('0')
+  await page.getByRole('button', { name: '產生 PNG', exact: true }).click()
+  await expect(page.getByRole('link', { name: '下載 PNG', exact: true })).toBeVisible()
+  expect(await outputPixels(page)).toMatchObject({ width: 1000, height: 2000 })
 })

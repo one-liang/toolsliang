@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,8 +17,19 @@ const locked = computed(() => busy.value || saving.value)
 const labels = computed(() => en.value ? { background: 'Background', product: 'Product', frame: 'Frame', logo: 'Logo' } : { background: '背景', product: '商品圖', frame: '框版', logo: 'Logo' })
 const savedAssets = computed(() => local.records.value.filter(record => ['background', 'frame', 'logo'].includes(record.kind)))
 const storageError = computed(() => local.error.value ? localAssetErrorMessage(local.error.value, locale.value) : null)
-const errorText = computed(() => error.value ? (promoErrors[error.value] ?? promoErrors.failed)![locale.value] : '')
+const drafts = reactive<Record<string, string | number>>({ width: 1000, height: 1000, x: 0, y: 0, scale: 100, opacity: 100 })
+const invalidFields = reactive<Record<string, boolean>>({})
+const invalid = computed(() => Object.values(invalidFields).some(Boolean))
+const errorText = computed(() => invalid.value ? promoErrors.invalid_options![locale.value] : error.value ? (promoErrors[error.value] ?? promoErrors.failed)![locale.value] : '')
+watch(selectedId, () => {
+  for (const key of ['x', 'y', 'scale', 'opacity']) invalidFields[key] = false
+})
+watch([scene, selectedId], () => {
+  for (const key of ['width', 'height'] as const) if (!invalidFields[key]) drafts[key] = scene.value[key]
+  for (const key of ['x', 'y', 'scale', 'opacity'] as const) if (!invalidFields[key]) drafts[key] = Math.round((selected.value?.[key] ?? 0) * 100)
+})
 const statusText = computed(() => {
+  if (saving.value) return en.value ? 'Saving asset on this device…' : '正在這台裝置保存素材…'
   if (busy.value) return (en.value ? 'Processing images locally: ' : '正在本機處理圖片：') + (stage.value === 'encoding' ? (en.value ? 'encoding' : '編碼') : stage.value === 'rendering' ? (en.value ? 'rendering layers' : '算繪圖層') : (en.value ? 'reading / decoding' : '讀取／解碼'))
   const messages: Record<string, string> = en.value
     ? { imported: 'Layer added.', saved: 'Asset saved on this device.', cancelled: 'Cancelled. Existing layers and saved assets are unchanged.', success: 'PNG output is ready.' }
@@ -33,13 +44,17 @@ const transforms = computed(() => [
 ])
 function transform(key: 'x' | 'y' | 'scale' | 'opacity', raw: string | number) {
   const field = transforms.value.find(item => item.key === key)!
+  drafts[key] = raw
   const value = Number(raw)
-  if (raw === '' || !Number.isFinite(value) || value < field.min || value > field.max) { error.value = 'invalid_options'; return }
+  invalidFields[key] = raw === '' || !Number.isFinite(value) || value < field.min || value > field.max
+  if (invalidFields[key]) return
   patchLayer({ [key]: value / 100 })
 }
 function resize(key: 'width' | 'height', raw: string | number) {
+  drafts[key] = raw
   const value = Number(raw)
-  if (!Number.isInteger(value) || value < 1 || value > 8192 || value * scene.value[key === 'width' ? 'height' : 'width'] > 24_000_000) { error.value = 'invalid_options'; return }
+  invalidFields[key] = !Number.isInteger(value) || value < 1 || value > 8192 || value * scene.value[key === 'width' ? 'height' : 'width'] > 24_000_000
+  if (invalidFields[key]) return
   commit({ ...scene.value, [key]: value })
 }
 function layerStyle(layer: PromoLayer) {
@@ -64,7 +79,7 @@ function shortcut(event: KeyboardEvent) {
 </script>
 
 <template>
-  <Card class="tool-workspace brand-promo" @keydown="shortcut">
+  <Card class="tool-workspace brand-promo" :aria-busy="locked" @keydown="shortcut">
     <p class="eyebrow">{{ en ? 'Your assets, your device' : '你的素材，留在你的裝置' }}</p>
     <p class="field-help">{{ en ? 'Combine backgrounds, products, frames, and Logos. No text or price tags. PNG keeps transparent areas.' : '組合背景、商品圖、框版與 Logo，不含文字與價籤。PNG 會保留透明區域。' }}</p>
     <div class="tool-workspace__grid">
@@ -120,7 +135,7 @@ function shortcut(event: KeyboardEvent) {
           </div>
           <div v-for="field in transforms" :key="field.key" class="field-group">
             <label :for="`promo-${field.key}`">{{ field.label }}</label>
-            <Input :id="`promo-${field.key}`" :model-value="Math.round(selected[field.key] * 100)" type="number" :min="field.min" :max="field.max" step="1" aria-describedby="promo-transform-help promo-error" @update:model-value="transform(field.key, $event)" />
+            <Input :id="`promo-${field.key}`" :model-value="drafts[field.key]" :aria-invalid="Boolean(invalidFields[field.key])" type="number" :min="field.min" :max="field.max" step="1" aria-describedby="promo-transform-help promo-error" @update:model-value="transform(field.key, $event)" />
           </div>
           <p id="promo-transform-help" class="field-help">{{ en ? 'Position is measured from the centre as a share of the canvas. Use number fields or nudge buttons.' : '位置從置中起算，以畫布百分比表示。可用數字欄位或微調按鈕。' }}</p>
           <div class="tool-workspace__actions">
@@ -145,29 +160,29 @@ function shortcut(event: KeyboardEvent) {
       </section>
     </div>
 
-    <form @submit.prevent="produce">
+    <form @submit.prevent="!invalid && produce()">
       <fieldset :disabled="locked" class="brand-promo__controls">
         <legend>{{ en ? 'PNG output size' : 'PNG 輸出尺寸' }}</legend>
         <div class="tool-workspace__grid">
           <div v-for="dimension in (['width', 'height'] as const)" :key="dimension" class="field-group">
             <label :for="`promo-${dimension}`">{{ dimension === 'width' ? (en ? 'Width (px)' : '寬度（像素）') : (en ? 'Height (px)' : '高度（像素）') }}</label>
-            <Input :id="`promo-${dimension}`" :model-value="scene[dimension]" type="number" min="1" max="8192" step="1" aria-describedby="promo-error" @update:model-value="resize(dimension, $event)" />
+            <Input :id="`promo-${dimension}`" :model-value="drafts[dimension]" :aria-invalid="Boolean(invalidFields[dimension])" type="number" min="1" max="8192" step="1" aria-describedby="promo-error" @update:model-value="resize(dimension, $event)" />
           </div>
         </div>
       </fieldset>
       <div class="tool-workspace__actions">
-        <Button type="submit" :disabled="locked || !supported || !scene.layers.length || error === 'invalid_options'">{{ en ? 'Produce PNG' : '產生 PNG' }}</Button>
+        <Button type="submit" :disabled="locked || !supported || !scene.layers.length || invalid">{{ en ? 'Produce PNG' : '產生 PNG' }}</Button>
         <Button v-if="busy" type="button" variant="outline" @click="cancel">{{ en ? 'Cancel' : '取消' }}</Button>
       </div>
     </form>
     <p id="promo-error" role="alert" class="field-error">{{ errorText }}</p>
     <p role="status">{{ statusText }}</p>
     <div v-if="busy" role="progressbar" :aria-label="en ? 'Local image processing' : '本機圖片處理'">{{ en ? 'Working locally. You can cancel.' : '正在本機處理，可隨時取消。' }}</div>
-    <figure v-if="outputPreview" class="brand-promo__result">
+    <figure v-if="outputPreview && !invalid" class="brand-promo__result">
       <img :src="outputPreview" :alt="en ? 'PNG output preview' : 'PNG 輸出預覽'">
       <figcaption>{{ en ? 'Re-encoded PNG does not copy source metadata. Keep your originals.' : '重新編碼的 PNG 不複製來源中繼資料，請保留原始檔案。' }}</figcaption>
     </figure>
-    <Button v-if="output" as-child><a :href="output" download="brand-promo.png">{{ en ? 'Download PNG' : '下載 PNG' }}</a></Button>
+    <Button v-if="output && !invalid" as-child><a :href="output" download="brand-promo.png">{{ en ? 'Download PNG' : '下載 PNG' }}</a></Button>
 
     <section class="brand-promo__library" :aria-label="en ? 'Saved local assets' : '已保存本機資產'">
       <h2>{{ en ? 'Saved on this device' : '保存在這台裝置' }}</h2>
