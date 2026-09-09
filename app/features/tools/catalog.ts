@@ -2,6 +2,7 @@ import { brandPromoImageDefinition } from './brand-promo-image/definition'
 import { compliantProductImageDefinition } from './compliant-product-image/definition'
 import { imageBackgroundRemoverDefinition } from './image-background-remover/definition'
 import { imageCompressorDefinition } from './image-compressor/definition'
+import { productImageWorkbenchDefinition } from './product-image-workbench/definition'
 import { bmiContentReview } from './bmi-calculator/domain/sources'
 import { ntdContentReview } from './ntd-uppercase/domain/sources'
 import { randomPickerContentReview } from './random-picker/domain/sources'
@@ -159,6 +160,7 @@ const registeredTools: ToolDefinition[] = [
   imageBackgroundRemoverDefinition,
   compliantProductImageDefinition,
   brandPromoImageDefinition,
+  productImageWorkbenchDefinition,
   {
     slug: 'bmi-calculator', category: 'calculation', icon: 'calculator',
     availability: { state: 'published', publishedAt: '2026-09-05' },
