@@ -1,3 +1,4 @@
+import { brandPromoImageFaq } from './brand-promo-image/content'
 import { compliantProductImageFaq } from './compliant-product-image/content'
 import { imageBackgroundRemoverFaq } from './image-background-remover/content'
 import { imageCompressorFaq } from './image-compressor/content'
@@ -21,6 +22,7 @@ export interface ToolFaqEntry {
 }
 
 const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
+  'brand-promo-image': brandPromoImageFaq,
   'bmi-calculator': bmiFaq,
   'ntd-uppercase': ntdFaq,
   'random-picker': randomPickerFaq,

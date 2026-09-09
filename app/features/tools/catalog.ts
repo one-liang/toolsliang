@@ -1,3 +1,4 @@
+import { brandPromoImageDefinition } from './brand-promo-image/definition'
 import { compliantProductImageDefinition } from './compliant-product-image/definition'
 import { imageBackgroundRemoverDefinition } from './image-background-remover/definition'
 import { imageCompressorDefinition } from './image-compressor/definition'
@@ -157,6 +158,7 @@ const registeredTools: ToolDefinition[] = [
   imageCompressorDefinition,
   imageBackgroundRemoverDefinition,
   compliantProductImageDefinition,
+  brandPromoImageDefinition,
   {
     slug: 'bmi-calculator', category: 'calculation', icon: 'calculator',
     availability: { state: 'published', publishedAt: '2026-09-05' },

@@ -1019,3 +1019,24 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .compliant-product-image__check q, .compliant-product-image__rules q { color: var(--color-muted-foreground); font-size: .8rem; }
 .compliant-product-image__meta { color: var(--color-muted-foreground); font-size: .78rem; }
 .compliant-product-image__caveats ul { margin: 0; padding-inline-start: 20px; display: grid; gap: 8px; font-size: .84rem; }
+
+/* Brand compositions use the shared flat tool surface and image preview budget. */
+.brand-promo__editor { display: grid; gap: 24px; margin-block: 24px; }
+.brand-promo__layers, .brand-promo__preview { min-width: 0; }
+.brand-promo h2 { margin-block: 0 16px; font-size: 1.125rem; }
+.brand-promo__layers ol, .brand-promo__library ul { padding: 0; list-style: none; display: grid; gap: 8px; }
+.brand-promo__layers li > button { width: 100%; justify-content: flex-start; white-space: normal; text-align: start; }
+.brand-promo__layers button[aria-pressed="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
+.brand-promo__controls { border: 0; padding: 0; margin-block: 24px; display: grid; gap: 16px; min-width: 0; }
+.brand-promo__controls legend { margin-bottom: 16px; font-weight: 650; }
+.brand-promo__filename, .brand-promo__library li { overflow-wrap: anywhere; }
+.brand-promo__canvas { position: relative; overflow: hidden; width: min(100%, calc(var(--image-preview-max-height) * var(--promo-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); background: var(--color-surface-subtle); }
+.brand-promo__canvas img { position: absolute; display: block; max-width: none; }
+.brand-promo__result { margin: 0; }
+.brand-promo__result img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); object-fit: contain; }
+.brand-promo__library { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border); }
+.brand-promo__library li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.brand-promo__library a { color: var(--color-primary-strong); text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; margin-right: 16px; }
+@media (min-width: 768px) {
+  .brand-promo__editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
