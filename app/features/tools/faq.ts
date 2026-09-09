@@ -1,3 +1,4 @@
+import { compliantProductImageFaq } from './compliant-product-image/content'
 import { imageBackgroundRemoverFaq } from './image-background-remover/content'
 import { imageCompressorFaq } from './image-compressor/content'
 import { customCalendarFaq } from './custom-calendar/content'
@@ -27,6 +28,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'device-time': deviceTimeFaq,
   'image-compressor': imageCompressorFaq,
   'image-background-remover': imageBackgroundRemoverFaq,
+  'compliant-product-image': compliantProductImageFaq,
   'custom-calendar': customCalendarFaq,
 }
 

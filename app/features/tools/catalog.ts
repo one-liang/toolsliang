@@ -1,3 +1,4 @@
+import { compliantProductImageDefinition } from './compliant-product-image/definition'
 import { imageBackgroundRemoverDefinition } from './image-background-remover/definition'
 import { imageCompressorDefinition } from './image-compressor/definition'
 import { bmiContentReview } from './bmi-calculator/domain/sources'
@@ -155,6 +156,7 @@ const registeredTools: ToolDefinition[] = [
   deviceTimeDefinition,
   imageCompressorDefinition,
   imageBackgroundRemoverDefinition,
+  compliantProductImageDefinition,
   {
     slug: 'bmi-calculator', category: 'calculation', icon: 'calculator',
     availability: { state: 'published', publishedAt: '2026-09-05' },

@@ -2,6 +2,7 @@ import { stripJpegMetadata } from '../../images/jpeg-metadata'
 import { imageDimensions } from '../../images/dimensions'
 import { exceedsImageLimits } from '../../images/limits'
 import { imageSignature } from '../../images/input'
+import { detectEncodableFormats } from '../../images/encoders'
 import type { CompressionInput, CompressionWireOutput, ImageFormat } from './types'
 import type { WorkerReply } from '../engine/worker-engine'
 
@@ -10,20 +11,7 @@ const formats: ImageFormat[] = ['image/png', 'image/jpeg', 'image/webp']
 const send = (message: WorkerReply<CompressionWireOutput>, transfer: Transferable[] = []) => self.postMessage(message, transfer)
 const progress = (stage: string) => send({ type: 'progress', progress: { stage, completed: 0, total: 1 } })
 
-async function capabilities() {
-  const supportedFormats: ImageFormat[] = []
-  if (typeof OffscreenCanvas === 'undefined' || typeof createImageBitmap !== 'function') return { supported: false, formats: supportedFormats }
-  const canvas = new OffscreenCanvas(1, 1)
-  try {
-    if (!canvas.getContext('2d')) return { supported: false, formats: supportedFormats }
-    for (const format of formats) {
-      try { if ((await canvas.convertToBlob({ type: format })).type === format) supportedFormats.push(format) }
-      catch { /* This encoder is unavailable; the UI offers the working formats. */ }
-    }
-    return { supported: supportedFormats.length > 0, formats: supportedFormats }
-  }
-  finally { canvas.width = 0; canvas.height = 0 }
-}
+const capabilities = () => detectEncodableFormats(formats)
 
 async function compress(input: CompressionInput) {
   let bitmap: ImageBitmap | undefined

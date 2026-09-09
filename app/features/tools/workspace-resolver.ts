@@ -1,4 +1,5 @@
 import backgroundRemovalWorkerUrl from './image-background-remover/background-removal.worker?worker&url'
+import compliantImageWorkerUrl from './compliant-product-image/compliant-image.worker?worker&url'
 import imageWorkerUrl from './image-compressor/image.worker?worker&url'
 import { defineAsyncComponent, type AsyncComponentLoader } from 'vue'
 import type { PublishedToolDefinition } from '@/features/tools/catalog'
@@ -31,5 +32,6 @@ export function validateToolWorkspaces(tools: PublishedToolDefinition[]) {
 export function getToolWorkspaceAssets(componentKey: string): string[] {
   if (componentKey === 'ImageCompressorWorkspace') return [imageWorkerUrl]
   if (componentKey === 'ImageBackgroundRemoverWorkspace') return [backgroundRemovalWorkerUrl]
+  if (componentKey === 'CompliantProductImageWorkspace') return [compliantImageWorkerUrl]
   return []
 }
