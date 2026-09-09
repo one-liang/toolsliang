@@ -102,7 +102,7 @@ async function outputPixels(page: Page) {
   }, href)
 }
 
-test('略過去背的合規主圖流程：從原圖完成版型、下載，並釋放記憶體', async ({ page }, info) => {
+test('略過去背的合規主圖流程：從原圖完成版型、下載，並釋放記憶體', async ({ page }) => {
   await gotoHydrated(page, route)
 
   await expect(page.locator('[data-workbench-step="brand"]')).toHaveAttribute('data-workbench-state', 'unavailable')
@@ -130,13 +130,35 @@ test('略過去背的合規主圖流程：從原圖完成版型、下載，並�
   expect((await download).suggestedFilename()).toBe('compliant-product-image.jpg')
 
   expect((await new AxeBuilder({ page }).include('.product-image-workbench').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
-  if (info.project.name === 'chromium') {
-    await page.setViewportSize({ width: 375, height: 900 })
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    await page.evaluate(() => window.scrollTo(0, 0))
-    await page.screenshot({ path: 'artifacts/product-image-workbench-mobile.png', fullPage: true })
-  }
 })
+
+/** The English page is its own contract: its own URL, its own copy, its own audit. */
+for (const locale of ['zh-tw', 'en']) {
+  test(`${locale} 響應式、亮暗色、SEO 與無障礙`, async ({ page }, info) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await gotoHydrated(page, `/${locale}/tools/product-image-workbench/`)
+
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://toolsliang.com/${locale}/tools/product-image-workbench/`)
+    await expect(page.locator('link[hreflang="en"]')).toHaveAttribute('href', 'https://toolsliang.com/en/tools/product-image-workbench/')
+    await expect(page.locator('link[hreflang="zh-Hant-TW"]')).toHaveAttribute('href', 'https://toolsliang.com/zh-tw/tools/product-image-workbench/')
+    await expect(page.locator('[data-workbench-panel]')).toContainText(locale === 'en' ? 'Choose product image' : '選擇商品圖')
+
+    // A refused file must be explained in the language of the page it was refused on.
+    await page.getByLabel(locale === 'en' ? 'Choose product image' : '選擇商品圖')
+      .setInputFiles({ name: 'renamed.png', mimeType: 'image/png', buffer: Buffer.from('not an image at all') })
+    await expect(page.getByRole('alert')).toContainText(locale === 'en' ? 'Choose a JPEG, PNG, or WebP image' : '請選擇真正的 JPEG、PNG 或 WebP 圖片')
+
+    for (const width of [320, 375, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    }
+    for (const theme of ['light', 'dark']) {
+      if (theme === 'dark') await page.getByRole('button', { name: locale === 'en' ? 'Toggle color theme' : '切換色彩模式' }).click()
+      expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
+      if (info.project.name === 'chromium') await page.screenshot({ path: `artifacts/product-image-workbench-${locale}-${theme}.png`, fullPage: true })
+    }
+  })
+}
 
 /**
  * Reading a revoked URL is the condition under test, and the browser reports the
@@ -165,7 +187,9 @@ test('品牌宣傳圖分支：版型結果再疊上框版與 Logo 並輸出 PNG'
   await expect(page.locator('[data-workbench-step="brand"]')).not.toHaveAttribute('data-workbench-state', 'unavailable')
   await expect(page.getByLabel('通路規格')).toHaveCount(0)
 
-  await page.getByLabel('寬度（像素）').fill('600')
+  // A non-square canvas: the Logo's share of the width is not its scale, so a
+  // preview that reads the scale as a width would disagree with the file.
+  await page.getByLabel('寬度（像素）').fill('900')
   await page.getByLabel('高度（像素）').fill('600')
   await page.getByRole('button', { name: '產生版型' }).click()
   await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'brand', { timeout: 60_000 })
@@ -174,11 +198,20 @@ test('品牌宣傳圖分支：版型結果再疊上框版與 Logo 並輸出 PNG'
   await page.getByLabel('Logo 縮放（%）').fill('40')
   await page.getByLabel('Logo 水平位置（%）').fill('0')
   await page.getByLabel('Logo 垂直位置（%）').fill('0')
+
+  // 40% of the contain fit of a 120 px square on 900 × 600 is 240 px, not 360.
+  await expect.poll(() => page.evaluate(() => {
+    const canvas = document.querySelector('[data-workbench-panel="brand"] .workbench__canvas')!
+    const layers = canvas.querySelectorAll('img')
+    const logo = layers[layers.length - 1]!
+    return Math.round(logo.getBoundingClientRect().width / canvas.getBoundingClientRect().width * 1000) / 1000
+  })).toBeCloseTo(240 / 900, 2)
+
   await page.getByRole('button', { name: '組合品牌素材' }).click()
 
   await expect(page.getByRole('link', { name: '下載輸出檔案' })).toBeVisible({ timeout: 60_000 })
   const output = await outputPixels(page)
-  expect(output).toMatchObject({ width: 600, height: 600, type: 'image/png' })
+  expect(output).toMatchObject({ width: 900, height: 600, type: 'image/png' })
   // The Logo covers the centre; the layout result still shows at the edge.
   expectColour(output.centre, [22, 163, 74])
   expectColour(output.corner, [29, 78, 216])
@@ -211,9 +244,12 @@ test('取消與失敗只影響該步驟，先前成果保留且可回到前一�
   await page.getByLabel('高度（像素）').fill('4800')
   await page.getByLabel('輸出格式').selectOption('image/png')
   await page.getByRole('button', { name: '產生版型' }).click()
-  // The panel reflows while the step runs, so waiting for the button to hold
-  // still would spend the very window this test needs.
-  await page.getByRole('button', { name: '取消這一步' }).click({ force: true })
+  // The panel reflows while the step runs. Waiting for the button to hold still
+  // spends the very window this test needs, and a forced click can land where
+  // the button no longer is, so the event is dispatched on the element itself.
+  const cancelStep = page.getByRole('button', { name: '取消這一步' })
+  await expect(cancelStep).toBeVisible()
+  await cancelStep.dispatchEvent('click')
 
   await expect(page.getByRole('status').filter({ hasText: '已取消' })).toBeVisible()
   await expect(page.locator('[data-workbench-step="import"]')).toHaveAttribute('data-workbench-state', 'done')

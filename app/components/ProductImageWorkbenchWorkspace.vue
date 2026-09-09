@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
-import { useOnline } from '@vueuse/core'
 import { CircleCheck, Download, TriangleAlert, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { useBackgroundRemovalModel } from '@/composables/useBackgroundRemovalModel'
 import { useProductImageWorkbench } from '@/composables/useProductImageWorkbench'
 import { copy } from '@/features/tools/catalog'
 import { heicMessage } from '@/features/images/messages'
 import { formatAssetSize } from '@/features/pwa/offline-assets'
-import { backgroundRemovalAssets } from '@/features/tools/image-background-remover/domain/model'
 import { portraitScopeNotice } from '@/features/tools/image-background-remover/content'
 import { planPlacement } from '@/features/tools/compliant-product-image/domain/placement'
 import { compliantImagePresets, type CompliantImagePresetRule } from '@/features/tools/compliant-product-image/domain/reference'
@@ -31,8 +30,9 @@ import {
   resolveOccupancyGuides,
   resolveSafeAreaInsets,
 } from '@/features/tools/compliant-product-image/domain/render'
-import { workbenchOutputName } from '@/features/tools/product-image-workbench/pipeline'
-import { noteWorkbenchStepError, workbenchPurposes, workbenchSteps, type WorkbenchStep } from '@/features/tools/product-image-workbench/session'
+import { planBrandScene, workbenchOutputName } from '@/features/tools/product-image-workbench/pipeline'
+import { promoPlacement } from '@/features/tools/brand-promo-image/scene'
+import { isWorkbenchStepReachable, workbenchPurposes, workbenchSteps, type WorkbenchStep } from '@/features/tools/product-image-workbench/session'
 import {
   workbenchBlockReasons,
   workbenchErrorMessage,
@@ -51,22 +51,18 @@ const en = computed(() => locale.value === 'en')
 const workbench = useProductImageWorkbench()
 const {
   artifacts, availableFormats, bounds, brandSettings, busy, cancel, chooseBrandAsset, choosePurpose,
-  clearBrandAsset, composeBrand, evaluationDate, frame, frameUrl, goTo, importSource, layoutSupported,
-  logo, logoUrl, notice, output, prepare, preparing, preset, presetDisabled, presetId, presetStatus,
-  progress, removeBackground, renderLayout, reset, running, session, settings, skip, source, sourceSize,
-  sourceUrl, stage,
+  clearBrandAsset, composeBrand, evaluationDate, frame, frameSize, frameUrl, goTo, importSource, layoutSupported,
+  logo, logoSize, logoUrl, noteError, notice, output, prepare, preparing, preset, presetDisabled,
+  presetId, presetStatus, progress, removeBackground, renderLayout, reset, running, session, settings,
+  skip, source, sourceSize, sourceUrl, stage,
 } = workbench
 
 const heading = ref<HTMLElement>()
 const importInput = ref<HTMLInputElement>()
-const online = useOnline()
-const model = backgroundRemovalAssets.map(asset => ({ asset, ...useOfflineAsset(asset) }))
-const modelBytes = backgroundRemovalAssets.reduce((total, asset) => total + asset.bytes, 0)
-const modelReady = computed(() => model.every(entry => entry.state.value.phase === 'cached'))
-const modelDownloading = computed(() => model.some(entry => entry.state.value.phase === 'downloading'))
-const modelReceived = computed(() => model.reduce((total, entry) => total + (entry.state.value.phase === 'cached' ? entry.asset.bytes : entry.state.value.receivedBytes), 0))
-const modelPercent = computed(() => Math.min(100, Math.round(modelReceived.value / modelBytes * 100)))
-const modelFailure = computed(() => model.find(entry => entry.state.value.phase === 'failed')?.state.value.failureReason)
+const {
+  cancel: cancelModel, download, downloading: modelDownloading, failure: modelFailure,
+  online, percent: modelPercent, ready: modelReady, totalBytes: modelBytes,
+} = useBackgroundRemovalModel()
 
 const current = computed(() => session.value.current)
 const states = computed(() => session.value.states)
@@ -92,7 +88,7 @@ const stepList = computed(() => {
     order: states.value[step] === 'unavailable' ? undefined : ++position,
     label: copy(workbenchStepLabels[step], locale.value),
     stateLabel: copy(workbenchStepStateLabels[states.value[step]], locale.value),
-    reachable: states.value[step] !== 'locked' && states.value[step] !== 'unavailable',
+    reachable: isWorkbenchStepReachable(session.value, step),
   }))
 })
 
@@ -185,6 +181,46 @@ const ruleGroups = computed(() => {
     .filter(group => group.rules.length > 0)
 })
 
+/**
+ * The brand preview is built from the scene the renderer is actually handed and
+ * placed with the renderer's own geometry, so the two cannot drift: a Logo that
+ * looks a quarter of a non-square canvas wide here is that wide in the file.
+ */
+const brandPreview = computed(() => {
+  const product = artifacts.value.layout
+  if (!product) return []
+  const { scene } = planBrandScene({
+    canvas: { width: product.width, height: product.height },
+    product: product.file,
+    frame: frame.value,
+    logo: logo.value,
+    ...brandSettings.value,
+  })
+  const sources: Record<string, { url: string, width: number, height: number } | undefined> = {
+    product: { url: product.url, width: product.width, height: product.height },
+    frame: frameSize.value && { url: frameUrl.value, ...frameSize.value },
+    logo: logoSize.value && { url: logoUrl.value, ...logoSize.value },
+  }
+
+  return scene.layers.flatMap((layer) => {
+    const source = sources[layer.assetId]
+    if (!source) return []
+    const spot = promoPlacement(layer, source.width, source.height, scene.width, scene.height)
+
+    return [{
+      id: layer.id,
+      url: source.url,
+      style: {
+        left: `${spot.x / scene.width * 100}%`,
+        top: `${spot.y / scene.height * 100}%`,
+        width: `${spot.width / scene.width * 100}%`,
+        height: `${spot.height / scene.height * 100}%`,
+        opacity: layer.opacity,
+      },
+    }]
+  })
+})
+
 const logoFields = computed(() => [
   { key: 'logoScale' as const, label: en.value ? 'Logo scale (%)' : 'Logo 縮放（%）', min: 1, max: 400 },
   { key: 'logoX' as const, label: en.value ? 'Logo horizontal position (%)' : 'Logo 水平位置（%）', min: -100, max: 100 },
@@ -248,20 +284,8 @@ function chooseFile(event: Event, take: (file: File) => void) {
   if (file) take(file)
   input.value = ''
 }
-/** §12.8: a device with no room for the model is told, not failed mid-write. */
 async function downloadModel() {
-  const estimate = await navigator.storage?.estimate?.().catch(() => undefined)
-  if (estimate?.quota && estimate.quota - (estimate.usage ?? 0) < modelBytes * 1.2) {
-    workbench.session.value = noteWorkbenchStepError(workbench.session.value, 'cutout', 'insufficient_storage')
-    return
-  }
-  for (const entry of model) {
-    if (entry.state.value.phase === 'cached') continue
-    await entry.download()
-  }
-}
-function cancelModel() {
-  for (const entry of model) entry.cancel()
+  if (await download() === 'insufficient_storage') noteError('cutout', 'insufficient_storage')
 }
 /**
  * Moving to a step deliberately moves the reading position with it. A step that
@@ -435,7 +459,8 @@ watch(() => session.value.errors.import, async (code) => {
           </div>
           <figcaption>
             {{ canvas.width }} × {{ canvas.height }}
-            <template v-if="occupancy.length"> · {{ en ? 'The guide frame shows the product occupancy this channel asks for:' : '輔助框標示這個通路要求的商品佔比：' }} {{ occupancy.map(guide => `${Math.round(guide.ratio * 100)}%`).join('、') }}</template>
+            <template v-if="occupancy.length"> · {{ en ? 'The dashed frame shows the product occupancy this channel asks for:' : '虛線輔助框標示這個通路要求的商品佔比：' }} {{ occupancy.map(guide => `${Math.round(guide.ratio * 100)}%`).join('、') }}</template>
+            <template v-if="safeAreas.length"> · {{ en ? 'The dotted frame marks the keep-out margins (top / right / bottom / left):' : '點線框標示要求留白的邊界（上／右／下／左）：' }} {{ safeAreas.map(guide => [guide.top, guide.right, guide.bottom, guide.left].map(inset => `${Math.round(inset * 100)}%`).join(' / ')).join('、') }}</template>
           </figcaption>
         </figure>
       </template>
@@ -468,9 +493,7 @@ watch(() => session.value.errors.import, async (code) => {
         </fieldset>
         <div v-if="artifacts.layout" class="workbench__figure">
           <div class="workbench__canvas" :style="{ aspectRatio: `${artifacts.layout.width} / ${artifacts.layout.height}`, '--workbench-ratio': artifacts.layout.width / artifacts.layout.height }" role="img" :aria-label="en ? 'Brand composition preview' : '品牌素材組合預覽'">
-            <img :src="artifacts.layout.url" class="workbench__layer" alt="">
-            <img v-if="frameUrl" :src="frameUrl" class="workbench__layer workbench__layer--cover" alt="">
-            <img v-if="logoUrl" :src="logoUrl" class="workbench__layer workbench__layer--logo" :style="{ inlineSize: `${Number(brandSettings.logoScale)}%`, insetInlineStart: `${50 - Number(brandSettings.logoScale) / 2 + Number(brandSettings.logoX)}%`, insetBlockStart: `${50 - Number(brandSettings.logoScale) / 2 + Number(brandSettings.logoY)}%`, opacity: Number(brandSettings.logoOpacity) / 100 }" alt="">
+            <img v-for="layer in brandPreview" :key="layer.id" :src="layer.url" :style="layer.style" alt="">
           </div>
         </div>
       </template>

@@ -163,6 +163,16 @@ describe('能力不足只停用受影響的步驟', () => {
     expect(output.states.output).toBe('done')
   })
 
+  it('必要步驟不可用時，這條流程就到此為止，不會出現無法產生的輸出', () => {
+    const blocked = blockWorkbenchStep(importDone(), 'layout', 'capability')
+
+    expect(blocked.states.layout).toBe('unavailable')
+    expect(blocked.states.output).toBe('locked')
+    expect(finalWorkbenchArtifact(blocked)).toBeUndefined()
+    // The cutout is before it, so it is still offered.
+    expect(blocked.states.cutout).toBe('ready')
+  })
+
   it('能力恢復後步驟回到可用，並重新鎖住尚未重做的下游', () => {
     const blocked = blockWorkbenchStep(importDone(), 'cutout', 'capability')
     const restored = unblockWorkbenchStep(blocked, 'cutout')

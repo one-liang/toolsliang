@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useOnline } from '@vueuse/core'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { Download, Image, TriangleAlert, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -8,7 +7,7 @@ import { validateImageInput } from '@/features/images/input'
 import { formatAssetSize } from '@/features/pwa/offline-assets'
 import { createBackgroundRemover } from '@/features/tools/image-background-remover/engine'
 import { backgroundRemovalErrors, backgroundRemovalStages, portraitScopeNotice } from '@/features/tools/image-background-remover/content'
-import { backgroundRemovalAssets } from '@/features/tools/image-background-remover/domain/model'
+import { useBackgroundRemovalModel } from '@/composables/useBackgroundRemovalModel'
 import { copy } from '@/features/tools/catalog'
 import type { BackgroundRemovalOutput } from '@/features/tools/image-background-remover/types'
 import type { EngineCapabilities } from '@/features/tools/engine/contract'
@@ -35,16 +34,12 @@ let mounted = true
  * The weights and the runtime are the same bytes the page's offline note
  * offers, so both surfaces share one download rather than racing for it.
  */
-const online = useOnline()
-const assets = backgroundRemovalAssets.map(asset => ({ asset, ...useOfflineAsset(asset) }))
-const modelBytes = backgroundRemovalAssets.reduce((total, asset) => total + asset.bytes, 0)
-const modelReady = computed(() => assets.every(entry => entry.state.value.phase === 'cached'))
-const modelDownloading = computed(() => assets.some(entry => entry.state.value.phase === 'downloading'))
+const {
+  cancel: cancelModel, download, downloading: modelDownloading, failure: modelFailure,
+  online, percent: modelPercent, ready: modelReady, totalBytes: modelBytes,
+} = useBackgroundRemovalModel()
 /** Being offline is the condition, not the phase it left behind: reconnecting must re-enable the download. */
 const modelBlocked = computed(() => !online.value)
-const modelFailure = computed(() => assets.find(entry => entry.state.value.phase === 'failed')?.state.value.failureReason)
-const modelReceived = computed(() => assets.reduce((total, entry) => total + (entry.state.value.phase === 'cached' ? entry.asset.bytes : entry.state.value.receivedBytes), 0))
-const modelPercent = computed(() => Math.min(100, Math.round(modelReceived.value / modelBytes * 100)))
 
 const busy = computed(() => running.value || validating.value || modelDownloading.value)
 useWorkspaceDirty('image-background-remover', computed(() => Boolean(source.value) || running.value))
@@ -98,28 +93,12 @@ async function prepare() {
   preparing.value = false
 }
 
-/**
- * §12.8 requires an unsupported device to fail before the full model loads, and
- * a device with no room for it to be told rather than to fail mid-write.
- */
+/** §12.8 requires an unsupported device to fail before the full model loads. */
 async function downloadModel() {
   if (!capabilities.value?.supported) return
   error.value = ''
-  const estimate = await navigator.storage?.estimate?.().catch(() => undefined)
-  if (!mounted) return
-  if (estimate?.quota && estimate.quota - (estimate.usage ?? 0) < modelBytes * 1.2) {
-    error.value = 'insufficient_storage'
-    return
-  }
-  for (const entry of assets) {
-    if (entry.state.value.phase === 'cached') continue
-    await entry.download()
-    if (!mounted) return
-  }
-}
-
-function cancelModel() {
-  for (const entry of assets) entry.cancel()
+  const outcome = await download()
+  if (mounted && outcome === 'insufficient_storage') error.value = 'insufficient_storage'
 }
 
 async function selectFiles(files: File[]) {

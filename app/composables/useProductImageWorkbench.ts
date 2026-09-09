@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import { validateImageInput } from '@/features/images/input'
 import { imageInputLimits } from '@/features/images/limits'
 import { createBackgroundRemover } from '@/features/tools/image-background-remover/engine'
+import type { EngineOutcome } from '@/features/tools/engine/contract'
 import { createCompliantImageRenderer } from '@/features/tools/compliant-product-image/engine'
 import { createPromoRenderer } from '@/features/tools/brand-promo-image/engine'
 import {
@@ -70,9 +71,12 @@ function releaseArtifact(artifact: StepArtifact | undefined) {
  * was running rather than waiting for it.
  */
 export function useProductImageWorkbench() {
-  const remover = createBackgroundRemover()
-  const layoutEngine = createCompliantImageRenderer()
-  const brandEngine = createPromoRenderer()
+  /** One engine per step, so preparing, cancelling and disposing are one loop each. */
+  const engines = {
+    cutout: createBackgroundRemover(),
+    layout: createCompliantImageRenderer(),
+    brand: createPromoRenderer(),
+  }
 
   const session = ref(createWorkbenchSession())
   const source = shallowRef<File>()
@@ -83,11 +87,12 @@ export function useProductImageWorkbench() {
   const logo = shallowRef<File>()
   const frameUrl = ref('')
   const logoUrl = ref('')
+  const frameSize = shallowRef<{ width: number, height: number }>()
+  const logoSize = shallowRef<{ width: number, height: number }>()
 
   const running = ref<typeof artifactSteps[number] | ''>('')
   const stage = ref('')
   const preparing = ref(true)
-  const layoutSupported = ref(false)
   const validating = ref(false)
   const notice = ref('')
 
@@ -178,14 +183,17 @@ export function useProductImageWorkbench() {
    * branches has to ask the same question again instead of quietly offering a
    * step whose engine was already found unavailable.
    */
-  const supported = ref({ cutout: false, brand: false })
+  const supported = ref<Record<typeof artifactSteps[number], boolean>>({ cutout: false, layout: false, brand: false })
+  const layoutSupported = computed(() => supported.value.layout)
 
   function applyCapabilities() {
-    session.value = supported.value.cutout
-      ? unblockWorkbenchStep(session.value, 'cutout')
-      : blockWorkbenchStep(session.value, 'cutout', 'capability')
-    if (session.value.purpose === 'promotional' && !supported.value.brand) {
-      session.value = blockWorkbenchStep(session.value, 'brand', 'capability')
+    for (const step of artifactSteps) {
+      // While the compliant branch is running, the brand step is already absent
+      // for a product reason; a capability answer must not overwrite that.
+      if (step === 'brand' && session.value.purpose === 'compliant') continue
+      session.value = supported.value[step]
+        ? unblockWorkbenchStep(session.value, step)
+        : blockWorkbenchStep(session.value, step, 'capability')
     }
   }
 
@@ -196,13 +204,12 @@ export function useProductImageWorkbench() {
    */
   async function prepare() {
     preparing.value = true
-    const [cutout, layout, brand] = await Promise.all([remover.prepare(), layoutEngine.prepare(), brandEngine.prepare()])
-    if (!mounted) return
-    layoutSupported.value = layout.supported
+    const [cutout, layout, brand] = await Promise.all(artifactSteps.map(step => engines[step].prepare()))
+    if (!mounted || !cutout || !layout || !brand) return
     layoutFormats.value = layout.supported
       ? encodableFormats.filter(format => layout.formats.includes(formatMimeTypes[format]))
       : [...encodableFormats]
-    supported.value = { cutout: cutout.supported, brand: brand.supported }
+    supported.value = { cutout: cutout.supported, layout: layout.supported, brand: brand.supported }
     applyCapabilities()
     preparing.value = false
     applyPreset()
@@ -282,16 +289,19 @@ export function useProductImageWorkbench() {
       session.value = noteWorkbenchStepError(session.value, 'brand', code)
       return
     }
-    const url = measure(file, () => {})
+    // The preview places these with the same geometry the renderer uses, so it
+    // needs their decoded size, not just something to show.
     if (kind === 'frame') {
       if (frameUrl.value) URL.revokeObjectURL(frameUrl.value)
+      frameSize.value = undefined
       frame.value = file
-      frameUrl.value = url
+      frameUrl.value = measure(file, size => { frameSize.value = size })
     }
     else {
       if (logoUrl.value) URL.revokeObjectURL(logoUrl.value)
+      logoSize.value = undefined
       logo.value = file
-      logoUrl.value = url
+      logoUrl.value = measure(file, size => { logoSize.value = size })
     }
     notice.value = 'asset-added'
   }
@@ -301,12 +311,27 @@ export function useProductImageWorkbench() {
       if (frameUrl.value) URL.revokeObjectURL(frameUrl.value)
       frame.value = undefined
       frameUrl.value = ''
+      frameSize.value = undefined
     }
     else {
       if (logoUrl.value) URL.revokeObjectURL(logoUrl.value)
       logo.value = undefined
       logoUrl.value = ''
+      logoSize.value = undefined
     }
+  }
+
+  /** The one way anything outside reports a refusal onto a step. */
+  function noteError(step: WorkbenchStep, code: string) {
+    session.value = noteWorkbenchStepError(session.value, step, code)
+  }
+
+  /** The three engines answer in the same shape; this is that shape, once. */
+  function toStepOutcome<T extends { blob: Blob, width: number, height: number }>(outcome: EngineOutcome<T>) {
+    if (outcome.status === 'success') return { status: 'success' as const, blob: outcome.output.blob, width: outcome.output.width, height: outcome.output.height }
+    if (outcome.status === 'cancelled') return { status: 'cancelled' as const }
+
+    return { status: 'error' as const, code: outcome.error.code }
   }
 
   /** One engine run, recorded on one step. Every exit lands on the same step. */
@@ -346,11 +371,8 @@ export function useProductImageWorkbench() {
   function removeBackground() {
     const file = source.value
     if (!file) return
-    return runStep('cutout', async (onProgress) => {
-      const outcome = await remover.run({ file }, { onProgress: progress => onProgress(progress.stage) })
-      if (outcome.status === 'success') return { status: 'success' as const, blob: outcome.output.blob, width: outcome.output.width, height: outcome.output.height }
-      return outcome.status === 'cancelled' ? { status: 'cancelled' as const } : { status: 'error' as const, code: outcome.error.code }
-    })
+    return runStep('cutout', async onProgress =>
+      toStepOutcome(await engines.cutout.run({ file }, { onProgress: progress => onProgress(progress.stage) })))
   }
 
   function renderLayout() {
@@ -366,9 +388,7 @@ export function useProductImageWorkbench() {
     const input = planLayoutInput({ file, purpose: session.value.purpose, settings: settings.value, byteRange: byteRange.value })
     return runStep('layout', async (onProgress) => {
       onProgress('validating-preset')
-      const outcome = await layoutEngine.run(input, { onProgress: progress => onProgress(progress.stage) })
-      if (outcome.status === 'success') return { status: 'success' as const, blob: outcome.output.blob, width: outcome.output.width, height: outcome.output.height }
-      return outcome.status === 'cancelled' ? { status: 'cancelled' as const } : { status: 'error' as const, code: outcome.error.code }
+      return toStepOutcome(await engines.layout.run(input, { onProgress: progress => onProgress(progress.stage) }))
     })
   }
 
@@ -391,9 +411,7 @@ export function useProductImageWorkbench() {
     })
     return runStep('brand', async (onProgress) => {
       onProgress('composing')
-      const outcome = await brandEngine.run(input, { onProgress: progress => onProgress(progress.stage) })
-      if (outcome.status === 'success') return { status: 'success' as const, blob: outcome.output.blob, width: outcome.output.width, height: outcome.output.height }
-      return outcome.status === 'cancelled' ? { status: 'cancelled' as const } : { status: 'error' as const, code: outcome.error.code }
+      return toStepOutcome(await engines.brand.run(input, { onProgress: progress => onProgress(progress.stage) }))
     })
   }
 
@@ -402,9 +420,7 @@ export function useProductImageWorkbench() {
     const step = running.value
     if (!step) return
     ++generation
-    if (step === 'cutout') remover.cancel()
-    if (step === 'layout') layoutEngine.cancel()
-    if (step === 'brand') brandEngine.cancel()
+    engines[step].cancel()
     running.value = ''
     stage.value = ''
     session.value = resetWorkbenchStep(session.value, step)
@@ -449,9 +465,7 @@ export function useProductImageWorkbench() {
   onBeforeUnmount(() => {
     mounted = false
     ++generation
-    remover.dispose()
-    layoutEngine.dispose()
-    brandEngine.dispose()
+    for (const step of artifactSteps) engines[step].dispose()
     for (const step of artifactSteps) releaseArtifact(artifacts.value[step])
     artifacts.value = {}
     releaseSource()
@@ -473,13 +487,16 @@ export function useProductImageWorkbench() {
     composeBrand,
     evaluationDate,
     frame,
+    frameSize,
     frameUrl,
     goTo,
     importSource,
     layoutSource,
     layoutSupported,
     logo,
+    logoSize,
     logoUrl,
+    noteError,
     notice,
     output,
     prepare,

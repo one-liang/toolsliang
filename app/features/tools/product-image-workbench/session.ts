@@ -66,7 +66,14 @@ function settle(states: Record<WorkbenchStep, WorkbenchStepState>) {
 
   for (const step of workbenchSteps) {
     const state = states[step]
-    if (state === 'unavailable') continue
+    if (state === 'unavailable') {
+      // An optional step this run does not have is simply passed over. A
+      // required one that cannot run ends the line instead, because nothing
+      // after it would have an input — and an output nobody can produce must
+      // not present itself as ready.
+      if (!optionalWorkbenchSteps.includes(step)) open = false
+      continue
+    }
 
     if (open) {
       if (state === 'locked') states[step] = step === 'output' ? 'done' : 'ready'

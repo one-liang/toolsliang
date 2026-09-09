@@ -23,23 +23,33 @@ it('以有名稱的步驟列開場，合規主圖分支不提供品牌素材步�
   expect(wrapper.findAll('[data-workbench-step] button > span:first-of-type').map(item => item.text())).toEqual([
     '1. 匯入商品圖',
     '去背（選用）',
-    '2. 版型與尺寸',
+    '版型與尺寸',
     '品牌素材（選用）',
-    '3. 輸出與下載',
+    '2. 輸出與下載',
   ])
   expect(wrapper.findAll('.workbench__state').map(item => item.text()))
-    .toEqual(['可以開始', '不適用', '尚未開放', '不適用', '尚未開放'])
+    .toEqual(['可以開始', '不適用', '不適用', '不適用', '尚未開放'])
   expect(wrapper.get('[data-workbench-panel="import"]').text()).toContain('選擇商品圖')
   wrapper.unmount()
 })
 
-it('本機無法執行模型時只停用去背，其餘步驟仍可操作', async () => {
+it('每個引擎各自回答能力，不能執行的步驟只停用自己，匯入仍可操作', async () => {
   const wrapper = mountWorkspace()
   await flushPromises()
 
-  expect(steps(wrapper)).toMatchObject({ cutout: 'unavailable', import: 'ready' })
+  expect(steps(wrapper)).toMatchObject({ import: 'ready', cutout: 'unavailable', layout: 'unavailable' })
   expect(wrapper.get('[data-workbench-step="cutout"] button').attributes('disabled')).toBeDefined()
   expect(wrapper.get('[data-workbench-step="import"] button').attributes('disabled')).toBeUndefined()
+  wrapper.unmount()
+})
+
+it('版型是必要步驟，無法執行時流程到此為止，不出現產不出來的輸出', async () => {
+  const wrapper = mountWorkspace()
+  await flushPromises()
+
+  expect(steps(wrapper).output).toBe('locked')
+  expect(wrapper.find('a[download]').exists()).toBe(false)
+  expect(wrapper.get('.workbench__steps').text()).toContain('不適用')
   wrapper.unmount()
 })
 

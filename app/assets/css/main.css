@@ -473,7 +473,7 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .bmi-units legend, .ntd-purposes legend, .picker-options legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
 .bmi-units__option, .ntd-purposes__option, .picker-option { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; padding: 8px 15px; border: 1px solid var(--input-border); border-radius: var(--radius-md); background: var(--color-surface); font-size: .86rem; cursor: pointer; }
 .bmi-units__option:has(input:checked), .ntd-purposes__option:has(input:checked), .picker-option:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); color: var(--color-primary-strong); font-weight: 700; }
-.bmi-units__option input, .ntd-purposes__option input, .picker-option input { width: 18px; height: 18px; accent-color: var(--color-primary-strong); }
+.bmi-units__option input, .ntd-purposes__option input, .picker-option input, .workbench__purpose input { width: 18px; height: 18px; accent-color: var(--color-primary-strong); }
 .bmi-fields { display: grid; gap: 18px; align-content: start; }
 .bmi-fields__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .field-pending { margin: 7px 0 0; color: var(--color-muted-foreground); font-size: .8rem; font-weight: 700; }
@@ -982,7 +982,7 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 /* Zoomed previews scroll inside their frame, so the page itself never does. */
 .image-background-remover__frame { max-height: var(--image-preview-max-height); overflow: auto; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 .image-background-remover__frame img { display: block; height: auto; max-width: none; }
-.image-background-remover__frame--alpha { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.image-background-remover__frame--alpha, .workbench__figure--alpha img { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 .image-background-remover__coverage { font-weight: 600; }
 
 /* Compliant product image: the source panel, the rule lists and the guide frames. */
@@ -1056,17 +1056,13 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .workbench__controls { border: 0; padding: 0; margin: 24px 0; display: grid; gap: 16px; min-width: 0; }
 .workbench__controls legend { margin-bottom: 12px; font-weight: 650; }
 .workbench__purpose { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
-.workbench__purpose input { min-width: 20px; min-height: 20px; margin-top: 4px; }
 .workbench__purpose label { display: grid; gap: 4px; }
+.workbench__purpose input { margin-top: 4px; }
 .workbench__figure { margin: 24px 0 0; }
 .workbench__figure img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); margin-inline: auto; object-fit: contain; }
 .workbench__figure figcaption { margin-top: 12px; font-size: .84rem; overflow-wrap: anywhere; }
-.workbench__figure--alpha img { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 .workbench__canvas { position: relative; overflow: hidden; width: min(100%, calc(var(--image-preview-max-height) * var(--workbench-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 .workbench__canvas img { position: absolute; display: block; max-width: none; max-height: none; }
-.workbench__layer { inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.workbench__layer--cover { object-fit: cover; }
-.workbench__layer--logo { inset: auto; height: auto; object-fit: contain; }
 .workbench__guide { position: absolute; border: 2px dashed var(--color-primary-strong); pointer-events: none; }
 .workbench__guide--safe { border-style: dotted; }
 .workbench__check { margin-top: 24px; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
