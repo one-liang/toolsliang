@@ -138,6 +138,32 @@ test('首次載入後 Worker 與圖片頁可離線重啟，圖片不進入快取
   expect(stored.urls.some(url => url.includes('transparent.webp') || url.startsWith('blob:'))).toBe(false)
 })
 
+/**
+ * How long the page's main thread may go without running a task while a 12 MP
+ * image is compressed. The point of the budget is that this tool does its work
+ * in a worker, so the interface stays answerable.
+ *
+ * Firefox needs a different number, and not because of anything this tool does.
+ * When a worker decodes a large image, Firefox does work proportional to that
+ * image on the content process main thread. Measured against this exact flow:
+ * the tool's own main-thread calls total about 3ms — `blob.slice` 0ms, a 4 KiB
+ * `arrayBuffer` 1ms, the worker script fetch 1ms, `new Worker`, `postMessage`
+ * and `createObjectURL` 0ms each — while no task can run for about 120ms. That
+ * stall is real rather than timer throttling (`MessageChannel` and
+ * `requestAnimationFrame` stall with `setInterval`), scales with the image
+ * (an 80 × 40 source produces no stall at all), is absent on Chromium and
+ * WebKit, and is unchanged on builds predating the tools that later made it
+ * visible in CI. On a CPU-constrained runner the same stall reaches ~300ms.
+ *
+ * So on Firefox a 250ms bound measures how much spare CPU the runner had, not
+ * this tool. The two engines where the number does describe the application
+ * keep it; Firefox keeps a bound loose enough to clear the browser's own cost
+ * and tight enough that work moving back onto the main thread would still fail.
+ */
+function mainThreadStallBudget(browser: string) {
+  return browser === 'firefox' ? 600 : 250
+}
+
 for (const mobile of [false, true]) test(`12 MP JPEG 品質極值、主執行緒回應與處理預算（${mobile ? '手機版面' : '桌面版面'}）`, async ({ page }, testInfo) => {
   test.setTimeout(60_000)
   if (mobile) await page.setViewportSize({ width: 375, height: 812 })
@@ -175,7 +201,7 @@ for (const mobile of [false, true]) test(`12 MP JPEG 品質極值、主執行緒
   }, low)
   expect(metrics.elapsed).toBeLessThan(8000)
   expect(metrics.progress).toBeGreaterThan(0); expect(metrics.progress).toBeLessThanOrEqual(250)
-  expect(metrics.maxGap).toBeLessThan(250)
+  expect(metrics.maxGap).toBeLessThan(mainThreadStallBudget(testInfo.project.name))
   await testInfo.attach('本機桌面效能量測', { body: JSON.stringify(metrics), contentType: 'application/json' })
   await page.getByLabel('Quality (0–100)').fill('100')
   await expect(page.getByRole('link', { name: 'Download image' })).toHaveCount(0)
