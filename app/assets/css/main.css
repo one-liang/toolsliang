@@ -982,7 +982,7 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 /* Zoomed previews scroll inside their frame, so the page itself never does. */
 .image-background-remover__frame { max-height: var(--image-preview-max-height); overflow: auto; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 .image-background-remover__frame img { display: block; height: auto; max-width: none; }
-.image-background-remover__frame--alpha, .workbench__figure--alpha img { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.image-background-remover__frame--alpha, .workbench__figure--alpha img, .workbench__thumb--alpha { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 .image-background-remover__coverage { font-weight: 600; }
 
 /* Compliant product image: the source panel, the rule lists and the guide frames. */
@@ -1072,5 +1072,18 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .workbench__check li { padding-inline-start: 12px; border-inline-start: 3px solid var(--color-border); font-size: .84rem; }
 .workbench__panel a:not(.ui-button) { color: var(--color-primary-strong); text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; }
 .workbench__status { margin-top: 16px; }
-.product-image-workbench .field-error { display: flex; align-items: flex-start; gap: 8px; }
+.product-image-workbench .field-error, .product-image-workbench .field-error p { display: grid; gap: 8px; }
+.product-image-workbench .field-error p { display: flex; align-items: flex-start; margin: 0; }
 .product-image-workbench .field-error svg { flex-shrink: 0; margin-top: 2px; }
+/* The job queue: one row per item, every action reachable without a pointer. */
+.workbench__queue { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border); }
+.workbench__queue h2 { margin: 0 0 8px; font-size: 1.125rem; }
+.workbench__queue h2:focus-visible { outline: 2px solid var(--color-primary-strong); outline-offset: 4px; }
+.workbench__queue ul { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.workbench__queue li { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.workbench__queue li[data-queue-selected="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
+.workbench__queue li[data-queue-state="failed"] { border-color: var(--color-warning); }
+.workbench__thumb { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+.workbench__queue-text { flex: 1 1 12rem; min-width: 0; display: grid; gap: 4px; }
+.workbench__queue-text p { margin: 0; overflow-wrap: anywhere; }
+.workbench__queue-actions { display: flex; flex-wrap: wrap; gap: 8px; }

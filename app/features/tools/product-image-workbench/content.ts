@@ -4,6 +4,10 @@ import { compliantImageErrors, compliantImageStages } from '../compliant-product
 import { imageInputErrors } from '@/features/images/messages'
 import { backgroundRemovalErrors, backgroundRemovalStages } from '../image-background-remover/content'
 import { promoErrors } from '../brand-promo-image/content'
+import { imageErrors } from '../image-compressor/content'
+import { formatAssetSize } from '@/features/pwa/offline-assets'
+import type { WorkbenchArchiveIssue } from './archive'
+import type { WorkbenchAdmissionCode, WorkbenchItemStatus, WorkbenchQueueLimits } from './queue'
 import type { WorkbenchBlockReason, WorkbenchPurpose, WorkbenchStep, WorkbenchStepState } from './session'
 
 export const workbenchStepLabels: Record<WorkbenchStep, LocalizedCopy> = {
@@ -11,6 +15,7 @@ export const workbenchStepLabels: Record<WorkbenchStep, LocalizedCopy> = {
   cutout: { 'zh-tw': '去背（選用）', en: 'Remove the background (optional)' },
   layout: { 'zh-tw': '版型與尺寸', en: 'Layout and size' },
   brand: { 'zh-tw': '品牌素材（選用）', en: 'Brand assets (optional)' },
+  compress: { 'zh-tw': '壓縮容量（選用）', en: 'Compress for capacity (optional)' },
   output: { 'zh-tw': '輸出與下載', en: 'Output and download' },
 }
 
@@ -31,9 +36,13 @@ export const workbenchStepSummaries: Record<WorkbenchStep, LocalizedCopy> = {
     'zh-tw': '在宣傳圖上疊加框版與 Logo；第一版不含文字與價籤。',
     en: 'Add a frame and a Logo to promotional artwork. Version one has no text or price tags.',
   },
+  compress: {
+    'zh-tw': '宣傳圖沒有通路規定的容量，可自行設定品質與最大尺寸再輸出；略過就沿用上一步的檔案。',
+    en: 'Promotional artwork has no channel capacity rule, so set the quality and the largest size yourself, or skip and keep the previous step\u2019s file.',
+  },
   output: {
-    'zh-tw': '檢查結果後下載。檔案只在你按下下載時才離開瀏覽器記憶體。',
-    en: 'Review the result and download it. The file leaves browser memory only when you download it.',
+    'zh-tw': '檢查結果後逐項下載，或把整批打包成一個封存檔。檔案只在你按下下載時才離開瀏覽器記憶體。',
+    en: 'Review the results and download them one by one, or pack the whole batch into one archive. A file leaves browser memory only when you download it.',
   },
 }
 
@@ -47,16 +56,35 @@ export const workbenchStepStateLabels: Record<WorkbenchStepState, LocalizedCopy>
   unavailable: { 'zh-tw': '不適用', en: 'Not available' },
 }
 
-/** Why a step is not offered. Never a failure, and never a reason to stop the run. */
-export const workbenchBlockReasons: Record<WorkbenchBlockReason, LocalizedCopy> = {
-  purpose: {
+/**
+ * Why a step is not offered. Never a failure, and never a reason to stop the run.
+ *
+ * A device that cannot run an engine says the same thing wherever it happens,
+ * but a step the branch does not have owes its own reason: the brand step is
+ * absent because a compliant main image may carry no overlay, and the compress
+ * step because the channel already stated the capacity. One sentence covering
+ * both would be true of neither.
+ */
+const capabilityBlockReason: LocalizedCopy = {
+  'zh-tw': '這個瀏覽器無法在本機執行這個步驟，已只停用這一步；其餘步驟仍可正常使用。',
+  en: 'This browser cannot run this step locally, so only this step is disabled. The rest of the workbench still works.',
+}
+
+const purposeBlockReasons: Partial<Record<WorkbenchStep, LocalizedCopy>> = {
+  brand: {
     'zh-tw': '合規主圖不得加入框版、Logo 或促銷文字，因此這個步驟不適用。需要品牌素材請改選品牌宣傳圖。',
     en: 'A compliant main image may not carry a frame, a Logo, or promotional text, so this step does not apply. Switch to promotional artwork if you need brand assets.',
   },
-  capability: {
-    'zh-tw': '這個瀏覽器無法在本機執行這個步驟，已只停用這一步；其餘步驟仍可正常使用。',
-    en: 'This browser cannot run this step locally, so only this step is disabled. The rest of the workbench still works.',
+  compress: {
+    'zh-tw': '合規主圖的容量由通路規格決定，版型步驟已依該範圍輸出，再壓一次會離開規格，因此這個步驟不適用。',
+    en: 'A compliant main image\u2019s file capacity comes from the channel specification, and the layout step already wrote inside that range. Compressing it again would leave the range, so this step does not apply.',
   },
+}
+
+export function workbenchBlockMessage(step: WorkbenchStep, reason: WorkbenchBlockReason, locale: keyof LocalizedCopy) {
+  const message = reason === 'capability' ? capabilityBlockReason : purposeBlockReasons[step] ?? capabilityBlockReason
+
+  return message[locale]
 }
 
 export const workbenchPurposeLabels: Record<WorkbenchPurpose, LocalizedCopy> = {
@@ -99,12 +127,29 @@ const sharedWorkbenchErrors: Record<string, LocalizedCopy> = {
   },
 }
 
+/** What the download step can refuse, all of it decided before a byte is written. */
+const archiveErrors: Record<string, LocalizedCopy> = {
+  nothing_to_archive: {
+    'zh-tw': '這批還沒有完成的輸出可以打包。完成至少一個項目後再下載封存檔。',
+    en: 'This batch has no finished output to pack yet. Finish at least one item, then download the archive.',
+  },
+  archive_too_large: {
+    'zh-tw': '這批輸出合計超過單一封存檔的上限。請先分批下載已完成的項目。',
+    en: 'These outputs add up to more than one archive can hold. Download the finished items in smaller groups instead.',
+  },
+  unsupported_browser: {
+    'zh-tw': '這個瀏覽器無法在本機打包封存檔，仍可逐項下載每個完成的輸出。',
+    en: 'This browser cannot pack an archive locally. You can still download each finished output on its own.',
+  },
+}
+
 export const workbenchStepErrors: Record<WorkbenchStep, Record<string, LocalizedCopy>> = {
   import: { ...imageInputErrors, ...sharedWorkbenchErrors },
   cutout: { ...backgroundRemovalErrors, ...sharedWorkbenchErrors },
   layout: { ...compliantImageErrors, ...sharedWorkbenchErrors },
   brand: { ...promoErrors, ...sharedWorkbenchErrors },
-  output: { ...sharedWorkbenchErrors },
+  compress: { ...imageErrors, ...sharedWorkbenchErrors },
+  output: { ...archiveErrors, ...sharedWorkbenchErrors },
 }
 
 export function workbenchErrorMessage(step: WorkbenchStep, code: string, locale: keyof LocalizedCopy) {
@@ -118,12 +163,70 @@ export const workbenchStages: Record<string, LocalizedCopy> = {
   ...backgroundRemovalStages,
   composing: { 'zh-tw': '組合品牌素材', en: 'Composing the brand assets' },
   rendering: { 'zh-tw': '繪製輸出畫布', en: 'Rendering the canvas' },
+  archiving: { 'zh-tw': '在本機打包封存檔', en: 'Packing the archive on this device' },
 }
 
 /** The sentence that has to survive every redesign of this page. */
 export const workbenchLocalNotice: LocalizedCopy = {
-  'zh-tw': '商品圖、遮罩、框版、Logo、每一步的中間結果與最終輸出都留在這台裝置；只有通路 preset 與去背模型會經由網路取得。',
-  en: 'Product images, mattes, frames, Logos, every intermediate result, and the final output stay on this device. Only channel presets and the background removal model come over the network.',
+  'zh-tw': '整批商品圖、遮罩、框版、Logo、每一步的中間結果、最終輸出與封存檔都留在這台裝置；只有通路 preset 與去背模型會經由網路取得。',
+  en: 'The whole batch — product images, mattes, frames, Logos, every intermediate result, the outputs, and the archive — stays on this device. Only channel presets and the background removal model come over the network.',
+}
+
+/**
+ * What one item in the queue is called.
+ *
+ * §12.11 asks for accessible item labels generated locally and free of file
+ * names. A position in the batch is all a merchant needs to tell two rows
+ * apart, and it is the only thing here that does not come from their file.
+ */
+export function workbenchItemLabel(ordinal: number, locale: keyof LocalizedCopy) {
+  return locale === 'en' ? `Item ${ordinal}` : `第 ${ordinal} 項`
+}
+
+export const workbenchItemStatusLabels: Record<WorkbenchItemStatus, LocalizedCopy> = {
+  pending: { 'zh-tw': '等待處理', en: 'Waiting' },
+  running: { 'zh-tw': '處理中', en: 'Working' },
+  failed: { 'zh-tw': '未完成', en: 'Did not finish' },
+  done: { 'zh-tw': '可以下載', en: 'Ready to download' },
+}
+
+/** The ceilings, in the words the merchant is refused with, so both come from one place. */
+export function workbenchLimitsNotice(limits: WorkbenchQueueLimits, locale: keyof LocalizedCopy) {
+  const size = formatAssetSize(limits.maxBytes, locale)
+
+  return locale === 'en'
+    ? `Up to ${limits.maxItems} images and ${size} in one batch on this device.`
+    : `這台裝置一次最多 ${limits.maxItems} 張、合計 ${size}。`
+}
+
+export function workbenchAdmissionMessage(code: WorkbenchAdmissionCode, limits: WorkbenchQueueLimits, locale: keyof LocalizedCopy) {
+  const size = formatAssetSize(limits.maxBytes, locale)
+  const messages: Record<WorkbenchAdmissionCode, LocalizedCopy> = {
+    too_many_items: {
+      'zh-tw': `超過張數上限，多出來的圖片沒有加入。這台裝置一次最多 ${limits.maxItems} 張，移除幾張後可以再加。`,
+      en: `That is more images than one batch holds, so the extra ones were not added. This device takes ${limits.maxItems} at a time; remove a few and add them again.`,
+    },
+    batch_too_large: {
+      'zh-tw': `超過合計容量上限，放不下的圖片沒有加入。這台裝置一次最多 ${size}，移除幾張後可以再加。`,
+      en: `That is more than one batch holds, so the images that did not fit were not added. This device takes ${size} at a time; remove a few and add them again.`,
+    },
+  }
+
+  return messages[code][locale]
+}
+
+export const workbenchArchiveIssues: Record<WorkbenchArchiveIssue, LocalizedCopy> = {
+  nothing_to_archive: archiveErrors.nothing_to_archive!,
+  archive_too_large: archiveErrors.archive_too_large!,
+}
+
+/** The aggregate live summary: one sentence, every item accounted for. */
+export function workbenchQueueSummary(progress: { total: number, done: number, failed: number, running: number, pending: number }, locale: keyof LocalizedCopy) {
+  if (progress.total === 0) return locale === 'en' ? 'No images in this batch yet.' : '這批還沒有圖片。'
+
+  return locale === 'en'
+    ? `${progress.total} images: ${progress.done} ready to download, ${progress.running} working, ${progress.failed} did not finish, ${progress.pending} waiting.`
+    : `共 ${progress.total} 張：${progress.done} 張可以下載、${progress.running} 張處理中、${progress.failed} 張未完成、${progress.pending} 張等待處理。`
 }
 
 export const productImageWorkbenchFaq: ToolFaqEntry[] = [
@@ -160,6 +263,27 @@ export const productImageWorkbenchFaq: ToolFaqEntry[] = [
     body: {
       'zh-tw': '不會。工作階段只存在於這個分頁，關閉或重新整理就會清空，也不會同步到雲端；離開前如果還有未完成的工作，瀏覽器會先提醒你。已保存的框版與 Logo 屬於本機資產，仍留在這台裝置。',
       en: 'No. The session lives in this tab only, is cleared when you close or reload it, and never syncs to the cloud; your browser warns you before you leave with unfinished work. Frames and Logos you saved earlier are local assets and stay on this device.',
+    },
+  },
+  {
+    heading: { 'zh-tw': '一次可以處理幾張？超過會怎樣？', en: 'How many images fit in one batch?' },
+    body: {
+      'zh-tw': '預設一次最多 20 張、合計 200 MiB，並依這台裝置回報的記憶體再往下調；實際數字會直接寫在匯入步驟裡。超過的圖片在加入時就被退回並說明原因，不會先收下再中途失敗，移除幾張後可以再加。單張仍受既有的 25 MiB、2,400 萬像素與單邊 8,192 像素上限限制。',
+      en: 'The default is 20 images and 200 MiB combined, lowered further when the device reports less memory; the actual numbers are printed in the import step. Images beyond the limit are refused as you add them, with the reason stated, rather than accepted and failed halfway; remove a few and add them again. Each image is still held to the shared 25 MiB, 24 megapixel, and 8,192 pixel-per-side limits.',
+    },
+  },
+  {
+    heading: { 'zh-tw': '批次裡有一張失敗，其他張會受影響嗎？', en: 'If one image in the batch fails, what happens to the rest?' },
+    body: {
+      'zh-tw': '不會。每張圖片各自走自己的流程，失敗只記在那一張上，可以單獨重試或從佇列移除；其他張照常完成，也照常可以下載。取消也一樣：只有明確完成的項目會留下可下載的檔案。',
+      en: 'Nothing. Each image runs its own pipeline, a failure is recorded on that image alone, and you can retry or remove just that one; the rest finish and stay downloadable. Cancelling behaves the same way — only items that explicitly finished keep a file you can download.',
+    },
+  },
+  {
+    heading: { 'zh-tw': '封存檔是在哪裡打包的？', en: 'Where is the archive built?' },
+    body: {
+      'zh-tw': '在這台裝置的瀏覽器裡。整批輸出會在背景執行緒打包成一個 ZIP，過程中不經過任何伺服器；封存檔裡的檔名只由用途與序號組成，也不寫入裝置時間。如果這個瀏覽器無法打包，工作台會直接說明，並讓你逐項下載。',
+      en: 'In this browser, on this device. The finished outputs are packed into one ZIP on a background thread without any server involved; names inside it are built from the output\u2019s purpose and its position, and no device clock is written into the file. If this browser cannot pack an archive, the workbench says so and you download each output on its own.',
     },
   },
   {

@@ -1,33 +1,40 @@
 /**
- * The workbench's own state: which step a merchant is on, which steps this
- * branch even has, and what each of them has produced so far.
+ * One item's own state: which steps this run even has, and what each of them
+ * has produced so far.
  *
  * It holds no pixels, no file, no blob URL and no channel rule — only the shape
- * of the run — so the orchestration above it can be reasoned about, and tested,
+ * of one item's run — so the queue above it can be reasoned about, and tested,
  * without an image. That separation is what lets one engine fail without taking
  * the other steps' results with it: a failure is recorded on one step, and the
  * steps before it keep the state they earned.
  *
- * §12.11 asks for a resumable in-tab job graph. This is that graph, reduced to
- * the one shape the first release needs: a line of steps, two of them optional,
- * one of them belonging to only one branch.
+ * §12.11 asks for a resumable in-tab job graph. This is one node of it: a line
+ * of steps, three of them optional, two belonging to only one branch. Which
+ * step a merchant is reading is not here — a batch has many items and one
+ * reading position, and that belongs to the queue.
  */
 
-export const workbenchSteps = ['import', 'cutout', 'layout', 'brand', 'output'] as const
+export const workbenchSteps = ['import', 'cutout', 'layout', 'brand', 'compress', 'output'] as const
 
 export type WorkbenchStep = typeof workbenchSteps[number]
 
 /** Steps a merchant may pass without running, because the work is genuinely optional. */
-export const optionalWorkbenchSteps: readonly WorkbenchStep[] = ['cutout', 'brand']
+export const optionalWorkbenchSteps: readonly WorkbenchStep[] = ['cutout', 'brand', 'compress']
 
 /**
  * ADR-0012 keeps the two outputs apart: a compliant main image may carry no
  * frame, Logo or promotional overlay, so the branch decides whether the brand
- * step exists at all rather than whether it is merely discouraged.
+ * step exists at all rather than whether it is merely discouraged. Compression
+ * is split for the same reason from the other side — a channel preset states
+ * the capacity a compliant image must land in, and a second pass over that file
+ * would talk the tool out of the range it was just asked to hit.
  */
 export const workbenchPurposes = ['compliant', 'promotional'] as const
 
 export type WorkbenchPurpose = typeof workbenchPurposes[number]
+
+/** Steps only the promotional branch has. */
+const promotionalOnlySteps: readonly WorkbenchStep[] = ['brand', 'compress']
 
 /**
  * `unavailable` is not a failure: it is a step this run does not have, either
@@ -40,8 +47,6 @@ export type WorkbenchBlockReason = 'purpose' | 'capability'
 
 export interface WorkbenchSession {
   purpose: WorkbenchPurpose
-  /** The step being shown. Only a reachable step can become the current one. */
-  current: WorkbenchStep
   states: Record<WorkbenchStep, WorkbenchStepState>
   /** The stable engine error code of the last failure, per step. */
   errors: Partial<Record<WorkbenchStep, string>>
@@ -84,38 +89,24 @@ function settle(states: Record<WorkbenchStep, WorkbenchStepState>) {
   }
 }
 
-function isOpen(states: Record<WorkbenchStep, WorkbenchStepState>, step: WorkbenchStep) {
-  return states[step] !== 'locked' && states[step] !== 'unavailable'
-}
-
-/**
- * Settles the line, then keeps the shown step on something a merchant can act
- * on: invalidating a step can close the one they were reading, and leaving them
- * on a panel whose input no longer exists is how a stale result gets used.
- */
-function next(session: WorkbenchSession, states: Record<WorkbenchStep, WorkbenchStepState>, errors: WorkbenchSession['errors'], current = session.current): WorkbenchSession {
+function next(session: WorkbenchSession, states: Record<WorkbenchStep, WorkbenchStepState>, errors: WorkbenchSession['errors']): WorkbenchSession {
   settle(states)
-  const shown = isOpen(states, current)
-    ? current
-    : [...workbenchSteps].reverse().find(step => isOpen(states, step)) ?? 'import'
 
-  return { ...session, current: shown, states, errors, blocked: { ...session.blocked } }
+  return { ...session, states, errors, blocked: { ...session.blocked } }
 }
 
 function withoutError(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession['errors'] {
   return Object.fromEntries(Object.entries(session.errors).filter(([key]) => key !== step))
 }
 
-/** The step a merchant lands on after `step` settles: the next one this run has. */
-function stepAfter(session: WorkbenchSession, step: WorkbenchStep, states: Record<WorkbenchStep, WorkbenchStepState>) {
-  return workbenchSteps.slice(workbenchSteps.indexOf(step) + 1).find(candidate => states[candidate] !== 'unavailable') ?? step
+function withoutBlock(blocked: WorkbenchSession['blocked'], step: WorkbenchStep): WorkbenchSession['blocked'] {
+  return Object.fromEntries(Object.entries(blocked).filter(([key]) => key !== step))
 }
 
 export function createWorkbenchSession(purpose: WorkbenchPurpose = 'compliant'): WorkbenchSession {
   const session: WorkbenchSession = {
     purpose,
-    current: 'import',
-    states: { import: 'locked', cutout: 'locked', layout: 'locked', brand: 'locked', output: 'locked' },
+    states: { import: 'locked', cutout: 'locked', layout: 'locked', brand: 'locked', compress: 'locked', output: 'locked' },
     errors: {},
     blocked: {},
   }
@@ -123,18 +114,20 @@ export function createWorkbenchSession(purpose: WorkbenchPurpose = 'compliant'):
   return applyPurpose(session, purpose)
 }
 
-/** The brand step exists only on the promotional branch; nothing else depends on the purpose. */
+/** The promotional steps exist only on their own branch; nothing else depends on the purpose. */
 function applyPurpose(session: WorkbenchSession, purpose: WorkbenchPurpose): WorkbenchSession {
   const states = { ...session.states }
-  const blocked = { ...session.blocked }
+  let blocked = { ...session.blocked }
 
-  if (purpose === 'compliant') {
-    states.brand = 'unavailable'
-    blocked.brand = 'purpose'
-  }
-  else {
-    if (blocked.brand === 'purpose') states.brand = 'locked'
-    delete blocked.brand
+  for (const step of promotionalOnlySteps) {
+    if (purpose === 'compliant') {
+      states[step] = 'unavailable'
+      blocked[step] = 'purpose'
+    }
+    else if (blocked[step] === 'purpose') {
+      states[step] = 'locked'
+      blocked = withoutBlock(blocked, step)
+    }
   }
 
   settle(states)
@@ -152,10 +145,8 @@ export function setWorkbenchPurpose(session: WorkbenchSession, purpose: Workbenc
 
   const states = { ...session.states }
   if (states.layout !== 'unavailable') states.layout = 'locked'
-  const errors = withoutError(session, 'layout')
-  const rewound = workbenchSteps.indexOf(session.current) > workbenchSteps.indexOf('layout') ? 'layout' : session.current
 
-  return applyPurpose({ ...session, current: rewound, states, errors }, purpose)
+  return applyPurpose({ ...session, states, errors: withoutError(session, 'layout') }, purpose)
 }
 
 export function isWorkbenchStepReachable(session: WorkbenchSession, step: WorkbenchStep) {
@@ -164,29 +155,22 @@ export function isWorkbenchStepReachable(session: WorkbenchSession, step: Workbe
   return state !== 'locked' && state !== 'unavailable'
 }
 
-export function goToWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
-  return isWorkbenchStepReachable(session, step) ? { ...session, current: step } : session
-}
-
 export function startWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
-  const states = { ...session.states, [step]: 'running' as const }
 
-  return next(session, states, withoutError(session, step), step)
+  return next(session, { ...session.states, [step]: 'running' }, withoutError(session, step))
 }
 
 export function completeWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
-  const states = { ...session.states, [step]: 'done' as const }
 
-  return next(session, states, withoutError(session, step), stepAfter(session, step, states))
+  return next(session, { ...session.states, [step]: 'done' }, withoutError(session, step))
 }
 
 export function failWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep, code: string): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
-  const states = { ...session.states, [step]: 'failed' as const }
 
-  return next(session, states, { ...session.errors, [step]: code }, step)
+  return next(session, { ...session.states, [step]: 'failed' }, { ...session.errors, [step]: code })
 }
 
 /**
@@ -199,16 +183,14 @@ export function failWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep
  */
 export function resetWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
-  const states = { ...session.states, [step]: 'ready' as const }
 
-  return next(session, states, withoutError(session, step), step)
+  return next(session, { ...session.states, [step]: 'ready' }, withoutError(session, step))
 }
 
 export function skipWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!optionalWorkbenchSteps.includes(step) || !isWorkbenchStepReachable(session, step)) return session
-  const states = { ...session.states, [step]: 'skipped' as const }
 
-  return next(session, states, withoutError(session, step), stepAfter(session, step, states))
+  return next(session, { ...session.states, [step]: 'skipped' }, withoutError(session, step))
 }
 
 /**
@@ -222,19 +204,14 @@ export function noteWorkbenchStepError(session: WorkbenchSession, step: Workbenc
 
 export function blockWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep, reason: WorkbenchBlockReason): WorkbenchSession {
   if (session.states[step] === 'unavailable') return session
-  const states = { ...session.states, [step]: 'unavailable' as const }
   const blocked = { ...session.blocked, [step]: reason }
-  const current = session.current === step ? stepAfter(session, step, states) : session.current
 
-  return { ...next(session, states, withoutError(session, step), current), blocked }
+  return { ...next(session, { ...session.states, [step]: 'unavailable' }, withoutError(session, step)), blocked }
 }
 
 export function unblockWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (session.states[step] !== 'unavailable') return session
-  const states = { ...session.states, [step]: 'locked' as const }
-  const blocked = Object.fromEntries(Object.entries(session.blocked).filter(([key]) => key !== step))
-
-  return { ...next(session, states, { ...session.errors }), blocked }
+  return { ...next(session, { ...session.states, [step]: 'locked' }, { ...session.errors }), blocked: withoutBlock(session.blocked, step) }
 }
 
 /** Steps this run actually has, so progress never counts work nobody was offered. */
@@ -254,9 +231,8 @@ export function workbenchProgress(session: WorkbenchSession) {
  * failed has already invalidated everything after it, so there is no way for a
  * stale result to be offered as the finished one.
  */
-export function finalWorkbenchArtifact(session: WorkbenchSession): 'layout' | 'brand' | undefined {
+export function finalWorkbenchArtifact(session: WorkbenchSession): 'layout' | 'brand' | 'compress' | undefined {
   if (session.states.output !== 'done') return undefined
-  if (session.states.brand === 'done') return 'brand'
 
-  return session.states.layout === 'done' ? 'layout' : undefined
+  return (['compress', 'brand', 'layout'] as const).find(step => session.states[step] === 'done')
 }

@@ -2,7 +2,9 @@ import { expect, it } from 'vitest'
 import { productImageWorkbenchCanaries } from './support/product-image-workbench-canaries'
 import { inspectNetworkRequest } from './e2e/support/privacy-boundary'
 import { productImageWorkbenchDefinition } from '@/features/tools/product-image-workbench/definition'
-import { planBrandScene, planLayoutInput, workbenchOutputName } from '@/features/tools/product-image-workbench/pipeline'
+import { planBrandScene, planLayoutInput } from '@/features/tools/product-image-workbench/pipeline'
+import { buildZipArchive, workbenchArchiveName, workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
+import { admitWorkbenchFiles, createWorkbenchQueue, measureWorkbenchItem } from '@/features/tools/product-image-workbench/queue'
 import { completeWorkbenchStep, createWorkbenchSession, startWorkbenchStep } from '@/features/tools/product-image-workbench/session'
 
 const policy = { allowedOrigins: ['https://toolsliang.com'] }
@@ -18,6 +20,7 @@ it.each(productImageWorkbenchCanaries)('同源 GET 不得夾帶任何一步的�
 it('公開 Worker 程式 URL 不會被誤判為工具內容', () => {
   expect(inspect('https://toolsliang.com/_nuxt/compliant-image.worker-publichash.js')).toEqual([])
   expect(inspect('https://toolsliang.com/_nuxt/promo.worker-publichash.js')).toEqual([])
+  expect(inspect('https://toolsliang.com/_nuxt/archive.worker-publichash.js')).toEqual([])
 })
 
 it('工作階段文件只帶步驟狀態，不含檔名、Blob 或像素', () => {
@@ -42,9 +45,27 @@ it('交給引擎的輸入只帶使用者的檔案本身，場景文件不複製�
   expect(inspect(`https://toolsliang.com/?scene=${encodeURIComponent(JSON.stringify(scene))}`)).toEqual([])
 })
 
-it('輸出檔名不帶來源檔名', () => {
-  expect(workbenchOutputName('compliant', 'image/jpeg')).not.toContain('private-workbench')
-  expect(workbenchOutputName('promotional', 'image/png')).not.toContain('private-workbench')
+it('輸出與封存檔名不帶來源檔名，只由用途與序號組成', () => {
+  expect(workbenchOutputName('compliant', 1, 'image/jpeg')).toBe('compliant-product-image-01.jpg')
+  expect(workbenchOutputName('promotional', 7, 'image/png')).not.toContain('private-workbench')
+  expect(workbenchArchiveName('promotional')).not.toContain('private-workbench')
+})
+
+it('佇列文件只帶批次的形狀，不含檔名、Blob 或像素', () => {
+  const { queue } = admitWorkbenchFiles(createWorkbenchQueue(), [{ bytes: 1024 }, { bytes: 2048 }])
+  const measured = measureWorkbenchItem(queue, 'item-1', { width: 800, height: 800 })
+
+  expect(inspect(`https://toolsliang.com/?queue=${encodeURIComponent(JSON.stringify(measured))}`)).toEqual([])
+  expect(JSON.stringify(measured)).not.toMatch(/private-workbench|blob:|data:/)
+})
+
+it('封存檔只寫入本機產生的名稱與內容，不寫入裝置時間', () => {
+  const archive = buildZipArchive([{ name: workbenchOutputName('promotional', 1, 'image/png'), bytes: new Uint8Array([1, 2, 3]) }])
+  const names = new TextDecoder().decode(archive)
+
+  expect(names).toContain('brand-promo-image-01.png')
+  expect(names).not.toContain('private-workbench')
+  expect(new DataView(archive.buffer).getUint16(10, true)).toBe(0)
 })
 
 it('工作台本身不宣告任何需要下載的離線資產', () => {

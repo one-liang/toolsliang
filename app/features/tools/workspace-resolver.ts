@@ -1,3 +1,4 @@
+import archiveWorkerUrl from './product-image-workbench/archive.worker?worker&url'
 import promoWorkerUrl from './brand-promo-image/promo.worker?worker&url'
 import backgroundRemovalWorkerUrl from './image-background-remover/background-removal.worker?worker&url'
 import compliantImageWorkerUrl from './compliant-product-image/compliant-image.worker?worker&url'
@@ -35,6 +36,6 @@ export function getToolWorkspaceAssets(componentKey: string): string[] {
   if (componentKey === 'ImageCompressorWorkspace') return [imageWorkerUrl]
   if (componentKey === 'ImageBackgroundRemoverWorkspace') return [backgroundRemovalWorkerUrl]
   if (componentKey === 'CompliantProductImageWorkspace') return [compliantImageWorkerUrl]
-  if (componentKey === 'ProductImageWorkbenchWorkspace') return [compliantImageWorkerUrl, promoWorkerUrl]
+  if (componentKey === 'ProductImageWorkbenchWorkspace') return [compliantImageWorkerUrl, promoWorkerUrl, imageWorkerUrl, archiveWorkerUrl]
   return []
 }
