@@ -35,5 +35,6 @@ export function getToolWorkspaceAssets(componentKey: string): string[] {
   if (componentKey === 'ImageCompressorWorkspace') return [imageWorkerUrl]
   if (componentKey === 'ImageBackgroundRemoverWorkspace') return [backgroundRemovalWorkerUrl]
   if (componentKey === 'CompliantProductImageWorkspace') return [compliantImageWorkerUrl]
+  if (componentKey === 'ProductImageWorkbenchWorkspace') return [compliantImageWorkerUrl, promoWorkerUrl]
   return []
 }
