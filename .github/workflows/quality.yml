@@ -14,14 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: lint、型別、測試與建置
+  static:
+    name: lint、型別與單元測試
     runs-on: ubuntu-latest
-    # 三瀏覽器 e2e 以單一 worker 執行，工具每增加一個就長一段。上一次通過的
-    # 執行已用掉 27m44s，離 30 分鐘只剩不到兩分鐘，而共用機器的快慢本身就有
-    # 一成以上的落差——這個上限已經不是在擋失控的測試，而是在擋一台比較慢的
-    # 機器。放寬到 45 分鐘，讓超時重新代表「真的卡住了」。
-    timeout-minutes: 45
+    # 依 2026-09-10 的觀測（run 34443059971）：npm ci 15.7s、lint 9.5s、
+    # typecheck 10.0s、單元測試 93.1s，連同 runner 啟動約 2.6 分鐘。
+    # 取約四倍餘裕，足以吸收共用機器的快慢落差。
+    timeout-minutes: 10
 
     steps:
       - name: 取得程式碼
@@ -45,17 +44,50 @@ jobs:
       - name: 執行單元測試
         run: npm run test:unit
 
-      - name: 安裝瀏覽器
-        run: npx playwright install --with-deps chromium firefox webkit
+  e2e:
+    name: e2e：${{ matrix.project }}
+    runs-on: ubuntu-latest
+    # 三個瀏覽器改成各自一個 job 後，wall-clock 是最慢的那一個，不再是三者相加。
+    # 依同一次觀測，單一瀏覽器的測試時間為 chromium 474s、firefox 536s、
+    # webkit 514s；加上 npm ci、安裝單一瀏覽器與 production build 約 115s，
+    # 最慢的一個約 10.9 分鐘。幾乎相同的一份工作在不同 runner 上量到 30m43s
+    # 與 24m38s（約 1.25 倍的落差），因此取兩倍餘裕。
+    timeout-minutes: 22
 
-      - name: 建置並執行三瀏覽器品質閘門
-        run: npm run test:e2e
+    strategy:
+      # 一個瀏覽器失敗時其餘兩個仍要跑完；否則看不出這是共通的問題還是引擎差異。
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
+
+    steps:
+      - name: 取得程式碼
+        uses: actions/checkout@v5
+
+      - name: 設定 Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.15.0
+          cache: npm
+
+      - name: 安裝依賴
+        run: npm ci
+
+      - name: 安裝瀏覽器
+        run: npx playwright install --with-deps ${{ matrix.project }}
+
+      # 建置與執行分開，讓每次執行都直接看得出時間花在建置還是測試。
+      - name: 建置 production bundle
+        run: npm run build
+
+      - name: 執行品質閘門
+        run: npx playwright test --project=${{ matrix.project }}
 
       - name: 保留失敗診斷
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-failure-${{ github.run_id }}
+          name: playwright-failure-${{ matrix.project }}-${{ github.run_id }}
           path: artifacts/
           if-no-files-found: ignore
           retention-days: 7
