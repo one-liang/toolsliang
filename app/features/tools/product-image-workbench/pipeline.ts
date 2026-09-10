@@ -8,6 +8,7 @@
  * pure means the wiring is testable without a worker, a canvas or a file.
  */
 import { imageInputLimits } from '@/features/images/limits'
+import type { CompressionInput, ImageFormat } from '../image-compressor/types'
 import { resolveOutputBounds, type EncodableMimeType, type OutputBounds } from '../compliant-product-image/domain/render'
 import type { CompliantImagePreset } from '../compliant-product-image/domain/reference'
 import type { CompliantRenderInput } from '../compliant-product-image/types'
@@ -134,19 +135,31 @@ export function planBrandScene(request: WorkbenchBrandRequest): PromoInput {
   return { scene: { width: request.canvas.width, height: request.canvas.height, layers }, files }
 }
 
-const outputExtensions: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
+export interface WorkbenchCompressionSettings {
+  format: ImageFormat
+  /** Percent, exactly as the numeric field holds it. */
+  quality: number
+  maxWidth: number
+  maxHeight: number
 }
 
 /**
- * The downloaded file is named after what it is, never after what was imported:
- * a source file name is tool content and has no reason to travel with a result
- * the merchant may share.
+ * Capacity control for the promotional branch.
+ *
+ * A channel preset states the bytes a compliant image must land in, and the
+ * layout engine already writes inside that range. Promotional artwork has no
+ * such published number, so the merchant sets one — and it is the independent
+ * compressor engine that applies it (ADR-0004), with the same ceilings every
+ * other image entry point uses.
  */
-export function workbenchOutputName(purpose: WorkbenchPurpose, format: string) {
-  const stem = purpose === 'compliant' ? 'compliant-product-image' : 'brand-promo-image'
+export function planCompressionInput(request: { file: File, settings: WorkbenchCompressionSettings }): CompressionInput {
+  const { file, settings } = request
 
-  return `${stem}.${outputExtensions[format] ?? 'png'}`
+  return {
+    file,
+    format: settings.format,
+    quality: Math.min(100, Math.max(1, settings.quality)) / 100,
+    maxWidth: Math.min(imageInputLimits.maxSide, Math.max(1, Math.round(settings.maxWidth))),
+    maxHeight: Math.min(imageInputLimits.maxSide, Math.max(1, Math.round(settings.maxHeight))),
+  }
 }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   planBrandScene,
+  planCompressionInput,
   planLayoutInput,
   promotionalCanvasBounds,
   resolveLayoutBounds,
-  workbenchOutputName,
 } from '@/features/tools/product-image-workbench/pipeline'
 import { findCompliantImagePreset } from '@/features/tools/compliant-product-image/domain/preset'
 import { describeSizeIssue } from '@/features/tools/compliant-product-image/domain/render'
@@ -120,10 +120,15 @@ describe('品牌素材步驟的場景', () => {
   })
 })
 
-describe('輸出檔名', () => {
-  it('依用途與格式命名，不含任何來源檔名', () => {
-    expect(workbenchOutputName('compliant', 'image/jpeg')).toBe('compliant-product-image.jpg')
-    expect(workbenchOutputName('compliant', 'image/webp')).toBe('compliant-product-image.webp')
-    expect(workbenchOutputName('promotional', 'image/png')).toBe('brand-promo-image.png')
+describe('壓縮步驟交給壓縮引擎的輸入', () => {
+  it('百分比設定換成引擎的品質比例，尺寸受本機處理上限限制', () => {
+    const input = planCompressionInput({ file: product, settings: { format: 'image/jpeg', quality: 80, maxWidth: 20_000, maxHeight: 1200 } })
+
+    expect(input).toEqual({ file: product, format: 'image/jpeg', quality: 0.8, maxWidth: imageInputLimits.maxSide, maxHeight: 1200 })
+  })
+
+  it('超出範圍的品質被拉回引擎接受的區間，不會送出無效選項', () => {
+    expect(planCompressionInput({ file: product, settings: { format: 'image/png', quality: 0, maxWidth: 800, maxHeight: 800 } }).quality).toBe(0.01)
+    expect(planCompressionInput({ file: product, settings: { format: 'image/png', quality: 400, maxWidth: 800, maxHeight: 800 } }).quality).toBe(1)
   })
 })
