@@ -17,8 +17,15 @@
 import { createCipheriv, createHash } from 'node:crypto'
 import { deflateSync } from 'node:zlib'
 
-/** The user password every encrypted fixture is built with. It guards synthetic pages only. */
+/** The user password the encrypted fixtures are built with. It guards synthetic pages only. */
 export const fixturePassword = 'toolsliang-t24'
+
+/**
+ * The owner password of the permission-restricted fixture. That document has an
+ * empty user password, so it opens without being asked for anything; what it
+ * withholds is permission to change it.
+ */
+export const fixtureOwnerPassword = 'toolsliang-owner'
 
 /** A4 in PDF user space units, the size the reference document uses. */
 const A4 = { width: 595.28, height: 841.89 }
@@ -28,6 +35,19 @@ const PASSWORD_PADDING = Buffer.from([
   0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
   0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A,
 ])
+
+/**
+ * The address the active-content document's link action points at. Nothing may
+ * ever request it; the evaluation records every path the browser asked for, and
+ * this one appearing would mean an engine followed an action in the file.
+ */
+export const ACTIVE_CONTENT_PROBE = 'http://127.0.0.1:9/active-content-probe'
+
+/**
+ * Permission bits for the restricted fixture: every bit set except "modify
+ * contents" (4) and "modify annotations" (6), per ISO 32000-1 table 22.
+ */
+export const RESTRICTED_PERMISSIONS = -1 - 8 - 32
 
 /** Fixed so the built bytes are reproducible; a real writer would randomise it. */
 const DOCUMENT_ID = Buffer.from('546f6f6c736c69616e6754323446697801', 'hex').subarray(0, 16)
@@ -79,11 +99,11 @@ function padPassword(password) {
  * Only the revisions the matrix needs are implemented: revision 3 with RC4 at
  * 128 bit, and revision 4 with AES-128 in CBC mode.
  */
-function standardSecurity({ revision, password, permissions }) {
+function standardSecurity({ revision, password, ownerPassword = password, permissions }) {
   const keyLength = 16
   const padded = padPassword(password)
 
-  let ownerDigest = md5(padded)
+  let ownerDigest = md5(padPassword(ownerPassword))
   for (let round = 0; round < 50; round += 1) ownerDigest = md5(ownerDigest.subarray(0, keyLength))
   const ownerKey = ownerDigest.subarray(0, keyLength)
 
@@ -270,18 +290,19 @@ class PdfBuilder {
 
     const size = this.objects.length
     entries.set(xrefNumber, { type: 1, first: offset, second: 0 })
-    const table = Buffer.alloc(size * 6)
+    /* `/W [1 4 2]`: the free entry's generation is 65535 and does not fit in one byte. */
+    const table = Buffer.alloc(size * 7)
     for (let number = 0; number < size; number += 1) {
       const entry = entries.get(number) ?? { type: 0, first: 0, second: 65535 }
-      table.writeUInt8(entry.type, number * 6)
-      table.writeUInt32BE(entry.first, number * 6 + 1)
-      table.writeUInt8(entry.second & 0xFF, number * 6 + 5)
+      table.writeUInt8(entry.type, number * 7)
+      table.writeUInt32BE(entry.first, number * 7 + 1)
+      table.writeUInt16BE(entry.second, number * 7 + 5)
     }
 
     const xrefPayload = deflateSync(table)
     const identifier = `<${DOCUMENT_ID.toString('hex')}> <${DOCUMENT_ID.toString('hex')}>`
     chunks.push(Buffer.concat([
-      Buffer.from(`${xrefNumber} 0 obj\n<< /Type /XRef /Size ${size} /W [1 4 1] /Root ${root} 0 R`
+      Buffer.from(`${xrefNumber} 0 obj\n<< /Type /XRef /Size ${size} /W [1 4 2] /Root ${root} 0 R`
         + ` /ID [${identifier}] /Filter /FlateDecode /Length ${xrefPayload.length} >>\nstream\n`, 'latin1'),
       xrefPayload,
       Buffer.from('\nendstream\nendobj\n', 'latin1'),
@@ -383,16 +404,48 @@ function buildObjectStreams() {
   return builder.buildWithObjectStreams({ root: catalog, compressed })
 }
 
-function buildEncrypted(revision) {
-  const security = standardSecurity({ revision, password: fixturePassword, permissions: -1 })
+function buildEncrypted({ revision, password = fixturePassword, ownerPassword = password, permissions = -1 }) {
+  const security = standardSecurity({ revision, password, ownerPassword, permissions })
   const builder = new PdfBuilder({ version: revision === 4 ? '1.6' : '1.4', security })
   const box = [0, 0, A4.width, A4.height]
   const catalog = documentPages(builder, { pages: 2, box })
   /* The encryption dictionary is the one object the handler never encrypts. */
   const encryptNumber = builder.reserve()
   builder.put(encryptNumber, security.dictionary())
-  const bytes = builder.build({ root: catalog, encryptRef: encryptNumber })
-  return bytes
+  return builder.build({ root: catalog, encryptRef: encryptNumber })
+}
+
+/**
+ * Everything a PDF can ask a viewer to *do*: a document-level script, an
+ * open action, a page action and a link that would leave the machine. A
+ * signature tool must run none of it and fetch none of it, and the harness
+ * reports whether any of it happened.
+ */
+function buildActiveContent() {
+  const builder = new PdfBuilder({})
+  const box = [0, 0, A4.width, A4.height]
+  const pagesNumber = builder.reserve()
+  const catalog = builder.reserve()
+
+  const script = builder.add('<< /Type /Action /S /JavaScript'
+    + ' /JS (globalThis.__pdfActiveContentRan = true;) >>')
+  const openAction = builder.add('<< /Type /Action /S /JavaScript'
+    + ' /JS (globalThis.__pdfActiveContentRan = true;) >>')
+  const link = builder.add('<< /Type /Annot /Subtype /Link /Rect [40 700 300 760] /Border [0 0 0]'
+    + ` /A << /Type /Action /S /URI /URI (${ACTIVE_CONTENT_PROBE}) >> >>`)
+  const launch = builder.add('<< /Type /Annot /Subtype /Link /Rect [40 600 300 660] /Border [0 0 0]'
+    + ' /A << /Type /Action /S /Launch /F (probe.txt) >> >>')
+
+  const contents = builder.addStream('<< ', Buffer.from(pageContent(box), 'latin1'), { compress: true })
+  const page = builder.add(`<< /Type /Page /Parent ${pagesNumber} 0 R /MediaBox [${box.join(' ')}]`
+    + ` /Rotate 0 /Resources << >> /Contents ${contents} 0 R /Annots [${link} 0 R ${launch} 0 R]`
+    + ` /AA << /O << /Type /Action /S /JavaScript /JS (globalThis.__pdfActiveContentRan = true;) >> >> >>`)
+
+  builder.put(pagesNumber, `<< /Type /Pages /Count 1 /Kids [${page} 0 R] >>`)
+  builder.put(catalog, `<< /Type /Catalog /Pages ${pagesNumber} 0 R /OpenAction ${openAction} 0 R`
+    + ` /Names << /JavaScript << /Names [(startup) ${script} 0 R] >> >> >>`)
+
+  return builder.build({ root: catalog })
 }
 
 function buildBrokenXref() {
@@ -404,7 +457,9 @@ function buildBrokenXref() {
 
 /**
  * The fixtures, in the order the record tabulates them. `structure` is what the
- * document exercises; `expectation` is what a candidate has to do with it.
+ * document exercises, `expectation` is what a candidate has to do with it, and
+ * `encrypted` decides how it may be exported: an encrypted document cannot take
+ * an incremental update, whether or not it asks the user for a password.
  */
 export function buildFixtures() {
   const reference = buildReference({ pages: 20, imageEdge: 600, seed: 20_240_724 })
@@ -412,6 +467,7 @@ export function buildFixtures() {
   const entries = [
     {
       name: 'reference-20-page',
+      encrypted: false,
       structure: 'classic-xref',
       expectation: 'open',
       pages: 20,
@@ -420,6 +476,7 @@ export function buildFixtures() {
     },
     {
       name: 'rotated-pages',
+      encrypted: false,
       structure: 'page-rotation',
       expectation: 'open',
       pages: 4,
@@ -428,6 +485,7 @@ export function buildFixtures() {
     },
     {
       name: 'offset-crop-box',
+      encrypted: false,
       structure: 'offset-boxes',
       expectation: 'open',
       pages: 2,
@@ -436,6 +494,7 @@ export function buildFixtures() {
     },
     {
       name: 'object-stream',
+      encrypted: false,
       structure: 'xref-stream',
       expectation: 'open',
       pages: 3,
@@ -444,6 +503,7 @@ export function buildFixtures() {
     },
     {
       name: 'large-56-page',
+      encrypted: false,
       structure: 'classic-xref',
       expectation: 'open',
       pages: 56,
@@ -452,6 +512,7 @@ export function buildFixtures() {
     },
     {
       name: 'page-cap-120',
+      encrypted: false,
       structure: 'classic-xref',
       expectation: 'open',
       pages: 120,
@@ -460,22 +521,48 @@ export function buildFixtures() {
     },
     {
       name: 'encrypted-rc4-128',
+      encrypted: true,
       structure: 'standard-security-r3',
       expectation: 'password',
       pages: 2,
       note: 'RC4 128 bit, revision 3, user password required to open',
-      bytes: buildEncrypted(3),
+      bytes: buildEncrypted({ revision: 3 }),
     },
     {
       name: 'encrypted-aes-128',
+      encrypted: true,
       structure: 'standard-security-r4',
       expectation: 'password',
       pages: 2,
       note: 'AES-128 CBC, revision 4, user password required to open',
-      bytes: buildEncrypted(4),
+      bytes: buildEncrypted({ revision: 4 }),
+    },
+    {
+      name: 'owner-password-restricted',
+      encrypted: true,
+      structure: 'standard-security-r4',
+      expectation: 'open',
+      pages: 2,
+      note: 'empty user password, owner password set, permissions deny modifying the document',
+      bytes: buildEncrypted({
+        revision: 4,
+        password: '',
+        ownerPassword: fixtureOwnerPassword,
+        permissions: RESTRICTED_PERMISSIONS,
+      }),
+    },
+    {
+      name: 'active-content',
+      encrypted: false,
+      structure: 'active-content',
+      expectation: 'open',
+      pages: 1,
+      note: 'document-level script, open action, page action, URI link and launch action',
+      bytes: buildActiveContent(),
     },
     {
       name: 'broken-xref',
+      encrypted: false,
       structure: 'damaged-startxref',
       expectation: 'recover-or-reject',
       pages: 2,
@@ -484,6 +571,7 @@ export function buildFixtures() {
     },
     {
       name: 'truncated',
+      encrypted: false,
       structure: 'damaged-truncated',
       expectation: 'reject',
       pages: 0,

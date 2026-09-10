@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import {
+  clampNormalizedRect,
+  estimatePdfWorkingSetBytes,
   pdfDisplayBox,
   pdfDisplayPointToUserSpace,
   pdfEngineCandidates,
   pdfEngineExclusionReasons,
   pdfEngineExclusions,
+  pdfEngineRoles,
   pdfSignatureBudgets,
   pdfSignatureDecision,
+  pdfSignatureDisclosureKeys,
   pdfSignatureDisclosures,
   pdfSignatureError,
+  pdfSignatureExportMode,
   pdfSignatureFailureCodes,
   pdfSignatureGateKeys,
+  pdfSignatureImage,
   pdfSignatureLimits,
+  pdfSignatureMemoryModel,
+  pdfSignatureParserPolicy,
   pdfSignaturePermittedLicences,
   pdfSignaturePlacement,
   pdfSignatureReferenceVersion,
@@ -24,7 +32,15 @@ import {
   type PdfPageGeometry,
 } from '@/features/tools/pdf-signature/domain/reference'
 import {
+  clampNormalizedRect as harnessClamp,
+  displayBox as harnessDisplayBox,
+  displayPointToUserSpace as harnessToUserSpace,
+  signaturePlacement as harnessPlacement,
+  userSpaceToDisplayPoint as harnessToDisplayPoint,
+} from '../scripts/pdf-engine/placement.mjs'
+import {
   browserNames,
+  measuredBrowser,
   measuredCandidate,
   measuredFixture,
   measuredRun,
@@ -42,6 +58,7 @@ import {
   pdfEngineDecisionRecord as record,
   pdfEngineMeasurements as measurements,
   sectionBody,
+  sortRoles,
   verdictOf,
 } from './support/pdf-engine-decision-record'
 
@@ -52,15 +69,26 @@ function candidateById(id: string): PdfEngineCandidate {
   return candidate
 }
 
-/** Package downloads are allowed; nothing about a document ever may be sent. */
-const allowedHosts = ['registry.npmjs.org', 'www.npmjs.com', 'github.com', 'developer.mozilla.org', 'www.iso.org', 'opensource.adobe.com']
+function everyRun() {
+  return browserNames.flatMap(browser => measuredBrowser(browser).runs.map(run => ({ browser, run })))
+}
+
+/** Package downloads and specifications; nothing about a document ever may be sent. */
+const allowedHosts = [
+  'registry.npmjs.org',
+  'www.npmjs.com',
+  'github.com',
+  'developer.mozilla.org',
+  'www.iso.org',
+  'opensource.adobe.com',
+]
 
 describe('vocabulary matches the decision record', () => {
   it('publishes exactly the documented candidates', () => {
     expect(pdfEngineCandidates.map(candidate => candidate.id)).toEqual(parseCandidates().map(row => row.id))
   })
 
-  it('describes each candidate the way the record does', () => {
+  it('describes each candidate the way the record and the measurements do', () => {
     for (const row of parseCandidates()) {
       const candidate = candidateById(row.id)
       expect(candidate.package).toBe(row.package)
@@ -68,6 +96,10 @@ describe('vocabulary matches the decision record', () => {
       expect(candidate.licence).toBe(row.licence)
       expect(candidate.licenceVerified).toBe(row.licenceVerified)
       expect(candidate.licenceUrl).toBe(row.licenceUrl)
+      /* Roles are stated in three places; the order they are listed in may differ. */
+      expect(sortRoles(candidate.roles)).toEqual(sortRoles(row.roles))
+      expect(sortRoles(candidate.roles)).toEqual(sortRoles(measuredCandidate(row.id).roles))
+      for (const role of candidate.roles) expect(pdfEngineRoles).toContain(role)
     }
   })
 
@@ -105,12 +137,20 @@ describe('vocabulary matches the decision record', () => {
     expect(pdfSignatureDecision.status === 'go').toBe(failed.length === 0)
   })
 
-  it('takes its limits and budgets from the record', () => {
+  it('takes its limits, budgets and memory model from the record', () => {
     const documented = new Map(parseLimits().map(row => [row.key, row.value]))
     expect(pdfSignatureLimits.maxPages).toBe(documented.get('maxPages'))
     expect(pdfSignatureLimits.maxBytes).toBe(documented.get('maxBytes'))
+    expect(pdfSignatureLimits.previewScale).toBe(documented.get('previewScale'))
     expect(pdfSignatureBudgets.firstPagePreviewMs).toBe(documented.get('firstPagePreviewMs'))
     expect(pdfSignatureBudgets.exportMs).toBe(documented.get('exportMs'))
+    expect(pdfSignatureMemoryModel.baseBytes).toBe(documented.get('baseBytes'))
+    expect(pdfSignatureMemoryModel.bytesPerInputByte).toBe(documented.get('bytesPerInputByte'))
+    expect(pdfSignatureImage.maxEdgePixels).toBe(documented.get('maxSignatureEdgePixels'))
+  })
+
+  it('previews at the zoom the matrix measured', () => {
+    expect(pdfSignatureLimits.previewScale).toBe(measurements.previewScale)
   })
 
   it('names the structures and stages the record works in', () => {
@@ -130,6 +170,7 @@ describe('the record only states what the measurements show', () => {
       const fixture = measuredFixture(row.name)
       expect(row.structure).toBe(fixture.structure)
       expect(row.expectation).toBe(fixture.expectation)
+      expect(row.encrypted).toBe(fixture.encrypted)
       expect(row.pages).toBe(fixture.pages)
       expect(row.byteLength).toBe(fixture.byteLength)
       expect(row.sha256).toBe(fixture.sha256)
@@ -148,6 +189,11 @@ describe('the record only states what the measurements show', () => {
     }
   })
 
+  it('covers every candidate and document in the compatibility matrix', () => {
+    expect(parseVerdicts('### 4.1 預設開啟'))
+      .toHaveLength(pdfEngineCandidates.length * measurements.fixtures.length)
+  })
+
   it('prints the compatibility verdict each browser actually reached', () => {
     for (const row of parseVerdicts('### 4.1 預設開啟')) {
       for (const browser of browserNames) {
@@ -156,21 +202,22 @@ describe('the record only states what the measurements show', () => {
     }
   })
 
-  it('prints the password verdicts each browser actually reached', () => {
-    for (const row of parseVerdicts('### 4.2 密碼保護檔')) {
+  it('prints the protected-document verdicts each browser actually reached', () => {
+    const rows = parseVerdicts('### 4.2 密碼與權限保護檔')
+    const guarded = measurements.fixtures.filter(fixture =>
+      fixture.expectation === 'password' || fixture.name === 'owner-password-restricted')
+    expect(rows).toHaveLength(pdfEngineCandidates.length * guarded.length)
+    for (const row of rows) {
       for (const browser of browserNames) {
         expect(row.verdicts[browser]).toBe(verdictOf(measuredRun(browser, row.candidateId, row.fixture, 'with-password')))
       }
     }
   })
 
-  it('covers every candidate and document in the compatibility matrix', () => {
-    const rows = parseVerdicts('### 4.1 預設開啟')
-    expect(rows).toHaveLength(pdfEngineCandidates.length * measurements.fixtures.length)
-  })
-
   it('prints the timings that were measured', () => {
-    for (const row of parseTimings()) {
+    const rows = parseTimings()
+    expect(rows).toHaveLength(pdfEngineCandidates.length * 2 * browserNames.length)
+    for (const row of rows) {
       const run = measuredRun(row.browser, row.candidateId, row.fixture)
       expect(row.openMs).toBe(run.stages.openMs)
       expect(row.previewMs).toBe(run.stages.firstPagePreviewMs ?? null)
@@ -179,15 +226,33 @@ describe('the record only states what the measurements show', () => {
     }
   })
 
-  it('prints the fidelity the verifier read back', () => {
-    for (const row of parseFidelityRows()) {
-      const run = measuredRun(row.browser, pdfSignatureSelection.writeEngineId, row.fixture, pdfSignatureSelection.exportVariant)
+  it('prints the fidelity the verifier read back, for the export mode each document takes', () => {
+    const rows = parseFidelityRows()
+    const signable = measurements.fixtures.filter(fixture =>
+      fixture.expectation === 'open' || fixture.expectation === 'password')
+    expect(rows).toHaveLength(signable.length * browserNames.length)
+    for (const row of rows) {
+      const fixture = measuredFixture(row.fixture)
+      expect(row.exportMode).toBe(pdfSignatureExportMode(fixture))
+      const run = measuredRun(row.browser, pdfSignatureSelection.writeEngineId, row.fixture,
+        fixture.encrypted
+          ? pdfSignatureSelection.exportVariants.encrypted
+          : pdfSignatureSelection.exportVariants.unencrypted)
       expect(row.inkRatio).toBe(run.verify?.firstPage?.inkRatio)
       expect(row.seeThroughRatio).toBe(run.verify?.firstPage?.seeThroughRatio)
       expect(row.strayInkPixels).toBe(run.verify?.firstPage?.strayInkPixels)
       expect(row.changedPixelsOutsidePlacement).toBe(run.verify?.firstPage?.changedPixelsOutsidePlacement)
       expect(row.untouchedPageChangedPixels).toBe(run.verify?.untouchedPage?.changedPixels ?? 0)
     }
+  })
+
+  it('states the margin the outside count actually used', () => {
+    const margins = new Set(everyRun()
+      .map(({ run }) => run.verify?.firstPage?.placementMarginPt)
+      .filter(value => value !== undefined))
+    expect(margins.size).toBe(1)
+    /* A tolerance that is not written down is a tolerance nobody can check. */
+    expect(sectionBody('### 6.3 讀回結果')).toContain(`${[...margins][0]} pt`)
   })
 })
 
@@ -235,8 +300,35 @@ describe('the selection is one the project may ship', () => {
         expect(run.verify?.firstPage?.changedPixelsOutsidePlacement).toBe(0)
       }
     }
-    expect(sectionBody('## 7. 密碼、不支援結構與損毀檔策略')).toContain('ignoreEncryption')
+    expect(sectionBody('### 7.4 損毀檔')).toContain('ignoreEncryption')
     expect(pdfSignatureSelection.writeEngineId).not.toBe('pdf-lib')
+  })
+
+  it('appends to an unencrypted document and rewrites an encrypted one', () => {
+    expect(pdfSignatureExportMode({ encrypted: false })).toBe('incremental-update')
+    expect(pdfSignatureExportMode({ encrypted: true })).toBe('full-rewrite')
+    expect(pdfSignatureSelection.encryptedExportIsDecrypted).toBe(true)
+  })
+
+  it('does not append to an encrypted document, because the page stops showing through the signature', () => {
+    /*
+     * An incremental update leaves `/Encrypt` behind an older trailer and writes
+     * the appended objects in the clear. The signature still lands, but far less
+     * of the page shows through it than on the same document rewritten in full:
+     * the transparency does not survive the mismatch.
+     */
+    for (const browser of browserNames) {
+      for (const fixture of measurements.fixtures.filter(entry => entry.encrypted).map(entry => entry.name)) {
+        const appended = measuredRun(browser, pdfSignatureSelection.writeEngineId, fixture, 'incremental')
+        const rewritten = measuredRun(browser, pdfSignatureSelection.writeEngineId, fixture, 'with-password')
+        expect(appended.verify?.firstPage?.seeThroughRatio)
+          .toBeLessThan(rewritten.verify!.firstPage!.seeThroughRatio - 0.2)
+        /* And the damage reaches past the signature: the page itself changes. */
+        expect(appended.verify?.firstPage?.changedPixelsOutsidePlacement).toBeGreaterThan(0)
+        expect(rewritten.verify?.firstPage?.changedPixelsOutsidePlacement).toBe(0)
+      }
+    }
+    expect(pdfSignatureSelection.exportModes.encrypted).toBe('full-rewrite')
   })
 
   it('reads every export back before calling it a download', () => {
@@ -249,7 +341,8 @@ describe('the selection is one the project may ship', () => {
       const preview = measuredRun(browser, pdfSignatureSelection.previewEngineId, 'reference-20-page')
       expect(preview.stages.firstPagePreviewMs).toBeLessThanOrEqual(pdfSignatureBudgets.firstPagePreviewMs)
 
-      const write = measuredRun(browser, pdfSignatureSelection.writeEngineId, 'reference-20-page', pdfSignatureSelection.exportVariant)
+      const write = measuredRun(browser, pdfSignatureSelection.writeEngineId, 'reference-20-page',
+        pdfSignatureSelection.exportVariants.unencrypted)
       const total = (write.stages.openMs ?? 0) + (write.stages.applyMs ?? 0) + (write.stages.exportMs ?? 0)
       expect(total).toBeLessThanOrEqual(pdfSignatureBudgets.exportMs)
     }
@@ -264,6 +357,21 @@ describe('the selection is one the project may ship', () => {
     }
   })
 
+  it('estimates a working set no smaller than the one that was measured', () => {
+    /* The model describes the two engines the tool ships, not the ones it declined. */
+    const selected = [pdfSignatureSelection.previewEngineId, pdfSignatureSelection.writeEngineId]
+    const sampled = measuredBrowser('chromium').runs
+      .filter(run => run.memoryBytes && selected.includes(run.candidateId))
+    expect(sampled.length).toBeGreaterThan(0)
+    for (const run of sampled) {
+      expect(run.memoryBytes!, `${run.candidateId}/${run.fixture}`)
+        .toBeLessThanOrEqual(estimatePdfWorkingSetBytes(measuredFixture(run.fixture).byteLength))
+    }
+    /* Both engines hold the document while a page is being signed. */
+    expect(pdfSignatureMemoryModel.engines).toBe(2)
+    expect(estimatePdfWorkingSetBytes(0)).toBe(pdfSignatureMemoryModel.baseBytes)
+  })
+
   it('rejects a damaged document rather than exporting one nothing can open', () => {
     /*
      * The selected writer accepts the truncated document and produces bytes the
@@ -274,7 +382,81 @@ describe('the selection is one the project may ship', () => {
       const run = measuredRun(browser, pdfSignatureSelection.writeEngineId, 'truncated')
       expect(run.verify?.failed).toBeDefined()
     }
-    expect(sectionBody('## 7. 密碼、不支援結構與損毀檔策略')).toContain('truncated')
+    expect(sectionBody('### 7.4 損毀檔')).toContain('truncated')
+  })
+})
+
+describe('nothing in a document may make anything happen', () => {
+  it('declares a parser that runs nothing and fetches nothing', () => {
+    for (const allowed of Object.values(pdfSignatureParserPolicy)) expect(allowed).toBe(false)
+  })
+
+  it('measured a document that asks for all of it', () => {
+    const fixture = measuredFixture('active-content')
+    expect(fixture.structure).toBe('active-content')
+    for (const browser of browserNames) {
+      for (const candidate of pdfEngineCandidates) {
+        expect(verdictOf(measuredRun(browser, candidate.id, fixture.name))).toBe('opened')
+      }
+    }
+  })
+
+  it('never let a document run its own script, in any run', () => {
+    for (const { browser, run } of everyRun()) {
+      expect(run.activeContentRan, `${browser}/${run.candidateId}/${run.fixture}`).not.toBe(true)
+    }
+  })
+
+  it('never let a document or a library reach for anything it was not given', () => {
+    for (const { browser, run } of everyRun()) {
+      expect(run.unexpectedRequests, `${browser}/${run.candidateId}/${run.fixture}`).toEqual([])
+    }
+    expect(measurements.activeContentProbe).toMatch(/^http:\/\/127\.0\.0\.1:/)
+  })
+})
+
+describe('a document may withhold permission to change it', () => {
+  const restricted = 'owner-password-restricted'
+
+  it('reads the permission bits with the preview engine', () => {
+    for (const browser of browserNames) {
+      const run = measuredRun(browser, pdfSignatureSelection.previewEngineId, restricted)
+      expect(run.outcome).toBe('ok')
+      /* Printing is allowed; modifying the contents and the annotations is not. */
+      expect(run.permissions).toContain(4)
+      expect(run.permissions).not.toContain(8)
+      expect(run.permissions).not.toContain(32)
+    }
+  })
+
+  it('opens without asking the user for anything, because its user password is empty', () => {
+    for (const browser of browserNames) {
+      expect(verdictOf(measuredRun(browser, pdfSignatureSelection.previewEngineId, restricted))).toBe('opened')
+    }
+  })
+
+  it('has a code of its own, so the refusal is not reported as a broken file', () => {
+    expect(pdfSignatureFailureCodes).toContain('modification_not_permitted')
+    expect(pdfSignatureError('modification_not_permitted').suggestedAction).toBe('change-input')
+    expect(sectionBody('### 7.2 權限')).toContain(restricted)
+  })
+})
+
+describe('the signature image contract', () => {
+  it('embeds one form only, so no font is ever written into a document', () => {
+    expect(pdfSignatureImage.format).toBe('image/png')
+    expect(pdfSignatureImage.alpha).toBe('required')
+    expect(pdfSignatureImage.renderScale).toBeGreaterThanOrEqual(2)
+    expect(pdfSignatureImage.maxEdgePixels).toBeGreaterThan(0)
+    expect(sectionBody('### 6.5 簽名影像契約')).toContain('字型')
+  })
+
+  it('is read back with the page still visible through it', () => {
+    for (const browser of browserNames) {
+      const run = measuredRun(browser, pdfSignatureSelection.writeEngineId, 'reference-20-page',
+        pdfSignatureSelection.exportVariants.unencrypted)
+      expect(run.verify?.firstPage?.seeThroughRatio).toBeGreaterThan(0.5)
+    }
   })
 })
 
@@ -320,6 +502,7 @@ describe('the placement contract', () => {
     expect(placement.height).toBeCloseTo(0.09 * 841.89, 6)
     expect(placement.anchor.x).toBeCloseTo(0.1 * 595.28, 6)
     expect(placement.anchor.y).toBeCloseTo(841.89 - (0.03 + 0.09) * 841.89, 6)
+    expect(placement.display).toEqual({ width: 595.28, height: 841.89 })
 
     const turned = pdfSignaturePlacement(rotated, rect)
     expect(turned.rotation).toBe(90)
@@ -339,16 +522,42 @@ describe('the placement contract', () => {
     expect(placement.top + placement.height).toBeLessThanOrEqual(841.89 + 1e-9)
     expect(placement.left).toBeGreaterThanOrEqual(0)
     expect(placement.top).toBeGreaterThanOrEqual(0)
+    /* A rectangle bigger than the page is the only case where the size gives. */
+    expect(clampNormalizedRect({ x: 0, y: 0, width: 2, height: 3 })).toEqual({ x: 0, y: 0, width: 1, height: 1 })
   })
 
   it('refuses a rotation the format does not define', () => {
     expect(() => pdfDisplayBox({ box: [0, 0, 100, 100], rotation: 45 })).toThrow()
   })
 
+  it('agrees with the copy the harness measured, on every geometry it measured', () => {
+    /*
+     * The evidence in §6.3 belongs to the exported functions only if the two
+     * implementations answer the same. They are separate because one is a
+     * browser module the harness loads and the other is the typed domain module.
+     */
+    const rects = [rect, { x: 0.9, y: 0.95, width: 0.4, height: 0.2 }, { x: -1, y: 2, width: 3, height: 0.5 }]
+    for (const rotation of [0, 90, 180, 270, -90, 450]) {
+      for (const box of [[0, 0, 595.28, 841.89], [20, 30, 615, 822], [50, 60, 545, 762]] as const) {
+        const page = { box, rotation }
+        expect(harnessDisplayBox(page)).toEqual(pdfDisplayBox(page))
+        for (const point of [{ x: 0, y: 0 }, { x: 33.3, y: 401.5 }]) {
+          expect(harnessToUserSpace(page, point)).toEqual(pdfDisplayPointToUserSpace(page, point))
+          expect(harnessToDisplayPoint(page, point)).toEqual(pdfUserSpaceToDisplayPoint(page, point))
+        }
+        for (const candidate of rects) {
+          expect(harnessClamp(candidate)).toEqual(clampNormalizedRect(candidate))
+          expect(harnessPlacement(page, candidate)).toEqual(pdfSignaturePlacement(page, candidate))
+        }
+      }
+    }
+  })
+
   it('was proved by reading a signed page back in every browser', () => {
     for (const browser of browserNames) {
       for (const fixture of ['reference-20-page', 'rotated-pages', 'offset-crop-box']) {
-        const run = measuredRun(browser, pdfSignatureSelection.writeEngineId, fixture, pdfSignatureSelection.exportVariant)
+        const run = measuredRun(browser, pdfSignatureSelection.writeEngineId, fixture,
+          pdfSignatureSelection.exportVariants.unencrypted)
         for (const page of [run.verify?.firstPage, run.verify?.lastPage]) {
           expect(page?.inkRatio).toBeGreaterThan(0.1)
           expect(page?.seeThroughRatio).toBeGreaterThan(0.5)
@@ -394,16 +603,24 @@ describe('the boundary the record fixes', () => {
 describe('the bilingual wording', () => {
   it('publishes exactly the documented copy in both locales', () => {
     const documented = parseDisclosures()
+    expect([...pdfSignatureDisclosureKeys]).toEqual(documented.map(row => row.key))
     expect(Object.keys(pdfSignatureDisclosures)).toEqual(documented.map(row => row.key))
     for (const row of documented) {
-      expect(pdfSignatureDisclosures[row.key]!['zh-tw']).toBe(row['zh-tw'])
-      expect(pdfSignatureDisclosures[row.key]!.en).toBe(row.en)
+      const key = row.key as (typeof pdfSignatureDisclosureKeys)[number]
+      expect(pdfSignatureDisclosures[key]['zh-tw']).toBe(row['zh-tw'])
+      expect(pdfSignatureDisclosures[key].en).toBe(row.en)
     }
   })
 
   it('says in both locales that the result is not a certificate-based signature', () => {
-    expect(pdfSignatureDisclosures['not-a-digital-signature']!['zh-tw']).toContain('憑證式數位簽章')
-    expect(pdfSignatureDisclosures['not-a-digital-signature']!.en).toContain('certificate-based digital signature')
+    expect(pdfSignatureDisclosures['not-a-digital-signature']['zh-tw']).toContain('憑證式數位簽章')
+    expect(pdfSignatureDisclosures['not-a-digital-signature'].en).toContain('certificate-based digital signature')
+  })
+
+  it('tells the user that signing a protected document removes its password', () => {
+    expect(pdfSignatureSelection.encryptedExportIsDecrypted).toBe(true)
+    expect(pdfSignatureDisclosures['decrypted-export']['zh-tw']).toContain('密碼')
+    expect(pdfSignatureDisclosures['decrypted-export'].en).toContain('password')
   })
 
   it('never claims legal effect or identity assurance', () => {

@@ -141,6 +141,7 @@ export const pdfSignatureStructures = [
   'offset-boxes',
   'standard-security-r3',
   'standard-security-r4',
+  'active-content',
   'damaged-startxref',
   'damaged-truncated',
 ] as const
@@ -160,6 +161,7 @@ export const pdfSignatureFailureCodes = [
   'password_required',
   'password_rejected',
   'unsupported_encryption',
+  'modification_not_permitted',
   'too_many_pages',
   'too_large',
   'insufficient_memory',
@@ -177,6 +179,7 @@ const suggestedActions: Record<PdfSignatureFailureCode, EngineError['suggestedAc
   password_required: 'enter-password',
   password_rejected: 'enter-password',
   unsupported_encryption: 'change-input',
+  modification_not_permitted: 'change-input',
   too_many_pages: 'change-input',
   too_large: 'change-input',
   insufficient_memory: 'change-input',
@@ -208,17 +211,30 @@ export const pdfSignatureBudgets = {
 } as const
 
 export interface PdfSignatureSelection {
-  /** Renders pages and detects encryption; it never writes. */
+  /** Renders pages, reads the permission bits and decides what may be opened. */
   previewEngineId: string
   /** Opens, places and exports; it never rasterises. */
   writeEngineId: string
-  /** The measured variant the selection is stated in terms of. */
-  exportVariant: 'default' | 'incremental'
   /**
-   * The export appends the change to the bytes that were opened instead of
-   * rewriting the file, so pages nobody signed keep the producer's own bytes.
+   * How a document is written back, by whether it was encrypted.
+   *
+   * `incremental-update` appends the change to the bytes that were opened, so
+   * pages nobody signed keep the producer's own bytes. It cannot be used on an
+   * encrypted document: the appended objects are written in the clear while
+   * `/Encrypt` survives in the older trailer, and §7 of the record measures
+   * what a reader then makes of them.
    */
-  exportMode: 'incremental-update'
+  exportModes: {
+    unencrypted: 'incremental-update'
+    encrypted: 'full-rewrite'
+  }
+  /** The measured variant each export mode corresponds to. */
+  exportVariants: {
+    unencrypted: 'incremental'
+    encrypted: 'with-password'
+  }
+  /** A full rewrite drops the document's own protection; the user has to be told. */
+  encryptedExportIsDecrypted: boolean
   /**
    * The writer accepts documents it cannot faithfully reproduce, so an export
    * is read back with the preview engine before it is offered as a download.
@@ -231,10 +247,80 @@ export interface PdfSignatureSelection {
 export const pdfSignatureSelection: PdfSignatureSelection = {
   previewEngineId: 'pdfjs-dist',
   writeEngineId: 'cantoo-pdf-lib',
-  exportVariant: 'incremental',
-  exportMode: 'incremental-update',
+  exportModes: {
+    unencrypted: 'incremental-update',
+    encrypted: 'full-rewrite',
+  },
+  exportVariants: {
+    unencrypted: 'incremental',
+    encrypted: 'with-password',
+  },
+  encryptedExportIsDecrypted: true,
   verifyExportBeforeDownload: true,
   passwordSupport: 'declared-capability',
+}
+
+/** Which way a document has to be written back. */
+export function pdfSignatureExportMode(document_: { encrypted: boolean }) {
+  return document_.encrypted
+    ? pdfSignatureSelection.exportModes.encrypted
+    : pdfSignatureSelection.exportModes.unencrypted
+}
+
+/**
+ * What the parser is allowed to do with a document that asks it to do things.
+ * A PDF can carry scripts, open actions, page actions, links and launch
+ * actions; a signature tool runs none of them and fetches nothing on their
+ * behalf. §7 of the record measures a document that declares all of them.
+ */
+export const pdfSignatureParserPolicy = {
+  /** No script in the document is executed, by any engine, at any stage. */
+  executeEmbeddedScripts: false,
+  /** `/OpenAction`, `/AA` and annotation actions are read as data or not at all. */
+  followDocumentActions: false,
+  /** Nothing in a document may cause a request; the engines are given bytes, not URLs. */
+  fetchExternalResources: false,
+  /** pdf.js only builds scripting when asked; it is never asked. */
+  enableScripting: false,
+  /** No `eval`-backed fast paths, and no font lookup on the user's machine. */
+  evalSupported: false,
+  useSystemFonts: false,
+  /** XFA forms are outside the supported subset and are not rendered. */
+  renderXfa: false,
+} as const
+
+/**
+ * Every signature form — drawn, typed or an imported transparent image — is
+ * rasterised to a PNG with an alpha channel before it is embedded. Nothing
+ * else is written into the document, which is what keeps font embedding, and
+ * the licensing and shaping questions that come with it, out of version one.
+ */
+export const pdfSignatureImage = {
+  format: 'image/png',
+  /** The alpha channel is the point: a signature must not carry its own background. */
+  alpha: 'required',
+  /** Rasterise at twice the placed size in points, so a 2× display stays sharp. */
+  renderScale: 2,
+  /** Beyond this the image costs more than it shows, on any page size. */
+  maxEdgePixels: 2000,
+} as const
+
+/**
+ * What one document costs a tab. Measured on Chromium: a working set of
+ * roughly three times the file, plus each engine's own runtime. The workspace
+ * holds the document in both engines while a page is being signed, so the
+ * file-proportional part is counted twice.
+ */
+export const pdfSignatureMemoryModel = {
+  baseBytes: 16 * 1024 * 1024,
+  bytesPerInputByte: 3.5,
+  engines: 2,
+} as const
+
+/** A conservative upper bound, for refusing a document before it is parsed. */
+export function estimatePdfWorkingSetBytes(fileBytes: number) {
+  return pdfSignatureMemoryModel.baseBytes
+    + fileBytes * pdfSignatureMemoryModel.bytesPerInputByte * pdfSignatureMemoryModel.engines
 }
 
 export type PdfSignatureGateVerdict = 'pass' | 'fail' | 'conditional'
@@ -247,6 +333,7 @@ export const pdfSignatureGateKeys = [
   'browser-support',
   'structure-coverage',
   'password-handling',
+  'active-content',
   'damaged-input',
   'output-fidelity',
   'performance',
@@ -280,6 +367,7 @@ export const pdfSignatureDecision: PdfSignatureDecision = {
     'browser-support': 'pass',
     'structure-coverage': 'pass',
     'password-handling': 'pass',
+    'active-content': 'pass',
     'damaged-input': 'conditional',
     'output-fidelity': 'pass',
     'performance': 'pass',
@@ -309,12 +397,18 @@ export interface PdfDisplayBox {
   rotation: 0 | 90 | 180 | 270
 }
 
-export interface PdfSignaturePlacement extends PdfDisplayBox {
+export interface PdfSignaturePlacement {
   /** Where the rectangle sits in display space, top-left origin, in points. */
   left: number
   top: number
+  /** The rectangle's own size in points, not the page's. */
+  width: number
+  height: number
+  /** The turn that keeps the image upright on the page, in degrees anticlockwise. */
+  rotation: 0 | 90 | 180 | 270
   /** Where the image's own bottom-left corner goes in PDF user space. */
   anchor: { x: number, y: number }
+  /** The page as the viewer shows it, for turning the rectangle back into a preview. */
   display: { width: number, height: number }
 }
 
@@ -397,11 +491,11 @@ export function pdfSignaturePlacement(page: PdfPageGeometry, rect: NormalizedRec
   const top = clamped.y * display.height
 
   return {
-    ...display,
     left,
     top,
     width,
     height,
+    rotation: display.rotation,
     anchor: pdfDisplayPointToUserSpace(page, { x: left, y: top + height }),
     display: { width: display.width, height: display.height },
   }
@@ -412,11 +506,25 @@ export interface LocalizedSentence {
   en: string
 }
 
+/** The wording the tool owes the user, in the order §10 of the record lists it. */
+export const pdfSignatureDisclosureKeys = [
+  'not-a-digital-signature',
+  'no-identity-verification',
+  'local-processing',
+  'saved-signature-is-local',
+  'password-stays-on-device',
+  'decrypted-export',
+  'original-pages-untouched',
+  'damaged-file-refused',
+] as const
+
+export type PdfSignatureDisclosureKey = typeof pdfSignatureDisclosureKeys[number]
+
 /**
  * The wording the tool has to show, fixed in both locales. §10 of the record is
  * the source; T25 may place it, never rewrite it.
  */
-export const pdfSignatureDisclosures: Record<string, LocalizedSentence> = {
+export const pdfSignatureDisclosures: Record<PdfSignatureDisclosureKey, LocalizedSentence> = {
   'not-a-digital-signature': {
     'zh-tw': '這個工具把你的手寫簽名放到 PDF 頁面上，它不是憑證式數位簽章，也不保證任何法律效力。',
     'en': 'This tool places your handwriting onto a PDF page. It is not a certificate-based digital signature, and it guarantees no legal effect.',
@@ -436,6 +544,10 @@ export const pdfSignatureDisclosures: Record<string, LocalizedSentence> = {
   'password-stays-on-device': {
     'zh-tw': '開啟密碼保護的 PDF 時，密碼只在這台裝置上用來解開檔案，不會被傳送或保存。',
     'en': 'To open a password-protected PDF, the password is used on this device only to unlock the file; it is never sent or stored.',
+  },
+  'decrypted-export': {
+    'zh-tw': '為密碼保護的 PDF 加上簽名後，下載到的檔案不再帶有原本的開啟密碼，請自行決定要不要重新保護。',
+    'en': 'Once a password-protected PDF is signed, the file you download no longer carries its original open password; protecting it again is your call.',
   },
   'original-pages-untouched': {
     'zh-tw': '輸出會保留原本的頁面尺寸、旋轉與你沒有簽名的頁面內容，簽名只加在你放置的位置上。',

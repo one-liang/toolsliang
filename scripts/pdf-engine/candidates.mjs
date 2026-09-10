@@ -139,11 +139,3 @@ export const exclusions = [
     sourceUrl: 'https://www.npmjs.com/package/pdf-annotate.js/v/1.0.0',
   },
 ]
-
-export const exclusionReasons = [
-  'copyleft-licence',
-  'proprietary-licence',
-  'creation-only',
-  'no-browser-build',
-  'unmaintained',
-]

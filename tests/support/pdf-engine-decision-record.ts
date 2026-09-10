@@ -23,6 +23,8 @@ export interface PdfEngineMeasurements {
   measuredAt: string
   host: { platform: string, arch: string, cpus: number }
   previewScale: number
+  activeContentProbe: string
+  passwords: { user: string, owner: string }
   permittedLicences: string[]
   fixtures: MeasuredFixture[]
   candidates: MeasuredCandidate[]
@@ -34,6 +36,8 @@ export interface MeasuredFixture {
   name: string
   structure: string
   expectation: 'open' | 'password' | 'recover-or-reject' | 'reject'
+  /** An encrypted document cannot take an incremental update, however it opens. */
+  encrypted: boolean
   pages: number
   note: string
   byteLength: number
@@ -80,6 +84,13 @@ export interface MeasuredBrowser {
   runs: MeasuredRun[]
 }
 
+/** The order the reference module lists roles in; a row's order must not matter. */
+const roleOrder = ['parse', 'preview', 'password', 'write']
+
+export function sortRoles(roles: readonly string[]) {
+  return [...roles].sort((left, right) => roleOrder.indexOf(left) - roleOrder.indexOf(right))
+}
+
 export interface MeasuredPageVerification {
   pageCount: number
   widthPreserved: boolean
@@ -91,6 +102,8 @@ export interface MeasuredPageVerification {
   seeThroughRatio: number
   strayInkPixels: number
   changedPixelsOutsidePlacement: number
+  /** How far beyond the rectangle a changed pixel still counts as its own edge. */
+  placementMarginPt: number
   comparedPixels: number
 }
 
@@ -100,6 +113,12 @@ export interface MeasuredRun {
   variant: 'default' | 'incremental' | 'with-password' | 'ignore-encryption'
   outcome: 'ok' | 'open-failed' | 'error' | 'timeout'
   roles?: string[]
+  /** The permission bits the preview engine read, `null` when the document sets none. */
+  permissions?: number[] | null
+  /** Whether anything in the document managed to run. It never may. */
+  activeContentRan?: boolean
+  /** Paths the browser asked for that the job had no business needing. */
+  unexpectedRequests?: string[]
   inputBytes?: number
   pageCount?: number
   exportBytes?: number
@@ -178,12 +197,13 @@ export const browserNames = ['chromium', 'firefox', 'webkit'] as const
 /** §2.1: the candidates the matrix measured. */
 export function parseCandidates() {
   const pattern = /^\| `([a-z0-9-]+)` \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| (是|否) \| <(\S+)> \|$/gm
+  const roleNames: Record<string, string> = { 解析: 'parse', 預覽: 'preview', 密碼: 'password', 寫入: 'write' }
 
   return reader.tableRows('### 2.1 量測候選', pattern).map(([, id, packageName, version, roles, licence, redistributable, licenceUrl]) => ({
     id: id!,
     package: packageName!.trim(),
     version: version!.trim(),
-    roles: roles!.trim().split('、'),
+    roles: roles!.trim().split('、').map(name => roleNames[name] ?? name),
     licence: licence!.trim(),
     licenceVerified: redistributable === '是',
     licenceUrl: licenceUrl!,
@@ -203,12 +223,13 @@ export function parseExclusions() {
 
 /** §3: the representative documents, with the digest of the bytes that were measured. */
 export function parseFixtures() {
-  const pattern = /^\| `([a-z0-9-]+)` \| `([a-z0-9-]+)` \| `([a-z-]+)` \| (\d+) \| ([\d,]+) \| `([0-9a-f]{64})` \|$/gm
+  const pattern = /^\| `([a-z0-9-]+)` \| `([a-z0-9-]+)` \| `([a-z-]+)` \| (是|否) \| (\d+) \| ([\d,]+) \| `([0-9a-f]{64})` \|$/gm
 
-  return reader.tableRows('## 3. 代表性文件', pattern).map(([, name, structure, expectation, pages, bytes, sha256]) => ({
+  return reader.tableRows('## 3. 代表性文件', pattern).map(([, name, structure, expectation, encrypted, pages, bytes, sha256]) => ({
     name: name!,
     structure: structure!,
     expectation: expectation!,
+    encrypted: encrypted === '是',
     pages: Number(pages),
     byteLength: Number(bytes!.replaceAll(',', '')),
     sha256: sha256!,
@@ -243,10 +264,11 @@ export function parseTimings() {
 
 /** §6.3: what reading the exported document back proved, for the selected writer. */
 export function parseFidelityRows() {
-  const pattern = /^\| `([a-z0-9-]+)` \| ([a-z]+) \| ([\d.]+) \| ([\d.]+) \| (\d+) \| (\d+) \| (\d+) \|$/gm
+  const pattern = /^\| `([a-z0-9-]+)` \| (增量更新|完整重寫) \| ([a-z]+) \| ([\d.]+) \| ([\d.]+) \| (\d+) \| (\d+) \| (\d+) \|$/gm
 
-  return reader.tableRows('### 6.3 讀回結果', pattern).map(([, fixture, browser, ink, seeThrough, stray, changed, untouched]) => ({
+  return reader.tableRows('### 6.3 讀回結果', pattern).map(([, fixture, mode, browser, ink, seeThrough, stray, changed, untouched]) => ({
     fixture: fixture!,
+    exportMode: mode === '增量更新' ? 'incremental-update' : 'full-rewrite',
     browser: browser!,
     inkRatio: Number(ink),
     seeThroughRatio: Number(seeThrough),
@@ -256,11 +278,11 @@ export function parseFidelityRows() {
   }))
 }
 
-/** §7: the failure vocabulary, its recoverability and the action it suggests. */
+/** §7.5: the failure vocabulary, its recoverability and the action it suggests. */
 export function parseFailureCodes() {
   const pattern = /^\| `([a-z_]+)` \| ([^|]+) \| (是|否) \| `([a-z-]+)` \|$/gm
 
-  return reader.tableRows('## 7. 密碼、不支援結構與損毀檔策略', pattern).map(([, code, , recoverable, action]) => ({
+  return reader.tableRows('### 7.5 失敗詞彙', pattern).map(([, code, , recoverable, action]) => ({
     code: code!,
     recoverable: recoverable === '是',
     suggestedAction: action!,
@@ -279,7 +301,7 @@ export function parseGates() {
 
 /** §9: the limits and budgets T25 has to implement. */
 export function parseLimits() {
-  const pattern = /^\| `([a-zA-Z]+)` \| ([\d,]+) \| ([^|]+) \|$/gm
+  const pattern = /^\| `([a-zA-Z]+)` \| ([\d,.]+) \| ([^|]+) \|$/gm
 
   return reader.tableRows('### 9.2 上限與預算', pattern).map(([, key, value]) => ({
     key: key!,

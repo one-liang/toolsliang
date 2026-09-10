@@ -7,6 +7,8 @@
 <body>
 <p>Measurement harness for the T24 PDF engine evaluation. It is driven by Playwright and is not part of the site.</p>
 <script type="module">
+import { signaturePlacement } from './lib/harness/placement.mjs'
+
 /*
  * One page runs one job: a candidate library, a fixture and the operations the
  * candidate's role allows. The runner opens a fresh page per job so a library's
@@ -19,6 +21,9 @@
 /** Placed over the page's own coloured band, so the transparency check has something to see through. */
 const SIGNATURE_RECT = { x: 0.10, y: 0.03, width: 0.30, height: 0.09 }
 
+/** How far beyond the placed rectangle a changed pixel still counts as its own edge. */
+const PLACEMENT_MARGIN_PT = 4
+
 /** The magenta the signature is drawn in; it appears nowhere in a fixture. */
 const INK = { r: 255, g: 0, b: 255 }
 
@@ -26,6 +31,9 @@ const INK = { r: 255, g: 0, b: 255 }
 const BAND = { r: 52, g: 111, b: 211 }
 
 const state = { library: null, verifier: null }
+
+/* A document may declare actions and links; nothing here may carry them out. */
+globalThis.__pdfActiveContentRan = false
 
 function near(pixel, colour, tolerance = 60) {
   return Math.abs(pixel[0] - colour.r) <= tolerance
@@ -64,44 +72,6 @@ async function signaturePng() {
 
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
   return new Uint8Array(await blob.arrayBuffer())
-}
-
-/**
- * The display box a viewer shows: the crop box when there is one, rotated by
- * the page's own `/Rotate`. Every placement in this harness is expressed in
- * that space, because it is the only space the user can point at.
- */
-function displayBox({ box, rotation }) {
-  const width = box[2] - box[0]
-  const height = box[3] - box[1]
-  const quarter = ((rotation % 360) + 360) % 360
-
-  return quarter === 90 || quarter === 270
-    ? { width: height, height: width, rotation: quarter }
-    : { width, height, rotation: quarter }
-}
-
-/** Display point (top-left origin) to PDF user space, for one page's box and rotation. */
-function toUserSpace({ box, rotation }, point) {
-  const [x0, y0, x1, y1] = box
-  const quarter = ((rotation % 360) + 360) % 360
-
-  if (quarter === 90) return { x: x0 + point.y, y: y0 + point.x }
-  if (quarter === 180) return { x: x1 - point.x, y: y0 + point.y }
-  if (quarter === 270) return { x: x1 - point.y, y: y1 - point.x }
-  return { x: x0 + point.x, y: y1 - point.y }
-}
-
-function placementFor(page, rect = SIGNATURE_RECT) {
-  const display = displayBox(page)
-  const width = rect.width * display.width
-  const height = rect.height * display.height
-  const left = rect.x * display.width
-  const top = rect.y * display.height
-  /* pdf-lib anchors an image at its own bottom-left corner and rotates about it. */
-  const anchor = toUserSpace(page, { x: left, y: top + height })
-
-  return { display, left, top, width, height, anchor, rotation: display.rotation }
 }
 
 async function loadModule(url) {
@@ -168,7 +138,15 @@ const adapters = {
         useSystemFonts: false,
       })
       const document_ = await task.promise
-      return { task, document: document_, pageCount: document_.numPages }
+      const permissions = await document_.getPermissions()
+      return {
+        task,
+        document: document_,
+        pageCount: document_.numPages,
+        /* `null` means the document sets no restrictions at all, which is not the
+         * same as a document that sets them and allows everything. */
+        permissions: permissions === null ? null : [...permissions].sort((left, right) => left - right),
+      }
     },
     async pageInfo(handle, index) {
       const page = await handle.document.getPage(index + 1)
@@ -252,10 +230,10 @@ const adapters = {
     async apply(handle, index, png) {
       const page = handle.document.getPages()[index]
       const box = page.getCropBox()
-      const placement = placementFor({
+      const placement = signaturePlacement({
         box: [box.x, box.y, box.x + box.width, box.y + box.height],
         rotation: page.getRotation().angle,
-      })
+      }, SIGNATURE_RECT)
       const image = await handle.document.embedPng(png)
       page.drawImage(image, {
         x: placement.anchor.x,
@@ -358,7 +336,9 @@ async function verifyPage({ module, source, exported, index, placement, password
 
   let strayInk = 0
   let changedOutside = 0
-  const margin = Math.round(4 * scale)
+  /* The signature's own edge is antialiased across the rectangle's boundary, so
+   * "outside" starts one point beyond it. The value is reported with the run. */
+  const margin = Math.round(PLACEMENT_MARGIN_PT * scale)
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const withinPlacement = x >= inside.left - margin && x <= inside.right + margin
@@ -385,6 +365,7 @@ async function verifyPage({ module, source, exported, index, placement, password
     seeThroughRatio: counts.total === 0 ? 0 : Math.round((counts.untouched / counts.total) * 1000) / 1000,
     strayInkPixels: strayInk,
     changedPixelsOutsidePlacement: changedOutside,
+    placementMarginPt: PLACEMENT_MARGIN_PT,
     comparedPixels: width * height,
   }
 }
@@ -462,6 +443,7 @@ window.__run = async (job) => {
     }
 
     report.pageCount = handle.pageCount
+    if (handle.permissions !== undefined) report.permissions = handle.permissions
     report.firstPage = await adapter.pageInfo(handle, 0)
     if (handle.pageCount > 1) report.lastPage = await adapter.pageInfo(handle, handle.pageCount - 1)
 
@@ -540,6 +522,7 @@ window.__run = async (job) => {
     report.error = describeError(error)
   }
 
+  report.activeContentRan = globalThis.__pdfActiveContentRan === true
   return report
 }
 

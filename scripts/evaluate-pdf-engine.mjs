@@ -29,12 +29,13 @@ import { promisify } from 'node:util'
 import { brotliCompress, constants } from 'node:zlib'
 import { chromium, firefox, webkit } from '@playwright/test'
 import { candidates as allCandidates, exclusions, permittedLicences } from './pdf-engine/candidates.mjs'
-import { buildFixtures, fixturePassword } from './pdf-engine/fixtures.mjs'
+import { ACTIVE_CONTENT_PROBE, buildFixtures, fixtureOwnerPassword, fixturePassword } from './pdf-engine/fixtures.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const WORK = join(ROOT, 'artifacts', 'pdf-engine')
 const OUTPUT = join(ROOT, 'docs', 'research', 'data', '009-pdf-engine-measurements.json')
 const HARNESS = join(ROOT, 'scripts', 'pdf-engine', 'harness.html')
+const PLACEMENT = join(ROOT, 'scripts', 'pdf-engine', 'placement.mjs')
 
 const compress = promisify(brotliCompress)
 const run = promisify(execFile)
@@ -134,8 +135,15 @@ async function prepareCandidate(candidate, files) {
 }
 
 function startServer(files) {
+  /*
+   * Every path the browser asks for, so a job can be checked against what it was
+   * supposed to need. A document that persuaded an engine to fetch something
+   * would appear here, and so would a library reaching for a CDN.
+   */
+  const requested = []
   const server = createServer(async (request, response) => {
     const path = new URL(request.url, 'http://localhost').pathname
+    requested.push(path)
     /* Chromium asks for this on its own; without a route it lands in the harness console. */
     if (path === '/favicon.ico') {
       response.writeHead(204).end()
@@ -157,7 +165,7 @@ function startServer(files) {
   })
 
   return new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port }))
+    server.listen(0, '127.0.0.1', () => resolve({ server, requested, port: server.address().port }))
   })
 }
 
@@ -168,7 +176,19 @@ const LAUNCHERS = {
 }
 
 /**
- * The jobs one candidate runs. A password fixture is opened twice on purpose:
+ * The password a document opens with, or `undefined` when it needs none. The
+ * restricted document's user password is the empty string: it opens in a viewer
+ * without a prompt, and a library that refuses it is refusing something the
+ * user considers unprotected.
+ */
+function openPasswordFor(fixture) {
+  if (fixture.expectation === 'password') return fixturePassword
+  if (fixture.name === 'owner-password-restricted') return ''
+  return undefined
+}
+
+/**
+ * The jobs one candidate runs. A protected document is opened twice on purpose:
  * once with nothing, to record what the library says when it cannot open the
  * file, and once with the password, to record whether it can at all.
  */
@@ -179,37 +199,32 @@ function jobsFor(candidate, fixtures) {
     if (candidate.roles.includes('preview')) operations.push('preview')
     if (candidate.roles.includes('write')) operations.push('apply', 'verify')
 
+    const password = openPasswordFor(fixture)
     jobs.push({ fixture, operations, variant: 'default', password: undefined })
 
-    /* Appending the change instead of rewriting the file is the shape a
-     * signature wants; only the maintained fork offers it. */
-    if (candidate.id === 'cantoo-pdf-lib' && fixture.expectation === 'open') {
-      jobs.push({ fixture, operations, variant: 'incremental', password: undefined })
+    if (password !== undefined) {
+      jobs.push({ fixture, operations, variant: 'with-password', password, verifyPassword: password })
     }
 
-    if (fixture.expectation === 'password') {
-      jobs.push({
-        fixture,
-        operations,
-        variant: 'with-password',
-        password: fixturePassword,
-        verifyPassword: fixturePassword,
-      })
-      /*
-       * pdf-lib's documented way past an encrypted file. The record has to say
-       * what it actually produces, because "it opened" is not the same as "the
-       * exported document is readable" — so the export is read back with the
-       * password as well, which is the most any reader could bring to it.
-       */
-      if (candidate.roles.includes('write') && !candidate.roles.includes('password')) {
-        jobs.push({
-          fixture,
-          operations,
-          variant: 'ignore-encryption',
-          password: undefined,
-          verifyPassword: fixturePassword,
-        })
-      }
+    /*
+     * Appending the change instead of rewriting the file is the shape a
+     * signature wants; only the maintained fork offers it. It has to be measured
+     * on the protected documents too: an appended update leaves the original
+     * `/Encrypt` behind an older trailer, and what a reader then does with the
+     * appended objects is exactly what the export mode depends on.
+     */
+    if (candidate.id === 'cantoo-pdf-lib' && fixture.expectation !== 'reject') {
+      jobs.push({ fixture, operations, variant: 'incremental', password, verifyPassword: password })
+    }
+
+    /*
+     * pdf-lib's documented way past an encrypted file. The record has to say
+     * what it actually produces, because "it opened" is not the same as "the
+     * exported document is readable" — so the export is read back with the
+     * password as well, which is the most any reader could bring to it.
+     */
+    if (password !== undefined && candidate.roles.includes('write') && !candidate.roles.includes('password')) {
+      jobs.push({ fixture, operations, variant: 'ignore-encryption', password: undefined, verifyPassword: password })
     }
   }
   return jobs
@@ -241,8 +256,9 @@ async function openHarness(browser, port, messages) {
   return page
 }
 
-async function runJob(browserName, browser, port, messages, payload, label) {
+async function runJob(browserName, browser, port, requested, messages, payload, label) {
   process.stdout.write(`  ${label}\n`)
+  requested.length = 0
   const page = await openHarness(browser, port, messages)
   await page.bringToFront()
 
@@ -260,11 +276,21 @@ async function runJob(browserName, browser, port, messages, payload, label) {
   ])
   report.wallClockMs = Date.now() - started
   await page.close()
+
+  /*
+   * What the job was allowed to ask for. Anything else — a path from a
+   * document's action, a library reaching past the files it was given — is
+   * recorded rather than judged here.
+   */
+  const expected = new Set(['/harness.html', '/favicon.ico', '/lib/harness/placement.mjs',
+    payload.fixture.url, ...Object.values(payload.candidate.urls), ...Object.values(payload.verifierUrls)])
+  report.unexpectedRequests = [...new Set(requested.filter(path => !expected.has(path)))]
+
   await writeFile(runPath(browserName, report.candidateId, report.fixture, report.variant), `${JSON.stringify(report, null, 2)}\n`)
   return report
 }
 
-async function evaluateBrowser(name, port, fixtures, prepared, verifierUrls) {
+async function evaluateBrowser(name, port, requested, fixtures, prepared, verifierUrls) {
   const messages = []
   const recorded = await loadRuns(name)
   const runs = [...recorded]
@@ -288,7 +314,7 @@ async function evaluateBrowser(name, port, fixtures, prepared, verifierUrls) {
           && entry.fixture === job.fixture.name && entry.variant === job.variant)
         if (already) continue
 
-        runs.push(await runJob(name, browser, port, messages, {
+        runs.push(await runJob(name, browser, port, requested, messages, {
           candidate: { id: candidate.id, urls: prepared.get(candidate.id).urls },
           fixture: { name: job.fixture.name, url: `/fixtures/${job.fixture.name}.pdf`, expectation: job.fixture.expectation },
           operations: job.operations,
@@ -310,7 +336,7 @@ async function evaluateBrowser(name, port, fixtures, prepared, verifierUrls) {
 }
 
 function sortRuns(runs, fixtures) {
-  const variants = ['default', 'incremental', 'with-password', 'ignore-encryption']
+  const variants = ['default', 'with-password', 'incremental', 'ignore-encryption']
   return [...runs].sort((left, right) => {
     const byCandidate = allCandidates.findIndex(entry => entry.id === left.candidateId)
       - allCandidates.findIndex(entry => entry.id === right.candidateId)
@@ -323,11 +349,11 @@ function sortRuns(runs, fixtures) {
 }
 
 async function main() {
-  const requested = process.argv.find(argument => argument.startsWith('--browsers='))
-  const browsers = (requested ? requested.split('=')[1] : 'chromium,firefox,webkit').split(',')
+  const requestedBrowsers = process.argv.find(argument => argument.startsWith('--browsers='))
+  const browsers = (requestedBrowsers ? requestedBrowsers.split('=')[1] : 'chromium,firefox,webkit').split(',')
 
   await mkdir(WORK, { recursive: true })
-  const files = new Map([['/harness.html', HARNESS]])
+  const files = new Map([['/harness.html', HARNESS], ['/lib/harness/placement.mjs', PLACEMENT]])
 
   process.stdout.write('fixtures\n')
   const fixtures = buildFixtures()
@@ -350,12 +376,12 @@ async function main() {
    * the independent reader that says whether a written file is still a PDF. */
   const verifierUrls = prepared.get('pdfjs-dist').urls
 
-  const { server, port } = await startServer(files)
+  const { server, requested, port } = await startServer(files)
   const browserReports = []
   try {
     for (const name of browsers) {
       process.stdout.write(`${name}\n`)
-      browserReports.push(await evaluateBrowser(name, port, fixtures, prepared, verifierUrls))
+      browserReports.push(await evaluateBrowser(name, port, requested, fixtures, prepared, verifierUrls))
     }
   }
   finally {
@@ -366,12 +392,16 @@ async function main() {
     measuredAt: new Date().toISOString().slice(0, 10),
     host: { platform: process.platform, arch: process.arch, cpus: cpus().length },
     previewScale: PREVIEW_SCALE,
+    /** The address the active-content document points at; no run may request it. */
+    activeContentProbe: ACTIVE_CONTENT_PROBE,
+    passwords: { user: fixturePassword, owner: fixtureOwnerPassword },
     permittedLicences,
     /* The documents themselves stay in `artifacts/`; the record keeps their shape and digest. */
     fixtures: fixtures.map(fixture => ({
       name: fixture.name,
       structure: fixture.structure,
       expectation: fixture.expectation,
+      encrypted: fixture.encrypted,
       pages: fixture.pages,
       note: fixture.note,
       byteLength: fixture.byteLength,
