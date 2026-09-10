@@ -24,17 +24,11 @@ export const optionalWorkbenchSteps: readonly WorkbenchStep[] = ['cutout', 'bran
 /**
  * ADR-0012 keeps the two outputs apart: a compliant main image may carry no
  * frame, Logo or promotional overlay, so the branch decides whether the brand
- * step exists at all rather than whether it is merely discouraged. Compression
- * is split for the same reason from the other side — a channel preset states
- * the capacity a compliant image must land in, and a second pass over that file
- * would talk the tool out of the range it was just asked to hit.
+ * step exists at all rather than whether it is merely discouraged.
  */
 export const workbenchPurposes = ['compliant', 'promotional'] as const
 
 export type WorkbenchPurpose = typeof workbenchPurposes[number]
-
-/** Steps only the promotional branch has. */
-const promotionalOnlySteps: readonly WorkbenchStep[] = ['brand', 'compress']
 
 /**
  * `unavailable` is not a failure: it is a step this run does not have, either
@@ -89,7 +83,7 @@ function settle(states: Record<WorkbenchStep, WorkbenchStepState>) {
   }
 }
 
-function next(session: WorkbenchSession, states: Record<WorkbenchStep, WorkbenchStepState>, errors: WorkbenchSession['errors']): WorkbenchSession {
+function withSettledStates(session: WorkbenchSession, states: Record<WorkbenchStep, WorkbenchStepState>, errors: WorkbenchSession['errors']): WorkbenchSession {
   settle(states)
 
   return { ...session, states, errors, blocked: { ...session.blocked } }
@@ -114,20 +108,22 @@ export function createWorkbenchSession(purpose: WorkbenchPurpose = 'compliant'):
   return applyPurpose(session, purpose)
 }
 
-/** The promotional steps exist only on their own branch; nothing else depends on the purpose. */
+/**
+ * The brand step exists only on the promotional branch; nothing else here
+ * depends on the purpose. Whether the compress step applies is decided outside
+ * this module, because it turns on the channel preset rather than the branch.
+ */
 function applyPurpose(session: WorkbenchSession, purpose: WorkbenchPurpose): WorkbenchSession {
   const states = { ...session.states }
   let blocked = { ...session.blocked }
 
-  for (const step of promotionalOnlySteps) {
-    if (purpose === 'compliant') {
-      states[step] = 'unavailable'
-      blocked[step] = 'purpose'
-    }
-    else if (blocked[step] === 'purpose') {
-      states[step] = 'locked'
-      blocked = withoutBlock(blocked, step)
-    }
+  if (purpose === 'compliant') {
+    states.brand = 'unavailable'
+    blocked.brand = 'purpose'
+  }
+  else if (blocked.brand === 'purpose') {
+    states.brand = 'locked'
+    blocked = withoutBlock(blocked, 'brand')
   }
 
   settle(states)
@@ -158,19 +154,19 @@ export function isWorkbenchStepReachable(session: WorkbenchSession, step: Workbe
 export function startWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
 
-  return next(session, { ...session.states, [step]: 'running' }, withoutError(session, step))
+  return withSettledStates(session, { ...session.states, [step]: 'running' }, withoutError(session, step))
 }
 
 export function completeWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
 
-  return next(session, { ...session.states, [step]: 'done' }, withoutError(session, step))
+  return withSettledStates(session, { ...session.states, [step]: 'done' }, withoutError(session, step))
 }
 
 export function failWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep, code: string): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
 
-  return next(session, { ...session.states, [step]: 'failed' }, { ...session.errors, [step]: code })
+  return withSettledStates(session, { ...session.states, [step]: 'failed' }, { ...session.errors, [step]: code })
 }
 
 /**
@@ -184,13 +180,13 @@ export function failWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep
 export function resetWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!isWorkbenchStepReachable(session, step)) return session
 
-  return next(session, { ...session.states, [step]: 'ready' }, withoutError(session, step))
+  return withSettledStates(session, { ...session.states, [step]: 'ready' }, withoutError(session, step))
 }
 
 export function skipWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (!optionalWorkbenchSteps.includes(step) || !isWorkbenchStepReachable(session, step)) return session
 
-  return next(session, { ...session.states, [step]: 'skipped' }, withoutError(session, step))
+  return withSettledStates(session, { ...session.states, [step]: 'skipped' }, withoutError(session, step))
 }
 
 /**
@@ -206,12 +202,12 @@ export function blockWorkbenchStep(session: WorkbenchSession, step: WorkbenchSte
   if (session.states[step] === 'unavailable') return session
   const blocked = { ...session.blocked, [step]: reason }
 
-  return { ...next(session, { ...session.states, [step]: 'unavailable' }, withoutError(session, step)), blocked }
+  return { ...withSettledStates(session, { ...session.states, [step]: 'unavailable' }, withoutError(session, step)), blocked }
 }
 
 export function unblockWorkbenchStep(session: WorkbenchSession, step: WorkbenchStep): WorkbenchSession {
   if (session.states[step] !== 'unavailable') return session
-  return { ...next(session, { ...session.states, [step]: 'locked' }, { ...session.errors }), blocked: withoutBlock(session.blocked, step) }
+  return { ...withSettledStates(session, { ...session.states, [step]: 'locked' }, { ...session.errors }), blocked: withoutBlock(session.blocked, step) }
 }
 
 /** Steps this run actually has, so progress never counts work nobody was offered. */

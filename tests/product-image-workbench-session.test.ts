@@ -37,13 +37,13 @@ describe('工作階段的步驟順序', () => {
       cutout: 'locked',
       layout: 'locked',
       brand: 'unavailable',
-      compress: 'unavailable',
+      compress: 'locked',
       output: 'locked',
     })
     expect(session.blocked.brand).toBe('purpose')
-    // A channel preset already states the capacity a compliant image must land
-    // in, so a second pass over that file belongs to the other branch.
-    expect(session.blocked.compress).toBe('purpose')
+    // Whether compression applies turns on the channel preset, not the branch,
+    // so this module has no opinion about it.
+    expect(session.blocked.compress).toBeUndefined()
   })
 
   it('完成一個步驟才開放下一個步驟', () => {
@@ -68,11 +68,10 @@ describe('工作階段的步驟順序', () => {
     expect(skipWorkbenchStep(compliantOutput(), 'layout').states.layout).toBe('done')
   })
 
-  it('合規主圖完成版型後直接產生可下載的輸出', () => {
-    const session = compliantOutput()
+  it('合規主圖略過壓縮後產生可下載的輸出', () => {
+    const session = skipWorkbenchStep(compliantOutput(), 'compress')
 
     expect(session.states.brand).toBe('unavailable')
-    expect(session.states.compress).toBe('unavailable')
     expect(session.states.output).toBe('done')
     expect(finalWorkbenchArtifact(session)).toBe('layout')
   })
@@ -169,9 +168,9 @@ describe('能力不足只停用受影響的步驟', () => {
     expect(blocked.states.cutout).toBe('unavailable')
     expect(blocked.blocked.cutout).toBe('capability')
     expect(blocked.states.layout).toBe('ready')
-    expect(workbenchProgress(blocked)).toEqual({ completed: 1, total: 3 })
+    expect(workbenchProgress(blocked)).toEqual({ completed: 1, total: 4 })
 
-    const output = completeWorkbenchStep(startWorkbenchStep(blocked, 'layout'), 'layout')
+    const output = skipWorkbenchStep(completeWorkbenchStep(startWorkbenchStep(blocked, 'layout'), 'layout'), 'compress')
     expect(output.states.output).toBe('done')
   })
 
@@ -226,8 +225,8 @@ describe('回到前一步與進度', () => {
   })
 
   it('進度只計算這個分支實際適用的步驟', () => {
-    expect(workbenchProgress(createWorkbenchSession())).toEqual({ completed: 0, total: 4 })
-    expect(workbenchProgress(compliantOutput())).toEqual({ completed: 4, total: 4 })
+    expect(workbenchProgress(createWorkbenchSession())).toEqual({ completed: 0, total: 5 })
+    expect(workbenchProgress(skipWorkbenchStep(compliantOutput(), 'compress'))).toEqual({ completed: 5, total: 5 })
 
     const promotional = setWorkbenchPurpose(createWorkbenchSession(), 'promotional')
     expect(workbenchProgress(promotional)).toEqual({ completed: 0, total: 6 })

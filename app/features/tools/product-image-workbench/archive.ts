@@ -16,13 +16,15 @@ import type { WorkbenchPurpose } from './session'
 export interface WorkbenchArchiveEntry { name: string, bytes: Uint8Array }
 
 /**
- * A stored ZIP keeps sizes and offsets in 32-bit fields, so the container
- * itself stops well before four gibibytes. The batch limits are far below this;
- * it is the last line, not the working ceiling.
+ * A stored ZIP keeps sizes and offsets in 32-bit fields, so the container itself
+ * stops well before four gibibytes. This is not a limit the batch limits already
+ * cover: outputs are not bounded by their sources, and a 200 MiB batch of JPEGs
+ * written to the largest canvas the tool allows becomes gigabytes of PNG.
  */
 export const workbenchArchiveLimits = { maxBytes: 3 * 1024 ** 3 } as const
 
 export type WorkbenchArchiveIssue = 'nothing_to_archive' | 'archive_too_large'
+
 
 /** The preflight §12.11 asks for: an archive that cannot be written is refused before it is started. */
 export function checkWorkbenchArchive(request: { count: number, bytes: number }): WorkbenchArchiveIssue | undefined {

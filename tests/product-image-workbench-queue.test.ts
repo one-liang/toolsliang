@@ -120,7 +120,8 @@ describe('批次的彙總狀態', () => {
 
   it('彙總進度以項目為單位，明確區分完成、未完成與尚未開始', () => {
     const laidOut = everyItem(everyItem(everyItem(queueOf(3), 'import'), 'cutout'), 'layout')
-    const queue = updateWorkbenchItem(laidOut, 'item-3', session => failWorkbenchStep(startWorkbenchStep(session, 'layout'), 'layout', 'encode_failed'))
+    const settled = updateWorkbenchItems(laidOut, session => skipWorkbenchStep(session, 'compress'))
+    const queue = updateWorkbenchItem(settled, 'item-3', session => failWorkbenchStep(startWorkbenchStep(session, 'layout'), 'layout', 'encode_failed'))
 
     expect(workbenchQueueProgress(queue)).toEqual({ total: 3, done: 2, failed: 1, running: 0, pending: 0 })
     expect(workbenchQueueOutputs(queue).map(entry => entry.id)).toEqual(['item-1', 'item-2'])
@@ -136,10 +137,10 @@ describe('批次的彙總狀態', () => {
     expect(workbenchStepStatus(queue, 'compress').state).toBe('locked')
   })
 
-  it('合規主圖分支沒有品牌素材與壓縮步驟，宣傳分支兩者都有', () => {
+  it('品牌素材由分支決定；壓縮不是分支的事，因此佇列不會只因用途就停用它', () => {
     expect(workbenchStepStatus(queueOf(1), 'brand').state).toBe('unavailable')
-    expect(workbenchStepStatus(queueOf(1), 'compress').state).toBe('unavailable')
-    expect(workbenchStepStatus(setWorkbenchQueuePurpose(queueOf(1), 'promotional'), 'compress').state).toBe('locked')
+    expect(workbenchStepStatus(queueOf(1), 'compress').state).toBe('locked')
+    expect(workbenchStepStatus(setWorkbenchQueuePurpose(queueOf(1), 'promotional'), 'brand').state).toBe('locked')
   })
 
   it('還沒有圖片時，佇列仍說得出這條流程有哪些步驟，之後收下的項目也照這個形狀開始', () => {

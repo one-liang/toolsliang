@@ -6,8 +6,7 @@ import type { EngineOutcome, ToolEngine } from '@/features/tools/engine/contract
 import { createCompliantImageRenderer } from '@/features/tools/compliant-product-image/engine'
 import { createPromoRenderer } from '@/features/tools/brand-promo-image/engine'
 import { createImageCompressor } from '@/features/tools/image-compressor/engine'
-import { createArchiveWriter } from '@/features/tools/product-image-workbench/engine'
-import { checkWorkbenchArchive, workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
+import { workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
 import {
   compliantImagePresets,
 } from '@/features/tools/compliant-product-image/domain/reference'
@@ -46,11 +45,12 @@ import {
   updateWorkbenchItem,
   updateWorkbenchItems,
   updateWorkbenchPipeline,
-  workbenchLaneOf,
   workbenchQueueBytes,
   workbenchQueueOutputs,
   workbenchQueueProgress,
+  workbenchStepConcurrency,
   workbenchStepStatus,
+  type WorkbenchAdmissionCode,
 } from '@/features/tools/product-image-workbench/queue'
 import {
   blockWorkbenchStep,
@@ -66,6 +66,9 @@ import {
   type WorkbenchSession,
   type WorkbenchStep,
 } from '@/features/tools/product-image-workbench/session'
+import { measureImage } from '@/features/images/measure'
+import { useWorkbenchArchive } from './useWorkbenchArchive'
+import { useWorkbenchBrandAssets } from './useWorkbenchBrandAssets'
 import { useWorkspaceDirty } from './useWorkspaceDirty'
 import { useUnloadGuard } from './useUnloadGuard'
 
@@ -81,8 +84,15 @@ const engineSteps = ['cutout', 'layout', 'brand', 'compress'] as const
 
 type EngineStep = typeof engineSteps[number]
 
-/** How many of one step's engines may run at once, before the device lowers it further. */
-const poolSizes: Record<EngineStep, number> = { cutout: 1, layout: 2, brand: 2, compress: 2 }
+/**
+ * How many engines each step keeps. It is the lane's own ceiling: the device may
+ * lower how many of them run at once, but never raise it, so one table decides
+ * both how many exist and how many are used.
+ */
+const poolSizes = Object.fromEntries(engineSteps.map(step => [step, workbenchStepConcurrency(step)])) as Record<EngineStep, number>
+
+/** Why something a merchant chose was not taken in: the file itself, or the batch's ceilings. */
+export type WorkbenchImportIssue = { kind: 'input', code: string } | { kind: 'admission', code: WorkbenchAdmissionCode }
 
 type StepRun
   = { status: 'success', blob: Blob, width: number, height: number }
@@ -112,8 +122,6 @@ export function useProductImageWorkbench() {
     brand: Array.from({ length: poolSizes.brand }, createPromoRenderer),
     compress: Array.from({ length: poolSizes.compress }, createImageCompressor),
   }
-  const archiver = createArchiveWriter()
-
   const limits = ref(resolveWorkbenchLimits({}))
   const laneLimits = ref(resolveWorkbenchLaneLimits({}))
   const queue = ref(createWorkbenchQueue('compliant', limits.value))
@@ -124,21 +132,14 @@ export function useProductImageWorkbench() {
   const sizes = shallowRef<Record<string, { width: number, height: number }>>({})
   const artifacts = shallowRef<Record<string, Partial<Record<EngineStep, StepArtifact>>>>({})
 
-  const frame = shallowRef<File>()
-  const logo = shallowRef<File>()
-  const frameUrl = ref('')
-  const logoUrl = ref('')
-  const frameSize = shallowRef<{ width: number, height: number }>()
-  const logoSize = shallowRef<{ width: number, height: number }>()
+  const { frame, frameSize, frameUrl, logo, logoSize, logoUrl, chooseAsset, clearAsset: clearBrandAsset } = useWorkbenchBrandAssets()
 
   const runningStep = ref<EngineStep | ''>('')
   const stages = ref<Record<string, string>>({})
   const preparing = ref(true)
   const validating = ref(false)
-  const archiving = ref(false)
-  const archiveUrl = ref('')
   const notice = ref('')
-  const importIssues = ref<{ kind: 'input' | 'admission', code: string }[]>([])
+  const importIssues = ref<WorkbenchImportIssue[]>([])
   const selected = ref('')
 
   /** The device's own day, so a preset that has not been re-read stops being usable here. */
@@ -163,11 +164,11 @@ export function useProductImageWorkbench() {
   /** Which item is running which step's engine, so one item can be cancelled on its own. */
   const active = new Map<string, { step: EngineStep, slot: number }>()
   /** Items the merchant pulled out of the batch that is running, so none is started again. */
-  const withdrawn = new Set<string>()
+  const withdrawn = ref<string[]>([])
   let generation = 0
   let mounted = true
 
-  const busy = computed(() => Boolean(runningStep.value) || validating.value || archiving.value)
+  const busy = computed(() => Boolean(runningStep.value) || validating.value || archive.building.value)
   const items = computed(() => queue.value.items)
   const dirty = computed(() => items.value.length > 0 || busy.value)
   const purpose = computed(() => queue.value.purpose)
@@ -182,6 +183,12 @@ export function useProductImageWorkbench() {
   const progress = computed(() => workbenchQueueProgress(queue.value))
   const outputs = computed(() => workbenchQueueOutputs(queue.value))
   const usedBytes = computed(() => workbenchQueueBytes(queue.value))
+  /** What the archive would contain right now, named the way a single download is. */
+  const archive = useWorkbenchArchive(() => outputs.value.flatMap((entry) => {
+    const artifact = artifacts.value[entry.id]?.[entry.step]
+
+    return artifact ? [{ name: workbenchOutputName(queue.value.purpose, entry.ordinal, artifact.format), blob: artifact.blob }] : []
+  }))
   const previewItem = computed(() => items.value.find(item => item.id === selected.value) ?? items.value[0])
 
   useWorkspaceDirty('product-image-workbench', dirty)
@@ -242,8 +249,26 @@ export function useProductImageWorkbench() {
    * step whose engine was already found unavailable.
    */
   const supported = ref<Record<EngineStep, boolean>>({ cutout: false, layout: false, brand: false, compress: false })
-  const archiveSupported = ref(false)
   const layoutSupported = computed(() => supported.value.layout)
+
+  /**
+   * Whether this batch has a compression step at all.
+   *
+   * §12.11 puts compression in the pipeline without qualifying the branch, so
+   * the question is not which output is being made but whether anyone has
+   * already answered it: a channel preset that states a capacity range has, and
+   * the layout step wrote inside it. Where no such range is published — and one
+   * reviewed preset publishes none — the merchant is the only one who can say
+   * how big the file may be, so the step is offered.
+   */
+  const capacityFromChannel = computed(() => purpose.value === 'compliant'
+    && (byteRange.value.min !== undefined || byteRange.value.max !== undefined))
+
+  function applyCompressionRule() {
+    queue.value = updateWorkbenchPipeline(queue.value, session => capacityFromChannel.value
+      ? blockWorkbenchStep(session, 'compress', 'purpose')
+      : session.blocked.compress === 'purpose' ? unblockWorkbenchStep(session, 'compress') : session)
+  }
 
   function applyCapabilities() {
     for (const step of engineSteps) {
@@ -264,16 +289,16 @@ export function useProductImageWorkbench() {
    */
   async function prepare() {
     preparing.value = true
-    const [cutout, layout, brand, compress, archive] = await Promise.all([
+    const [cutout, layout, brand, compress] = await Promise.all([
       ...engineSteps.map(step => pools[step][0]!.prepare()),
-      archiver.prepare(),
+      archive.prepare(),
     ])
-    if (!mounted || !cutout || !layout || !brand || !compress || !archive) return
+    if (!mounted || !cutout || !layout || !brand || !compress) return
     layoutFormats.value = layout.supported
       ? encodableFormats.filter(format => layout.formats.includes(formatMimeTypes[format]))
       : [...encodableFormats]
     supported.value = { cutout: cutout.supported, layout: layout.supported, brand: brand.supported, compress: compress.supported }
-    archiveSupported.value = archive.supported
+    applyCompressionRule()
     applyCapabilities()
     preparing.value = false
     applyPreset()
@@ -288,8 +313,9 @@ export function useProductImageWorkbench() {
     if (busy.value || purpose.value === next) return
     for (const item of items.value) dropFrom(item.id, 'layout')
     queue.value = setWorkbenchQueuePurpose(queue.value, next)
-    applyCapabilities()
     if (next === 'compliant') applyPreset()
+    applyCompressionRule()
+    applyCapabilities()
   }
 
   function skip(step: WorkbenchStep) {
@@ -297,16 +323,6 @@ export function useProductImageWorkbench() {
     for (const item of items.value) dropFrom(item.id, step)
     queue.value = advanceWorkbenchQueue(updateWorkbenchItems(queue.value, session => skipWorkbenchStep(session, step)), step)
     notice.value = 'skipped'
-  }
-
-  function measure(file: File, onSize: (size: { width: number, height: number }) => void, onFailure: () => void) {
-    const url = URL.createObjectURL(file)
-    const image = new Image()
-    image.onload = () => { if (mounted) onSize({ width: image.naturalWidth, height: image.naturalHeight }) }
-    image.onerror = () => { if (mounted) onFailure() }
-    image.src = url
-
-    return url
   }
 
   /**
@@ -320,7 +336,7 @@ export function useProductImageWorkbench() {
     validating.value = true
     importIssues.value = []
     notice.value = ''
-    const issues: { kind: 'input' | 'admission', code: string }[] = []
+    const issues: WorkbenchImportIssue[] = []
     try {
       const checked = await Promise.all(files.map(async file => ({
         file,
@@ -339,17 +355,19 @@ export function useProductImageWorkbench() {
         sources.value = { ...sources.value, [item.id]: file }
         previews.value = {
           ...previews.value,
-          [item.id]: measure(
+          [item.id]: measureImage(
             file,
             (size) => {
+              if (!mounted) return
               sizes.value = { ...sizes.value, [item.id]: size }
               queue.value = advanceWorkbenchQueue(measureWorkbenchItem(queue.value, item.id, size), 'import')
             },
-            () => { queue.value = updateWorkbenchItem(queue.value, item.id, session => failWorkbenchStep(session, 'import', 'corrupt_image')) },
+            () => {
+              if (mounted) queue.value = updateWorkbenchItem(queue.value, item.id, session => failWorkbenchStep(session, 'import', 'corrupt_image'))
+            },
           ),
         }
       })
-      applyCapabilities()
       if (!selected.value && accepted[0]) selected.value = accepted[0].id
       importIssues.value = issues.filter((issue, index) => issues.findIndex(other => other.code === issue.code) === index)
       if (accepted.length) notice.value = 'imported'
@@ -383,42 +401,11 @@ export function useProductImageWorkbench() {
 
   async function chooseBrandAsset(kind: 'frame' | 'logo', file: File) {
     if (busy.value) return
-    const code = await validateImageInput(file) ?? (file.size > imageInputLimits.maxBytes ? 'too_large' : undefined)
+    const code = await chooseAsset(kind, file)
     if (!mounted) return
-    if (code) {
-      queue.value = updateWorkbenchItems(queue.value, session => noteWorkbenchStepError(session, 'brand', code))
-      return
-    }
-    // The preview places these with the same geometry the renderer uses, so it
-    // needs their decoded size, not just something to show.
-    if (kind === 'frame') {
-      if (frameUrl.value) URL.revokeObjectURL(frameUrl.value)
-      frameSize.value = undefined
-      frame.value = file
-      frameUrl.value = measure(file, (size) => { frameSize.value = size }, () => {})
-    }
-    else {
-      if (logoUrl.value) URL.revokeObjectURL(logoUrl.value)
-      logoSize.value = undefined
-      logo.value = file
-      logoUrl.value = measure(file, (size) => { logoSize.value = size }, () => {})
-    }
-    notice.value = 'asset-added'
-  }
-
-  function clearBrandAsset(kind: 'frame' | 'logo') {
-    if (kind === 'frame') {
-      if (frameUrl.value) URL.revokeObjectURL(frameUrl.value)
-      frame.value = undefined
-      frameUrl.value = ''
-      frameSize.value = undefined
-    }
-    else {
-      if (logoUrl.value) URL.revokeObjectURL(logoUrl.value)
-      logo.value = undefined
-      logoUrl.value = ''
-      logoSize.value = undefined
-    }
+    // A refused frame or Logo is explained on the step that asked for it.
+    if (code) queue.value = updateWorkbenchItems(queue.value, session => noteWorkbenchStepError(session, 'brand', code))
+    else notice.value = 'asset-added'
   }
 
   /** The five engines answer in the same shape; this is that shape, once. */
@@ -482,7 +469,7 @@ export function useProductImageWorkbench() {
   }
 
   /** One engine run for one item, recorded on that item's own step. */
-  async function runItem(id: string, step: EngineStep) {
+  async function runItem(id: string, step: EngineStep, run: number) {
     const slot = claim(step)
     active.set(id, { step, slot })
     dropFrom(id, step)
@@ -490,7 +477,9 @@ export function useProductImageWorkbench() {
     setStage(id, '')
     const outcome = await execute(id, step, slot, stage => setStage(id, stage))
     active.delete(id)
-    if (!mounted) return
+    // A cancelled batch has already handed every item back; applying an outcome
+    // now would overwrite whatever the merchant started next.
+    if (!mounted || run !== generation) return
     setStage(id, '')
     if (outcome.status === 'cancelled') {
       queue.value = updateWorkbenchItem(queue.value, id, session => resetWorkbenchStep(session, step))
@@ -510,9 +499,7 @@ export function useProductImageWorkbench() {
   }
 
   function laneLimitFor(step: EngineStep) {
-    const lane = workbenchLaneOf(step)
-
-    return Math.min(poolSizes[step], lane ? laneLimits.value[lane] : 1)
+    return Math.min(poolSizes[step], workbenchStepConcurrency(step, laneLimits.value))
   }
 
   /**
@@ -527,14 +514,14 @@ export function useProductImageWorkbench() {
     const run = ++generation
     runningStep.value = step
     notice.value = ''
-    withdrawn.clear()
+    withdrawn.value = []
     const inFlight = new Map<string, Promise<void>>()
     while (run === generation) {
       const ready = only
         ? (queue.value.items.find(item => item.id === only && item.session.states[step] === 'ready') ? [only] : [])
-        : planWorkbenchRuns(queue.value, step, { running: [...inFlight.keys(), ...withdrawn], limit: laneLimitFor(step) })
-      for (const id of ready.filter(candidate => !inFlight.has(candidate) && !withdrawn.has(candidate))) {
-        inFlight.set(id, runItem(id, step).finally(() => inFlight.delete(id)))
+        : planWorkbenchRuns(queue.value, step, { running: [...inFlight.keys(), ...withdrawn.value], limit: laneLimitFor(step) })
+      for (const id of ready.filter(candidate => !inFlight.has(candidate) && !withdrawn.value.includes(candidate))) {
+        inFlight.set(id, runItem(id, step, run).finally(() => inFlight.delete(id)))
       }
       if (inFlight.size === 0) break
       await Promise.race(inFlight.values())
@@ -557,15 +544,17 @@ export function useProductImageWorkbench() {
   }
 
   /**
-   * Cancelling one item terminates that item's worker and hands its step back.
-   * It is also withdrawn from the batch that is running, because a step handed
-   * back is a step the scheduler would otherwise pick up again immediately.
+   * Takes one item out of the batch that is running: the one still waiting is
+   * simply never started, and the one already working has its worker terminated.
+   * Either way it is withdrawn, because a step handed back is a step the
+   * scheduler would otherwise pick up again on its next pass.
    */
   function cancelItem(id: string) {
+    if (!runningStep.value || withdrawn.value.includes(id)) return
+    withdrawn.value = [...withdrawn.value, id]
     const entry = active.get(id)
     if (!entry) return
     active.delete(id)
-    withdrawn.add(id)
     pools[entry.step][entry.slot]!.cancel()
   }
 
@@ -575,15 +564,18 @@ export function useProductImageWorkbench() {
    * still waiting is handed back, so nothing half-produced is ever offered.
    */
   function cancelAll() {
-    if (!runningStep.value && !archiving.value) return
+    const step = runningStep.value
+    if (!step && !archive.building.value) return
     ++generation
     for (const [id, entry] of active) {
       active.delete(id)
       pools[entry.step][entry.slot]!.cancel()
     }
-    archiver.cancel()
+    archive.cancel()
+    // The runs whose outcomes are now stale will not settle themselves, so the
+    // steps they were on are handed back here, before anything else can start.
+    if (step) queue.value = updateWorkbenchItems(queue.value, session => session.states[step] === 'running' ? resetWorkbenchStep(session, step) : session)
     runningStep.value = ''
-    archiving.value = false
     stages.value = {}
     notice.value = 'cancelled'
   }
@@ -592,7 +584,7 @@ export function useProductImageWorkbench() {
     if (busy.value) cancelAll()
     ++generation
     for (const item of items.value) releaseItem(item.id)
-    releaseArchive()
+    archive.release()
     clearBrandAsset('frame')
     clearBrandAsset('logo')
     sources.value = {}
@@ -606,41 +598,13 @@ export function useProductImageWorkbench() {
     notice.value = 'reset'
   }
 
-  function releaseArchive() {
-    if (archiveUrl.value) URL.revokeObjectURL(archiveUrl.value)
-    archiveUrl.value = ''
-  }
-
-  const archiveEntries = computed(() => outputs.value.flatMap((entry) => {
-    const artifact = artifacts.value[entry.id]?.[entry.step]
-    if (!artifact) return []
-
-    return [{ name: workbenchOutputName(purpose.value, entry.ordinal, artifact.format), blob: artifact.blob }]
-  }))
-
-  const archiveIssue = computed(() => checkWorkbenchArchive({
-    count: archiveEntries.value.length,
-    bytes: archiveEntries.value.reduce((total, entry) => total + entry.blob.size, 0),
-  }))
-
   /** Packs every finished output into one file, here, on a worker. */
   async function buildArchive() {
-    if (busy.value || archiveIssue.value || !archiveSupported.value) return
-    releaseArchive()
-    archiving.value = true
-    const run = ++generation
-    const outcome = await archiver.run({ entries: archiveEntries.value }, { onProgress: update => setStage('archive', update.stage) })
-    if (!mounted || run !== generation) return
-    archiving.value = false
-    setStage('archive', '')
-    if (outcome.status === 'success') {
-      archiveUrl.value = URL.createObjectURL(outcome.output.blob)
-      notice.value = 'archive-ready'
-      return
-    }
-    if (outcome.status === 'error') {
-      queue.value = updateWorkbenchItems(queue.value, session => noteWorkbenchStepError(session, 'output', outcome.error.code))
-    }
+    if (busy.value) return
+    await archive.build()
+    if (!mounted) return
+    if (archive.failure.value) queue.value = updateWorkbenchItems(queue.value, session => noteWorkbenchStepError(session, 'output', archive.failure.value))
+    else if (archive.url.value) notice.value = 'archive-ready'
   }
 
   /**
@@ -650,7 +614,7 @@ export function useProductImageWorkbench() {
    */
   function invalidate(step: EngineStep) {
     if (busy.value) return
-    releaseArchive()
+    archive.release()
     for (const item of items.value) {
       if (!['done', 'failed'].includes(item.session.states[step])) continue
       dropFrom(item.id, step)
@@ -675,14 +639,16 @@ export function useProductImageWorkbench() {
   watch(presetId, () => {
     settings.value = { ...settings.value, presetId: presetId.value }
     applyPreset()
+    applyCompressionRule()
   })
   watch(settings, () => invalidate('layout'), { deep: true })
   watch([brandSettings, frame, logo], () => invalidate('brand'), { deep: true })
   watch(compression, () => invalidate('compress'), { deep: true })
-  watch(outputs, () => releaseArchive())
+  watch(outputs, () => archive.release())
 
   onMounted(() => {
     today.value = new Date().toISOString().slice(0, 10)
+    applyCompressionRule()
     const device = navigator as Navigator & { deviceMemory?: number }
     limits.value = resolveWorkbenchLimits({ deviceMemory: device.deviceMemory })
     laneLimits.value = resolveWorkbenchLaneLimits({ hardwareConcurrency: navigator.hardwareConcurrency })
@@ -694,20 +660,16 @@ export function useProductImageWorkbench() {
     mounted = false
     ++generation
     for (const step of engineSteps) for (const engine of pools[step]) engine.dispose()
-    archiver.dispose()
     for (const item of items.value) releaseItem(item.id)
-    releaseArchive()
     artifacts.value = {}
     previews.value = {}
-    if (frameUrl.value) URL.revokeObjectURL(frameUrl.value)
-    if (logoUrl.value) URL.revokeObjectURL(logoUrl.value)
   })
 
   return {
-    archiveIssue,
-    archiveSupported,
-    archiveUrl,
-    archiving,
+    archiveIssue: archive.issue,
+    archiveSupported: archive.supported,
+    archiveUrl: archive.url,
+    archiving: archive.building,
     artifacts,
     availableFormats,
     bounds,
@@ -751,7 +713,6 @@ export function useProductImageWorkbench() {
     previews,
     progress,
     purpose,
-    queue,
     removeItem,
     reset,
     retryItem,
@@ -765,6 +726,7 @@ export function useProductImageWorkbench() {
     sources,
     stages,
     stepStatus: (step: WorkbenchStep) => workbenchStepStatus(queue.value, step),
+    withdrawn,
     today,
     usedBytes,
   }

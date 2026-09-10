@@ -37,8 +37,8 @@ export const workbenchStepSummaries: Record<WorkbenchStep, LocalizedCopy> = {
     en: 'Add a frame and a Logo to promotional artwork. Version one has no text or price tags.',
   },
   compress: {
-    'zh-tw': '宣傳圖沒有通路規定的容量，可自行設定品質與最大尺寸再輸出；略過就沿用上一步的檔案。',
-    en: 'Promotional artwork has no channel capacity rule, so set the quality and the largest size yourself, or skip and keep the previous step\u2019s file.',
+    'zh-tw': '沒有通路規定容量時，由你決定品質與最大尺寸再輸出；略過就沿用上一步的檔案。',
+    en: 'When no channel states a capacity, you set the quality and the largest size yourself. Skipping keeps the previous step\u2019s file.',
   },
   output: {
     'zh-tw': '檢查結果後逐項下載，或把整批打包成一個封存檔。檔案只在你按下下載時才離開瀏覽器記憶體。',
@@ -76,8 +76,8 @@ const purposeBlockReasons: Partial<Record<WorkbenchStep, LocalizedCopy>> = {
     en: 'A compliant main image may not carry a frame, a Logo, or promotional text, so this step does not apply. Switch to promotional artwork if you need brand assets.',
   },
   compress: {
-    'zh-tw': '合規主圖的容量由通路規格決定，版型步驟已依該範圍輸出，再壓一次會離開規格，因此這個步驟不適用。',
-    en: 'A compliant main image\u2019s file capacity comes from the channel specification, and the layout step already wrote inside that range. Compressing it again would leave the range, so this step does not apply.',
+    'zh-tw': '這個通路規格已經規定了檔案容量，版型步驟也已依該範圍輸出，再壓一次只會離開規格，因此這個步驟不適用。換成沒有規定容量的通路規格，或改做品牌宣傳圖時，這一步會回到可用。',
+    en: 'This channel specification already states a file capacity, and the layout step wrote inside that range, so compressing again would only leave it. This step applies again under a preset that publishes no capacity, or on the promotional branch.',
   },
 }
 
@@ -127,8 +127,8 @@ const sharedWorkbenchErrors: Record<string, LocalizedCopy> = {
   },
 }
 
-/** What the download step can refuse, all of it decided before a byte is written. */
-const archiveErrors: Record<string, LocalizedCopy> = {
+/** What the archive itself can refuse, decided before a byte is written. */
+export const workbenchArchiveIssues: Record<WorkbenchArchiveIssue, LocalizedCopy> = {
   nothing_to_archive: {
     'zh-tw': '這批還沒有完成的輸出可以打包。完成至少一個項目後再下載封存檔。',
     en: 'This batch has no finished output to pack yet. Finish at least one item, then download the archive.',
@@ -137,6 +137,11 @@ const archiveErrors: Record<string, LocalizedCopy> = {
     'zh-tw': '這批輸出合計超過單一封存檔的上限。請先分批下載已完成的項目。',
     en: 'These outputs add up to more than one archive can hold. Download the finished items in smaller groups instead.',
   },
+}
+
+/** What the download step can refuse, its own refusals included. */
+const archiveErrors: Record<string, LocalizedCopy> = {
+  ...workbenchArchiveIssues,
   unsupported_browser: {
     'zh-tw': '這個瀏覽器無法在本機打包封存檔，仍可逐項下載每個完成的輸出。',
     en: 'This browser cannot pack an archive locally. You can still download each finished output on its own.',
@@ -213,11 +218,6 @@ export function workbenchAdmissionMessage(code: WorkbenchAdmissionCode, limits: 
   }
 
   return messages[code][locale]
-}
-
-export const workbenchArchiveIssues: Record<WorkbenchArchiveIssue, LocalizedCopy> = {
-  nothing_to_archive: archiveErrors.nothing_to_archive!,
-  archive_too_large: archiveErrors.archive_too_large!,
 }
 
 /** The aggregate live summary: one sentence, every item accounted for. */

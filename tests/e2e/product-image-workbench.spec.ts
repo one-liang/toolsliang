@@ -141,7 +141,13 @@ test('合規主圖批次：兩張圖走完流程、逐項下載並在本機打�
   await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'skipped')
   await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'layout')
 
+  // Compression belongs to whoever has not already stated a capacity: the momo
+  // preset publishes a byte range, the reviewed Amazon one does not.
+  await page.getByLabel('通路規格').selectOption('amazon-main')
+  await expect(page.locator('[data-workbench-step="compress"]')).not.toHaveAttribute('data-workbench-state', 'unavailable')
   await page.getByLabel('通路規格').selectOption('momo-store-main')
+  await expect(page.locator('[data-workbench-step="compress"]')).toHaveAttribute('data-workbench-state', 'unavailable')
+
   await expect(page.getByLabel('寬度（像素）')).toHaveValue('1000')
   await batch(page, '整批產生版型').click()
 
@@ -406,12 +412,18 @@ test('純鍵盤可完成步驟切換與佇列操作，未完成工作會攔截�
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('workbench-import')
 })
 
-test('併發受限，且封存不佔住主執行緒', async ({ page }, info) => {
+test('蓋住上限的批次仍可完成：併發受限，且封存不佔住主執行緒', async ({ page }, info) => {
   test.skip(info.project.name !== 'chromium', '長工作量測只在支援 longtask 的瀏覽器進行一次')
 
   await gotoHydrated(page, route)
   const product = await productFile(page)
-  await importProducts(page, [product, product, product, product])
+  // Two more than the batch holds: the extra ones are refused as they are added,
+  // and what was taken in is still a batch that runs to the end.
+  await page.getByLabel('選擇商品圖').setInputFiles(Array.from({ length: 22 }, () => product))
+  await expect(page.locator('[data-queue-item]')).toHaveCount(20)
+  await expect(page.locator('#workbench-import-issues')).toContainText('超過張數上限')
+  await expect(page.locator('[data-workbench-step="import"]')).toHaveAttribute('data-workbench-state', 'done')
+
   await batch(page, '整批略過這一步').click()
   await page.getByLabel('通路規格').selectOption('momo-store-main')
 
@@ -425,15 +437,15 @@ test('併發受限，且封存不佔住主執行緒', async ({ page }, info) => 
   })
 
   await batch(page, '整批產生版型').click()
-  await expect(page.locator('[data-queue-state="done"]')).toHaveCount(4, { timeout: 120_000 })
-  // §12.11 caps encoding at two jobs; a batch of four therefore never opens four.
+  await expect(page.locator('[data-queue-state="done"]')).toHaveCount(20, { timeout: 180_000 })
+  // §12.11 caps encoding at two jobs; a batch of twenty therefore never opens twenty.
   const peak = await page.evaluate(() => (window as unknown as { __peak: number }).__peak)
   expect(peak).toBeGreaterThan(0)
   expect(peak).toBeLessThanOrEqual(2)
 
-  await batch(page, '打包 4 個輸出成封存檔').click()
+  await batch(page, '打包 20 個輸出成封存檔').click()
   await expect(page.getByRole('link', { name: '下載封存檔' })).toBeVisible({ timeout: 60_000 })
-  expect(await archiveNames(page)).toHaveLength(4)
+  expect(await archiveNames(page)).toHaveLength(20)
   // The budget is 50 ms. The ceiling asserted here is far looser on purpose:
   // reading and checksumming a whole batch on the page would produce a task of
   // seconds, and a loose bound stays honest on a shared CI machine.

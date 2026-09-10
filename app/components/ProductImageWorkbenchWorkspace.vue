@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch, type Ref } from 'vue'
 import { CircleCheck, Download, RotateCcw, Trash2, TriangleAlert, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -31,8 +31,9 @@ import {
   resolveSafeAreaInsets,
 } from '@/features/tools/compliant-product-image/domain/render'
 import { planBrandScene } from '@/features/tools/product-image-workbench/pipeline'
-import { workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
-import { workbenchItemStatus, workbenchStepStatus } from '@/features/tools/product-image-workbench/queue'
+import { workbenchArchiveName, workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
+import { workbenchItemStatus } from '@/features/tools/product-image-workbench/queue'
+import { imageInputLimits } from '@/features/images/limits'
 import { promoPlacement } from '@/features/tools/brand-promo-image/scene'
 import { workbenchPurposes, workbenchSteps, type WorkbenchStep } from '@/features/tools/product-image-workbench/session'
 import {
@@ -62,8 +63,8 @@ const {
   buildArchive, busy, cancelAll, cancelItem, canRetryItem, chooseBrandAsset, choosePurpose, clearBrandAsset, compression,
   current, evaluationDate, failedStep, frame, frameSize, frameUrl, goTo, importFiles, importIssues, items,
   layoutSupported, limits, logo, logoSize, logoUrl, notice, outputs, pipeline, prepare, preparing, preset, presetDisabled,
-  presetId, presetStatus, previewItem, previews, progress, purpose, queue, removeItem, reset, retryItem, runStep,
-  runningStep, selectItem, selected, settings, sizes, skip, stages, usedBytes,
+  presetId, presetStatus, previewItem, previews, progress, purpose, removeItem, reset, retryItem, runStep,
+  runningStep, selectItem, selected, settings, sizes, skip, stages, stepStatus, usedBytes, withdrawn,
 } = workbench
 
 const heading = ref<HTMLElement>()
@@ -74,8 +75,7 @@ const {
   online, percent: modelPercent, ready: modelReady, totalBytes: modelBytes,
 } = useBackgroundRemovalModel()
 
-const status = (step: WorkbenchStep) => workbenchStepStatus(queue.value, step)
-const currentStatus = computed(() => status(current.value))
+const currentStatus = computed(() => stepStatus(current.value))
 const blockedReason = computed(() => pipeline.value.blocked[current.value])
 const sizeIssue = computed(() => describeSizeIssue(bounds.value, Number(settings.value.width), Number(settings.value.height)))
 
@@ -99,7 +99,7 @@ const stepList = computed(() => {
   let position = 0
 
   return workbenchSteps.map((step) => {
-    const state = status(step)
+    const state = stepStatus(step)
 
     return {
       step,
@@ -141,6 +141,9 @@ const rows = computed(() => items.value.map((item) => {
     error: failed && item.session.errors[failed] ? workbenchErrorMessage(failed, item.session.errors[failed]!, locale.value) : '',
     canRetry: canRetryItem(item.session),
     running: state === 'running',
+    // A batch is running and this one has not started: it can still be taken out,
+    // and once it has been, there is nothing left to offer to cancel.
+    queued: Boolean(runningStep.value) && state === 'pending' && !withdrawn.value.includes(item.id),
     preview: latest?.url ?? previews.value[item.id],
     alpha: latest?.format === 'image/png',
     size: sizes.value[item.id],
@@ -303,8 +306,8 @@ const logoFields = computed(() => [
 
 const compressionFields = computed(() => [
   { key: 'quality' as const, label: en.value ? 'Quality (%)' : '品質（%）', min: 1, max: 100 },
-  { key: 'maxWidth' as const, label: en.value ? 'Largest width (px)' : '最大寬度（像素）', min: 1, max: 8192 },
-  { key: 'maxHeight' as const, label: en.value ? 'Largest height (px)' : '最大高度（像素）', min: 1, max: 8192 },
+  { key: 'maxWidth' as const, label: en.value ? 'Largest width (px)' : '最大寬度（像素）', min: 1, max: imageInputLimits.maxSide },
+  { key: 'maxHeight' as const, label: en.value ? 'Largest height (px)' : '最大高度（像素）', min: 1, max: imageInputLimits.maxSide },
 ])
 
 /**
@@ -333,24 +336,27 @@ watch([settings, brandSettings, compression], () => {
   for (const field of compressionFields.value) if (!invalidFields[field.key]) drafts[field.key] = compression.value[field.key]
 }, { immediate: true, deep: true })
 
-function setNumber(key: string, raw: string | number, field: { min: number, max: number, integer?: boolean }, apply: (value: number) => void) {
-  drafts[key] = raw
-  const value = Number(raw)
-  invalidFields[key] = raw === '' || !Number.isFinite(value) || value < field.min || value > field.max || (field.integer === true && !Number.isInteger(value))
-  if (!invalidFields[key]) apply(value)
+/**
+ * One editor for every numeric field: find the range it declared, judge the text
+ * against it, and only then replace the setting it feeds. Three copies of this
+ * would be three chances for one group of fields to validate differently from
+ * the others.
+ */
+function editNumber<Settings extends Record<string, unknown>, Key extends string & keyof Settings>(
+  fields: () => readonly { key: Key, min: number, max: number, integer?: boolean }[],
+  target: Ref<Settings>,
+) {
+  return (key: Key, raw: string | number) => {
+    const field = fields().find(item => item.key === key)!
+    drafts[key] = raw
+    const value = Number(raw)
+    invalidFields[key] = raw === '' || !Number.isFinite(value) || value < field.min || value > field.max || (field.integer === true && !Number.isInteger(value))
+    if (!invalidFields[key]) target.value = { ...target.value, [key]: value }
+  }
 }
-function setLayoutNumber(key: 'width' | 'height' | 'zoom' | 'offsetX' | 'offsetY', raw: string | number) {
-  const field = numericFields.find(item => item.key === key)!
-  setNumber(key, raw, field, value => { settings.value = { ...settings.value, [key]: value } })
-}
-function setLogoNumber(key: 'logoScale' | 'logoX' | 'logoY' | 'logoOpacity', raw: string | number) {
-  const field = logoFields.value.find(item => item.key === key)!
-  setNumber(key, raw, field, value => { brandSettings.value = { ...brandSettings.value, [key]: value } })
-}
-function setCompressionNumber(key: 'quality' | 'maxWidth' | 'maxHeight', raw: string | number) {
-  const field = compressionFields.value.find(item => item.key === key)!
-  setNumber(key, raw, field, value => { compression.value = { ...compression.value, [key]: value } })
-}
+const setLayoutNumber = editNumber(() => numericFields, settings)
+const setLogoNumber = editNumber(() => logoFields.value, brandSettings)
+const setCompressionNumber = editNumber(() => compressionFields.value, compression)
 
 /** The step a merchant returns to: the nearest earlier step this run still has. */
 const previousStep = computed(() => {
@@ -463,9 +469,6 @@ async function dropItem(id: string) {
             {{ en ? `Used so far: ${number(usedBytes)} bytes.` : `目前已使用 ${number(usedBytes)} bytes。` }}
             {{ en ? 'Each image: up to 25 MiB and 24 MP.' : '單張最多 25 MiB、2,400 萬像素。' }} {{ copy(heicMessage, locale) }}
           </p>
-        </div>
-        <div id="workbench-import-issues" role="alert" class="field-error">
-          <p v-for="message in importMessages" :key="message"><TriangleAlert :size="16" aria-hidden="true" />{{ message }}</p>
         </div>
       </template>
 
@@ -625,7 +628,7 @@ async function dropItem(id: string) {
               {{ en ? `Pack ${outputs.length} outputs into one archive` : `打包 ${outputs.length} 個輸出成封存檔` }}
             </Button>
             <Button v-if="archiveUrl" as-child>
-              <a :href="archiveUrl" :download="`${purpose === 'compliant' ? 'compliant-product-image' : 'brand-promo-image'}s.zip`" data-archive-download>
+              <a :href="archiveUrl" :download="workbenchArchiveName(purpose)" data-archive-download>
                 <Download :size="16" aria-hidden="true" />{{ en ? 'Download the archive' : '下載封存檔' }}
               </a>
             </Button>
@@ -660,6 +663,13 @@ async function dropItem(id: string) {
           </section>
         </template>
       </template>
+
+      <!-- Files that were refused are reported wherever the merchant now is: the
+           batch moves on to the next step as soon as one image is ready, and a
+           reason that disappears with the panel is a reason nobody read. -->
+      <div id="workbench-import-issues" role="alert" class="field-error">
+        <p v-for="message in importMessages" :key="message"><TriangleAlert :size="16" aria-hidden="true" />{{ message }}</p>
+      </div>
 
       <div id="workbench-error" role="alert" class="field-error">
         <p v-for="message in stepErrors" :key="message"><TriangleAlert :size="16" aria-hidden="true" />{{ message }}</p>
@@ -708,7 +718,7 @@ async function dropItem(id: string) {
             <Button v-if="row.download" variant="outline" as-child>
               <a :href="row.download.url" :download="row.download.name"><Download :size="16" aria-hidden="true" />{{ en ? `Download ${row.label}` : `下載${row.label}` }}</a>
             </Button>
-            <Button v-if="row.running" variant="outline" @click="cancelItem(row.id)"><X :size="16" aria-hidden="true" />{{ en ? `Cancel ${row.label}` : `取消${row.label}` }}</Button>
+            <Button v-if="row.running || row.queued" variant="outline" @click="cancelItem(row.id)"><X :size="16" aria-hidden="true" />{{ en ? `Cancel ${row.label}` : `取消${row.label}` }}</Button>
             <Button v-if="row.canRetry" variant="outline" :disabled="busy" @click="retryItem(row.id)"><RotateCcw :size="16" aria-hidden="true" />{{ en ? `Retry ${row.label}` : `重試${row.label}` }}</Button>
             <Button v-if="row.id !== selected" variant="outline" :disabled="busy" @click="selectItem(row.id)">{{ en ? `Preview ${row.label}` : `預覽${row.label}` }}</Button>
             <Button variant="outline" :disabled="busy" data-queue-remove @click="dropItem(row.id)"><Trash2 :size="16" aria-hidden="true" />{{ en ? `Remove ${row.label}` : `移除${row.label}` }}</Button>

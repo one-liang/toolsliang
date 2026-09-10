@@ -46,7 +46,7 @@ describe('商品圖工作台的目錄註冊', () => {
 
   it('不宣稱合規主圖可以加上框版或 Logo，也說明為什麼不再壓一次', () => {
     expect(workbenchBlockMessage('brand', 'purpose', 'zh-tw')).toContain('合規主圖不得加入框版、Logo 或促銷文字')
-    expect(workbenchBlockMessage('compress', 'purpose', 'zh-tw')).toContain('容量由通路規格決定')
+    expect(workbenchBlockMessage('compress', 'purpose', 'zh-tw')).toContain('這個通路規格已經規定了檔案容量')
     expect(workbenchBlockMessage('brand', 'purpose', 'zh-tw')).not.toBe(workbenchBlockMessage('compress', 'purpose', 'zh-tw'))
     expect(workbenchBlockMessage('cutout', 'capability', 'zh-tw')).toContain('其餘步驟仍可正常使用')
   })

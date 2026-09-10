@@ -71,6 +71,13 @@ export function workbenchLaneOf(step: WorkbenchStep): WorkbenchLane | undefined 
   return lanes[step]
 }
 
+/** How many of one step's engines may run at once. Laneless steps are not engine work. */
+export function workbenchStepConcurrency(step: WorkbenchStep, limits: WorkbenchLaneLimits = workbenchLaneLimits) {
+  const lane = workbenchLaneOf(step)
+
+  return lane ? limits[lane] : 1
+}
+
 /** One core has to stay for the page itself, and §12.11 never asks for more than two encodes. */
 export function resolveWorkbenchLaneLimits(device: { hardwareConcurrency?: number }, base: WorkbenchLaneLimits = workbenchLaneLimits): WorkbenchLaneLimits {
   if (!device.hardwareConcurrency) return { ...base }
@@ -164,10 +171,6 @@ export function clearWorkbenchQueue(queue: WorkbenchQueue): WorkbenchQueue {
   return { ...queue, items: [], current: 'import' }
 }
 
-export function findWorkbenchItem(queue: WorkbenchQueue, id: string) {
-  return queue.items.find(item => item.id === id)
-}
-
 export function updateWorkbenchItem(queue: WorkbenchQueue, id: string, transition: (session: WorkbenchSession) => WorkbenchSession): WorkbenchQueue {
   return { ...queue, items: queue.items.map(item => item.id === id ? { ...item, session: transition(item.session) } : item) }
 }
@@ -249,11 +252,6 @@ export function advanceWorkbenchQueue(queue: WorkbenchQueue, from: WorkbenchStep
   const next = workbenchSteps.slice(workbenchSteps.indexOf(from) + 1).find(step => workbenchStepStatus(queue, step).reachable)
 
   return next ? goToWorkbenchStep(queue, next) : queue
-}
-
-/** Steps this batch has at all, in order, so a rail and a summary count the same things. */
-export function applicableWorkbenchQueueSteps(queue: WorkbenchQueue): WorkbenchStep[] {
-  return workbenchSteps.filter(step => workbenchStepStatus(queue, step).state !== 'unavailable')
 }
 
 export type WorkbenchItemStatus = 'pending' | 'running' | 'failed' | 'done'
