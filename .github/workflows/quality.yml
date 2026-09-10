@@ -17,7 +17,11 @@ jobs:
   quality:
     name: lint、型別、測試與建置
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 三瀏覽器 e2e 以單一 worker 執行，工具每增加一個就長一段。上一次通過的
+    # 執行已用掉 27m44s，離 30 分鐘只剩不到兩分鐘，而共用機器的快慢本身就有
+    # 一成以上的落差——這個上限已經不是在擋失控的測試，而是在擋一台比較慢的
+    # 機器。放寬到 45 分鐘，讓超時重新代表「真的卡住了」。
+    timeout-minutes: 45
 
     steps:
       - name: 取得程式碼

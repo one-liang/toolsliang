@@ -34,7 +34,7 @@ async function imageFile(page: Page, name: string, colour: string, width = 240, 
  */
 const fixtures = new Map<string, Buffer>()
 
-async function productFile(page: Page, size = 1200) {
+async function productFile(page: Page, size = 800) {
   const cached = fixtures.get(String(size))
   if (cached) return { name: 'private-workbench-canary.png', mimeType: 'image/jpeg', buffer: cached }
 
@@ -307,14 +307,14 @@ test('混合批次：不能處理的那一張只留在自己那一列，其餘�
   expect(await archiveNames(page)).toEqual(['compliant-product-image-01.jpg', 'compliant-product-image-03.jpg'])
 })
 
-test('取消只交還未完成的工作：逐項與全部取消都保留先前成果', async ({ page }) => {
+test('逐項取消只交還那一項，先前成果保留且可重試', async ({ page }) => {
   await gotoHydrated(page, route)
   // Cancelling needs a step that is still running. Delaying the engine's own
   // script does not produce one — the Service Worker and the browser cache both
   // answer that request without touching the network — so the work itself is
-  // made heavy instead: a 5.8 MP source written to the largest canvas the tool
+  // made heavy instead: a 3.2 MP source written to the largest canvas the tool
   // allows.
-  await importProducts(page, [await productFile(page, 2400)])
+  await importProducts(page, [await productFile(page, 1800)])
 
   await batch(page, '整批略過這一步').click()
   await page.locator('#workbench-purpose-promotional').check()
@@ -334,15 +334,6 @@ test('取消只交還未完成的工作：逐項與全部取消都保留先前�
   await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'skipped')
   await expect(page.locator('[data-workbench-step="layout"]')).toHaveAttribute('data-workbench-state', 'ready')
   await expect(page.getByRole('link', { name: '下載第 1 項' })).toHaveCount(0)
-
-  // Cancel-all stops the batch the same way, and says so.
-  await batch(page, '整批產生版型').click()
-  const cancelAll = page.getByRole('button', { name: '全部取消' })
-  await expect(cancelAll).toBeVisible()
-  await cancelAll.dispatchEvent('click')
-  await expect(page.getByRole('status').filter({ hasText: '已完成的項目保留成果' })).toBeVisible()
-  await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'skipped')
-  await expect(page.locator('[data-workbench-step="layout"]')).toHaveAttribute('data-workbench-state', 'ready')
 
   // The same step retries from the results the earlier steps still hold.
   await page.getByLabel('寬度（像素）').fill('800')
@@ -436,6 +427,21 @@ test('蓋住上限的批次仍可完成：併發受限，且封存不佔住主�
     setInterval(() => { window_.__peak = Math.max(window_.__peak, document.querySelectorAll('[data-queue-state="running"]').length) }, 20)
   })
 
+  await batch(page, '整批產生版型').click()
+
+  // Cancel-all in the middle of a real batch: what explicitly finished keeps its
+  // result and stays downloadable, and nothing is left half-produced.
+  await expect(page.locator('[data-queue-state="done"]').first()).toBeVisible({ timeout: 120_000 })
+  const cancelAll = page.getByRole('button', { name: '全部取消' })
+  await expect(cancelAll).toBeVisible()
+  await cancelAll.dispatchEvent('click')
+  await expect(page.getByRole('status').filter({ hasText: '已完成的項目保留成果' })).toBeVisible()
+  await expect(page.locator('[data-queue-state="running"]')).toHaveCount(0)
+  const finished = await page.locator('[data-queue-state="done"]').count()
+  expect(finished).toBeGreaterThan(0)
+  expect(await page.getByRole('link', { name: /^下載第 / }).count()).toBe(finished)
+
+  // Picking the batch back up finishes what was handed back.
   await batch(page, '整批產生版型').click()
   await expect(page.locator('[data-queue-state="done"]')).toHaveCount(20, { timeout: 180_000 })
   // §12.11 caps encoding at two jobs; a batch of twenty therefore never opens twenty.
