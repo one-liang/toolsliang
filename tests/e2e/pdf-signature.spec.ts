@@ -294,9 +294,16 @@ test('手機版面：簽名與定位的操作目標足夠大，亮暗模式都�
   }
 })
 
-test('代表性 20 頁 20 MiB 文件符合首頁預覽與匯出預算', async ({ page }, testInfo) => {
-  /* A desktop budget, measured once on the browser that reports timings consistently. */
-  test.skip(testInfo.project.name !== 'chromium', '效能預算只在 chromium 量測一次')
+/**
+ * A smoke bound, not the specification's budget. What is measured here includes
+ * handing 20 MiB to the browser over the driver connection, which is the test
+ * harness rather than the tool. §12.12's 3-second preview and 15-second export
+ * are measured inside the browser by `scripts/verify-pdf-signature-output.mjs`
+ * and enforced against those numbers in `tests/pdf-signature-output.test.ts`;
+ * this test is here to catch a representative document becoming unusable.
+ */
+test('代表性 20 頁 20 MiB 文件在本機可用的時間內開啟與匯出', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', '大檔案的煙霧量測只在 chromium 跑一次')
   test.setTimeout(120_000)
 
   await gotoHydrated(page, '/en/tools/pdf-signature/')
@@ -314,6 +321,6 @@ test('代表性 20 頁 20 MiB 文件符合首頁預覽與匯出預算', async ({
   await expect(page.locator('[data-export-summary]')).toContainText('20 pages', { timeout: 30_000 })
   const exportMs = Date.now() - exportStarted
 
-  expect(previewMs, `首頁預覽 ${previewMs}ms`).toBeLessThan(3_000)
-  expect(exportMs, `匯出 ${exportMs}ms`).toBeLessThan(15_000)
+  expect(previewMs, `首頁預覽（含驅動端傳檔）${previewMs}ms`).toBeLessThan(20_000)
+  expect(exportMs, `匯出 ${exportMs}ms`).toBeLessThan(20_000)
 })
