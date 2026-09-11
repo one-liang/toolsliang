@@ -47,7 +47,7 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'compliant-product-image', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'compliant-product-image', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar', 'pdf-signature'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
@@ -180,6 +180,7 @@ describe('tool catalog', () => {
       '/zh-tw/tools/random-picker/',
       '/zh-tw/tools/taiwan-calendar/',
       '/zh-tw/tools/custom-calendar/',
+      '/zh-tw/tools/pdf-signature/',
       '/en/tools/device-time/',
       '/en/tools/image-compressor/',
       '/en/tools/image-background-remover/',
@@ -191,6 +192,7 @@ describe('tool catalog', () => {
       '/en/tools/random-picker/',
       '/en/tools/taiwan-calendar/',
       '/en/tools/custom-calendar/',
+      '/en/tools/pdf-signature/',
     ])
     expect(isSupportedLocale('tw')).toBe(false)
   })

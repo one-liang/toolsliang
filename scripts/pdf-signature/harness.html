@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PDF signature output harness</title>
+</head>
+<body>
+<p>Verification harness for the PDF handwritten signature engine. It is driven by Playwright and is not part of the site.</p>
+<script type="module">
+import * as pdfjs from './vendor/pdf.mjs'
+
+/*
+ * Drives the worker the tool ships, through the same message protocol the page
+ * uses, and then reads every export back with an independent pdf.js instance to
+ * answer the questions the e2e suite cannot: did the ink land inside the
+ * rectangle the visitor drew, did anything change outside it, is the page still
+ * visible through the transparent parts, and is the page still the same size.
+ *
+ * Everything is local: the fixtures are drawn from code by the runner, and the
+ * only origin either side ever talks to is the runner's own server.
+ */
+pdfjs.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.mjs'
+
+/** Placed over the coloured band the fixtures paint across every page. */
+const SIGNATURE_RECT = { x: 0.10, y: 0.03, width: 0.30, height: 0.09 }
+/** How far beyond the rectangle an antialiased edge may still reach. */
+const PLACEMENT_MARGIN_PT = 4
+/** The magenta the signature is drawn in; it appears in no fixture. */
+const INK = { r: 255, g: 0, b: 255 }
+const PREVIEW_SCALE = 1.5
+
+const pending = new Map()
+let worker
+let nextId = 1
+
+function startWorker() {
+  worker = new Worker('./engine-worker.mjs', { type: 'module' })
+  worker.addEventListener('message', (event) => {
+    const reply = event.data
+    /* pdf.js shares this port inside the worker; only the tool's replies carry an id. */
+    if (typeof reply?.id !== 'number') return
+    const entry = pending.get(reply.id)
+    if (!entry) return
+    if (reply.type === 'progress') { entry.stages.push(reply.stage); return }
+    pending.delete(reply.id)
+    entry.resolve(reply)
+  })
+  worker.addEventListener('error', (event) => { event.preventDefault(); window.__workerError = String(event.message).slice(0, 200) })
+}
+
+function ask(request) {
+  const id = nextId++
+  const stages = []
+  return new Promise((resolve) => {
+    pending.set(id, { resolve: reply => resolve({ reply, stages }), stages })
+    worker.postMessage({ ...request, id })
+  })
+}
+
+/** A transparent signature drawn from code: strokes with gaps the page shows through. */
+async function signaturePng() {
+  const canvas = new OffscreenCanvas(600, 200)
+  const context = canvas.getContext('2d')
+  context.strokeStyle = `rgb(${INK.r} ${INK.g} ${INK.b})`
+  context.lineWidth = 24
+  context.lineCap = 'round'
+  context.beginPath()
+  context.moveTo(40, 160)
+  context.bezierCurveTo(160, 20, 280, 180, 400, 50)
+  context.lineTo(560, 120)
+  context.stroke()
+  return await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer()
+}
+
+async function render(bytes, index, password) {
+  const task = pdfjs.getDocument({ data: bytes.slice(0), password, isEvalSupported: false, useSystemFonts: false })
+  const document_ = await task.promise
+  const page = await document_.getPage(index + 1)
+  const viewport = page.getViewport({ scale: PREVIEW_SCALE })
+  const canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  context.fillStyle = 'white'
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  await page.render({ canvasContext: context, viewport }).promise
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
+  const summary = { pixels, width: viewport.width, height: viewport.height, pages: document_.numPages, rotation: page.rotate }
+  page.cleanup()
+  await task.destroy()
+  return summary
+}
+
+function isInk(data, offset) {
+  return Math.abs(data[offset] - INK.r) <= 70 && Math.abs(data[offset + 1] - INK.g) <= 70 && Math.abs(data[offset + 2] - INK.b) <= 70
+}
+
+function changed(before, after, offset) {
+  return Math.abs(after[offset] - before[offset])
+    + Math.abs(after[offset + 1] - before[offset + 1])
+    + Math.abs(after[offset + 2] - before[offset + 2]) > 24
+}
+
+/**
+ * Compares the page before and after signing. `seeThroughRatio` is the
+ * transparency evidence: a signature flattened onto an opaque background would
+ * repaint the whole rectangle and leave nothing unchanged inside it.
+ */
+function compare(before, after, region) {
+  const width = after.pixels.width
+  const height = after.pixels.height
+  const margin = Math.round(PLACEMENT_MARGIN_PT * PREVIEW_SCALE)
+  let ink = 0
+  let unchanged = 0
+  let inside = 0
+  let strayInk = 0
+  let changedOutside = 0
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const offset = (y * width + x) * 4
+      const withinRect = x >= region.left && x < region.right && y >= region.top && y < region.bottom
+      if (withinRect) {
+        inside += 1
+        if (isInk(after.pixels.data, offset)) ink += 1
+        if (!changed(before.pixels.data, after.pixels.data, offset)) unchanged += 1
+        continue
+      }
+      const nearRect = x >= region.left - margin && x <= region.right + margin && y >= region.top - margin && y <= region.bottom + margin
+      if (nearRect) continue
+      if (!changed(before.pixels.data, after.pixels.data, offset)) continue
+      changedOutside += 1
+      if (isInk(after.pixels.data, offset)) strayInk += 1
+    }
+  }
+
+  return {
+    inkRatio: inside === 0 ? 0 : Math.round((ink / inside) * 1000) / 1000,
+    seeThroughRatio: inside === 0 ? 0 : Math.round((unchanged / inside) * 1000) / 1000,
+    strayInkPixels: strayInk,
+    changedPixelsOutsidePlacement: changedOutside,
+    placementMarginPt: PLACEMENT_MARGIN_PT,
+    comparedPixels: width * height,
+  }
+}
+
+window.__environment = () => ({
+  userAgent: navigator.userAgent,
+  offscreenCanvas: typeof OffscreenCanvas === 'function',
+  crossOriginIsolated: Boolean(window.crossOriginIsolated),
+})
+
+window.__verify = async (job) => {
+  const report = { fixture: job.fixture.name, outcome: 'ok' }
+  if (!worker) startWorker()
+
+  try {
+    /* The document is fetched from the runner's own server: a 20 MiB fixture is
+     * far too large to hand across the driver connection. */
+    const response = await fetch(job.fixture.url)
+    if (!response.ok) throw new Error(`fixture_fetch_failed_${response.status}`)
+    const source = new Uint8Array(await response.arrayBuffer())
+    const file = new File([source], `${job.fixture.name}.pdf`, { type: 'application/pdf' })
+    const opened = await ask({ type: 'open', file, password: job.password })
+    report.openStages = opened.stages
+    if (opened.reply.type !== 'document') {
+      report.outcome = 'refused'
+      report.code = opened.reply.code
+      return report
+    }
+
+    const document_ = opened.reply.report
+    report.pageCount = document_.pageCount
+    report.encrypted = document_.encrypted
+    report.permissionBits = document_.permissions
+    report.pages = document_.pages.map(page => ({ index: page.index, box: page.box, rotation: page.rotation }))
+
+    const lastPage = document_.pageCount - 1
+    const previewStarted = performance.now()
+    const preview = await ask({ type: 'preview', page: 0, scale: PREVIEW_SCALE })
+    report.firstPagePreviewMs = Math.round(performance.now() - previewStarted)
+    report.previewSize = preview.reply.type === 'preview'
+      ? { width: Math.round(preview.reply.report.width), height: Math.round(preview.reply.report.height) }
+      : null
+
+    const signature = await signaturePng()
+    const exportStarted = performance.now()
+    const exported = await ask({
+      type: 'export',
+      placements: [
+        { page: 0, rect: SIGNATURE_RECT, signatureId: 'signature' },
+        { page: lastPage, rect: SIGNATURE_RECT, signatureId: 'signature' },
+      ],
+      signatures: [{ id: 'signature', bytes: signature }],
+    })
+    report.exportMs = Math.round(performance.now() - exportStarted)
+    if (exported.reply.type !== 'export') {
+      report.outcome = 'export-refused'
+      report.code = exported.reply.code
+      return report
+    }
+
+    report.exportStages = exported.stages
+    const output = new Uint8Array(exported.reply.report.bytes)
+    report.exportMode = exported.reply.report.mode
+    report.exportDecrypted = exported.reply.report.decrypted
+    report.exportBytes = output.byteLength
+    /* An incremental update appends: the original file is still the prefix. */
+    report.originalBytesArePrefix = source.every((byte, index) => output[index] === byte)
+
+    /* Read back with a pdf.js of the page's own, not the one inside the worker. */
+    const password = exported.reply.report.decrypted ? undefined : job.password
+    const verified = []
+    for (const index of [...new Set([0, lastPage])]) {
+      const before = await render(source, index, job.password)
+      const after = await render(output, index, password)
+      /* `after.width` is the viewport at the preview scale, so it is already in
+       * the pixels the comparison walks: the rectangle only has to be projected
+       * onto it, not scaled again. */
+      const region = {
+        left: Math.round(SIGNATURE_RECT.x * after.width),
+        right: Math.round((SIGNATURE_RECT.x + SIGNATURE_RECT.width) * after.width),
+        top: Math.round(SIGNATURE_RECT.y * after.height),
+        bottom: Math.round((SIGNATURE_RECT.y + SIGNATURE_RECT.height) * after.height),
+      }
+      verified.push({
+        index,
+        pageCount: after.pages,
+        widthPreserved: Math.abs(after.width - before.width) < 0.01,
+        heightPreserved: Math.abs(after.height - before.height) < 0.01,
+        rotationPreserved: after.rotation === before.rotation,
+        displayWidth: Math.round(after.width * 100) / 100,
+        displayHeight: Math.round(after.height * 100) / 100,
+        ...compare(before, after, region),
+      })
+    }
+    report.signedPages = verified
+
+    /* A page nobody signed has to come back pixel for pixel. */
+    if (document_.pageCount > 2) {
+      const untouched = 1
+      const before = await render(source, untouched, job.password)
+      const after = await render(output, untouched, password)
+      let differing = 0
+      for (let offset = 0; offset < after.pixels.data.length; offset += 4) {
+        if (changed(before.pixels.data, after.pixels.data, offset)) differing += 1
+      }
+      report.untouchedPage = { index: untouched, changedPixels: differing, comparedPixels: after.pixels.width * after.pixels.height }
+    }
+  }
+  catch (error) {
+    report.outcome = 'error'
+    /* Library wording and fixture names only; no document content reaches a report. */
+    report.error = `${error?.name ?? 'Error'}: ${String(error?.message ?? error).slice(0, 200)}`
+  }
+
+  return report
+}
+</script>
+</body>
+</html>

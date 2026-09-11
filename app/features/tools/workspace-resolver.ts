@@ -28,7 +28,10 @@ export function validateToolWorkspaces(tools: PublishedToolDefinition[]) {
  * dependency does not produce the same bytes — and therefore not the same
  * hashed file name — on both sides, so the URL a server render computed for it
  * would not exist. That is why the background remover loads its inference
- * runtime from a versioned asset instead of bundling it.
+ * runtime from a versioned asset instead of bundling it, and why the PDF
+ * signature worker — which bundles both of its engines — is deliberately absent
+ * here: it is fetched when the workspace first asks for it, and the Service
+ * Worker caches it from then on like any other build asset.
  * `tests/e2e/quality-gates.spec.ts` holds every declared asset to a 200.
  */
 export function getToolWorkspaceAssets(componentKey: string): string[] {

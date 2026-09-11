@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {
   Banknote, Braces, Calculator, CalendarDays, CalendarPlus, CaseSensitive, Clock, Crop, Dices,
-  FileText, Image, ShoppingBag, TableProperties, Type,
+  FileText, Image, PenLine, ShoppingBag, TableProperties, Type,
 } from '@lucide/vue'
 import type { ToolIcon } from '@/features/tools/catalog'
 
@@ -19,6 +19,7 @@ const iconMap = {
   dices: Dices,
   'file-text': FileText,
   image: Image,
+  'pen-line': PenLine,
   'shopping-bag': ShoppingBag,
   table: TableProperties,
   type: Type,
