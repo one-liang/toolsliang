@@ -11,7 +11,7 @@
 import type { EngineError } from '../../engine/contract'
 
 /** Names the reviewed candidate set by the day the measurements were taken. */
-export const pdfSignatureReferenceVersion = 'pdf-signature-2026-09-10'
+export const pdfSignatureReferenceVersion = 'pdf-signature-2026-09-11'
 
 /**
  * Licences this project may redistribute from its own bundle. A candidate is

@@ -1,6 +1,6 @@
 # PDF 本機編輯引擎與安全邊界
 
-Issue：#26（T24）。版本識別碼：`pdf-signature-2026-09-10`。這份紀錄選定 PDF 手寫簽名要使用的瀏覽器端引擎，並把密碼、損毀檔、座標、保真與資源上限寫成 T25（#27）與 T26（#28）可以直接引用的契約。
+Issue：#26（T24）。版本識別碼：`pdf-signature-2026-09-11`。這份紀錄選定 PDF 手寫簽名要使用的瀏覽器端引擎，並把密碼、損毀檔、座標、保真與資源上限寫成 T25（#27）與 T26（#28）可以直接引用的契約。
 
 ## 1. 範圍與方法
 
@@ -173,37 +173,48 @@ node scripts/evaluate-pdf-engine.mjs [--browsers=chromium,firefox,webkit] [--can
 
 | 引擎 | 文件 | 瀏覽器 | 開啟 ms | 首頁預覽 ms | 匯出 ms | 記憶體 MiB |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `pdfjs-dist` | `reference-20-page` | chromium | 38 | 17 | - | 53 |
-| `pdfjs-dist` | `reference-20-page` | firefox | 58 | 12 | - | - |
-| `pdfjs-dist` | `reference-20-page` | webkit | 43 | 27 | - | - |
-| `pdfjs-dist` | `large-56-page` | chromium | 35 | 19 | - | 127 |
-| `pdfjs-dist` | `large-56-page` | firefox | 54 | 14 | - | - |
-| `pdfjs-dist` | `large-56-page` | webkit | 36 | 16 | - | - |
-| `hyzyla-pdfium` | `reference-20-page` | chromium | 5 | 20 | - | 66 |
+| `pdfjs-dist` | `reference-20-page` | chromium | 40 | 25 | - | 53 |
+| `pdfjs-dist` | `reference-20-page` | firefox | 52 | 3 | - | - |
+| `pdfjs-dist` | `reference-20-page` | webkit | 43 | 22 | - | - |
+| `pdfjs-dist` | `large-56-page` | chromium | 34 | 10 | - | 127 |
+| `pdfjs-dist` | `large-56-page` | firefox | 56 | 5 | - | - |
+| `pdfjs-dist` | `large-56-page` | webkit | 37 | 14 | - | - |
+| `hyzyla-pdfium` | `reference-20-page` | chromium | 5 | 22 | - | 66 |
 | `hyzyla-pdfium` | `reference-20-page` | firefox | 5 | 74 | - | - |
 | `hyzyla-pdfium` | `reference-20-page` | webkit | 5 | 20 | - | - |
-| `hyzyla-pdfium` | `large-56-page` | chromium | 10 | 19 | - | 136 |
-| `hyzyla-pdfium` | `large-56-page` | firefox | 10 | 74 | - | - |
-| `hyzyla-pdfium` | `large-56-page` | webkit | 10 | 20 | - | - |
-| `pdf-lib` | `reference-20-page` | chromium | 6 | - | 30 | 66 |
-| `pdf-lib` | `reference-20-page` | firefox | 9 | - | 28 | - |
-| `pdf-lib` | `reference-20-page` | webkit | 7 | - | 23 | - |
-| `pdf-lib` | `large-56-page` | chromium | 12 | - | 66 | 177 |
-| `pdf-lib` | `large-56-page` | firefox | 15 | - | 81 | - |
-| `pdf-lib` | `large-56-page` | webkit | 15 | - | 47 | - |
+| `hyzyla-pdfium` | `large-56-page` | chromium | 10 | 20 | - | 136 |
+| `hyzyla-pdfium` | `large-56-page` | firefox | 15 | 73 | - | - |
+| `hyzyla-pdfium` | `large-56-page` | webkit | 11 | 20 | - | - |
+| `pdf-lib` | `reference-20-page` | chromium | 6 | - | 29 | 66 |
+| `pdf-lib` | `reference-20-page` | firefox | 9 | - | 29 | - |
+| `pdf-lib` | `reference-20-page` | webkit | 7 | - | 24 | - |
+| `pdf-lib` | `large-56-page` | chromium | 13 | - | 66 | 177 |
+| `pdf-lib` | `large-56-page` | firefox | 16 | - | 79 | - |
+| `pdf-lib` | `large-56-page` | webkit | 14 | - | 47 | - |
 | `cantoo-pdf-lib` | `reference-20-page` | chromium | 6 | - | 28 | 66 |
-| `cantoo-pdf-lib` | `reference-20-page` | firefox | 10 | - | 30 | - |
-| `cantoo-pdf-lib` | `reference-20-page` | webkit | 8 | - | 23 | - |
-| `cantoo-pdf-lib` | `large-56-page` | chromium | 14 | - | 65 | 178 |
-| `cantoo-pdf-lib` | `large-56-page` | firefox | 17 | - | 79 | - |
+| `cantoo-pdf-lib` | `reference-20-page` | firefox | 10 | - | 29 | - |
+| `cantoo-pdf-lib` | `reference-20-page` | webkit | 8 | - | 24 | - |
+| `cantoo-pdf-lib` | `large-56-page` | chromium | 13 | - | 65 | 178 |
+| `cantoo-pdf-lib` | `large-56-page` | firefox | 15 | - | 82 | - |
 | `cantoo-pdf-lib` | `large-56-page` | webkit | 15 | - | 47 | - |
 
 規格 §12.12 給的桌面預算是首頁預覽 3 秒、匯出 15 秒。實測值全部低兩個數量級，預算不是這個工具的難處。真正決定體感的是別的東西：
 
-- **開啟時間不代表解析完成。** `pdf-lib` 家族的 `load` 只建索引，工作留到 `save`；`pdfjs-dist` 的 36 至 60 毫秒裡大半是 worker 啟動，之後每頁預覽只花 10 至 27 毫秒。兩者都不會在開啟階段就把 20 MiB 走過一遍。
-- **記憶體隨檔案大小走。** 58 MiB 的文件在 Chromium 上讓分頁到 178 MiB，20 MiB 的文件是 66 MiB。這是「檔案位元組 × 約 3」的量級：原始 buffer、解析後的物件、以及匯出時的輸出 buffer 同時在場。§9.2 把它寫成估算式，並把兩個引擎同時持有文件的情形算進去。
-- **增量更新省下的是匯出。** 同一份 `reference-20-page`，完整重寫 27 至 30 毫秒，增量更新 11 至 19 毫秒；`large-56-page` 是 68 至 84 對 14 至 19 毫秒。差距隨檔案變大而拉開，因為重寫要重新序列化每一個物件，增量更新只寫新增的那幾個。
-- **Firefox 的 PDFium 算圖慢 3.5 倍**（73 對 20 毫秒），`pdfjs-dist` 在 Firefox 沒有這個落差。這是不選 PDFium 的第二個理由，雖然不是決定性的那個。
+- **開啟時間不代表解析完成。** `pdf-lib` 家族的 `load` 只建索引，工作留到 `save`；`pdfjs-dist` 的開啟時間裡大半是 worker 啟動，之後每頁預覽只花幾十毫秒。兩者都不會在開啟階段就把 20 MiB 走過一遍。上表是唯一的數字來源，這裡不另外轉述。
+- **記憶體隨檔案大小走。** 數量級是「檔案位元組的幾倍」：原始 buffer、解析後的物件、以及匯出時的輸出 buffer 同時在場。實際數字見上表，§9.2 把它寫成估算式，並把兩個引擎同時持有文件的情形算進去。
+- **增量更新省下的是匯出。** 差距隨檔案變大而拉開，因為重寫要重新序列化每一個物件，增量更新只寫新增的那幾個；數字見下面的「匯出方式比較」。
+- **Firefox 的 PDFium 算圖明顯慢於另兩個瀏覽器**，倍數見上表；`pdfjs-dist` 在 Firefox 沒有這個落差。這是不選 PDFium 的第二個理由，雖然不是決定性的那個。
+
+#### 匯出方式比較
+
+| 文件 | 瀏覽器 | 完整重寫 ms | 增量更新 ms |
+| --- | --- | ---: | ---: |
+| `reference-20-page` | chromium | 28 | 10 |
+| `reference-20-page` | firefox | 29 | 11 |
+| `reference-20-page` | webkit | 24 | 11 |
+| `large-56-page` | chromium | 65 | 14 |
+| `large-56-page` | firefox | 82 | 17 |
+| `large-56-page` | webkit | 47 | 15 |
 
 ## 6. 保真與座標契約
 
@@ -288,6 +299,8 @@ node scripts/evaluate-pdf-engine.mjs [--browsers=chromium,firefox,webkit] [--can
 - 單邊上限 2,000 像素；超過只會增加檔案大小，不會增加看得見的細節。
 - 影像的長寬比由使用者在預覽上決定，工具不代為修正。
 
+規格 §12.12 另外提到縮寫與日期。它們不是別的機制，是同一條路徑上的不同內容：一樣先轉成帶 alpha 的 PNG，一樣用 §6.1 的正規化矩形定位。日期的值由使用者自己輸入或選擇，工具不自動填入裝置時間——那會讓人以為時間經過驗證，而 CONTEXT.md 的「裝置時間」本來就只是裝置時鐘。
+
 ## 7. 密碼、權限、主動內容與損毀檔策略
 
 ### 7.1 密碼與匯出方式
@@ -325,6 +338,8 @@ node scripts/evaluate-pdf-engine.mjs [--browsers=chromium,firefox,webkit] [--can
 
 `owner-password-restricted` 的使用者密碼是空字串、擁有者密碼另外設定，權限位元允許列印與複製、不允許修改內容與修改標註。這種檔案在任何檢視器裡都直接打開，不會要求輸入任何東西。
 
+這份文件在 §4 與 §6.3 是「開得起來、簽得上去、讀得回來」，在這裡卻是「必須拒絕」。兩者不衝突：矩陣量的是引擎做不做得到，這一節寫的是產品要不要做。量測必須先證明做得到，否則「選擇不做」只是掩蓋做不到。
+
 預覽引擎讀得到權限位元（`pdfjs-dist` 的 `getPermissions()` 在三個瀏覽器都回報允許 4、不含 8 與 32），因此工具在開檔後就知道作者不允許修改，並以 `modification_not_permitted` 說明並停止。
 
 這是產品決定，不是技術限制：PDF 的權限位元對任何持有檔案的程式都只是宣告，繞過它不需要任何技巧。工具選擇尊重它，因為使用者拿到的是別人給的檔案，作者已經明說不希望它被改。
@@ -335,7 +350,9 @@ node scripts/evaluate-pdf-engine.mjs [--browsers=chromium,firefox,webkit] [--can
 
 PDF 可以在文件層、頁面層與標註上宣告動作：JavaScript、`/OpenAction`、`/AA`、URI 連結與 Launch。簽名工具一個都不執行，也不代替文件發出任何請求。
 
-`active-content` 這份文件同時宣告了以上五種。四個候選在三個瀏覽器都把它當成普通的一頁文件開啟，沒有任何一次執行了文件裡的指令碼，量測期間伺服器也沒有收到任何預期以外的路徑請求——包含那個只會被跟隨動作的引擎請求的探測位址。
+`active-content` 這份文件同時宣告了以上五種。四個候選在三個瀏覽器都把它當成普通的一頁文件開啟，每一次執行都明確回報文件裡的指令碼沒有被執行，也沒有任何一次發出預期以外的請求。
+
+「沒有發出請求」是從瀏覽器自己的 request 事件（context 層，含 worker、任何來源）逐筆記錄的，不是從量測伺服器的存取記錄推出來的——那份記錄只看得到它被要求提供的路徑，而文件裡的連結動作指向另一個 origin，伺服器永遠不會知道。兩份清單互相對照：伺服器提供過的每一個路徑都必須同時出現在瀏覽器的事件裡，否則就表示事件漏看了東西，上面那句話也就沒有根據。唯一對不上的是 `/favicon.ico`——Chromium 與 Firefox 會在頁面的請求流程之外自己去要它。這一筆照實記錄而不是過濾掉，因為過濾會把「還有第二種漏看」一起掩蓋；測試因此要求每次執行對不上的只能是它。
 
 實作上這由 `pdfSignatureParserPolicy` 固定：不執行指令碼、不跟隨文件動作、不取用外部資源、不啟用 scripting、不使用 `eval` 快徑、不查詢本機字型、不算圖 XFA。
 
@@ -384,8 +401,8 @@ PDF 可以在文件層、頁面層與標註上宣告動作：JavaScript、`/Open
 | `active-content` | pass | 宣告了指令碼、文件動作、頁面動作、URI 連結與 Launch 的文件被當成普通文件開啟；沒有一次執行，也沒有一次多發請求（§7.3）。 |
 | `damaged-input` | conditional | 寫入端會接受截斷檔並產生讀不回來的輸出；必須以預覽引擎把關並在下載前讀回（§7.4）。 |
 | `output-fidelity` | pass | 依 §7.1 的匯出方式，越界像素與未簽頁變動像素在三個瀏覽器皆為 0，頁數、尺寸與旋轉保持不變（§6.3）。 |
-| `performance` | pass | 首頁預覽 10 至 27 毫秒、匯出 11 至 84 毫秒，遠低於 3 秒與 15 秒的預算（§5）。 |
-| `memory-headroom` | conditional | 只有 Chromium 提供記憶體 API；58 MiB 文件量到 178 MiB，行動裝置未實測（§5、§12）。 |
+| `performance` | pass | 首頁預覽與匯出都低於 §9.2 的 3 秒與 15 秒預算兩個數量級，數字見 §5 的表。 |
+| `memory-headroom` | conditional | 只有 Chromium 提供記憶體 API，行動裝置未實測；工作集估算式見 §9.2（§5、§12）。 |
 | `privacy` | pass | 引擎全部在本機執行，不需要任何伺服器端點；測試素材與量測皆不含使用者檔案（§1、§12）。 |
 
 沒有任何一項 fail，結論為 **go**：PDF 手寫簽名可以在瀏覽器本機實作。兩項 conditional 不是對選型的保留，而是對做法的要求，已寫入 §9 的交接清單。
@@ -413,8 +430,8 @@ PDF 可以在文件層、頁面層與標註上宣告動作：JavaScript、`/Open
 | `previewScale` | 1.5 | 頁面預覽的算圖倍率，也是矩陣量測時使用的倍率。 |
 | `firstPagePreviewMs` | 3000 | 規格 §12.12 的桌面首頁預覽預算；實測最慢 27 毫秒。 |
 | `exportMs` | 15000 | 規格 §12.12 的桌面匯出預算；實測最慢 84 毫秒。 |
-| `baseBytes` | 16777216 | 兩個引擎自己的程式與執行期，取 Chromium 上小文件的量測值（`pdfjs-dist` 約 11 MiB、`cantoo-pdf-lib` 約 5 MiB）。 |
-| `bytesPerInputByte` | 3.5 | 每一位元組輸入的工作集係數；實測落在 2.20 至 3.22 之間，取上界。 |
+| `baseBytes` | 16777216 | 16 MiB：兩個引擎自己的程式與執行期，取 Chromium 上小文件的量測值相加（`pdfjs-dist` 約 11 MiB、`cantoo-pdf-lib` 約 5 MiB）。 |
+| `bytesPerInputByte` | 3.5 | 每一位元組輸入的工作集係數。係數疊在 `baseBytes` 之上，對應的實測值是「（量到的記憶體 − `baseBytes`）÷ 檔案位元組」；選定兩個引擎在 Chromium 上這個值落在 1.25 至 2.81 之間，取寬裕的上界。 |
 | `maxSignatureEdgePixels` | 2000 | 簽名影像的單邊像素上限（§6.5）。 |
 
 工作集估算式為 `baseBytes + 檔案位元組 × bytesPerInputByte × 2`，乘以 2 是因為放置簽名時預覽引擎與寫入引擎同時持有同一份文件。`estimatePdfWorkingSetBytes()` 由 domain 模組匯出，供 `insufficient_memory` 在解析前判斷。
@@ -430,7 +447,7 @@ PDF 可以在文件層、頁面層與標註上宣告動作：JavaScript、`/Open
 5. 匯出順序：套用 → 依 `pdfSignatureExportMode()` 選增量更新或完整重寫 → 預覽引擎讀回 → 才產生 Blob URL 與下載。
 6. 錯誤、記錄與進度都不得帶入檔名、頁面內容或密碼。
 7. 解密後匯出的檔案不再有原本的密碼保護，介面必須在下載前說明。
-8. 使用者主動保存的簽名是本機資產（ADR-0007），不進入雲端偏好。
+8. 使用者主動保存的簽名是本機資產（ADR-0007），不進入雲端偏好。規格 §12.12 要求的明確保存、刪除、可安全的匯出入與儲存用量，由既有的 `app/features/shell/local-assets/` 提供（`repository.ts` 的配額與用量、`transfer.ts` 的匯出入），不要另建一套。
 9. 三種簽名形式在嵌入前都轉成帶 alpha 的 PNG（§6.5）；不要為了「輸入文字」而嵌入字型。
 10. 權限位元不允許修改時以 `modification_not_permitted` 停止，不要當成損毀檔（§7.2）。
 11. 解析器行為沿用 `pdfSignatureParserPolicy`，七個開關都必須維持關閉（§7.3）。

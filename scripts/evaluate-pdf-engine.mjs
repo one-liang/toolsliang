@@ -136,14 +136,14 @@ async function prepareCandidate(candidate, files) {
 
 function startServer(files) {
   /*
-   * Every path the browser asks for, so a job can be checked against what it was
-   * supposed to need. A document that persuaded an engine to fetch something
-   * would appear here, and so would a library reaching for a CDN.
+   * The paths actually served. The per-job check is made from the browser's own
+   * request events, which see every origin; this list is the cross-check that
+   * the two agree about what the harness was asked for.
    */
-  const requested = []
+  const served = []
   const server = createServer(async (request, response) => {
     const path = new URL(request.url, 'http://localhost').pathname
-    requested.push(path)
+    served.push(path)
     /* Chromium asks for this on its own; without a route it lands in the harness console. */
     if (path === '/favicon.ico') {
       response.writeHead(204).end()
@@ -165,7 +165,7 @@ function startServer(files) {
   })
 
   return new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => resolve({ server, requested, port: server.address().port }))
+    server.listen(0, '127.0.0.1', () => resolve({ server, served, port: server.address().port }))
   })
 }
 
@@ -245,8 +245,15 @@ async function loadRuns(browser) {
   return runs
 }
 
-async function openHarness(browser, port, messages) {
+async function openHarness(browser, port, messages, requested = []) {
   const page = await browser.newPage()
+  /*
+   * Context level, and the full URL. The server's own log only sees what it was
+   * asked to serve, so a document that persuaded an engine to fetch something
+   * elsewhere would leave no trace there. This sees every request the browser
+   * makes, including from workers, to any origin.
+   */
+  page.context().on('request', request => requested.push(request.url()))
   page.on('pageerror', error => messages.push(String(error).slice(0, 200)))
   page.on('console', message => {
     if (message.type() === 'error') messages.push(message.text().slice(0, 200))
@@ -256,10 +263,11 @@ async function openHarness(browser, port, messages) {
   return page
 }
 
-async function runJob(browserName, browser, port, requested, messages, payload, label) {
+async function runJob(browserName, browser, port, served, messages, payload, label) {
   process.stdout.write(`  ${label}\n`)
-  requested.length = 0
-  const page = await openHarness(browser, port, messages)
+  served.length = 0
+  const requested = []
+  const page = await openHarness(browser, port, messages, requested)
   await page.bringToFront()
 
   const started = Date.now()
@@ -278,19 +286,34 @@ async function runJob(browserName, browser, port, requested, messages, payload, 
   await page.close()
 
   /*
-   * What the job was allowed to ask for. Anything else — a path from a
-   * document's action, a library reaching past the files it was given — is
-   * recorded rather than judged here.
+   * What the job was allowed to ask for. Anything else — the address a
+   * document's link action points at, a library reaching past the files it was
+   * given — is recorded rather than judged here.
    */
+  const origin = `http://127.0.0.1:${port}`
   const expected = new Set(['/harness.html', '/favicon.ico', '/lib/harness/placement.mjs',
-    payload.fixture.url, ...Object.values(payload.candidate.urls), ...Object.values(payload.verifierUrls)])
-  report.unexpectedRequests = [...new Set(requested.filter(path => !expected.has(path)))]
+    payload.fixture.url, ...Object.values(payload.candidate.urls), ...Object.values(payload.verifierUrls)]
+    .map(path => `${origin}${path}`))
+  report.unexpectedRequests = [...new Set(requested
+    .map(url => url.replace(/[?#].*$/, ''))
+    .filter(url => !expected.has(url)))]
+  /*
+   * Anything the harness served that the browser never reported asking for. If
+   * the request events were missing traffic, the check above would be blind to
+   * the same extent, so this is recorded rather than filtered: the one entry it
+   * ever contains is the favicon, which Chromium and Firefox fetch outside the
+   * page's own request pipeline. Nothing is excluded here, so a second kind of
+   * blind spot would show up instead of being swept away.
+   */
+  report.unservedMismatch = served
+    .map(path => `${origin}${path}`)
+    .filter(url => !requested.some(asked => asked.replace(/[?#].*$/, '') === url))
 
   await writeFile(runPath(browserName, report.candidateId, report.fixture, report.variant), `${JSON.stringify(report, null, 2)}\n`)
   return report
 }
 
-async function evaluateBrowser(name, port, requested, fixtures, prepared, verifierUrls) {
+async function evaluateBrowser(name, port, served, fixtures, prepared, verifierUrls) {
   const messages = []
   const recorded = await loadRuns(name)
   const runs = [...recorded]
@@ -314,8 +337,8 @@ async function evaluateBrowser(name, port, requested, fixtures, prepared, verifi
           && entry.fixture === job.fixture.name && entry.variant === job.variant)
         if (already) continue
 
-        runs.push(await runJob(name, browser, port, requested, messages, {
-          candidate: { id: candidate.id, urls: prepared.get(candidate.id).urls },
+        runs.push(await runJob(name, browser, port, served, messages, {
+          candidate: { id: candidate.id, roles: candidate.roles, urls: prepared.get(candidate.id).urls },
           fixture: { name: job.fixture.name, url: `/fixtures/${job.fixture.name}.pdf`, expectation: job.fixture.expectation },
           operations: job.operations,
           variant: job.variant,
@@ -376,12 +399,12 @@ async function main() {
    * the independent reader that says whether a written file is still a PDF. */
   const verifierUrls = prepared.get('pdfjs-dist').urls
 
-  const { server, requested, port } = await startServer(files)
+  const { server, served, port } = await startServer(files)
   const browserReports = []
   try {
     for (const name of browsers) {
       process.stdout.write(`${name}\n`)
-      browserReports.push(await evaluateBrowser(name, port, requested, fixtures, prepared, verifierUrls))
+      browserReports.push(await evaluateBrowser(name, port, served, fixtures, prepared, verifierUrls))
     }
   }
   finally {

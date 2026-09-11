@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-09-10",
+  "measuredAt": "2026-09-11",
   "host": {
     "platform": "darwin",
     "arch": "arm64",
@@ -353,14 +353,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
-            "openMs": 38,
-            "firstPagePreviewMs": 17,
-            "lastPagePreviewMs": 17
+            "libraryLoadMs": 13,
+            "openMs": 40,
+            "firstPagePreviewMs": 25,
+            "lastPagePreviewMs": 15
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 21611328,
           "pageCount": 20,
@@ -379,10 +380,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 55146682,
+          "memoryBytes": 55162047,
           "activeContentRan": false,
-          "wallClockMs": 17151,
-          "unexpectedRequests": []
+          "wallClockMs": 16155,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -390,14 +394,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 10,
-            "openMs": 30,
+            "libraryLoadMs": 47,
+            "openMs": 31,
             "firstPagePreviewMs": 3,
-            "lastPagePreviewMs": 9
+            "lastPagePreviewMs": 3
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1592,
           "pageCount": 4,
@@ -416,10 +421,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 11837731,
+          "memoryBytes": 11830043,
           "activeContentRan": false,
-          "wallClockMs": 14083,
-          "unexpectedRequests": []
+          "wallClockMs": 15106,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -427,14 +435,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 49,
-            "openMs": 30,
-            "firstPagePreviewMs": 7,
-            "lastPagePreviewMs": 16
+            "libraryLoadMs": 12,
+            "openMs": 29,
+            "firstPagePreviewMs": 19,
+            "lastPagePreviewMs": 18
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 980,
           "pageCount": 2,
@@ -453,10 +462,13 @@
             "width": 743,
             "height": 1053
           },
-          "memoryBytes": 10441053,
+          "memoryBytes": 10440827,
           "activeContentRan": false,
-          "wallClockMs": 15129,
-          "unexpectedRequests": []
+          "wallClockMs": 18101,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -466,12 +478,13 @@
           "stages": {
             "libraryLoadMs": 11,
             "openMs": 30,
-            "firstPagePreviewMs": 8,
+            "firstPagePreviewMs": 12,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 996,
           "pageCount": 3,
@@ -490,10 +503,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 11865507,
+          "memoryBytes": 11869713,
           "activeContentRan": false,
-          "wallClockMs": 10086,
-          "unexpectedRequests": []
+          "wallClockMs": 17092,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -502,13 +518,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 11,
-            "openMs": 35,
-            "firstPagePreviewMs": 19,
-            "lastPagePreviewMs": 12
+            "openMs": 34,
+            "firstPagePreviewMs": 10,
+            "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 60511308,
           "pageCount": 56,
@@ -527,10 +544,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 132985914,
+          "memoryBytes": 132986276,
           "activeContentRan": false,
-          "wallClockMs": 12174,
-          "unexpectedRequests": []
+          "wallClockMs": 11175,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -538,14 +558,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 10,
-            "openMs": 30,
-            "firstPagePreviewMs": 3,
-            "lastPagePreviewMs": 9
+            "libraryLoadMs": 11,
+            "openMs": 31,
+            "firstPagePreviewMs": 22,
+            "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 39114,
           "pageCount": 120,
@@ -564,100 +585,117 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 12090322,
+          "memoryBytes": 12090092,
           "activeContentRan": false,
-          "wallClockMs": 10081,
-          "unexpectedRequests": []
+          "wallClockMs": 17103,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
           "fixture": "encrypted-rc4-128",
-          "variant": "default",
-          "outcome": "open-failed",
-          "stages": {
-            "libraryLoadMs": 10,
-            "openMs": 31
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1190,
-          "error": {
-            "name": "PasswordException",
-            "message": "No password given"
-          },
-          "memoryBytes": 7049058,
-          "wallClockMs": 19066,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "pdfjs-dist",
-          "fixture": "encrypted-rc4-128",
-          "variant": "with-password",
-          "outcome": "ok",
-          "stages": {
-            "libraryLoadMs": 10,
-            "openMs": 30,
-            "firstPagePreviewMs": 3,
-            "lastPagePreviewMs": 2
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1190,
-          "pageCount": 2,
-          "permissions": [
-            4,
-            8,
-            16,
-            32,
-            256,
-            512,
-            1024,
-            2048
-          ],
-          "firstPage": {
-            "width": 595.28,
-            "height": 841.89,
-            "rotation": 0
-          },
-          "lastPage": {
-            "width": 595.28,
-            "height": 841.89,
-            "rotation": 0
-          },
-          "preview": {
-            "width": 893,
-            "height": 1263
-          },
-          "memoryBytes": 11866419,
-          "activeContentRan": false,
-          "wallClockMs": 17067,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "pdfjs-dist",
-          "fixture": "encrypted-aes-128",
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
             "libraryLoadMs": 13,
-            "openMs": 63
+            "openMs": 69
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1190,
+          "error": {
+            "name": "PasswordException",
+            "message": "No password given"
+          },
+          "memoryBytes": 7059375,
+          "activeContentRan": false,
+          "wallClockMs": 14104,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "pdfjs-dist",
+          "fixture": "encrypted-rc4-128",
+          "variant": "with-password",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 13,
+            "openMs": 66,
+            "firstPagePreviewMs": 3,
+            "lastPagePreviewMs": 4
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1190,
+          "pageCount": 2,
+          "permissions": [
+            4,
+            8,
+            16,
+            32,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "firstPage": {
+            "width": 595.28,
+            "height": 841.89,
+            "rotation": 0
+          },
+          "lastPage": {
+            "width": 595.28,
+            "height": 841.89,
+            "rotation": 0
+          },
+          "preview": {
+            "width": 893,
+            "height": 1263
+          },
+          "memoryBytes": 11860699,
+          "activeContentRan": false,
+          "wallClockMs": 10109,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "pdfjs-dist",
+          "fixture": "encrypted-aes-128",
+          "variant": "default",
+          "outcome": "open-failed",
+          "stages": {
+            "libraryLoadMs": 11,
+            "openMs": 31
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "error": {
             "name": "PasswordException",
             "message": "No password given"
           },
-          "memoryBytes": 7061069,
-          "wallClockMs": 19099,
-          "unexpectedRequests": []
+          "memoryBytes": 7060853,
+          "activeContentRan": false,
+          "wallClockMs": 18071,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -665,14 +703,15 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 48,
+            "libraryLoadMs": 11,
             "openMs": 31,
-            "firstPagePreviewMs": 6,
-            "lastPagePreviewMs": 14
+            "firstPagePreviewMs": 3,
+            "lastPagePreviewMs": 17
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "pageCount": 2,
@@ -700,10 +739,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 11873642,
+          "memoryBytes": 11880925,
           "activeContentRan": false,
-          "wallClockMs": 16111,
-          "unexpectedRequests": []
+          "wallClockMs": 19087,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -711,14 +753,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 11,
-            "openMs": 30,
-            "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 17
+            "libraryLoadMs": 42,
+            "openMs": 34,
+            "firstPagePreviewMs": 3,
+            "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -744,10 +787,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 11881233,
+          "memoryBytes": 11883835,
           "activeContentRan": false,
-          "wallClockMs": 19085,
-          "unexpectedRequests": []
+          "wallClockMs": 10106,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -755,14 +801,15 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 11,
-            "openMs": 31,
-            "firstPagePreviewMs": 4,
+            "libraryLoadMs": 10,
+            "openMs": 29,
+            "firstPagePreviewMs": 19,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -788,10 +835,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 11886915,
+          "memoryBytes": 11886797,
           "activeContentRan": false,
-          "wallClockMs": 19081,
-          "unexpectedRequests": []
+          "wallClockMs": 12097,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -799,13 +849,14 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 17,
-            "openMs": 29,
-            "firstPagePreviewMs": 14
+            "libraryLoadMs": 10,
+            "openMs": 30,
+            "firstPagePreviewMs": 13
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1400,
           "pageCount": 1,
@@ -819,10 +870,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 11846731,
+          "memoryBytes": 11830708,
           "activeContentRan": false,
-          "wallClockMs": 19082,
-          "unexpectedRequests": []
+          "wallClockMs": 10075,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -830,14 +884,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 11,
+            "libraryLoadMs": 10,
             "openMs": 30,
-            "firstPagePreviewMs": 5,
+            "firstPagePreviewMs": 15,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 952,
           "pageCount": 2,
@@ -856,10 +911,13 @@
             "width": 893,
             "height": 1263
           },
-          "memoryBytes": 11842901,
+          "memoryBytes": 11843215,
           "activeContentRan": false,
-          "wallClockMs": 10084,
-          "unexpectedRequests": []
+          "wallClockMs": 17094,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -867,21 +925,26 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 27,
-            "openMs": 116
+            "libraryLoadMs": 11,
+            "openMs": 112
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 12966796,
           "error": {
             "name": "InvalidPDFException",
             "message": "Invalid PDF structure."
           },
-          "memoryBytes": 33060733,
-          "wallClockMs": 10190,
-          "unexpectedRequests": []
+          "memoryBytes": 33060647,
+          "activeContentRan": false,
+          "wallClockMs": 14164,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -889,14 +952,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 20,
+            "libraryLoadMs": 25,
             "openMs": 5,
-            "firstPagePreviewMs": 20,
+            "firstPagePreviewMs": 22,
             "lastPagePreviewMs": 8
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 21611328,
           "pageCount": 20,
@@ -914,10 +978,13 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 69038848,
+          "memoryBytes": 69039090,
           "activeContentRan": false,
-          "wallClockMs": 1009,
-          "unexpectedRequests": []
+          "wallClockMs": 963,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -925,14 +992,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 20,
+            "libraryLoadMs": 44,
             "openMs": 1,
             "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1592,
           "pageCount": 4,
@@ -950,10 +1018,13 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 25530384,
+          "memoryBytes": 25530334,
           "activeContentRan": false,
-          "wallClockMs": 532,
-          "unexpectedRequests": []
+          "wallClockMs": 549,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -961,14 +1032,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 1,
             "firstPagePreviewMs": 4,
-            "lastPagePreviewMs": 3
+            "lastPagePreviewMs": 2
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 980,
           "pageCount": 2,
@@ -986,10 +1058,13 @@
             "width": 742,
             "height": 1053
           },
-          "memoryBytes": 24155714,
+          "memoryBytes": 24155664,
           "activeContentRan": false,
-          "wallClockMs": 531,
-          "unexpectedRequests": []
+          "wallClockMs": 540,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -997,14 +1072,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
+            "libraryLoadMs": 17,
             "openMs": 2,
             "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 3
+            "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 996,
           "pageCount": 3,
@@ -1022,10 +1098,13 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 25520084,
+          "memoryBytes": 25531398,
           "activeContentRan": false,
-          "wallClockMs": 523,
-          "unexpectedRequests": []
+          "wallClockMs": 556,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -1033,14 +1112,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
+            "libraryLoadMs": 18,
             "openMs": 10,
-            "firstPagePreviewMs": 19,
+            "firstPagePreviewMs": 20,
             "lastPagePreviewMs": 8
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 60511308,
           "pageCount": 56,
@@ -1058,10 +1138,13 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 142279484,
+          "memoryBytes": 142279502,
           "activeContentRan": false,
-          "wallClockMs": 14156,
-          "unexpectedRequests": []
+          "wallClockMs": 13147,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -1069,14 +1152,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 19,
             "openMs": 1,
             "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 3
+            "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 39114,
           "pageCount": 120,
@@ -1094,141 +1178,203 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 25567897,
+          "memoryBytes": 25556195,
+          "activeContentRan": false,
+          "wallClockMs": 969,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-rc4-128",
+          "variant": "default",
+          "outcome": "open-failed",
+          "stages": {
+            "libraryLoadMs": 46,
+            "openMs": 1
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1190,
+          "error": {
+            "name": "Error",
+            "message": "Password required or incorrect password"
+          },
+          "memoryBytes": 20990214,
+          "activeContentRan": false,
+          "wallClockMs": 1010,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-rc4-128",
+          "variant": "with-password",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 44,
+            "openMs": 2,
+            "firstPagePreviewMs": 5,
+            "lastPagePreviewMs": 3
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1190,
+          "pageCount": 2,
+          "firstPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "lastPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "preview": {
+            "width": 892,
+            "height": 1261
+          },
+          "memoryBytes": 25526012,
+          "activeContentRan": false,
+          "wallClockMs": 1010,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-aes-128",
+          "variant": "default",
+          "outcome": "open-failed",
+          "stages": {
+            "libraryLoadMs": 16,
+            "openMs": 1
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1339,
+          "error": {
+            "name": "Error",
+            "message": "Password required or incorrect password"
+          },
+          "memoryBytes": 20990852,
+          "activeContentRan": false,
+          "wallClockMs": 966,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-aes-128",
+          "variant": "with-password",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 19,
+            "openMs": 2,
+            "firstPagePreviewMs": 5,
+            "lastPagePreviewMs": 3
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1339,
+          "pageCount": 2,
+          "firstPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "lastPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "preview": {
+            "width": 892,
+            "height": 1261
+          },
+          "memoryBytes": 25526253,
+          "activeContentRan": false,
+          "wallClockMs": 972,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "owner-password-restricted",
+          "variant": "default",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 18,
+            "openMs": 2,
+            "firstPagePreviewMs": 5,
+            "lastPagePreviewMs": 4
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1340,
+          "pageCount": 2,
+          "firstPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "lastPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "preview": {
+            "width": 892,
+            "height": 1261
+          },
+          "memoryBytes": 25521662,
           "activeContentRan": false,
           "wallClockMs": 535,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-rc4-128",
-          "variant": "default",
-          "outcome": "open-failed",
-          "stages": {
-            "libraryLoadMs": 49,
-            "openMs": 2
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1190,
-          "error": {
-            "name": "Error",
-            "message": "Password required or incorrect password"
-          },
-          "memoryBytes": 21002236,
-          "wallClockMs": 537,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-rc4-128",
-          "variant": "with-password",
-          "outcome": "ok",
-          "stages": {
-            "libraryLoadMs": 19,
-            "openMs": 2,
-            "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 3
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1190,
-          "pageCount": 2,
-          "firstPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "lastPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "preview": {
-            "width": 892,
-            "height": 1261
-          },
-          "memoryBytes": 25537718,
-          "activeContentRan": false,
-          "wallClockMs": 533,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-aes-128",
-          "variant": "default",
-          "outcome": "open-failed",
-          "stages": {
-            "libraryLoadMs": 19,
-            "openMs": 2
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1339,
-          "error": {
-            "name": "Error",
-            "message": "Password required or incorrect password"
-          },
-          "memoryBytes": 21002554,
-          "wallClockMs": 489,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-aes-128",
-          "variant": "with-password",
-          "outcome": "ok",
-          "stages": {
-            "libraryLoadMs": 49,
-            "openMs": 2,
-            "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 3
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1339,
-          "pageCount": 2,
-          "firstPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "lastPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "preview": {
-            "width": 892,
-            "height": 1261
-          },
-          "memoryBytes": 25537959,
-          "activeContentRan": false,
-          "wallClockMs": 548,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
           "fixture": "owner-password-restricted",
-          "variant": "default",
+          "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 25,
+            "libraryLoadMs": 46,
             "openMs": 2,
             "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 4
+            "lastPagePreviewMs": 3
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -1246,46 +1392,13 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 25521712,
+          "memoryBytes": 25520490,
           "activeContentRan": false,
-          "wallClockMs": 528,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "owner-password-restricted",
-          "variant": "with-password",
-          "outcome": "ok",
-          "stages": {
-            "libraryLoadMs": 17,
-            "openMs": 2,
-            "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 4
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1340,
-          "pageCount": 2,
-          "firstPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "lastPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "preview": {
-            "width": 892,
-            "height": 1261
-          },
-          "memoryBytes": 25533036,
-          "activeContentRan": false,
-          "wallClockMs": 523,
-          "unexpectedRequests": []
+          "wallClockMs": 598,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -1293,13 +1406,14 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
+            "libraryLoadMs": 17,
             "openMs": 1,
-            "firstPagePreviewMs": 6
+            "firstPagePreviewMs": 5
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1400,
           "pageCount": 1,
@@ -1312,10 +1426,13 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 25535297,
+          "memoryBytes": 25523595,
           "activeContentRan": false,
-          "wallClockMs": 535,
-          "unexpectedRequests": []
+          "wallClockMs": 968,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -1323,14 +1440,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 2,
             "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 4
+            "lastPagePreviewMs": 3
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 952,
           "pageCount": 2,
@@ -1348,10 +1466,13 @@
             "width": 892,
             "height": 1261
           },
-          "memoryBytes": 25529970,
+          "memoryBytes": 25518556,
           "activeContentRan": false,
-          "wallClockMs": 536,
-          "unexpectedRequests": []
+          "wallClockMs": 967,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -1359,21 +1480,26 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 34,
             "openMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 12966796,
           "error": {
             "name": "Error",
             "message": "File not in PDF format or corrupted"
           },
-          "memoryBytes": 46931700,
-          "wallClockMs": 531,
-          "unexpectedRequests": []
+          "memoryBytes": 46919682,
+          "activeContentRan": false,
+          "wallClockMs": 1010,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1381,11 +1507,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 11,
+            "libraryLoadMs": 32,
             "openMs": 6,
             "applyMs": 5,
-            "exportMs": 30,
-            "verifyMs": 305
+            "exportMs": 29,
+            "verifyMs": 306
           },
           "roles": [
             "parse",
@@ -1416,7 +1542,7 @@
             ]
           },
           "exportBytes": 21615514,
-          "memoryBytes": 69011247,
+          "memoryBytes": 69013619,
           "verify": {
             "firstPage": {
               "pageCount": 20,
@@ -1453,8 +1579,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 11454,
-          "unexpectedRequests": []
+          "wallClockMs": 15476,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1462,11 +1591,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 10,
-            "openMs": 1,
-            "applyMs": 4,
+            "libraryLoadMs": 12,
+            "openMs": 2,
+            "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 280
+            "verifyMs": 287
           },
           "roles": [
             "parse",
@@ -1497,7 +1626,7 @@
             ]
           },
           "exportBytes": 5772,
-          "memoryBytes": 4114487,
+          "memoryBytes": 4113225,
           "verify": {
             "firstPage": {
               "pageCount": 4,
@@ -1534,8 +1663,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 11367,
-          "unexpectedRequests": []
+          "wallClockMs": 15373,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1547,7 +1679,7 @@
             "openMs": 1,
             "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 234
+            "verifyMs": 202
           },
           "roles": [
             "parse",
@@ -1578,7 +1710,7 @@
             ]
           },
           "exportBytes": 5099,
-          "memoryBytes": 4102671,
+          "memoryBytes": 4083461,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -1610,8 +1742,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 10318,
-          "unexpectedRequests": []
+          "wallClockMs": 14278,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1619,11 +1754,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 11,
+            "libraryLoadMs": 10,
             "openMs": 2,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 278
+            "verifyMs": 283
           },
           "roles": [
             "parse",
@@ -1654,7 +1789,7 @@
             ]
           },
           "exportBytes": 5411,
-          "memoryBytes": 4150604,
+          "memoryBytes": 4162069,
           "verify": {
             "firstPage": {
               "pageCount": 3,
@@ -1691,8 +1826,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 12363,
-          "unexpectedRequests": []
+          "wallClockMs": 16361,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1701,10 +1839,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 11,
-            "openMs": 12,
+            "openMs": 13,
             "applyMs": 4,
             "exportMs": 66,
-            "verifyMs": 361
+            "verifyMs": 327
           },
           "roles": [
             "parse",
@@ -1735,7 +1873,7 @@
             ]
           },
           "exportBytes": 60515656,
-          "memoryBytes": 185792951,
+          "memoryBytes": 185777815,
           "verify": {
             "firstPage": {
               "pageCount": 56,
@@ -1772,8 +1910,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 1355,
-          "unexpectedRequests": []
+          "wallClockMs": 1357,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1781,11 +1922,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 11,
+            "libraryLoadMs": 10,
             "openMs": 4,
             "applyMs": 4,
-            "exportMs": 31,
-            "verifyMs": 303
+            "exportMs": 28,
+            "verifyMs": 289
           },
           "roles": [
             "parse",
@@ -1816,7 +1957,7 @@
             ]
           },
           "exportBytes": 43628,
-          "memoryBytes": 4389294,
+          "memoryBytes": 4382100,
           "verify": {
             "firstPage": {
               "pageCount": 120,
@@ -1853,8 +1994,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 14407,
-          "unexpectedRequests": []
+          "wallClockMs": 10393,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1863,7 +2007,7 @@
           "outcome": "open-failed",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 1
+            "openMs": 2
           },
           "roles": [
             "parse",
@@ -1874,9 +2018,13 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 3666652,
-          "wallClockMs": 17036,
-          "unexpectedRequests": []
+          "memoryBytes": 3660766,
+          "activeContentRan": false,
+          "wallClockMs": 16035,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1884,8 +2032,8 @@
           "variant": "with-password",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 14,
-            "openMs": 1
+            "libraryLoadMs": 10,
+            "openMs": 2
           },
           "roles": [
             "parse",
@@ -1896,9 +2044,13 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 3674578,
-          "wallClockMs": 15037,
-          "unexpectedRequests": []
+          "memoryBytes": 3644601,
+          "activeContentRan": false,
+          "wallClockMs": 10035,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1908,9 +2060,9 @@
           "stages": {
             "libraryLoadMs": 10,
             "openMs": 1,
-            "applyMs": 4,
+            "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 209
+            "verifyMs": 203
           },
           "roles": [
             "parse",
@@ -1941,7 +2093,7 @@
             ]
           },
           "exportBytes": 5331,
-          "memoryBytes": 4104436,
+          "memoryBytes": 4098481,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -1973,8 +2125,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 13298,
-          "unexpectedRequests": []
+          "wallClockMs": 17279,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -1982,7 +2137,7 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 10,
+            "libraryLoadMs": 11,
             "openMs": 1
           },
           "roles": [
@@ -1994,9 +2149,13 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 3666472,
-          "wallClockMs": 15039,
-          "unexpectedRequests": []
+          "memoryBytes": 3667222,
+          "activeContentRan": false,
+          "wallClockMs": 15057,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -2016,9 +2175,13 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 3666375,
-          "wallClockMs": 13035,
-          "unexpectedRequests": []
+          "memoryBytes": 3655018,
+          "activeContentRan": false,
+          "wallClockMs": 14034,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -2027,10 +2190,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 2,
+            "openMs": 1,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 210
+            "verifyMs": 206
           },
           "roles": [
             "parse",
@@ -2061,7 +2224,7 @@
             ]
           },
           "exportBytes": 5479,
-          "memoryBytes": 4095118,
+          "memoryBytes": 4099776,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -2093,8 +2256,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 11300,
-          "unexpectedRequests": []
+          "wallClockMs": 10285,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -2102,29 +2268,7 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 11,
-            "openMs": 2
-          },
-          "roles": [
-            "parse",
-            "write"
-          ],
-          "inputBytes": 1340,
-          "error": {
-            "name": "Error",
-            "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
-          },
-          "memoryBytes": 3661465,
-          "wallClockMs": 17034,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "pdf-lib",
-          "fixture": "owner-password-restricted",
-          "variant": "with-password",
-          "outcome": "open-failed",
-          "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 12,
             "openMs": 1
           },
           "roles": [
@@ -2136,9 +2280,39 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 3668275,
-          "wallClockMs": 14062,
-          "unexpectedRequests": []
+          "memoryBytes": 3646523,
+          "activeContentRan": false,
+          "wallClockMs": 12057,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "pdf-lib",
+          "fixture": "owner-password-restricted",
+          "variant": "with-password",
+          "outcome": "open-failed",
+          "stages": {
+            "libraryLoadMs": 11,
+            "openMs": 1
+          },
+          "roles": [
+            "parse",
+            "write"
+          ],
+          "inputBytes": 1340,
+          "error": {
+            "name": "Error",
+            "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
+          },
+          "memoryBytes": 3644675,
+          "activeContentRan": false,
+          "wallClockMs": 12069,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -2147,10 +2321,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 1,
+            "openMs": 2,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 227
+            "verifyMs": 208
           },
           "roles": [
             "parse",
@@ -2181,7 +2355,7 @@
             ]
           },
           "exportBytes": 5480,
-          "memoryBytes": 4115732,
+          "memoryBytes": 4095715,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -2213,8 +2387,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 17309,
-          "unexpectedRequests": []
+          "wallClockMs": 14286,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -2222,11 +2399,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
+            "libraryLoadMs": 11,
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 7,
-            "verifyMs": 131
+            "verifyMs": 129
           },
           "roles": [
             "parse",
@@ -2246,7 +2423,7 @@
             ]
           },
           "exportBytes": 3582,
-          "memoryBytes": 4122629,
+          "memoryBytes": 4114643,
           "verify": {
             "firstPage": {
               "pageCount": 1,
@@ -2264,8 +2441,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 14220,
-          "unexpectedRequests": []
+          "wallClockMs": 13217,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -2273,11 +2453,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 11,
+            "libraryLoadMs": 12,
             "openMs": 1,
             "applyMs": 5,
-            "exportMs": 9,
-            "verifyMs": 217
+            "exportMs": 10,
+            "verifyMs": 210
           },
           "roles": [
             "parse",
@@ -2308,7 +2488,7 @@
             ]
           },
           "exportBytes": 5085,
-          "memoryBytes": 4105550,
+          "memoryBytes": 4098424,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -2340,8 +2520,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 17304,
-          "unexpectedRequests": []
+          "wallClockMs": 10295,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -2349,8 +2532,8 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 11,
-            "openMs": 4
+            "libraryLoadMs": 10,
+            "openMs": 5
           },
           "roles": [
             "parse",
@@ -2361,9 +2544,13 @@
             "name": "Error",
             "message": "Failed to parse PDF document (line:284 col:451 offset=12966050): Failed to parse invalid PDF object"
           },
-          "memoryBytes": 42600702,
-          "wallClockMs": 19058,
-          "unexpectedRequests": []
+          "memoryBytes": 42577875,
+          "activeContentRan": false,
+          "wallClockMs": 12059,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2371,11 +2558,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 30,
             "openMs": 6,
-            "applyMs": 4,
+            "applyMs": 5,
             "exportMs": 28,
-            "verifyMs": 310
+            "verifyMs": 293
           },
           "roles": [
             "parse",
@@ -2407,7 +2594,7 @@
             ]
           },
           "exportBytes": 21615514,
-          "memoryBytes": 69654201,
+          "memoryBytes": 69647287,
           "verify": {
             "firstPage": {
               "pageCount": 20,
@@ -2444,8 +2631,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 14510,
-          "unexpectedRequests": []
+          "wallClockMs": 18459,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2453,11 +2643,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 20,
+            "libraryLoadMs": 14,
             "openMs": 6,
             "applyMs": 5,
-            "exportMs": 11,
-            "verifyMs": 347
+            "exportMs": 10,
+            "verifyMs": 318
           },
           "roles": [
             "parse",
@@ -2489,7 +2679,7 @@
             ]
           },
           "exportBytes": 21616034,
-          "memoryBytes": 69704139,
+          "memoryBytes": 69681644,
           "verify": {
             "firstPage": {
               "pageCount": 20,
@@ -2526,8 +2716,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 13479,
-          "unexpectedRequests": []
+          "wallClockMs": 15428,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2539,7 +2732,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 290
+            "verifyMs": 287
           },
           "roles": [
             "parse",
@@ -2571,7 +2764,7 @@
             ]
           },
           "exportBytes": 5772,
-          "memoryBytes": 4754633,
+          "memoryBytes": 4759792,
           "verify": {
             "firstPage": {
               "pageCount": 4,
@@ -2608,8 +2801,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 19375,
-          "unexpectedRequests": []
+          "wallClockMs": 11368,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2617,11 +2813,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 12,
             "openMs": 1,
             "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 310
+            "verifyMs": 275
           },
           "roles": [
             "parse",
@@ -2653,7 +2849,7 @@
             ]
           },
           "exportBytes": 6300,
-          "memoryBytes": 4805384,
+          "memoryBytes": 4799390,
           "verify": {
             "firstPage": {
               "pageCount": 4,
@@ -2690,8 +2886,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 18398,
-          "unexpectedRequests": []
+          "wallClockMs": 10361,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2701,9 +2900,9 @@
           "stages": {
             "libraryLoadMs": 13,
             "openMs": 1,
-            "applyMs": 4,
-            "exportMs": 8,
-            "verifyMs": 228
+            "applyMs": 5,
+            "exportMs": 9,
+            "verifyMs": 190
           },
           "roles": [
             "parse",
@@ -2735,7 +2934,7 @@
             ]
           },
           "exportBytes": 5099,
-          "memoryBytes": 4727845,
+          "memoryBytes": 4725204,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -2767,8 +2966,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 16308,
-          "unexpectedRequests": []
+          "wallClockMs": 17267,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2776,11 +2978,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 14,
             "openMs": 1,
             "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 230
+            "verifyMs": 192
           },
           "roles": [
             "parse",
@@ -2812,7 +3014,7 @@
             ]
           },
           "exportBytes": 5667,
-          "memoryBytes": 4787614,
+          "memoryBytes": 4774296,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -2844,8 +3046,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 11309,
-          "unexpectedRequests": []
+          "wallClockMs": 12279,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2853,11 +3058,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 46,
             "openMs": 2,
             "applyMs": 4,
-            "exportMs": 8,
-            "verifyMs": 305
+            "exportMs": 9,
+            "verifyMs": 275
           },
           "roles": [
             "parse",
@@ -2889,7 +3094,7 @@
             ]
           },
           "exportBytes": 5417,
-          "memoryBytes": 4786305,
+          "memoryBytes": 4785391,
           "verify": {
             "firstPage": {
               "pageCount": 3,
@@ -2926,8 +3131,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 15393,
-          "unexpectedRequests": []
+          "wallClockMs": 19391,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -2939,7 +3147,7 @@
             "openMs": 2,
             "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 311
+            "verifyMs": 284
           },
           "roles": [
             "parse",
@@ -2971,7 +3179,7 @@
             ]
           },
           "exportBytes": 5672,
-          "memoryBytes": 4850285,
+          "memoryBytes": 4838981,
           "verify": {
             "firstPage": {
               "pageCount": 3,
@@ -3008,8 +3216,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 12390,
-          "unexpectedRequests": []
+          "wallClockMs": 16363,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3018,10 +3229,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 13,
-            "openMs": 14,
-            "applyMs": 4,
+            "openMs": 13,
+            "applyMs": 5,
             "exportMs": 65,
-            "verifyMs": 369
+            "verifyMs": 331
           },
           "roles": [
             "parse",
@@ -3053,7 +3264,7 @@
             ]
           },
           "exportBytes": 60515656,
-          "memoryBytes": 186429998,
+          "memoryBytes": 186438216,
           "verify": {
             "firstPage": {
               "pageCount": 56,
@@ -3090,8 +3301,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 1408,
-          "unexpectedRequests": []
+          "wallClockMs": 1331,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3103,7 +3317,7 @@
             "openMs": 13,
             "applyMs": 6,
             "exportMs": 14,
-            "verifyMs": 358
+            "verifyMs": 323
           },
           "roles": [
             "parse",
@@ -3135,7 +3349,7 @@
             ]
           },
           "exportBytes": 60516037,
-          "memoryBytes": 186464110,
+          "memoryBytes": 186447494,
           "verify": {
             "firstPage": {
               "pageCount": 56,
@@ -3172,8 +3386,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 1354,
-          "unexpectedRequests": []
+          "wallClockMs": 1357,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3181,11 +3398,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 45,
             "openMs": 4,
             "applyMs": 4,
             "exportMs": 30,
-            "verifyMs": 308
+            "verifyMs": 282
           },
           "roles": [
             "parse",
@@ -3217,7 +3434,7 @@
             ]
           },
           "exportBytes": 43628,
-          "memoryBytes": 5056103,
+          "memoryBytes": 5037949,
           "verify": {
             "firstPage": {
               "pageCount": 120,
@@ -3254,8 +3471,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 19426,
-          "unexpectedRequests": []
+          "wallClockMs": 12420,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3263,11 +3483,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 14,
+            "libraryLoadMs": 15,
             "openMs": 4,
             "applyMs": 6,
             "exportMs": 11,
-            "verifyMs": 301
+            "verifyMs": 288
           },
           "roles": [
             "parse",
@@ -3299,7 +3519,7 @@
             ]
           },
           "exportBytes": 43813,
-          "memoryBytes": 5071756,
+          "memoryBytes": 5053578,
           "verify": {
             "firstPage": {
               "pageCount": 120,
@@ -3336,8 +3556,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 11390,
-          "unexpectedRequests": []
+          "wallClockMs": 11372,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3358,9 +3581,13 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 4288002,
-          "wallClockMs": 13040,
-          "unexpectedRequests": []
+          "memoryBytes": 4291048,
+          "activeContentRan": false,
+          "wallClockMs": 15040,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3368,11 +3595,11 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
-            "openMs": 3,
+            "libraryLoadMs": 13,
+            "openMs": 2,
             "applyMs": 4,
-            "exportMs": 9,
-            "verifyMs": 214
+            "exportMs": 8,
+            "verifyMs": 204
           },
           "roles": [
             "parse",
@@ -3404,7 +3631,7 @@
             ]
           },
           "exportBytes": 5316,
-          "memoryBytes": 4815667,
+          "memoryBytes": 4793392,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -3436,8 +3663,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 10304,
-          "unexpectedRequests": []
+          "wallClockMs": 17286,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3449,7 +3679,7 @@
             "openMs": 3,
             "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 215
+            "verifyMs": 211
           },
           "roles": [
             "parse",
@@ -3481,7 +3711,7 @@
             ]
           },
           "exportBytes": 5860,
-          "memoryBytes": 4863413,
+          "memoryBytes": 4848255,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -3513,8 +3743,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 13304,
-          "unexpectedRequests": []
+          "wallClockMs": 14292,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3535,9 +3768,13 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 4291409,
-          "wallClockMs": 14040,
-          "unexpectedRequests": []
+          "memoryBytes": 4282900,
+          "activeContentRan": false,
+          "wallClockMs": 12040,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3545,11 +3782,11 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 12,
             "openMs": 3,
             "applyMs": 4,
-            "exportMs": 8,
-            "verifyMs": 199
+            "exportMs": 9,
+            "verifyMs": 203
           },
           "roles": [
             "parse",
@@ -3581,7 +3818,7 @@
             ]
           },
           "exportBytes": 5366,
-          "memoryBytes": 4828957,
+          "memoryBytes": 4831855,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -3613,8 +3850,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 15290,
-          "unexpectedRequests": []
+          "wallClockMs": 18286,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3622,11 +3862,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
+            "libraryLoadMs": 15,
             "openMs": 3,
             "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 200
+            "verifyMs": 209
           },
           "roles": [
             "parse",
@@ -3658,7 +3898,7 @@
             ]
           },
           "exportBytes": 6010,
-          "memoryBytes": 4895508,
+          "memoryBytes": 4888560,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -3690,8 +3930,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 12290,
-          "unexpectedRequests": []
+          "wallClockMs": 12300,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3699,7 +3942,7 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 12,
             "openMs": 1
           },
           "roles": [
@@ -3712,9 +3955,13 @@
             "name": "Error",
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
-          "memoryBytes": 4282963,
-          "wallClockMs": 19040,
-          "unexpectedRequests": []
+          "memoryBytes": 4300172,
+          "activeContentRan": false,
+          "wallClockMs": 15035,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3726,7 +3973,7 @@
             "openMs": 3,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 214
+            "verifyMs": 192
           },
           "roles": [
             "parse",
@@ -3758,7 +4005,7 @@
             ]
           },
           "exportBytes": 5367,
-          "memoryBytes": 4840868,
+          "memoryBytes": 4837794,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -3790,8 +4037,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 16304,
-          "unexpectedRequests": []
+          "wallClockMs": 10270,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3799,11 +4049,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 14,
             "openMs": 3,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 213
+            "verifyMs": 212
           },
           "roles": [
             "parse",
@@ -3835,7 +4085,7 @@
             ]
           },
           "exportBytes": 6011,
-          "memoryBytes": 4899240,
+          "memoryBytes": 4877490,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -3867,8 +4117,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 18304,
-          "unexpectedRequests": []
+          "wallClockMs": 12329,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3876,11 +4129,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
+            "libraryLoadMs": 15,
             "openMs": 1,
             "applyMs": 4,
-            "exportMs": 6,
-            "verifyMs": 103
+            "exportMs": 7,
+            "verifyMs": 130
           },
           "roles": [
             "parse",
@@ -3901,7 +4154,7 @@
             ]
           },
           "exportBytes": 3582,
-          "memoryBytes": 4744043,
+          "memoryBytes": 4737285,
           "verify": {
             "firstPage": {
               "pageCount": 1,
@@ -3919,8 +4172,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 13190,
-          "unexpectedRequests": []
+          "wallClockMs": 11217,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3928,11 +4184,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
+            "libraryLoadMs": 13,
             "openMs": 1,
             "applyMs": 4,
-            "exportMs": 6,
-            "verifyMs": 120
+            "exportMs": 7,
+            "verifyMs": 131
           },
           "roles": [
             "parse",
@@ -3953,7 +4209,7 @@
             ]
           },
           "exportBytes": 4145,
-          "memoryBytes": 4788477,
+          "memoryBytes": 4765104,
           "verify": {
             "firstPage": {
               "pageCount": 1,
@@ -3971,8 +4227,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 17205,
-          "unexpectedRequests": []
+          "wallClockMs": 14209,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -3980,11 +4239,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 16,
+            "libraryLoadMs": 15,
             "openMs": 1,
             "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 214
+            "verifyMs": 195
           },
           "roles": [
             "parse",
@@ -4016,7 +4275,7 @@
             ]
           },
           "exportBytes": 5085,
-          "memoryBytes": 4734440,
+          "memoryBytes": 4727390,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -4048,8 +4307,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 14311,
-          "unexpectedRequests": []
+          "wallClockMs": 12279,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -4057,11 +4319,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
+            "libraryLoadMs": 15,
             "openMs": 1,
-            "applyMs": 4,
+            "applyMs": 5,
             "exportMs": 9,
-            "verifyMs": 213
+            "verifyMs": 205
           },
           "roles": [
             "parse",
@@ -4093,7 +4355,7 @@
             ]
           },
           "exportBytes": 5619,
-          "memoryBytes": 4779462,
+          "memoryBytes": 4769203,
           "verify": {
             "firstPage": {
               "pageCount": 2,
@@ -4125,8 +4387,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 19300,
-          "unexpectedRequests": []
+          "wallClockMs": 16297,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -4135,10 +4400,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 13,
-            "openMs": 5,
+            "openMs": 6,
             "applyMs": 4,
             "exportMs": 19,
-            "verifyMs": 124
+            "verifyMs": 121
           },
           "roles": [
             "parse",
@@ -4170,7 +4435,7 @@
             ]
           },
           "exportBytes": 12971052,
-          "memoryBytes": 43711225,
+          "memoryBytes": 43707809,
           "verify": {
             "failed": {
               "name": "InvalidPDFException",
@@ -4178,8 +4443,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 16248,
-          "unexpectedRequests": []
+          "wallClockMs": 15272,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         }
       ]
     },
@@ -4202,14 +4470,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 22,
-            "openMs": 58,
-            "firstPagePreviewMs": 12,
+            "libraryLoadMs": 23,
+            "openMs": 52,
+            "firstPagePreviewMs": 3,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 21611328,
           "pageCount": 20,
@@ -4230,8 +4499,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 134,
-          "unexpectedRequests": []
+          "wallClockMs": 119,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4239,14 +4511,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
+            "libraryLoadMs": 20,
             "openMs": 46,
-            "firstPagePreviewMs": 7,
+            "firstPagePreviewMs": 12,
             "lastPagePreviewMs": 17
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1592,
           "pageCount": 4,
@@ -4267,8 +4540,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 93,
-          "unexpectedRequests": []
+          "wallClockMs": 98,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4276,14 +4552,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
-            "openMs": 45,
-            "firstPagePreviewMs": 5,
+            "libraryLoadMs": 21,
+            "openMs": 48,
+            "firstPagePreviewMs": 18,
             "lastPagePreviewMs": 17
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 980,
           "pageCount": 2,
@@ -4304,8 +4581,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 88,
-          "unexpectedRequests": []
+          "wallClockMs": 106,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4313,14 +4593,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 20,
-            "openMs": 47,
-            "firstPagePreviewMs": 3,
-            "lastPagePreviewMs": 17
+            "libraryLoadMs": 19,
+            "openMs": 46,
+            "firstPagePreviewMs": 16,
+            "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 996,
           "pageCount": 3,
@@ -4341,8 +4622,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 90,
-          "unexpectedRequests": []
+          "wallClockMs": 101,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4351,13 +4635,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 25,
-            "openMs": 54,
-            "firstPagePreviewMs": 14,
+            "openMs": 56,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 60511308,
           "pageCount": 56,
@@ -4378,8 +4663,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 156,
-          "unexpectedRequests": []
+          "wallClockMs": 154,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4387,14 +4675,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 21,
+            "libraryLoadMs": 20,
             "openMs": 48,
-            "firstPagePreviewMs": 15,
+            "firstPagePreviewMs": 13,
             "lastPagePreviewMs": 17
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 39114,
           "pageCount": 120,
@@ -4415,45 +4704,54 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 105,
-          "unexpectedRequests": []
+          "wallClockMs": 100,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
           "fixture": "encrypted-rc4-128",
           "variant": "default",
           "outcome": "open-failed",
-          "stages": {
-            "libraryLoadMs": 21,
-            "openMs": 46
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1190,
-          "error": {
-            "name": "PasswordException",
-            "message": "No password given"
-          },
-          "memoryBytes": null,
-          "wallClockMs": 70,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "pdfjs-dist",
-          "fixture": "encrypted-rc4-128",
-          "variant": "with-password",
-          "outcome": "ok",
           "stages": {
             "libraryLoadMs": 19,
-            "openMs": 51,
-            "firstPagePreviewMs": 6,
-            "lastPagePreviewMs": 18
+            "openMs": 46
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1190,
+          "error": {
+            "name": "PasswordException",
+            "message": "No password given"
+          },
+          "memoryBytes": null,
+          "activeContentRan": false,
+          "wallClockMs": 68,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "pdfjs-dist",
+          "fixture": "encrypted-rc4-128",
+          "variant": "with-password",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 20,
+            "openMs": 47,
+            "firstPagePreviewMs": 4,
+            "lastPagePreviewMs": 17
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
           ],
           "inputBytes": 1190,
           "pageCount": 2,
@@ -4483,8 +4781,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 99,
-          "unexpectedRequests": []
+          "wallClockMs": 91,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4492,12 +4793,13 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 20,
-            "openMs": 46
+            "libraryLoadMs": 21,
+            "openMs": 49
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "error": {
@@ -4505,8 +4807,12 @@
             "message": "No password given"
           },
           "memoryBytes": null,
-          "wallClockMs": 67,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 72,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4514,14 +4820,15 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 21,
-            "openMs": 46,
-            "firstPagePreviewMs": 3,
+            "libraryLoadMs": 20,
+            "openMs": 47,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 17
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "pageCount": 2,
@@ -4551,67 +4858,27 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 89,
-          "unexpectedRequests": []
+          "wallClockMs": 91,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
           "fixture": "owner-password-restricted",
           "variant": "default",
-          "outcome": "ok",
-          "stages": {
-            "libraryLoadMs": 20,
-            "openMs": 46,
-            "firstPagePreviewMs": 14,
-            "lastPagePreviewMs": 17
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1340,
-          "pageCount": 2,
-          "permissions": [
-            4,
-            16,
-            256,
-            512,
-            1024,
-            2048
-          ],
-          "firstPage": {
-            "width": 595.28,
-            "height": 841.89,
-            "rotation": 0
-          },
-          "lastPage": {
-            "width": 595.28,
-            "height": 841.89,
-            "rotation": 0
-          },
-          "preview": {
-            "width": 893,
-            "height": 1263
-          },
-          "memoryBytes": null,
-          "activeContentRan": false,
-          "wallClockMs": 100,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "pdfjs-dist",
-          "fixture": "owner-password-restricted",
-          "variant": "with-password",
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 19,
             "openMs": 47,
-            "firstPagePreviewMs": 6,
-            "lastPagePreviewMs": 17
+            "firstPagePreviewMs": 8,
+            "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -4639,8 +4906,59 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 92,
-          "unexpectedRequests": []
+          "wallClockMs": 95,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
+        },
+        {
+          "candidateId": "pdfjs-dist",
+          "fixture": "owner-password-restricted",
+          "variant": "with-password",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 21,
+            "openMs": 46,
+            "firstPagePreviewMs": 18,
+            "lastPagePreviewMs": 16
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1340,
+          "pageCount": 2,
+          "permissions": [
+            4,
+            16,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "firstPage": {
+            "width": 595.28,
+            "height": 841.89,
+            "rotation": 0
+          },
+          "lastPage": {
+            "width": 595.28,
+            "height": 841.89,
+            "rotation": 0
+          },
+          "preview": {
+            "width": 893,
+            "height": 1263
+          },
+          "memoryBytes": null,
+          "activeContentRan": false,
+          "wallClockMs": 104,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4650,11 +4968,12 @@
           "stages": {
             "libraryLoadMs": 21,
             "openMs": 45,
-            "firstPagePreviewMs": 3
+            "firstPagePreviewMs": 18
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1400,
           "pageCount": 1,
@@ -4670,8 +4989,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 72,
-          "unexpectedRequests": []
+          "wallClockMs": 87,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4681,12 +5003,13 @@
           "stages": {
             "libraryLoadMs": 20,
             "openMs": 46,
-            "firstPagePreviewMs": 19,
-            "lastPagePreviewMs": 16
+            "firstPagePreviewMs": 17,
+            "lastPagePreviewMs": 17
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 952,
           "pageCount": 2,
@@ -4707,8 +5030,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 105,
-          "unexpectedRequests": []
+          "wallClockMs": 104,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdfjs-dist",
@@ -4716,12 +5042,13 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 23,
-            "openMs": 121
+            "libraryLoadMs": 21,
+            "openMs": 123
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 12966796,
           "error": {
@@ -4729,8 +5056,12 @@
             "message": "Invalid PDF structure."
           },
           "memoryBytes": null,
-          "wallClockMs": 156,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 155,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4738,14 +5069,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 81,
+            "libraryLoadMs": 84,
             "openMs": 5,
             "firstPagePreviewMs": 74,
-            "lastPagePreviewMs": 74
+            "lastPagePreviewMs": 72
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 21611328,
           "pageCount": 20,
@@ -4765,8 +5097,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 260,
-          "unexpectedRequests": []
+          "wallClockMs": 265,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4776,12 +5111,13 @@
           "stages": {
             "libraryLoadMs": 73,
             "openMs": 0,
-            "firstPagePreviewMs": 5,
+            "firstPagePreviewMs": 4,
             "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1592,
           "pageCount": 4,
@@ -4801,8 +5137,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 85,
-          "unexpectedRequests": []
+          "wallClockMs": 84,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4817,7 +5156,8 @@
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 980,
           "pageCount": 2,
@@ -4837,8 +5177,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 82,
-          "unexpectedRequests": []
+          "wallClockMs": 83,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4846,14 +5189,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 73,
+            "libraryLoadMs": 74,
             "openMs": 0,
-            "firstPagePreviewMs": 4,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 996,
           "pageCount": 3,
@@ -4873,8 +5217,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 84,
-          "unexpectedRequests": []
+          "wallClockMs": 85,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4882,14 +5229,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 77,
-            "openMs": 10,
-            "firstPagePreviewMs": 74,
+            "libraryLoadMs": 80,
+            "openMs": 15,
+            "firstPagePreviewMs": 73,
             "lastPagePreviewMs": 73
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 60511308,
           "pageCount": 56,
@@ -4909,8 +5257,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 286,
-          "unexpectedRequests": []
+          "wallClockMs": 287,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4918,14 +5269,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 73,
+            "libraryLoadMs": 75,
             "openMs": 0,
             "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 39114,
           "pageCount": 120,
@@ -4945,8 +5297,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 89,
-          "unexpectedRequests": []
+          "wallClockMs": 90,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4954,12 +5309,13 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 72,
+            "libraryLoadMs": 74,
             "openMs": 0
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1190,
           "error": {
@@ -4967,8 +5323,12 @@
             "message": "Password required or incorrect password"
           },
           "memoryBytes": null,
-          "wallClockMs": 75,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 77,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -4983,7 +5343,8 @@
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1190,
           "pageCount": 2,
@@ -5004,7 +5365,10 @@
           "memoryBytes": null,
           "activeContentRan": false,
           "wallClockMs": 86,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -5012,12 +5376,13 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 73,
+            "libraryLoadMs": 75,
             "openMs": 1
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "error": {
@@ -5025,8 +5390,12 @@
             "message": "Password required or incorrect password"
           },
           "memoryBytes": null,
-          "wallClockMs": 75,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 79,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -5041,7 +5410,8 @@
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "pageCount": 2,
@@ -5062,7 +5432,10 @@
           "memoryBytes": null,
           "activeContentRan": false,
           "wallClockMs": 85,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -5070,14 +5443,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 76,
+            "libraryLoadMs": 72,
             "openMs": 0,
-            "firstPagePreviewMs": 6,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -5097,8 +5471,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 89,
-          "unexpectedRequests": []
+          "wallClockMs": 85,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -5106,14 +5483,15 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 75,
+            "libraryLoadMs": 74,
             "openMs": 0,
-            "firstPagePreviewMs": 4,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 4
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -5133,8 +5511,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 87,
-          "unexpectedRequests": []
+          "wallClockMs": 86,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -5148,7 +5529,8 @@
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1400,
           "pageCount": 1,
@@ -5163,8 +5545,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 82,
-          "unexpectedRequests": []
+          "wallClockMs": 81,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -5179,7 +5564,8 @@
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 952,
           "pageCount": 2,
@@ -5199,8 +5585,11 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 84,
-          "unexpectedRequests": []
+          "wallClockMs": 83,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -5208,12 +5597,13 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 73,
+            "libraryLoadMs": 74,
             "openMs": 3
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 12966796,
           "error": {
@@ -5221,8 +5611,12 @@
             "message": "File not in PDF format or corrupted"
           },
           "memoryBytes": null,
-          "wallClockMs": 89,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 93,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5233,8 +5627,8 @@
             "libraryLoadMs": 23,
             "openMs": 9,
             "applyMs": 4,
-            "exportMs": 28,
-            "verifyMs": 390
+            "exportMs": 29,
+            "verifyMs": 387
           },
           "roles": [
             "parse",
@@ -5302,8 +5696,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 492,
-          "unexpectedRequests": []
+          "wallClockMs": 504,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5315,7 +5712,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 335
+            "verifyMs": 367
           },
           "roles": [
             "parse",
@@ -5383,8 +5780,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 392,
-          "unexpectedRequests": []
+          "wallClockMs": 426,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5395,8 +5795,8 @@
             "libraryLoadMs": 20,
             "openMs": 1,
             "applyMs": 4,
-            "exportMs": 8,
-            "verifyMs": 244
+            "exportMs": 9,
+            "verifyMs": 225
           },
           "roles": [
             "parse",
@@ -5459,8 +5859,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 301,
-          "unexpectedRequests": []
+          "wallClockMs": 283,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5540,8 +5943,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 401,
-          "unexpectedRequests": []
+          "wallClockMs": 400,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5549,11 +5955,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 23,
-            "openMs": 15,
-            "applyMs": 4,
-            "exportMs": 81,
-            "verifyMs": 391
+            "libraryLoadMs": 62,
+            "openMs": 16,
+            "applyMs": 5,
+            "exportMs": 79,
+            "verifyMs": 432
           },
           "roles": [
             "parse",
@@ -5621,8 +6027,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 583,
-          "unexpectedRequests": []
+          "wallClockMs": 666,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5634,7 +6043,7 @@
             "openMs": 6,
             "applyMs": 4,
             "exportMs": 45,
-            "verifyMs": 383
+            "verifyMs": 384
           },
           "roles": [
             "parse",
@@ -5703,7 +6112,10 @@
           },
           "activeContentRan": false,
           "wallClockMs": 482,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5724,8 +6136,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 25,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 24,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5733,7 +6149,7 @@
           "variant": "with-password",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 21,
+            "libraryLoadMs": 20,
             "openMs": 1
           },
           "roles": [
@@ -5746,8 +6162,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 25,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 23,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5755,11 +6175,11 @@
           "variant": "ignore-encryption",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 20,
+            "libraryLoadMs": 21,
             "openMs": 1,
             "applyMs": 4,
-            "exportMs": 9,
-            "verifyMs": 248
+            "exportMs": 8,
+            "verifyMs": 268
           },
           "roles": [
             "parse",
@@ -5822,8 +6242,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 307,
-          "unexpectedRequests": []
+          "wallClockMs": 326,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5844,8 +6267,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 24,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5853,7 +6280,7 @@
           "variant": "with-password",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 20,
+            "libraryLoadMs": 21,
             "openMs": 1
           },
           "roles": [
@@ -5866,8 +6293,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 24,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 26,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5879,7 +6310,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 238
+            "verifyMs": 262
           },
           "roles": [
             "parse",
@@ -5942,8 +6373,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 294,
-          "unexpectedRequests": []
+          "wallClockMs": 318,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5964,8 +6398,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 24,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5986,8 +6424,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 24,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 23,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -5999,7 +6441,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 237
+            "verifyMs": 238
           },
           "roles": [
             "parse",
@@ -6062,8 +6504,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 295,
-          "unexpectedRequests": []
+          "wallClockMs": 294,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -6075,7 +6520,7 @@
             "openMs": 1,
             "applyMs": 2,
             "exportMs": 6,
-            "verifyMs": 117
+            "verifyMs": 118
           },
           "roles": [
             "parse",
@@ -6114,7 +6559,10 @@
           },
           "activeContentRan": false,
           "wallClockMs": 170,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -6126,7 +6574,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 228
+            "verifyMs": 245
           },
           "roles": [
             "parse",
@@ -6189,8 +6637,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 285,
-          "unexpectedRequests": []
+          "wallClockMs": 301,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "pdf-lib",
@@ -6198,7 +6649,7 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 21,
+            "libraryLoadMs": 22,
             "openMs": 5
           },
           "roles": [
@@ -6211,8 +6662,12 @@
             "message": "Failed to parse PDF document (line:284 col:451 offset=12966050): Failed to parse invalid PDF object"
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 37,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6220,11 +6675,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 34,
+            "libraryLoadMs": 31,
             "openMs": 10,
-            "applyMs": 4,
-            "exportMs": 30,
-            "verifyMs": 390
+            "applyMs": 5,
+            "exportMs": 29,
+            "verifyMs": 392
           },
           "roles": [
             "parse",
@@ -6293,8 +6748,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 517,
-          "unexpectedRequests": []
+          "wallClockMs": 512,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6302,11 +6760,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 33,
+            "libraryLoadMs": 32,
             "openMs": 9,
             "applyMs": 5,
             "exportMs": 11,
-            "verifyMs": 376
+            "verifyMs": 396
           },
           "roles": [
             "parse",
@@ -6375,8 +6833,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 476,
-          "unexpectedRequests": []
+          "wallClockMs": 493,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6387,7 +6848,7 @@
             "libraryLoadMs": 28,
             "openMs": 1,
             "applyMs": 4,
-            "exportMs": 8,
+            "exportMs": 9,
             "verifyMs": 320
           },
           "roles": [
@@ -6458,7 +6919,10 @@
           },
           "activeContentRan": false,
           "wallClockMs": 385,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6466,11 +6930,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 28,
+            "libraryLoadMs": 29,
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 333
+            "verifyMs": 349
           },
           "roles": [
             "parse",
@@ -6539,8 +7003,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 399,
-          "unexpectedRequests": []
+          "wallClockMs": 415,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6552,7 +7019,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 223
+            "verifyMs": 235
           },
           "roles": [
             "parse",
@@ -6616,8 +7083,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 289,
-          "unexpectedRequests": []
+          "wallClockMs": 300,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6629,7 +7099,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 231
+            "verifyMs": 232
           },
           "roles": [
             "parse",
@@ -6693,8 +7163,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 296,
-          "unexpectedRequests": []
+          "wallClockMs": 299,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6705,7 +7178,7 @@
             "libraryLoadMs": 28,
             "openMs": 2,
             "applyMs": 4,
-            "exportMs": 8,
+            "exportMs": 9,
             "verifyMs": 352
           },
           "roles": [
@@ -6776,7 +7249,10 @@
           },
           "activeContentRan": false,
           "wallClockMs": 418,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6788,7 +7264,7 @@
             "openMs": 2,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 367
+            "verifyMs": 366
           },
           "roles": [
             "parse",
@@ -6857,8 +7333,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 438,
-          "unexpectedRequests": []
+          "wallClockMs": 433,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6867,10 +7346,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 33,
-            "openMs": 17,
+            "openMs": 15,
             "applyMs": 4,
-            "exportMs": 79,
-            "verifyMs": 429
+            "exportMs": 82,
+            "verifyMs": 408
           },
           "roles": [
             "parse",
@@ -6939,8 +7418,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 632,
-          "unexpectedRequests": []
+          "wallClockMs": 619,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -6948,11 +7430,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 32,
-            "openMs": 17,
+            "libraryLoadMs": 34,
+            "openMs": 19,
             "applyMs": 5,
-            "exportMs": 15,
-            "verifyMs": 395
+            "exportMs": 17,
+            "verifyMs": 405
           },
           "roles": [
             "parse",
@@ -7021,8 +7503,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 532,
-          "unexpectedRequests": []
+          "wallClockMs": 545,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7030,11 +7515,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 29,
+            "libraryLoadMs": 28,
             "openMs": 6,
             "applyMs": 4,
-            "exportMs": 47,
-            "verifyMs": 378
+            "exportMs": 45,
+            "verifyMs": 359
           },
           "roles": [
             "parse",
@@ -7103,8 +7588,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 492,
-          "unexpectedRequests": []
+          "wallClockMs": 467,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7112,11 +7600,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 29,
+            "libraryLoadMs": 28,
             "openMs": 6,
             "applyMs": 5,
             "exportMs": 12,
-            "verifyMs": 375
+            "verifyMs": 377
           },
           "roles": [
             "parse",
@@ -7185,8 +7673,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 450,
-          "unexpectedRequests": []
+          "wallClockMs": 451,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7194,7 +7685,7 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 28,
+            "libraryLoadMs": 29,
             "openMs": 1
           },
           "roles": [
@@ -7208,8 +7699,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 32,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 33,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7217,11 +7712,11 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 28,
+            "libraryLoadMs": 29,
             "openMs": 2,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 223
+            "verifyMs": 239
           },
           "roles": [
             "parse",
@@ -7285,8 +7780,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 289,
-          "unexpectedRequests": []
+          "wallClockMs": 307,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7298,7 +7796,7 @@
             "openMs": 2,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 236
+            "verifyMs": 235
           },
           "roles": [
             "parse",
@@ -7363,7 +7861,10 @@
           },
           "activeContentRan": false,
           "wallClockMs": 302,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7385,8 +7886,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 32,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 31,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7397,8 +7902,8 @@
             "libraryLoadMs": 29,
             "openMs": 3,
             "applyMs": 4,
-            "exportMs": 8,
-            "verifyMs": 250
+            "exportMs": 9,
+            "verifyMs": 230
           },
           "roles": [
             "parse",
@@ -7462,8 +7967,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 318,
-          "unexpectedRequests": []
+          "wallClockMs": 296,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7475,7 +7983,7 @@
             "openMs": 3,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 253
+            "verifyMs": 237
           },
           "roles": [
             "parse",
@@ -7539,8 +8047,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 323,
-          "unexpectedRequests": []
+          "wallClockMs": 304,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7562,8 +8073,12 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 32,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7574,8 +8089,8 @@
             "libraryLoadMs": 30,
             "openMs": 3,
             "applyMs": 4,
-            "exportMs": 8,
-            "verifyMs": 240
+            "exportMs": 9,
+            "verifyMs": 242
           },
           "roles": [
             "parse",
@@ -7640,7 +8155,10 @@
           },
           "activeContentRan": false,
           "wallClockMs": 310,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7652,7 +8170,7 @@
             "openMs": 3,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 238
+            "verifyMs": 236
           },
           "roles": [
             "parse",
@@ -7716,8 +8234,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 305,
-          "unexpectedRequests": []
+          "wallClockMs": 304,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7725,11 +8246,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 28,
+            "libraryLoadMs": 29,
             "openMs": 1,
             "applyMs": 2,
             "exportMs": 6,
-            "verifyMs": 106
+            "verifyMs": 135
           },
           "roles": [
             "parse",
@@ -7768,8 +8289,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 166,
-          "unexpectedRequests": []
+          "wallClockMs": 197,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7781,7 +8305,7 @@
             "openMs": 1,
             "applyMs": 3,
             "exportMs": 6,
-            "verifyMs": 107
+            "verifyMs": 120
           },
           "roles": [
             "parse",
@@ -7820,8 +8344,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 168,
-          "unexpectedRequests": []
+          "wallClockMs": 183,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7833,7 +8360,7 @@
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 8,
-            "verifyMs": 221
+            "verifyMs": 233
           },
           "roles": [
             "parse",
@@ -7897,8 +8424,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 286,
-          "unexpectedRequests": []
+          "wallClockMs": 299,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7906,11 +8436,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 30,
+            "libraryLoadMs": 28,
             "openMs": 1,
             "applyMs": 4,
             "exportMs": 9,
-            "verifyMs": 250
+            "verifyMs": 252
           },
           "roles": [
             "parse",
@@ -7974,8 +8504,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 319,
-          "unexpectedRequests": []
+          "wallClockMs": 318,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -7983,11 +8516,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 30,
+            "libraryLoadMs": 31,
             "openMs": 6,
             "applyMs": 4,
             "exportMs": 20,
-            "verifyMs": 122
+            "verifyMs": 121
           },
           "roles": [
             "parse",
@@ -8027,8 +8560,11 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 218,
-          "unexpectedRequests": []
+          "wallClockMs": 217,
+          "unexpectedRequests": [],
+          "unservedMismatch": [
+            "http://127.0.0.1:49543/favicon.ico"
+          ]
         }
       ]
     },
@@ -8053,12 +8589,13 @@
           "stages": {
             "libraryLoadMs": 12,
             "openMs": 43,
-            "firstPagePreviewMs": 27,
+            "firstPagePreviewMs": 22,
             "lastPagePreviewMs": 15
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 21611328,
           "pageCount": 20,
@@ -8079,8 +8616,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 129,
-          "unexpectedRequests": []
+          "wallClockMs": 123,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8089,13 +8627,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 28,
-            "firstPagePreviewMs": 10,
+            "openMs": 29,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1592,
           "pageCount": 4,
@@ -8116,8 +8655,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 68,
-          "unexpectedRequests": []
+          "wallClockMs": 64,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8127,12 +8667,13 @@
           "stages": {
             "libraryLoadMs": 10,
             "openMs": 29,
-            "firstPagePreviewMs": 12,
-            "lastPagePreviewMs": 16
+            "firstPagePreviewMs": 5,
+            "lastPagePreviewMs": 15
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 980,
           "pageCount": 2,
@@ -8153,8 +8694,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 71,
-          "unexpectedRequests": []
+          "wallClockMs": 62,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8163,13 +8705,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 29,
-            "firstPagePreviewMs": 5,
-            "lastPagePreviewMs": 16
+            "openMs": 30,
+            "firstPagePreviewMs": 13,
+            "lastPagePreviewMs": 17
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 996,
           "pageCount": 3,
@@ -8190,8 +8733,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 64,
-          "unexpectedRequests": []
+          "wallClockMs": 73,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8199,14 +8743,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
-            "openMs": 36,
-            "firstPagePreviewMs": 16,
-            "lastPagePreviewMs": 16
+            "libraryLoadMs": 10,
+            "openMs": 37,
+            "firstPagePreviewMs": 14,
+            "lastPagePreviewMs": 13
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 60511308,
           "pageCount": 56,
@@ -8227,8 +8772,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 140,
-          "unexpectedRequests": []
+          "wallClockMs": 135,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8237,13 +8783,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 31,
-            "firstPagePreviewMs": 6,
-            "lastPagePreviewMs": 15
+            "openMs": 32,
+            "firstPagePreviewMs": 21,
+            "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 39114,
           "pageCount": 120,
@@ -8264,8 +8811,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 66,
-          "unexpectedRequests": []
+          "wallClockMs": 82,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8278,7 +8826,8 @@
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1190,
           "error": {
@@ -8286,8 +8835,10 @@
             "message": "No password given"
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 43,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8297,12 +8848,13 @@
           "stages": {
             "libraryLoadMs": 10,
             "openMs": 30,
-            "firstPagePreviewMs": 9,
+            "firstPagePreviewMs": 22,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1190,
           "pageCount": 2,
@@ -8332,8 +8884,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 68,
-          "unexpectedRequests": []
+          "wallClockMs": 82,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8342,11 +8895,12 @@
           "outcome": "open-failed",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 29
+            "openMs": 30
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "error": {
@@ -8354,8 +8908,10 @@
             "message": "No password given"
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 42,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8365,12 +8921,13 @@
           "stages": {
             "libraryLoadMs": 10,
             "openMs": 30,
-            "firstPagePreviewMs": 5,
+            "firstPagePreviewMs": 10,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1339,
           "pageCount": 2,
@@ -8400,8 +8957,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 65,
-          "unexpectedRequests": []
+          "wallClockMs": 70,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8411,12 +8969,13 @@
           "stages": {
             "libraryLoadMs": 10,
             "openMs": 30,
-            "firstPagePreviewMs": 13,
+            "firstPagePreviewMs": 6,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -8444,8 +9003,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 73,
-          "unexpectedRequests": []
+          "wallClockMs": 66,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8454,13 +9014,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 30,
-            "firstPagePreviewMs": 13,
+            "openMs": 29,
+            "firstPagePreviewMs": 14,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -8489,7 +9050,8 @@
           "memoryBytes": null,
           "activeContentRan": false,
           "wallClockMs": 73,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8498,12 +9060,13 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 29,
+            "openMs": 28,
             "firstPagePreviewMs": 13
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1400,
           "pageCount": 1,
@@ -8519,8 +9082,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 56,
-          "unexpectedRequests": []
+          "wallClockMs": 57,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8529,13 +9093,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 10,
-            "openMs": 30,
-            "firstPagePreviewMs": 8,
+            "openMs": 32,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 16
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 952,
           "pageCount": 2,
@@ -8556,8 +9121,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 68,
-          "unexpectedRequests": []
+          "wallClockMs": 67,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdfjs-dist",
@@ -8565,12 +9131,13 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 12,
-            "openMs": 92
+            "libraryLoadMs": 10,
+            "openMs": 91
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 12966796,
           "error": {
@@ -8578,8 +9145,10 @@
             "message": "Invalid PDF structure."
           },
           "memoryBytes": null,
-          "wallClockMs": 119,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 120,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8587,14 +9156,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 20,
+            "libraryLoadMs": 21,
             "openMs": 5,
             "firstPagePreviewMs": 20,
             "lastPagePreviewMs": 8
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 21611328,
           "pageCount": 20,
@@ -8614,8 +9184,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 79,
-          "unexpectedRequests": []
+          "wallClockMs": 85,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8625,12 +9196,13 @@
           "stages": {
             "libraryLoadMs": 18,
             "openMs": 1,
-            "firstPagePreviewMs": 6,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 5
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1592,
           "pageCount": 4,
@@ -8651,7 +9223,8 @@
           "memoryBytes": null,
           "activeContentRan": false,
           "wallClockMs": 34,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8659,14 +9232,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
+            "libraryLoadMs": 18,
             "openMs": 1,
             "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 3
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 980,
           "pageCount": 2,
@@ -8687,7 +9261,8 @@
           "memoryBytes": null,
           "activeContentRan": false,
           "wallClockMs": 31,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8702,7 +9277,8 @@
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 996,
           "pageCount": 3,
@@ -8722,8 +9298,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 37,
-          "unexpectedRequests": []
+          "wallClockMs": 35,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8732,13 +9309,14 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 18,
-            "openMs": 10,
+            "openMs": 11,
             "firstPagePreviewMs": 20,
             "lastPagePreviewMs": 8
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 60511308,
           "pageCount": 56,
@@ -8758,8 +9336,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 118,
-          "unexpectedRequests": []
+          "wallClockMs": 117,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8767,14 +9346,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 19,
             "openMs": 1,
             "firstPagePreviewMs": 6,
             "lastPagePreviewMs": 5
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 39114,
           "pageCount": 120,
@@ -8794,124 +9374,135 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
+          "wallClockMs": 40,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-rc4-128",
+          "variant": "default",
+          "outcome": "open-failed",
+          "stages": {
+            "libraryLoadMs": 19,
+            "openMs": 2
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1190,
+          "error": {
+            "name": "Error",
+            "message": "Password required or incorrect password"
+          },
+          "memoryBytes": null,
+          "activeContentRan": false,
+          "wallClockMs": 23,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-rc4-128",
+          "variant": "with-password",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 18,
+            "openMs": 1,
+            "firstPagePreviewMs": 6,
+            "lastPagePreviewMs": 5
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1190,
+          "pageCount": 2,
+          "firstPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "lastPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "preview": {
+            "width": 892,
+            "height": 1261
+          },
+          "memoryBytes": null,
+          "activeContentRan": false,
+          "wallClockMs": 34,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-aes-128",
+          "variant": "default",
+          "outcome": "open-failed",
+          "stages": {
+            "libraryLoadMs": 18,
+            "openMs": 2
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1339,
+          "error": {
+            "name": "Error",
+            "message": "Password required or incorrect password"
+          },
+          "memoryBytes": null,
+          "activeContentRan": false,
+          "wallClockMs": 22,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
+        },
+        {
+          "candidateId": "hyzyla-pdfium",
+          "fixture": "encrypted-aes-128",
+          "variant": "with-password",
+          "outcome": "ok",
+          "stages": {
+            "libraryLoadMs": 18,
+            "openMs": 2,
+            "firstPagePreviewMs": 6,
+            "lastPagePreviewMs": 5
+          },
+          "roles": [
+            "parse",
+            "preview",
+            "password"
+          ],
+          "inputBytes": 1339,
+          "pageCount": 2,
+          "firstPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "lastPage": {
+            "width": 595.280029296875,
+            "height": 841.8900146484375,
+            "rotation": null
+          },
+          "preview": {
+            "width": 892,
+            "height": 1261
+          },
+          "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 35,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-rc4-128",
-          "variant": "default",
-          "outcome": "open-failed",
-          "stages": {
-            "libraryLoadMs": 18,
-            "openMs": 2
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1190,
-          "error": {
-            "name": "Error",
-            "message": "Password required or incorrect password"
-          },
-          "memoryBytes": null,
-          "wallClockMs": 22,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-rc4-128",
-          "variant": "with-password",
-          "outcome": "ok",
-          "stages": {
-            "libraryLoadMs": 18,
-            "openMs": 2,
-            "firstPagePreviewMs": 6,
-            "lastPagePreviewMs": 5
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1190,
-          "pageCount": 2,
-          "firstPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "lastPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "preview": {
-            "width": 892,
-            "height": 1261
-          },
-          "memoryBytes": null,
-          "activeContentRan": false,
-          "wallClockMs": 34,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-aes-128",
-          "variant": "default",
-          "outcome": "open-failed",
-          "stages": {
-            "libraryLoadMs": 18,
-            "openMs": 2
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1339,
-          "error": {
-            "name": "Error",
-            "message": "Password required or incorrect password"
-          },
-          "memoryBytes": null,
-          "wallClockMs": 22,
-          "unexpectedRequests": []
-        },
-        {
-          "candidateId": "hyzyla-pdfium",
-          "fixture": "encrypted-aes-128",
-          "variant": "with-password",
-          "outcome": "ok",
-          "stages": {
-            "libraryLoadMs": 21,
-            "openMs": 2,
-            "firstPagePreviewMs": 6,
-            "lastPagePreviewMs": 5
-          },
-          "roles": [
-            "parse",
-            "preview"
-          ],
-          "inputBytes": 1339,
-          "pageCount": 2,
-          "firstPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "lastPage": {
-            "width": 595.280029296875,
-            "height": 841.8900146484375,
-            "rotation": null
-          },
-          "preview": {
-            "width": 892,
-            "height": 1261
-          },
-          "memoryBytes": null,
-          "activeContentRan": false,
-          "wallClockMs": 38,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8921,12 +9512,13 @@
           "stages": {
             "libraryLoadMs": 18,
             "openMs": 1,
-            "firstPagePreviewMs": 6,
+            "firstPagePreviewMs": 5,
             "lastPagePreviewMs": 5
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -8947,7 +9539,8 @@
           "memoryBytes": null,
           "activeContentRan": false,
           "wallClockMs": 34,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8955,14 +9548,15 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 19,
             "openMs": 1,
             "firstPagePreviewMs": 6,
             "lastPagePreviewMs": 5
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1340,
           "pageCount": 2,
@@ -8982,8 +9576,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 34,
-          "unexpectedRequests": []
+          "wallClockMs": 35,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -8991,13 +9586,14 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
+            "libraryLoadMs": 18,
             "openMs": 1,
             "firstPagePreviewMs": 6
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 1400,
           "pageCount": 1,
@@ -9012,8 +9608,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 31,
-          "unexpectedRequests": []
+          "wallClockMs": 29,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -9021,14 +9618,15 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 19,
+            "libraryLoadMs": 22,
             "openMs": 1,
             "firstPagePreviewMs": 6,
             "lastPagePreviewMs": 5
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 952,
           "pageCount": 2,
@@ -9048,8 +9646,9 @@
           },
           "memoryBytes": null,
           "activeContentRan": false,
-          "wallClockMs": 34,
-          "unexpectedRequests": []
+          "wallClockMs": 37,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "hyzyla-pdfium",
@@ -9057,12 +9656,13 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 21,
             "openMs": 5
           },
           "roles": [
             "parse",
-            "preview"
+            "preview",
+            "password"
           ],
           "inputBytes": 12966796,
           "error": {
@@ -9070,8 +9670,10 @@
             "message": "File not in PDF format or corrupted"
           },
           "memoryBytes": null,
-          "wallClockMs": 38,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 41,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9082,8 +9684,8 @@
             "libraryLoadMs": 16,
             "openMs": 7,
             "applyMs": 6,
-            "exportMs": 23,
-            "verifyMs": 300
+            "exportMs": 24,
+            "verifyMs": 314
           },
           "roles": [
             "parse",
@@ -9151,8 +9753,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 397,
-          "unexpectedRequests": []
+          "wallClockMs": 413,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9164,7 +9767,7 @@
             "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 273
+            "verifyMs": 304
           },
           "roles": [
             "parse",
@@ -9232,8 +9835,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 319,
-          "unexpectedRequests": []
+          "wallClockMs": 350,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9308,8 +9912,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 250,
-          "unexpectedRequests": []
+          "wallClockMs": 251,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9317,11 +9922,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 12,
+            "libraryLoadMs": 13,
             "openMs": 2,
             "applyMs": 6,
-            "exportMs": 10,
-            "verifyMs": 288
+            "exportMs": 9,
+            "verifyMs": 286
           },
           "roles": [
             "parse",
@@ -9389,8 +9994,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 334,
-          "unexpectedRequests": []
+          "wallClockMs": 332,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9399,10 +10005,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 13,
-            "openMs": 15,
+            "openMs": 14,
             "applyMs": 6,
             "exportMs": 47,
-            "verifyMs": 340
+            "verifyMs": 350
           },
           "roles": [
             "parse",
@@ -9470,8 +10076,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 491,
-          "unexpectedRequests": []
+          "wallClockMs": 506,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9480,10 +10087,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 13,
-            "openMs": 4,
+            "openMs": 5,
             "applyMs": 6,
             "exportMs": 11,
-            "verifyMs": 302
+            "verifyMs": 298
           },
           "roles": [
             "parse",
@@ -9551,8 +10158,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 352,
-          "unexpectedRequests": []
+          "wallClockMs": 349,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9573,8 +10181,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 17,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9595,8 +10205,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 16,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 17,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9604,11 +10216,11 @@
           "variant": "ignore-encryption",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 13,
-            "openMs": 1,
-            "applyMs": 6,
-            "exportMs": 9,
-            "verifyMs": 208
+            "libraryLoadMs": 17,
+            "openMs": 2,
+            "applyMs": 7,
+            "exportMs": 11,
+            "verifyMs": 214
           },
           "roles": [
             "parse",
@@ -9671,8 +10283,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 254,
-          "unexpectedRequests": []
+          "wallClockMs": 270,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9693,8 +10306,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 17,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9715,8 +10330,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 17,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9728,7 +10345,7 @@
             "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 182
+            "verifyMs": 194
           },
           "roles": [
             "parse",
@@ -9791,8 +10408,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 229,
-          "unexpectedRequests": []
+          "wallClockMs": 239,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9813,8 +10431,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 17,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9835,8 +10455,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 17,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9845,10 +10467,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 13,
-            "openMs": 1,
+            "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 196
+            "verifyMs": 199
           },
           "roles": [
             "parse",
@@ -9911,8 +10533,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 242,
-          "unexpectedRequests": []
+          "wallClockMs": 245,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9924,7 +10547,7 @@
             "openMs": 2,
             "applyMs": 5,
             "exportMs": 7,
-            "verifyMs": 92
+            "verifyMs": 108
           },
           "roles": [
             "parse",
@@ -9962,8 +10585,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 134,
-          "unexpectedRequests": []
+          "wallClockMs": 152,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -9975,7 +10599,7 @@
             "openMs": 1,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 193
+            "verifyMs": 207
           },
           "roles": [
             "parse",
@@ -10038,8 +10662,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 239,
-          "unexpectedRequests": []
+          "wallClockMs": 253,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "pdf-lib",
@@ -10060,8 +10685,10 @@
             "message": "Failed to parse PDF document (line:284 col:451 offset=12966050): Failed to parse invalid PDF object"
           },
           "memoryBytes": null,
-          "wallClockMs": 33,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 36,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10072,8 +10699,8 @@
             "libraryLoadMs": 18,
             "openMs": 8,
             "applyMs": 6,
-            "exportMs": 23,
-            "verifyMs": 331
+            "exportMs": 24,
+            "verifyMs": 307
           },
           "roles": [
             "parse",
@@ -10142,8 +10769,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 428,
-          "unexpectedRequests": []
+          "wallClockMs": 405,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10152,10 +10780,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 18,
-            "openMs": 9,
+            "openMs": 8,
             "applyMs": 7,
             "exportMs": 11,
-            "verifyMs": 327
+            "verifyMs": 303
           },
           "roles": [
             "parse",
@@ -10224,8 +10852,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 409,
-          "unexpectedRequests": []
+          "wallClockMs": 384,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10237,7 +10866,7 @@
             "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 286
+            "verifyMs": 280
           },
           "roles": [
             "parse",
@@ -10306,8 +10935,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 337,
-          "unexpectedRequests": []
+          "wallClockMs": 331,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10315,11 +10945,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 2,
-            "applyMs": 6,
+            "applyMs": 7,
             "exportMs": 9,
-            "verifyMs": 286
+            "verifyMs": 282
           },
           "roles": [
             "parse",
@@ -10388,8 +11018,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 338,
-          "unexpectedRequests": []
+          "wallClockMs": 335,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10401,7 +11032,7 @@
             "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 190
+            "verifyMs": 206
           },
           "roles": [
             "parse",
@@ -10465,8 +11096,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 241,
-          "unexpectedRequests": []
+          "wallClockMs": 256,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10478,7 +11110,7 @@
             "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 202
+            "verifyMs": 201
           },
           "roles": [
             "parse",
@@ -10542,8 +11174,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 254,
-          "unexpectedRequests": []
+          "wallClockMs": 253,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10552,10 +11185,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 17,
-            "openMs": 3,
+            "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 284
+            "verifyMs": 285
           },
           "roles": [
             "parse",
@@ -10624,8 +11257,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 335,
-          "unexpectedRequests": []
+          "wallClockMs": 336,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10633,11 +11267,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 3,
             "applyMs": 6,
             "exportMs": 10,
-            "verifyMs": 286
+            "verifyMs": 281
           },
           "roles": [
             "parse",
@@ -10706,8 +11340,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 338,
-          "unexpectedRequests": []
+          "wallClockMs": 333,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10719,7 +11354,7 @@
             "openMs": 15,
             "applyMs": 6,
             "exportMs": 47,
-            "verifyMs": 333
+            "verifyMs": 367
           },
           "roles": [
             "parse",
@@ -10788,8 +11423,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 491,
-          "unexpectedRequests": []
+          "wallClockMs": 521,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10798,10 +11434,10 @@
           "outcome": "ok",
           "stages": {
             "libraryLoadMs": 18,
-            "openMs": 16,
+            "openMs": 15,
             "applyMs": 7,
             "exportMs": 15,
-            "verifyMs": 332
+            "verifyMs": 326
           },
           "roles": [
             "parse",
@@ -10870,8 +11506,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 454,
-          "unexpectedRequests": []
+          "wallClockMs": 459,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10879,11 +11516,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 5,
             "applyMs": 6,
             "exportMs": 11,
-            "verifyMs": 292
+            "verifyMs": 282
           },
           "roles": [
             "parse",
@@ -10952,8 +11589,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 347,
-          "unexpectedRequests": []
+          "wallClockMs": 336,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -10963,8 +11601,8 @@
           "stages": {
             "libraryLoadMs": 17,
             "openMs": 5,
-            "applyMs": 7,
-            "exportMs": 12,
+            "applyMs": 8,
+            "exportMs": 11,
             "verifyMs": 295
           },
           "roles": [
@@ -11034,8 +11672,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 354,
-          "unexpectedRequests": []
+          "wallClockMs": 355,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11043,7 +11682,7 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 2
           },
           "roles": [
@@ -11057,8 +11696,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 22,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 21,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11135,7 +11776,8 @@
           },
           "activeContentRan": false,
           "wallClockMs": 253,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11143,10 +11785,10 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 20,
+            "libraryLoadMs": 17,
             "openMs": 3,
             "applyMs": 6,
-            "exportMs": 9,
+            "exportMs": 10,
             "verifyMs": 201
           },
           "roles": [
@@ -11211,8 +11853,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 257,
-          "unexpectedRequests": []
+          "wallClockMs": 254,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11220,7 +11863,7 @@
           "variant": "default",
           "outcome": "open-failed",
           "stages": {
-            "libraryLoadMs": 17,
+            "libraryLoadMs": 19,
             "openMs": 2
           },
           "roles": [
@@ -11234,8 +11877,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
-          "wallClockMs": 22,
-          "unexpectedRequests": []
+          "activeContentRan": false,
+          "wallClockMs": 24,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11247,7 +11892,7 @@
             "openMs": 4,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 200
+            "verifyMs": 195
           },
           "roles": [
             "parse",
@@ -11311,8 +11956,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 253,
-          "unexpectedRequests": []
+          "wallClockMs": 248,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11323,8 +11969,8 @@
             "libraryLoadMs": 17,
             "openMs": 4,
             "applyMs": 6,
-            "exportMs": 9,
-            "verifyMs": 204
+            "exportMs": 10,
+            "verifyMs": 201
           },
           "roles": [
             "parse",
@@ -11388,8 +12034,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 257,
-          "unexpectedRequests": []
+          "wallClockMs": 254,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11411,8 +12058,10 @@
             "message": "Input document to `PDFDocument.load` is encrypted. You can use `PDFDocument.load(..., { ignoreEncryption: true })` if you wish to load the document anyways."
           },
           "memoryBytes": null,
+          "activeContentRan": false,
           "wallClockMs": 22,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11420,11 +12069,11 @@
           "variant": "with-password",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 4,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 201
+            "verifyMs": 202
           },
           "roles": [
             "parse",
@@ -11489,7 +12138,8 @@
           },
           "activeContentRan": false,
           "wallClockMs": 255,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11500,8 +12150,8 @@
             "libraryLoadMs": 17,
             "openMs": 4,
             "applyMs": 6,
-            "exportMs": 10,
-            "verifyMs": 201
+            "exportMs": 9,
+            "verifyMs": 202
           },
           "roles": [
             "parse",
@@ -11566,7 +12216,8 @@
           },
           "activeContentRan": false,
           "wallClockMs": 255,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11578,7 +12229,7 @@
             "openMs": 2,
             "applyMs": 5,
             "exportMs": 7,
-            "verifyMs": 108
+            "verifyMs": 107
           },
           "roles": [
             "parse",
@@ -11618,7 +12269,8 @@
           },
           "activeContentRan": false,
           "wallClockMs": 155,
-          "unexpectedRequests": []
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11626,11 +12278,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 17,
+            "libraryLoadMs": 18,
             "openMs": 2,
             "applyMs": 5,
             "exportMs": 7,
-            "verifyMs": 106
+            "verifyMs": 105
           },
           "roles": [
             "parse",
@@ -11669,8 +12321,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 154,
-          "unexpectedRequests": []
+          "wallClockMs": 153,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11682,7 +12335,7 @@
             "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 200
+            "verifyMs": 202
           },
           "roles": [
             "parse",
@@ -11746,8 +12399,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 251,
-          "unexpectedRequests": []
+          "wallClockMs": 252,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11755,11 +12409,11 @@
           "variant": "incremental",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 2,
             "applyMs": 6,
             "exportMs": 9,
-            "verifyMs": 204
+            "verifyMs": 200
           },
           "roles": [
             "parse",
@@ -11823,8 +12477,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 255,
-          "unexpectedRequests": []
+          "wallClockMs": 253,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         },
         {
           "candidateId": "cantoo-pdf-lib",
@@ -11832,11 +12487,11 @@
           "variant": "default",
           "outcome": "ok",
           "stages": {
-            "libraryLoadMs": 18,
+            "libraryLoadMs": 17,
             "openMs": 7,
             "applyMs": 6,
             "exportMs": 18,
-            "verifyMs": 90
+            "verifyMs": 91
           },
           "roles": [
             "parse",
@@ -11876,8 +12531,9 @@
             }
           },
           "activeContentRan": false,
-          "wallClockMs": 167,
-          "unexpectedRequests": []
+          "wallClockMs": 170,
+          "unexpectedRequests": [],
+          "unservedMismatch": []
         }
       ]
     }

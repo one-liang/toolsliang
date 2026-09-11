@@ -117,8 +117,10 @@ export interface MeasuredRun {
   permissions?: number[] | null
   /** Whether anything in the document managed to run. It never may. */
   activeContentRan?: boolean
-  /** Paths the browser asked for that the job had no business needing. */
+  /** URLs the browser asked for that the job had no business needing, any origin. */
   unexpectedRequests?: string[]
+  /** Served by the harness but never reported by the browser; the capture's own cross-check. */
+  unservedMismatch?: string[]
   inputBytes?: number
   pageCount?: number
   exportBytes?: number
@@ -260,6 +262,27 @@ export function parseTimings() {
     exportMs: exportMs === '-' ? null : Number(exportMs),
     memoryMiB: memoryMiB === '-' ? null : Number(memoryMiB),
   }))
+}
+
+/** §5: what the two export modes cost on the same document. */
+export function parseExportModeRows() {
+  const pattern = /^\| `([a-z0-9-]+)` \| ([a-z]+) \| (\d+) \| (\d+) \|$/gm
+
+  return reader.tableRows('#### 匯出方式比較', pattern).map(([, fixture, browser, full, incremental]) => ({
+    fixture: fixture!,
+    browser: browser!,
+    fullRewriteMs: Number(full),
+    incrementalMs: Number(incremental),
+  }))
+}
+
+/** §6.3: the outside count's tolerance, stated as a number rather than as prose. */
+export function parseOutsideMarginPt() {
+  const body = reader.sectionBody('### 6.3 讀回結果')
+  const match = /從矩形邊界再往外 (\d+) pt 起算/.exec(body)
+  if (!match) throw new Error('§6.3 does not state the outside margin in points')
+
+  return Number(match[1])
 }
 
 /** §6.3: what reading the exported document back proved, for the selected writer. */

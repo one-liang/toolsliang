@@ -47,12 +47,14 @@ import {
   parseCandidates,
   parseDisclosures,
   parseExclusions,
+  parseExportModeRows,
   parseFailureCodes,
   parseFidelityRows,
   parseFixtures,
   parseForbiddenWording,
   parseGates,
   parseLimits,
+  parseOutsideMarginPt,
   parseTimings,
   parseVerdicts,
   pdfEngineDecisionRecord as record,
@@ -252,7 +254,41 @@ describe('the record only states what the measurements show', () => {
       .filter(value => value !== undefined))
     expect(margins.size).toBe(1)
     /* A tolerance that is not written down is a tolerance nobody can check. */
-    expect(sectionBody('### 6.3 讀回結果')).toContain(`${[...margins][0]} pt`)
+    expect(parseOutsideMarginPt()).toBe([...margins][0])
+  })
+
+  it('prints what the two export modes actually cost', () => {
+    const rows = parseExportModeRows()
+    expect(rows).toHaveLength(2 * browserNames.length)
+    for (const row of rows) {
+      expect(row.fullRewriteMs)
+        .toBe(measuredRun(row.browser, pdfSignatureSelection.writeEngineId, row.fixture).stages.exportMs)
+      expect(row.incrementalMs)
+        .toBe(measuredRun(row.browser, pdfSignatureSelection.writeEngineId, row.fixture, 'incremental').stages.exportMs)
+    }
+  })
+
+  it('states the measured range the memory coefficient was taken from', () => {
+    const selected = [pdfSignatureSelection.previewEngineId, pdfSignatureSelection.writeEngineId]
+    const ratios = measuredBrowser('chromium').runs
+      .filter(run => run.memoryBytes && selected.includes(run.candidateId))
+      .map(run => (run.memoryBytes! - pdfSignatureMemoryModel.baseBytes)
+        / Math.max(measuredFixture(run.fixture).byteLength, 1))
+      .filter(ratio => ratio > 0)
+    const documented = /這個值落在 ([\d.]+) 至 ([\d.]+) 之間/.exec(sectionBody('### 9.2 上限與預算'))
+    expect(documented).not.toBeNull()
+    /*
+     * The stated range has to contain the measured one — rounding may widen it,
+     * never narrow it — and stay close enough to still describe the data.
+     */
+    const low = Number(documented![1])
+    const high = Number(documented![2])
+    expect(low).toBeLessThanOrEqual(Math.min(...ratios))
+    expect(low).toBeGreaterThan(Math.min(...ratios) - 0.05)
+    expect(high).toBeGreaterThanOrEqual(Math.max(...ratios))
+    expect(high).toBeLessThan(Math.max(...ratios) + 0.05)
+    /* And the coefficient the tool uses has to bound the whole range. */
+    expect(pdfSignatureMemoryModel.bytesPerInputByte).toBeGreaterThanOrEqual(Math.max(...ratios))
   })
 })
 
@@ -401,9 +437,11 @@ describe('nothing in a document may make anything happen', () => {
     }
   })
 
-  it('never let a document run its own script, in any run', () => {
+  it('never let a document run its own script, and says so on every single run', () => {
     for (const { browser, run } of everyRun()) {
-      expect(run.activeContentRan, `${browser}/${run.candidateId}/${run.fixture}`).not.toBe(true)
+      /* `toBe(false)` rather than `not.toBe(true)`: a run that stopped reporting
+       * the flag at all would otherwise pass without evidence. */
+      expect(run.activeContentRan, `${browser}/${run.candidateId}/${run.fixture}`).toBe(false)
     }
   })
 
@@ -411,7 +449,38 @@ describe('nothing in a document may make anything happen', () => {
     for (const { browser, run } of everyRun()) {
       expect(run.unexpectedRequests, `${browser}/${run.candidateId}/${run.fixture}`).toEqual([])
     }
-    expect(measurements.activeContentProbe).toMatch(/^http:\/\/127\.0\.0\.1:/)
+  })
+
+  it('watched every request the browser made, not only the ones the harness served', () => {
+    /*
+     * The probe the active-content document points at is on a different origin
+     * from the harness, so a check built from the harness server's own access log
+     * could never have seen it. The per-run list therefore comes from the
+     * browser's request events, and `unservedMismatch` is the cross-check that
+     * those events miss nothing the server actually served.
+     */
+    const probe = new URL(measurements.activeContentProbe)
+    const origins = new Set(everyRun()
+      .flatMap(({ run }) => [...(run.unexpectedRequests ?? []), ...(run.unservedMismatch ?? [])])
+      .map(url => new URL(url).origin))
+    for (const origin of origins) expect(origin).not.toBe(probe.origin)
+
+    for (const { browser, run } of everyRun()) {
+      /*
+       * The only thing the events do not see is the favicon, which the browser
+       * fetches outside the page's request pipeline. Anything else here would
+       * mean the capture has a blind spot, and the claim above would not hold.
+       */
+      const unseen = (run.unservedMismatch ?? []).map(url => new URL(url).pathname)
+      expect(unseen, `${browser}/${run.candidateId}/${run.fixture}`)
+        .toEqual(unseen.length === 0 ? [] : ['/favicon.ico'])
+    }
+  })
+
+  it('reports the candidate roles the registry declares', () => {
+    for (const { run } of everyRun()) {
+      expect(sortRoles(run.roles ?? [])).toEqual(sortRoles(measuredCandidate(run.candidateId).roles))
+    }
   })
 })
 

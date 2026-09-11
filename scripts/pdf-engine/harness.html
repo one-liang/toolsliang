@@ -124,7 +124,6 @@ async function renderWithVerifier(module, bytes, index, scale, password) {
 
 const adapters = {
   'pdfjs-dist': {
-    roles: ['parse', 'preview'],
     async load(urls) {
       const module = await loadModule(urls.module)
       module.GlobalWorkerOptions.workerSrc = urls.worker
@@ -170,7 +169,6 @@ const adapters = {
   },
 
   'hyzyla-pdfium': {
-    roles: ['parse', 'preview'],
     async load(urls) {
       const module = await loadModule(urls.module)
       state.library = await module.PDFiumLibrary.init({ wasmUrl: urls.wasm })
@@ -204,7 +202,6 @@ const adapters = {
   },
 
   'pdf-lib': {
-    roles: ['parse', 'write'],
     async load(urls) {
       await loadScript(urls.script)
       state.library = window.PDFLib
@@ -256,7 +253,6 @@ const adapters = {
  * incremental update instead of rewriting the file. */
 adapters['cantoo-pdf-lib'] = {
   ...adapters['pdf-lib'],
-  roles: ['parse', 'write', 'password'],
   async open(bytes, password, options = {}) {
     const document_ = await state.library.PDFDocument.load(bytes, {
       updateMetadata: false,
@@ -416,7 +412,9 @@ window.__run = async (job) => {
   try {
     const adapter = adapters[job.candidate.id]
     if (!adapter) throw new Error(`unknown_candidate ${job.candidate.id}`)
-    report.roles = adapter.roles
+    /* What this engine is for is decided once, in the candidate registry; the
+     * operations the runner derived from it are the only gate here. */
+    report.roles = job.candidate.roles
 
     const bytes = await fetchBytes(job.fixture.url)
     report.inputBytes = bytes.length
@@ -439,6 +437,7 @@ window.__run = async (job) => {
       report.error = describeError(error)
       report.stages.openMs = Math.round(performance.now() - openStart)
       report.memoryBytes = job.measureMemory ? await sampleMemory() : null
+      report.activeContentRan = globalThis.__pdfActiveContentRan === true
       return report
     }
 
@@ -447,7 +446,7 @@ window.__run = async (job) => {
     report.firstPage = await adapter.pageInfo(handle, 0)
     if (handle.pageCount > 1) report.lastPage = await adapter.pageInfo(handle, handle.pageCount - 1)
 
-    if (adapter.roles.includes('preview') && job.operations.includes('preview')) {
+    if (job.operations.includes('preview')) {
       const previewStart = performance.now()
       const preview = await adapter.preview(handle, 0, job.scale)
       report.stages.firstPagePreviewMs = Math.round(performance.now() - previewStart)
@@ -461,7 +460,7 @@ window.__run = async (job) => {
       }
     }
 
-    if (adapter.roles.includes('write') && job.operations.includes('apply')) {
+    if (job.operations.includes('apply')) {
       const png = await signaturePng()
       /* The first and the last page: on a rotated document they are not the
        * same problem, and the last page is where a partial write shows up. */
