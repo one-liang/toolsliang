@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>T24 PDF engine harness</title>
+</head>
+<body>
+<p>Measurement harness for the T24 PDF engine evaluation. It is driven by Playwright and is not part of the site.</p>
+<script type="module">
+import { signaturePlacement } from './lib/harness/placement.mjs'
+
+/*
+ * One page runs one job: a candidate library, a fixture and the operations the
+ * candidate's role allows. The runner opens a fresh page per job so a library's
+ * memory is returned before the next one is measured.
+ *
+ * Every byte the harness handles comes from the local server that Playwright
+ * started. Nothing is uploaded, and the fixtures are drawn from code.
+ */
+
+/** Placed over the page's own coloured band, so the transparency check has something to see through. */
+const SIGNATURE_RECT = { x: 0.10, y: 0.03, width: 0.30, height: 0.09 }
+
+/** How far beyond the placed rectangle a changed pixel still counts as its own edge. */
+const PLACEMENT_MARGIN_PT = 4
+
+/** The magenta the signature is drawn in; it appears nowhere in a fixture. */
+const INK = { r: 255, g: 0, b: 255 }
+
+/** The band the fixtures paint across the top of every page. */
+const BAND = { r: 52, g: 111, b: 211 }
+
+const state = { library: null, verifier: null }
+
+/* A document may declare actions and links; nothing here may carry them out. */
+globalThis.__pdfActiveContentRan = false
+
+function near(pixel, colour, tolerance = 60) {
+  return Math.abs(pixel[0] - colour.r) <= tolerance
+    && Math.abs(pixel[1] - colour.g) <= tolerance
+    && Math.abs(pixel[2] - colour.b) <= tolerance
+}
+
+function describeError(error) {
+  return {
+    name: error?.name ?? 'Error',
+    /* Fixture names and library wording only; no document content ever reaches a report. */
+    message: String(error?.message ?? error).slice(0, 200),
+  }
+}
+
+async function fetchBytes(url) {
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`fixture_fetch_failed_${response.status}`)
+  return new Uint8Array(await response.arrayBuffer())
+}
+
+/** A transparent PNG drawn from code: magenta strokes with gaps the page shows through. */
+async function signaturePng() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 300
+  canvas.height = 120
+  const context = canvas.getContext('2d')
+  context.strokeStyle = `rgb(${INK.r} ${INK.g} ${INK.b})`
+  context.lineWidth = 14
+  context.lineCap = 'round'
+  context.beginPath()
+  context.moveTo(20, 95)
+  context.bezierCurveTo(80, 10, 140, 110, 200, 30)
+  context.lineTo(280, 70)
+  context.stroke()
+
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+  return new Uint8Array(await blob.arrayBuffer())
+}
+
+async function loadModule(url) {
+  return import(url)
+}
+
+async function loadScript(url) {
+  await new Promise((resolve, reject) => {
+    const element = document.createElement('script')
+    element.src = url
+    element.onload = resolve
+    element.onerror = () => reject(new Error(`script_load_failed ${url}`))
+    document.head.append(element)
+  })
+}
+
+/** pdf.js is both a candidate and the independent verifier every export is read back with. */
+async function verifier(urls) {
+  if (state.verifier) return state.verifier
+
+  const module = await loadModule(urls.module)
+  module.GlobalWorkerOptions.workerSrc = urls.worker
+  state.verifier = module
+  return module
+}
+
+async function renderWithVerifier(module, bytes, index, scale, password) {
+  const task = module.getDocument({ data: bytes, password, isEvalSupported: false, useSystemFonts: false })
+  const document_ = await task.promise
+  const page = await document_.getPage(index + 1)
+  const viewport = page.getViewport({ scale })
+  const canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  context.fillStyle = 'white'
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  await page.render({ canvasContext: context, viewport }).promise
+
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
+  const summary = {
+    pageCount: document_.numPages,
+    width: viewport.width,
+    height: viewport.height,
+    rotation: page.rotate,
+    pixels,
+  }
+  page.cleanup()
+  await task.destroy()
+  return summary
+}
+
+const adapters = {
+  'pdfjs-dist': {
+    async load(urls) {
+      const module = await loadModule(urls.module)
+      module.GlobalWorkerOptions.workerSrc = urls.worker
+      state.library = module
+    },
+    async open(bytes, password) {
+      const task = state.library.getDocument({
+        data: bytes,
+        password,
+        isEvalSupported: false,
+        useSystemFonts: false,
+      })
+      const document_ = await task.promise
+      const permissions = await document_.getPermissions()
+      return {
+        task,
+        document: document_,
+        pageCount: document_.numPages,
+        /* `null` means the document sets no restrictions at all, which is not the
+         * same as a document that sets them and allows everything. */
+        permissions: permissions === null ? null : [...permissions].sort((left, right) => left - right),
+      }
+    },
+    async pageInfo(handle, index) {
+      const page = await handle.document.getPage(index + 1)
+      const viewport = page.getViewport({ scale: 1 })
+      return { width: viewport.width, height: viewport.height, rotation: page.rotate }
+    },
+    async preview(handle, index, scale) {
+      const page = await handle.document.getPage(index + 1)
+      const viewport = page.getViewport({ scale })
+      const canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
+      const context = canvas.getContext('2d', { willReadFrequently: true })
+      await page.render({ canvasContext: context, viewport }).promise
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
+      page.cleanup()
+      return { width: canvas.width, height: canvas.height, pixels }
+    },
+    async close(handle) {
+      /* The loading task owns the worker; closing the proxy alone leaves it running. */
+      await handle.task.destroy()
+    },
+  },
+
+  'hyzyla-pdfium': {
+    async load(urls) {
+      const module = await loadModule(urls.module)
+      state.library = await module.PDFiumLibrary.init({ wasmUrl: urls.wasm })
+    },
+    async open(bytes, password) {
+      const document_ = await state.library.loadDocument(bytes, password)
+      return { document: document_, pageCount: document_.getPageCount() }
+    },
+    async pageInfo(handle, index) {
+      const page = handle.document.getPage(index)
+      const size = page.getOriginalSize()
+      /* PDFium reports the size a viewer shows, rotation already applied. */
+      return { width: size.originalWidth, height: size.originalHeight, rotation: null }
+    },
+    async preview(handle, index, scale) {
+      const page = handle.document.getPage(index)
+      const render = await page.render({ scale, render: 'bitmap' })
+      const pixels = new ImageData(render.width, render.height)
+      /* PDFium hands back BGRA; the checks below read RGBA. */
+      for (let offset = 0; offset < render.data.length; offset += 4) {
+        pixels.data[offset] = render.data[offset + 2]
+        pixels.data[offset + 1] = render.data[offset + 1]
+        pixels.data[offset + 2] = render.data[offset]
+        pixels.data[offset + 3] = render.data[offset + 3]
+      }
+      return { width: render.width, height: render.height, pixels }
+    },
+    async close(handle) {
+      handle.document.destroy()
+    },
+  },
+
+  'pdf-lib': {
+    async load(urls) {
+      await loadScript(urls.script)
+      state.library = window.PDFLib
+    },
+    async open(bytes, password, options = {}) {
+      const document_ = await state.library.PDFDocument.load(bytes, {
+        updateMetadata: false,
+        ignoreEncryption: options.ignoreEncryption === true,
+        ...(password === undefined ? {} : { password }),
+      })
+      return { document: document_, pageCount: document_.getPageCount() }
+    },
+    async pageInfo(handle, index) {
+      const page = handle.document.getPages()[index]
+      const box = page.getCropBox()
+      return {
+        width: box.width,
+        height: box.height,
+        rotation: page.getRotation().angle,
+        box: [box.x, box.y, box.x + box.width, box.y + box.height],
+      }
+    },
+    async apply(handle, index, png) {
+      const page = handle.document.getPages()[index]
+      const box = page.getCropBox()
+      const placement = signaturePlacement({
+        box: [box.x, box.y, box.x + box.width, box.y + box.height],
+        rotation: page.getRotation().angle,
+      }, SIGNATURE_RECT)
+      const image = await handle.document.embedPng(png)
+      page.drawImage(image, {
+        x: placement.anchor.x,
+        y: placement.anchor.y,
+        width: placement.width,
+        height: placement.height,
+        rotate: state.library.degrees(placement.rotation),
+      })
+      return placement
+    },
+    async save(handle) {
+      return handle.document.save({ useObjectStreams: false, addDefaultPage: false })
+    },
+    async close() {},
+  },
+}
+
+/* The maintained fork keeps pdf-lib's interface and adds the two things the
+ * tool needs from it: opening an encrypted document and appending an
+ * incremental update instead of rewriting the file. */
+adapters['cantoo-pdf-lib'] = {
+  ...adapters['pdf-lib'],
+  async open(bytes, password, options = {}) {
+    const document_ = await state.library.PDFDocument.load(bytes, {
+      updateMetadata: false,
+      ignoreEncryption: options.ignoreEncryption === true,
+      forIncrementalUpdate: options.incremental === true,
+      ...(password === undefined ? {} : { password }),
+    })
+    return { document: document_, pageCount: document_.getPageCount() }
+  },
+  async save(handle, variant) {
+    /*
+     * `commit` appends the change to the bytes that were loaded instead of
+     * rewriting the file. For a signature that is the interesting shape: the
+     * pages nobody touched are still the producer's own bytes.
+     */
+    return variant === 'incremental'
+      ? handle.document.commit({ useObjectStreams: false })
+      : handle.document.save({ useObjectStreams: false, addDefaultPage: false })
+  },
+}
+
+function changed(before, after, offset) {
+  return Math.abs(after[offset] - before[offset])
+    + Math.abs(after[offset + 1] - before[offset + 1])
+    + Math.abs(after[offset + 2] - before[offset + 2]) > 24
+}
+
+/**
+ * Inside the placed rectangle: how much of it the signature covers, and how
+ * much of it the page still shows through. `untouched` is the transparency
+ * evidence — a signature flattened onto an opaque background would repaint the
+ * whole rectangle, and nothing inside it would still equal the original page.
+ */
+function insideCounts(before, after, region, width) {
+  let ink = 0
+  let untouched = 0
+  let total = 0
+  for (let y = region.top; y < region.bottom; y += 1) {
+    for (let x = region.left; x < region.right; x += 1) {
+      const offset = (y * width + x) * 4
+      total += 1
+      if (near([after[offset], after[offset + 1], after[offset + 2]], INK, 70)) ink += 1
+      if (!changed(before, after, offset)) untouched += 1
+    }
+  }
+  return { ink, untouched, total }
+}
+
+function differingPixels(before, after) {
+  let count = 0
+  for (let offset = 0; offset < after.length; offset += 4) {
+    if (changed(before, after, offset)) count += 1
+  }
+  return count
+}
+
+/**
+ * Reads the exported file back with pdf.js and answers the questions the
+ * signature contract rests on: is the document still the same shape, did the
+ * signature land where the preview said it would, did it stay inside its own
+ * rectangle, and is the page still visible through the transparent parts.
+ */
+async function verifyPage({ module, source, exported, index, placement, password, scale }) {
+  const before = await renderWithVerifier(module, source.slice(), index, scale, password)
+  const after = await renderWithVerifier(module, exported.slice(), index, scale, password)
+
+  const width = after.pixels.width
+  const height = after.pixels.height
+  /* Five per cent in from each edge: the rounded stroke does not reach the corners. */
+  const inside = {
+    left: Math.round((placement.left + placement.width * 0.05) * scale),
+    right: Math.round((placement.left + placement.width * 0.95) * scale),
+    top: Math.round((placement.top + placement.height * 0.05) * scale),
+    bottom: Math.round((placement.top + placement.height * 0.95) * scale),
+  }
+  const counts = insideCounts(before.pixels.data, after.pixels.data, inside, width)
+
+  let strayInk = 0
+  let changedOutside = 0
+  /* The signature's own edge is antialiased across the rectangle's boundary, so
+   * "outside" starts one point beyond it. The value is reported with the run. */
+  const margin = Math.round(PLACEMENT_MARGIN_PT * scale)
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const withinPlacement = x >= inside.left - margin && x <= inside.right + margin
+        && y >= inside.top - margin && y <= inside.bottom + margin
+      if (withinPlacement) continue
+      const offset = (y * width + x) * 4
+      if (!changed(before.pixels.data, after.pixels.data, offset)) continue
+      changedOutside += 1
+      const pixel = [after.pixels.data[offset], after.pixels.data[offset + 1], after.pixels.data[offset + 2]]
+      if (near(pixel, INK, 70)) strayInk += 1
+    }
+  }
+
+  return {
+    pageCount: after.pageCount,
+    widthPreserved: Math.abs(after.width - before.width) < 0.01,
+    heightPreserved: Math.abs(after.height - before.height) < 0.01,
+    rotationPreserved: after.rotation === before.rotation,
+    displayWidth: Math.round(after.width * 100) / 100,
+    displayHeight: Math.round(after.height * 100) / 100,
+    /* Share of the placed rectangle the signature actually covers. */
+    inkRatio: counts.total === 0 ? 0 : Math.round((counts.ink / counts.total) * 1000) / 1000,
+    /* Share of it the page still shows through: the alpha channel survived. */
+    seeThroughRatio: counts.total === 0 ? 0 : Math.round((counts.untouched / counts.total) * 1000) / 1000,
+    strayInkPixels: strayInk,
+    changedPixelsOutsidePlacement: changedOutside,
+    placementMarginPt: PLACEMENT_MARGIN_PT,
+    comparedPixels: width * height,
+  }
+}
+
+/** A page nobody signed has to come back identical, or the export rewrote more than it was asked to. */
+async function verifyUntouchedPage({ module, source, exported, index, password, scale }) {
+  const before = await renderWithVerifier(module, source.slice(), index, scale, password)
+  const after = await renderWithVerifier(module, exported.slice(), index, scale, password)
+
+  return {
+    index,
+    changedPixels: differingPixels(before.pixels.data, after.pixels.data),
+    comparedPixels: after.pixels.width * after.pixels.height,
+  }
+}
+
+/** Chromium only; the other two engines do not implement the API. */
+async function sampleMemory() {
+  if (typeof performance.measureUserAgentSpecificMemory !== 'function') return null
+  try {
+    const sample = await performance.measureUserAgentSpecificMemory()
+    return sample.bytes
+  }
+  catch {
+    return null
+  }
+}
+
+window.__environment = () => ({
+  userAgent: navigator.userAgent,
+  hardwareConcurrency: navigator.hardwareConcurrency ?? null,
+  deviceMemory: navigator.deviceMemory ?? null,
+  crossOriginIsolated: Boolean(window.crossOriginIsolated),
+  memoryApi: typeof performance.measureUserAgentSpecificMemory === 'function' ? 'available' : 'absent',
+  offscreenCanvas: typeof OffscreenCanvas === 'function',
+  wasm: typeof WebAssembly === 'object',
+})
+
+window.__run = async (job) => {
+  const report = {
+    candidateId: job.candidate.id,
+    fixture: job.fixture.name,
+    variant: job.variant ?? 'default',
+    outcome: 'ok',
+    stages: {},
+  }
+
+  try {
+    const adapter = adapters[job.candidate.id]
+    if (!adapter) throw new Error(`unknown_candidate ${job.candidate.id}`)
+    /* What this engine is for is decided once, in the candidate registry; the
+     * operations the runner derived from it are the only gate here. */
+    report.roles = job.candidate.roles
+
+    const bytes = await fetchBytes(job.fixture.url)
+    report.inputBytes = bytes.length
+
+    const loadStart = performance.now()
+    await adapter.load(job.candidate.urls)
+    report.stages.libraryLoadMs = Math.round(performance.now() - loadStart)
+
+    let handle
+    const openStart = performance.now()
+    try {
+      handle = await adapter.open(bytes.slice(), job.password, {
+        ignoreEncryption: job.variant === 'ignore-encryption',
+        incremental: job.variant === 'incremental',
+      })
+      report.stages.openMs = Math.round(performance.now() - openStart)
+    }
+    catch (error) {
+      report.outcome = 'open-failed'
+      report.error = describeError(error)
+      report.stages.openMs = Math.round(performance.now() - openStart)
+      report.memoryBytes = job.measureMemory ? await sampleMemory() : null
+      report.activeContentRan = globalThis.__pdfActiveContentRan === true
+      return report
+    }
+
+    report.pageCount = handle.pageCount
+    if (handle.permissions !== undefined) report.permissions = handle.permissions
+    report.firstPage = await adapter.pageInfo(handle, 0)
+    if (handle.pageCount > 1) report.lastPage = await adapter.pageInfo(handle, handle.pageCount - 1)
+
+    if (job.operations.includes('preview')) {
+      const previewStart = performance.now()
+      const preview = await adapter.preview(handle, 0, job.scale)
+      report.stages.firstPagePreviewMs = Math.round(performance.now() - previewStart)
+      report.preview = { width: preview.width, height: preview.height }
+
+      const lastIndex = handle.pageCount - 1
+      if (lastIndex > 0) {
+        const lastStart = performance.now()
+        await adapter.preview(handle, lastIndex, job.scale)
+        report.stages.lastPagePreviewMs = Math.round(performance.now() - lastStart)
+      }
+    }
+
+    if (job.operations.includes('apply')) {
+      const png = await signaturePng()
+      /* The first and the last page: on a rotated document they are not the
+       * same problem, and the last page is where a partial write shows up. */
+      const indices = handle.pageCount > 1 ? [0, handle.pageCount - 1] : [0]
+      const placements = []
+      const applyStart = performance.now()
+      for (const index of indices) placements.push(await adapter.apply(handle, index, png))
+      report.stages.applyMs = Math.round(performance.now() - applyStart)
+
+      const saveStart = performance.now()
+      const exported = await adapter.save(handle, job.variant)
+      report.stages.exportMs = Math.round(performance.now() - saveStart)
+      report.exportBytes = exported.length
+      report.memoryBytes = job.measureMemory ? await sampleMemory() : null
+
+      if (job.operations.includes('verify')) {
+        const module = await verifier(job.verifierUrls)
+        const password = job.verifyPassword ?? job.password
+        const verifyStart = performance.now()
+        report.verify = {}
+        try {
+          const labels = ['firstPage', 'lastPage']
+          for (const [position, index] of indices.entries()) {
+            report.verify[labels[position]] = await verifyPage({
+              module,
+              source: bytes,
+              exported,
+              index,
+              placement: placements[position],
+              password,
+              scale: job.scale,
+            })
+          }
+          /* A page between the two signed ones, to show the export left it alone. */
+          if (handle.pageCount > 2) {
+            report.verify.untouchedPage = await verifyUntouchedPage({
+              module,
+              source: bytes,
+              exported,
+              index: 1,
+              password,
+              scale: job.scale,
+            })
+          }
+        }
+        catch (error) {
+          report.verify.failed = describeError(error)
+        }
+        report.stages.verifyMs = Math.round(performance.now() - verifyStart)
+      }
+    }
+
+    if (report.memoryBytes === undefined) report.memoryBytes = job.measureMemory ? await sampleMemory() : null
+    await adapter.close(handle)
+  }
+  catch (error) {
+    report.outcome = report.outcome === 'ok' ? 'error' : report.outcome
+    report.error = describeError(error)
+  }
+
+  report.activeContentRan = globalThis.__pdfActiveContentRan === true
+  return report
+}
+
+window.__ready = true
+</script>
+</body>
+</html>

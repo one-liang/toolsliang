@@ -1,5 +1,6 @@
 export interface EngineProgress { stage: string, completed: number, total?: number }
-export interface EngineError { code: string, recoverable: boolean, suggestedAction: 'retry' | 'change-input' | 'use-supported-browser' }
+/** `enter-password` is for inputs whose own protection is the obstacle: the user has something to supply, and no other action helps. */
+export interface EngineError { code: string, recoverable: boolean, suggestedAction: 'retry' | 'change-input' | 'use-supported-browser' | 'enter-password' }
 export type EngineOutcome<T> = { status: 'success', output: T } | { status: 'cancelled' } | { status: 'error', error: EngineError }
 export interface EngineCapabilities { supported: boolean, formats: string[], reason?: string }
 export interface RunContext { signal?: AbortSignal, onProgress?: (progress: EngineProgress) => void }
