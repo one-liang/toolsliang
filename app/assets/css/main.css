@@ -1127,3 +1127,5 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .signature-pad__form:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
 .signature-pad__canvas { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; border: 1px dashed var(--color-muted-foreground); border-radius: var(--radius-sm); background-color: var(--color-surface); touch-action: none; }
 .signature-pad__imported-note { overflow-wrap: anywhere; }
+.pdf-signature__history { margin-top: 16px; }
+.signature-pad__panel { display: grid; gap: 12px; }

@@ -161,10 +161,13 @@ describe('兩種匯出方式', () => {
     }
   })
 
-  it('每一次執行都跑完規格列出的階段', () => {
+  it('每一次執行都跑完規格列出的階段，套用階段逐一數過每個簽名', () => {
     for (const run of signed) {
       expect(run.openStages).toEqual(['read', 'parse'])
-      expect(run.exportStages).toEqual(['apply', 'write'])
+      /* `apply` repeats once per placement, so the order is what matters here. */
+      expect([...new Set(run.exportStages)]).toEqual(['apply', 'write'])
+      expect(run.exportStages!.at(-1)).toBe('write')
+      expect(run.exportStages!.filter(stage => stage === 'apply').length).toBeGreaterThanOrEqual(2)
     }
   })
 })

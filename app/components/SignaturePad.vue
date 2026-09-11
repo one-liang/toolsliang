@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { Eraser, PenLine, Type, Upload } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { exceedsImageLimits, imageInputLimits } from '@/features/images/limits'
 import {
   fitTypedSignatureSize,
   opaqueBounds,
@@ -13,10 +14,11 @@ import {
   strokeContentBox,
   typedSignatureText,
   validateSignatureImageFile,
+  type SignatureBox,
   type SignatureForm,
   type SignatureStroke,
 } from '@/features/tools/pdf-signature/domain/signature'
-import { signatureInputErrors } from '@/features/tools/pdf-signature/content'
+import { signatureInputErrors, type SignatureInputErrorCode } from '@/features/tools/pdf-signature/content'
 import type { LocaleCode } from '@/features/tools/catalog'
 
 /**
@@ -46,6 +48,15 @@ const PAD_HEIGHT = PAD_WIDTH / signaturePadAspect
 const STROKE_RATIO = 0.045
 /** Breathing room around the handwriting, in the same units. */
 const CONTENT_PADDING = 0.03
+/** The ink every form is drawn in: the page's own text colour, not pure black. */
+const INK = '#1d1b19'
+/** How much of its box a typed name fills, leaving room for descenders. */
+const TYPED_FILL = { width: 0.94, height: 0.8 }
+/** The same question once the signature is rasterised at its real size. */
+const TYPED_RASTER_FILL = { width: 0.96, height: 0.82 }
+/** A typed name's own shape: its measured width plus air, over one line of type. */
+const TYPED_SIDE_AIR = 1.08
+const TYPED_LINE_HEIGHT = 1.5
 
 const form = ref<SignatureForm>('drawn')
 const strokes = shallowRef<SignatureStroke[]>([])
@@ -57,9 +68,14 @@ const strokes = shallowRef<SignatureStroke[]>([])
  */
 const hasInk = ref(false)
 const typed = ref('')
-const imported = shallowRef<{ bitmap: ImageBitmap, width: number, height: number }>()
+/**
+ * The imported picture, with the crop measured once. The pixels themselves are
+ * not kept: a large picture is tens of megabytes of RGBA, and the only thing
+ * the rasteriser needs from them is the rectangle that is not transparent.
+ */
+const imported = shallowRef<{ bitmap: ImageBitmap, width: number, height: number, bounds: SignatureBox }>()
 const importedName = ref('')
-const error = ref('')
+const error = ref<SignatureInputErrorCode | ''>('')
 const pad = ref<HTMLCanvasElement>()
 const typedPreview = ref<HTMLCanvasElement>()
 const imageInput = ref<HTMLInputElement>()
@@ -71,14 +87,15 @@ const formLabels: Record<SignatureForm, { 'zh-tw': string, en: string }> = {
   image: { 'zh-tw': '匯入透明圖片', en: 'Import image' },
 }
 
-const errorText = computed(() => error.value ? signatureInputErrors[error.value]?.[locale] ?? '' : '')
+const errorText = computed(() => error.value ? signatureInputErrors[error.value][locale] : '')
 const ready = computed(() => {
   if (form.value === 'drawn') return hasInk.value
   if (form.value === 'typed') return typedSignatureText(typed.value).length > 0
   return Boolean(imported.value)
 })
 
-function padContext() {
+/** Resets the pad to its own pixel size, which also clears what was on it. */
+function resetPad() {
   const canvas = pad.value
   if (!canvas) return undefined
   canvas.width = PAD_WIDTH
@@ -93,7 +110,7 @@ function paintStrokes(
   box: { x: number, y: number, width: number, height: number },
 ) {
   context.clearRect(0, 0, target.width, target.height)
-  context.strokeStyle = '#1d1b19'
+  context.strokeStyle = INK
   context.lineJoin = 'round'
   context.lineCap = 'round'
   context.lineWidth = Math.max(1, STROKE_RATIO * (target.height / box.height))
@@ -115,7 +132,7 @@ function paintStrokes(
 }
 
 function redrawPad() {
-  const context = padContext()
+  const context = resetPad()
   if (!context) return
   paintStrokes(context, { width: PAD_WIDTH, height: PAD_HEIGHT }, { x: 0, y: 0, width: 1, height: 1 })
 }
@@ -169,24 +186,38 @@ function clearPad() {
   redrawPad()
 }
 
+/**
+ * Writes the typed name into the middle of the target, at the largest size that
+ * still fits the share of it the fill allows. The preview and the rasterised
+ * signature go through here, so what the visitor sees is what gets placed.
+ */
+function paintTypedText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  target: { width: number, height: number },
+  fill: { width: number, height: number },
+) {
+  context.clearRect(0, 0, target.width, target.height)
+  if (!text) return
+
+  const size = typedFontSize(context, text, { width: target.width * fill.width, height: target.height * fill.height })
+  context.font = typedFont(size)
+  context.fillStyle = INK
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
+  context.fillText(text, target.width / 2, target.height / 2)
+}
+
 /** Draws the typed name so the visitor sees what will be placed, not a promise of it. */
 function redrawTyped() {
   const canvas = typedPreview.value
-  const text = typedSignatureText(typed.value)
   if (!canvas) return
   canvas.width = PAD_WIDTH
   canvas.height = PAD_HEIGHT
   const context = canvas.getContext('2d')
   if (!context) return
-  context.clearRect(0, 0, canvas.width, canvas.height)
-  if (!text) return
 
-  const size = typedFontSize(context, text, { width: PAD_WIDTH * 0.94, height: PAD_HEIGHT * 0.8 })
-  context.font = typedFont(size)
-  context.fillStyle = '#1d1b19'
-  context.textAlign = 'center'
-  context.textBaseline = 'middle'
-  context.fillText(text, canvas.width / 2, canvas.height / 2)
+  paintTypedText(context, typedSignatureText(typed.value), { width: PAD_WIDTH, height: PAD_HEIGHT }, TYPED_FILL)
 }
 
 /** The device's own text font: nothing is embedded, so nothing has to be licensed. */
@@ -207,7 +238,7 @@ function typedFontSize(context: CanvasRenderingContext2D, text: string, box: { w
 }
 
 /** A refused image puts the focus back where the visitor can choose another one. */
-function refuse(code: string) {
+function refuse(code: SignatureInputErrorCode) {
   error.value = code
   imageInput.value?.focus()
 }
@@ -220,19 +251,28 @@ async function chooseImage(files: File[]) {
   const file = files[0]!
   const code = await validateSignatureImageFile(file)
   if (code) { refuse(code); return }
+  if (file.size > imageInputLimits.maxBytes) { refuse('signature_too_large'); return }
 
   try {
     const bitmap = await createImageBitmap(file)
+    if (exceedsImageLimits(bitmap.width, bitmap.height)) { bitmap.close(); refuse('signature_too_large'); return }
+
     const canvas = document.createElement('canvas')
     canvas.width = bitmap.width
     canvas.height = bitmap.height
     const context = canvas.getContext('2d', { willReadFrequently: true })
-    if (!context) { refuse('unsupported_format'); return }
+    if (!context) { bitmap.close(); refuse('unsupported_format'); return }
     context.drawImage(bitmap, 0, 0)
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
     if (!signatureHasTransparency(pixels)) { bitmap.close(); refuse('signature_is_opaque'); return }
 
-    imported.value = { bitmap, width: bitmap.width, height: bitmap.height }
+    clearImported()
+    imported.value = {
+      bitmap,
+      width: bitmap.width,
+      height: bitmap.height,
+      bounds: opaqueBounds(pixels, bitmap.width, bitmap.height) ?? { x: 0, y: 0, width: bitmap.width, height: bitmap.height },
+    }
     importedName.value = file.name
   }
   catch {
@@ -240,81 +280,100 @@ async function chooseImage(files: File[]) {
   }
 }
 
+/** A picture that is no longer shown is a decoded bitmap nobody is holding for. */
+function clearImported() {
+  imported.value?.bitmap.close()
+  imported.value = undefined
+}
+
+/** A signature on a canvas of its own, with the name it will be saved under. */
+interface Rasterised {
+  canvas: HTMLCanvasElement
+  context: CanvasRenderingContext2D
+  name: string
+}
+
+/** The canvas every form draws onto, or nothing when this device has no 2D context. */
+function rasterCanvas(size: { width: number, height: number }, name: string): Rasterised | undefined {
+  const canvas = document.createElement('canvas')
+  canvas.width = size.width
+  canvas.height = size.height
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) { error.value = 'unsupported_format'; return undefined }
+
+  return { canvas, context, name }
+}
+
+function rasteriseDrawn(): Rasterised | undefined {
+  const box = strokeContentBox(strokes.value, CONTENT_PADDING)
+  if (!box) { error.value = 'signature_empty'; return undefined }
+
+  /* The box is a share of the pad, and the pad is three times as wide as tall. */
+  const size = signatureRasterSize({ aspect: (box.width * signaturePadAspect) / box.height, maxPlacedWidthPt })
+  const target = rasterCanvas(size, locale === 'en' ? 'Drawn signature' : '手寫簽名')
+  if (target) paintStrokes(target.context, size, box)
+
+  return target
+}
+
+function rasteriseTyped(): Rasterised | undefined {
+  const text = typedSignatureText(typed.value)
+  /* The name's own shape has to be measured before there is a canvas to draw it on. */
+  const probe = document.createElement('canvas').getContext('2d')
+  if (!probe) { error.value = 'unsupported_format'; return undefined }
+
+  const padSize = typedFontSize(probe, text, { width: PAD_WIDTH * TYPED_FILL.width, height: PAD_HEIGHT * TYPED_FILL.height })
+  probe.font = typedFont(padSize)
+  const aspect = Math.max(0.1, (probe.measureText(text).width * TYPED_SIDE_AIR) / (padSize * TYPED_LINE_HEIGHT))
+  const size = signatureRasterSize({ aspect, maxPlacedWidthPt })
+  const target = rasterCanvas(size, text)
+  if (target) paintTypedText(target.context, text, size, TYPED_RASTER_FILL)
+
+  return target
+}
+
+function rasteriseImported(): Rasterised | undefined {
+  const source = imported.value
+  if (!source) { error.value = 'signature_empty'; return undefined }
+
+  const crop = source.bounds
+  /* Never upscale an imported picture: its own pixels are the most it has. */
+  const width = Math.min(signatureRasterSize({ aspect: crop.width / crop.height, maxPlacedWidthPt }).width, crop.width)
+  const size = { width, height: Math.max(1, Math.round(width * (crop.height / crop.width))) }
+  const target = rasterCanvas(size, locale === 'en' ? 'Imported signature' : '匯入的簽名')
+  if (target) target.context.drawImage(source.bitmap, crop.x, crop.y, crop.width, crop.height, 0, 0, size.width, size.height)
+
+  return target
+}
+
+const rasterisers: Record<SignatureForm, () => Rasterised | undefined> = {
+  drawn: rasteriseDrawn,
+  typed: rasteriseTyped,
+  image: rasteriseImported,
+}
+
 /** Writes the signature out as the transparent PNG everything downstream expects. */
 async function create() {
   if (disabled || !ready.value) { error.value = 'signature_empty'; return }
   error.value = ''
 
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d', { willReadFrequently: true })
-  if (!context) { error.value = 'unsupported_format'; return }
+  const target = rasterisers[form.value]()
+  if (!target) return
 
-  let name = ''
-  if (form.value === 'drawn') {
-    const box = strokeContentBox(strokes.value, CONTENT_PADDING)
-    if (!box) { error.value = 'signature_empty'; return }
-    const size = signatureRasterSize({ aspect: (box.width * signaturePadAspect) / box.height, maxPlacedWidthPt })
-    canvas.width = size.width
-    canvas.height = size.height
-    paintStrokes(context, size, box)
-    name = locale === 'en' ? 'Drawn signature' : '手寫簽名'
-  }
-  else if (form.value === 'typed') {
-    const text = typedSignatureText(typed.value)
-    /* Measured at the pad's shape first, then rasterised to the real box. */
-    const probe = document.createElement('canvas').getContext('2d')
-    if (!probe) { error.value = 'unsupported_format'; return }
-    const padSize = typedFontSize(probe, text, { width: PAD_WIDTH * 0.94, height: PAD_HEIGHT * 0.8 })
-    probe.font = typedFont(padSize)
-    const measured = probe.measureText(text)
-    const aspect = Math.max(0.1, (measured.width * 1.08) / (padSize * 1.5))
-    const size = signatureRasterSize({ aspect, maxPlacedWidthPt })
-    canvas.width = size.width
-    canvas.height = size.height
-    const fontSize = typedFontSize(context, text, { width: size.width * 0.96, height: size.height * 0.82 })
-    context.font = typedFont(fontSize)
-    context.fillStyle = '#1d1b19'
-    context.textAlign = 'center'
-    context.textBaseline = 'middle'
-    context.fillText(text, size.width / 2, size.height / 2)
-    name = text
-  }
-  else {
-    const source = imported.value
-    if (!source) { error.value = 'signature_empty'; return }
-    const crop = opaqueBounds(cropSource(source.bitmap), source.width, source.height)
-      ?? { x: 0, y: 0, width: source.width, height: source.height }
-    const size = signatureRasterSize({ aspect: crop.width / crop.height, maxPlacedWidthPt })
-    canvas.width = Math.min(size.width, crop.width)
-    canvas.height = Math.max(1, Math.round(canvas.width * (crop.height / crop.width)))
-    context.clearRect(0, 0, canvas.width, canvas.height)
-    context.drawImage(source.bitmap, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height)
-    name = locale === 'en' ? 'Imported signature' : '匯入的簽名'
-  }
-
-  const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
+  const blob = await new Promise<Blob | null>(resolve => target.canvas.toBlob(resolve, 'image/png'))
   if (!blob) { error.value = 'unsupported_format'; return }
 
   emit('created', {
-    name,
+    name: target.name,
     form: form.value,
     bytes: await blob.arrayBuffer(),
-    width: canvas.width,
-    height: canvas.height,
+    width: target.canvas.width,
+    height: target.canvas.height,
   })
 }
 
-/** The imported bitmap's pixels, read once so the crop can be measured. */
-function cropSource(bitmap: ImageBitmap) {
-  const canvas = document.createElement('canvas')
-  canvas.width = bitmap.width
-  canvas.height = bitmap.height
-  const context = canvas.getContext('2d', { willReadFrequently: true })!
-  context.drawImage(bitmap, 0, 0)
-  return context.getImageData(0, 0, canvas.width, canvas.height).data
-}
-
 watch(typed, redrawTyped)
+onBeforeUnmount(clearImported)
 watch(form, (value) => {
   error.value = ''
   if (value === 'drawn') requestAnimationFrame(redrawPad)

@@ -6,10 +6,15 @@
  * image in is one image out. Signing is a conversation instead — open, look at a
  * page, place, look again, export — and re-parsing a 50 MiB document for each of
  * those steps would be both slower and less honest about what the tool is
- * holding. So the session keeps a single worker and correlates requests by id,
- * while keeping the parts of the Tool Engine contract that matter: a capability
- * answer before anything is chosen, progress per stage, cancellation that really
- * stops the work, structured failures, and a release that leaves nothing behind.
+ * holding. So the session keeps a single worker and correlates requests by id.
+ *
+ * That is a different shape from `createWorkerEngine`, not a different contract.
+ * ADR-0010 asks a heavy module to run in a Web Worker and to encapsulate the six
+ * things a visitor can feel, and all six are here: capability detection before
+ * anything is chosen (`capabilities`), progress per stage (`onProgress`),
+ * cancellation (`cancel`, `signal`), structured failures (`pdfSignatureError`),
+ * Blob output (`PdfPagePreview`, `PdfExportResult`) and memory cleanup
+ * (`dispose`, and a terminated worker on every cancel).
  *
  * Cancellation terminates the worker. Nothing inside an engine's save or render
  * can be interrupted once it has started, and a terminated worker is also the
@@ -22,6 +27,7 @@ import {
   estimatePdfWorkingSetBytes,
   pdfSignatureError,
   pdfSignatureLimits,
+  pdfSignatureMemoryModel,
   type PdfSignatureFailureCode,
   type PdfSignatureStage,
 } from './domain/reference'
@@ -38,7 +44,40 @@ import type { EngineOutcome } from '../engine/contract'
 import type { WorkerLease } from '../engine/local-worker'
 
 /** The same ceiling every other local engine works under. */
-const DEFAULT_MEMORY_BUDGET_BYTES = 384 * 1024 * 1024
+export const pdfSignatureMemoryBudgetBytes = 384 * 1024 * 1024
+
+/**
+ * What this device may actually be asked to hold.
+ *
+ * §12.12 sets 100 pages and 50 MiB "subject to device capability", and §9.2 of
+ * the record allows the numbers to come down but never up. The working set is
+ * several times the file (two engines, each holding it), so the byte ceiling is
+ * derived by running the record's own estimator backwards from the budget.
+ * `deviceMemory` is coarse and missing in some browsers; when it says nothing
+ * the shared ceiling stands, because a limit invented from silence is not more
+ * careful, only more annoying. The page cap does not move: it is about how much
+ * a person can work with, not about bytes.
+ */
+export function resolvePdfSignatureLimits(
+  device: { deviceMemory?: number } = {},
+  budgetBytes = pdfSignatureMemoryBudgetBytes,
+) {
+  const budget = device.deviceMemory
+    ? Math.min(budgetBytes, Math.round(device.deviceMemory * 1024 ** 3 / 8))
+    : budgetBytes
+  const fits = Math.floor(
+    (budget - pdfSignatureMemoryModel.baseBytes)
+    / (pdfSignatureMemoryModel.bytesPerInputByte * pdfSignatureMemoryModel.engines),
+  )
+
+  return {
+    maxPages: pdfSignatureLimits.maxPages,
+    maxBytes: Math.max(0, Math.min(pdfSignatureLimits.maxBytes, fits)),
+    budgetBytes: budget,
+  }
+}
+
+export type PdfSignatureSessionLimits = ReturnType<typeof resolvePdfSignatureLimits>
 /** A request that has not answered by now is a worker that is not coming back. */
 const REQUEST_TIMEOUT_MS = 90_000
 
@@ -54,15 +93,21 @@ export interface PdfExportResult {
 }
 
 export interface PdfRequestContext {
-  onProgress?: (stage: PdfSignatureStage) => void
+  onProgress?: (progress: { stage: PdfSignatureStage, page?: number, total?: number }) => void
+  /** Abandons this request the way `cancel()` does, for a caller that owns its own lifetime. */
+  signal?: AbortSignal
 }
 
 export interface PdfSignatureSessionOptions {
-  /** Lowered by the tests and by a device that reports less room than the default. */
+  /** What the browser admits the device has, in GiB; absent leaves the shared ceiling. */
+  deviceMemory?: number
+  /** Lowered by the tests to reach the memory refusal without a large file. */
   memoryBudgetBytes?: number
 }
 
 export interface PdfSignatureSession {
+  /** The ceilings this session enforces, after the device has been asked. */
+  limits: PdfSignatureSessionLimits
   capabilities: () => Promise<PdfSignatureCapabilities>
   open: (file: File, context?: PdfRequestContext & { password?: string }) => Promise<EngineOutcome<PdfDocumentReport>>
   renderPage: (index: number, scale: number, context?: PdfRequestContext) => Promise<EngineOutcome<PdfPagePreview>>
@@ -81,12 +126,12 @@ interface PendingRequest {
   settle: (reply: PdfSignatureReply) => void
   /** Resolves the caller without a reply, for a cancelled or disposed session. */
   abandon: () => void
-  onProgress?: (stage: PdfSignatureStage) => void
+  onProgress?: PdfRequestContext['onProgress']
   timer: ReturnType<typeof setTimeout>
 }
 
 export function createPdfSignatureSession(options: PdfSignatureSessionOptions = {}): PdfSignatureSession {
-  const memoryBudgetBytes = options.memoryBudgetBytes ?? DEFAULT_MEMORY_BUDGET_BYTES
+  const limits = resolvePdfSignatureLimits(options, options.memoryBudgetBytes ?? pdfSignatureMemoryBudgetBytes)
   const pending = new Map<number, PendingRequest>()
   let lease: WorkerLease | undefined
   let starting: Promise<WorkerLease | undefined> | undefined
@@ -106,13 +151,25 @@ export function createPdfSignatureSession(options: PdfSignatureSessionOptions = 
     return { status: 'error', error: pdfSignatureError(code) }
   }
 
-  function settleAll(outcome: 'cancelled') {
+  /** Hands every request in flight back to its caller as cancelled. */
+  function abandonPending() {
     const requests = [...pending.values()]
     pending.clear()
     for (const request of requests) {
       clearTimeout(request.timer)
-      if (outcome === 'cancelled') request.abandon()
+      request.abandon()
     }
+  }
+
+  /**
+   * Stops everything: the work in flight goes back to its callers as cancelled
+   * and the worker holding the document is terminated. Cancelling, aborting and
+   * disposing all mean this, so they all come through here.
+   */
+  function abandonEverything() {
+    generation += 1
+    abandonPending()
+    teardown()
   }
 
   /** Hands the worker and the document it holds back to the device. */
@@ -131,7 +188,7 @@ export function createPdfSignatureSession(options: PdfSignatureSessionOptions = 
     if (!request) return
 
     if (reply.type === 'progress') {
-      request.onProgress?.(reply.stage)
+      request.onProgress?.({ stage: reply.stage, page: reply.page, total: reply.total })
       return
     }
 
@@ -186,24 +243,38 @@ export function createPdfSignatureSession(options: PdfSignatureSessionOptions = 
     context: PdfRequestContext = {},
     transfer: Transferable[] = [],
   ): Promise<EngineOutcome<T>> {
-    if (disposed) return { status: 'cancelled' }
+    if (disposed || context.signal?.aborted) return { status: 'cancelled' }
     const mine = generation
     const worker = await ensureWorker()
     if (disposed || mine !== generation) return { status: 'cancelled' }
+    /* Aborted while the worker was starting: the caller still gets the cancel it asked for. */
+    if (context.signal?.aborted) { abandonEverything(); return { status: 'cancelled' } }
     if (!worker) return failure('unsupported_browser')
 
     const id = nextId++
     const message = build(id)
 
     return new Promise<EngineOutcome<T>>((resolve) => {
+      const settled = (outcome: EngineOutcome<T>) => {
+        context.signal?.removeEventListener('abort', abort)
+        resolve(outcome)
+      }
+      /* An aborted request is a cancelled one: the worker holding the document goes. */
+      const abort = () => {
+        pending.delete(id)
+        abandonEverything()
+        settled({ status: 'cancelled' })
+      }
+      context.signal?.addEventListener('abort', abort, { once: true })
+
       pending.set(id, {
         onProgress: context.onProgress,
-        settle: reply => resolve(reply.type === 'failure' ? failure(reply.code) : read(reply)),
-        abandon: () => resolve({ status: 'cancelled' }),
+        settle: reply => settled(reply.type === 'failure' ? failure(reply.code) : read(reply)),
+        abandon: () => settled({ status: 'cancelled' }),
         timer: setTimeout(() => {
           pending.delete(id)
           teardown()
-          resolve(failure('insufficient_memory'))
+          settled(failure('insufficient_memory'))
         }, REQUEST_TIMEOUT_MS),
       })
       worker.worker.postMessage(message, transfer)
@@ -211,6 +282,8 @@ export function createPdfSignatureSession(options: PdfSignatureSessionOptions = 
   }
 
   return {
+    limits,
+
     async capabilities() {
       if (disposed) return unsupported
       const outcome = await request<PdfSignatureCapabilities>(
@@ -229,7 +302,8 @@ export function createPdfSignatureSession(options: PdfSignatureSessionOptions = 
     async open(file, context = {}) {
       if (disposed) return { status: 'cancelled' }
       if (file.size > pdfSignatureLimits.maxBytes) return failure('too_large')
-      if (estimatePdfWorkingSetBytes(file.size) > memoryBudgetBytes) return failure('insufficient_memory')
+      if (file.size > limits.maxBytes) return failure('insufficient_memory')
+      if (estimatePdfWorkingSetBytes(file.size) > limits.budgetBytes) return failure('insufficient_memory')
 
       const header = new Uint8Array(await file.slice(0, 5).arrayBuffer())
       if (String.fromCharCode(...header) !== '%PDF-') return failure('not_a_pdf')
@@ -275,17 +349,11 @@ export function createPdfSignatureSession(options: PdfSignatureSessionOptions = 
       )
     },
 
-    cancel() {
-      generation += 1
-      settleAll('cancelled')
-      teardown()
-    },
+    cancel: abandonEverything,
 
     dispose() {
       disposed = true
-      generation += 1
-      settleAll('cancelled')
-      teardown()
+      abandonEverything()
     },
   }
 }

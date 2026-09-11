@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canUndoPlacement,
   createPdfWorkspace,
   movePlacement,
   nudgeStepPt,
   placeSignature,
   placementGeometry,
+  placementHistoryLimit,
   placementSummary,
   removePlacement,
   resizePlacement,
@@ -141,6 +143,28 @@ describe('刪除與復原', () => {
 
     expect(undoPlacement(afterMove).placements).toHaveLength(0)
     expect(undoPlacement(undoPlacement(afterMove)).placements).toHaveLength(0)
+  })
+
+  it('一次拖曳只留下一步：復原回到拖曳開始前的位置', () => {
+    const start = place()
+    const before = placementGeometry(start, 'place-1')!
+    // One gesture, many pointer samples: only the first records where to go back to.
+    let dragged = movePlacement(start, 'place-1', { x: 4, y: 0 })
+    for (const step of [4, 4, 4, 4]) dragged = movePlacement(dragged, 'place-1', { x: step, y: 0 }, { continuing: true })
+
+    expect(placementGeometry(dragged, 'place-1')!.left).toBeCloseTo(before.left + 20, 4)
+    expect(dragged.history).toHaveLength(start.history.length + 1)
+    expect(placementGeometry(undoPlacement(dragged), 'place-1')!.left).toBeCloseTo(before.left, 6)
+  })
+
+  it('復原紀錄有上限，長時間作業不會無限成長', () => {
+    let state = place()
+    for (let step = 0; step < placementHistoryLimit + 20; step += 1) {
+      state = movePlacement(state, 'place-1', { x: 1, y: 0 })
+    }
+
+    expect(state.history).toHaveLength(placementHistoryLimit)
+    expect(canUndoPlacement(state)).toBe(true)
   })
 
   it('選取與讀取不會寫進復原紀錄', () => {

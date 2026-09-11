@@ -59,7 +59,8 @@ export type PdfSignatureRequest =
 
 export type PdfSignatureReply =
   | { type: 'capabilities', id: number, capabilities: PdfSignatureCapabilities }
-  | { type: 'progress', id: number, stage: PdfSignatureStage }
+  /** `page` and `total` are present for the stages that walk pages; never a name or any content. */
+  | { type: 'progress', id: number, stage: PdfSignatureStage, page?: number, total?: number }
   | { type: 'document', id: number, report: PdfDocumentReport }
   | { type: 'preview', id: number, report: PdfPagePreviewReport }
   | { type: 'export', id: number, report: PdfExportReport }

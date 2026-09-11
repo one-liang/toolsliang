@@ -69,7 +69,7 @@ function stubWorkingWorker() {
       worker.reply({ type: 'document', id: request.id, report: documentReport })
     }
     if (request.type === 'preview') {
-      worker.reply({ type: 'progress', id: request.id, stage: 'preview' })
+      worker.reply({ type: 'progress', id: request.id, stage: 'preview', page: request.page + 1, total: documentReport.pageCount })
       worker.reply({ type: 'preview', id: request.id, report: { index: request.page, scale: request.scale, width: 100, height: 200, bytes: new Uint8Array([1, 2]).buffer } })
     }
     if (request.type === 'export') {
@@ -138,11 +138,21 @@ describe('開檔、預覽與匯出', () => {
   it('逐階段回報進度，並只交出不帶檔名的摘要', async () => {
     const stages: string[] = []
     const session = createPdfSignatureSession()
-    const outcome = await session.open(pdfFile(), { onProgress: stage => stages.push(stage) })
+    const outcome = await session.open(pdfFile(), { onProgress: progress => stages.push(progress.stage) })
 
     expect(outcome).toEqual({ status: 'success', output: documentReport })
     expect(stages).toEqual(['read', 'parse'])
     expect(JSON.stringify(outcome)).not.toContain('contract.pdf')
+    session.dispose()
+  })
+
+  it('會走頁面的階段同時回報第幾頁與共幾頁，不帶任何頁面內容', async () => {
+    const reported: Array<{ stage: string, page?: number, total?: number }> = []
+    const session = createPdfSignatureSession()
+    await session.open(pdfFile())
+    await session.renderPage(0, 1.5, { onProgress: progress => reported.push(progress) })
+
+    expect(reported).toEqual([{ stage: 'preview', page: 1, total: 1 }])
     session.dispose()
   })
 
@@ -195,7 +205,62 @@ describe('開檔、預覽與匯出', () => {
   })
 })
 
+describe('裝置能力決定的上限', () => {
+  it('瀏覽器沒有回報記憶體時維持規格的上限', () => {
+    const session = createPdfSignatureSession()
+
+    expect(session.limits).toMatchObject({ maxPages: 100, maxBytes: pdfSignatureLimits.maxBytes })
+    session.dispose()
+  })
+
+  it('記憶體較少的裝置只下修不上修，且下修後的數字就是工具使用的數字', async () => {
+    stubWorkingWorker()
+    const session = createPdfSignatureSession({ deviceMemory: 1 })
+
+    expect(session.limits.maxBytes).toBeLessThan(pdfSignatureLimits.maxBytes)
+    expect(session.limits.maxPages).toBe(pdfSignatureLimits.maxPages)
+    expect(await session.open(pdfFile('big.pdf', session.limits.maxBytes + 1)))
+      .toMatchObject({ status: 'error', error: { code: 'insufficient_memory' } })
+    expect(workers).toHaveLength(0)
+    session.dispose()
+  })
+
+  it('記憶體很多的裝置也不會超過規格的上限', () => {
+    const session = createPdfSignatureSession({ deviceMemory: 64 })
+
+    expect(session.limits.maxBytes).toBe(pdfSignatureLimits.maxBytes)
+    session.dispose()
+  })
+})
+
 describe('取消、失敗與釋放', () => {
+  it('呼叫端自己的 AbortSignal 與取消等效：交還工作並釋放 Worker', async () => {
+    stubWorker((request, worker) => {
+      /* `open` answers; the preview never does, so only the abort can settle it. */
+      if (request.type === 'open') worker.reply({ type: 'document', id: request.id, report: documentReport })
+    })
+    const session = createPdfSignatureSession()
+    await session.open(pdfFile())
+    const controller = new AbortController()
+    const pending = session.renderPage(0, 1.5, { signal: controller.signal })
+    controller.abort()
+
+    expect(await pending).toEqual({ status: 'cancelled' })
+    expect(workers[0]!.terminated).toBe(true)
+    session.dispose()
+  })
+
+  it('已經中止的 signal 不會建立任何工作', async () => {
+    stubWorkingWorker()
+    const session = createPdfSignatureSession()
+    await session.open(pdfFile())
+    const aborted = AbortSignal.abort()
+
+    expect(await session.renderPage(0, 1.5, { signal: aborted })).toEqual({ status: 'cancelled' })
+    expect(workers[0]!.posted.filter(request => request.type === 'preview')).toHaveLength(0)
+    session.dispose()
+  })
+
   it('取消會終止 Worker 並把進行中的工作交還，之後可以重新開檔', async () => {
     stubWorker((request, worker) => {
       /* `open` answers; the export never does, which is the state only a terminated worker leaves. */

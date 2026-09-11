@@ -50,8 +50,14 @@ import type { SignatureExportRequest } from './domain/workspace'
 
 declare const self: DedicatedWorkerGlobalScope
 
-/** pdf.js permission bit for changing the page content (ISO 32000-1 table 22). */
+/**
+ * The permission bits §7.2 of the record makes the tool respect: changing page
+ * content and changing annotations (ISO 32000-1 table 22). A document that
+ * withholds either one is saying it does not want to be edited, and the tool
+ * takes the author at their word even though nothing enforces it.
+ */
 const MODIFY_CONTENTS = 0x08
+const MODIFY_ANNOTATIONS = 0x20
 
 /** Only errors are logged: a warning per missing glyph would say more about the document than the console should. */
 const PDFJS_VERBOSITY_ERRORS = 0
@@ -60,7 +66,9 @@ function send(reply: PdfSignatureReply, transfer: Transferable[] = []) {
   self.postMessage(reply, transfer)
 }
 
-const progress = (id: number, stage: PdfSignatureStage) => send({ type: 'progress', id, stage })
+/** Stages carry「第幾頁／共幾頁」where there is a page to count, never a name or a word of content. */
+const progress = (id: number, stage: PdfSignatureStage, page?: number, total?: number) =>
+  send({ type: 'progress', id, stage, ...(page === undefined ? {} : { page, total }) })
 
 /**
  * A signature tool opens documents it did not make, so the parser is told to do
@@ -108,7 +116,6 @@ class OffscreenCanvasFactory {
 }
 
 interface OpenDocument {
-  file: File
   password: string | undefined
   /** The bytes as they arrived. pdf.js is handed a copy, because it takes ownership of what it is given. */
   bytes: Uint8Array
@@ -148,7 +155,7 @@ function capabilities() {
  * What pdf.js refused, in the tool's own vocabulary. A password problem is the
  * one the visitor can act on, so it is never folded into a damaged document.
  */
-function classifyOpenFailure(error: unknown): PdfSignatureFailureCode {
+function classifyFailure(error: unknown): PdfSignatureFailureCode {
   if (error instanceof SignatureFailure) return error.code
   const name = error instanceof Error ? error.name : ''
   if (name === 'PasswordException') {
@@ -170,7 +177,9 @@ async function readReport(document_: OpenDocument['document']): Promise<PdfDocum
   if (document_.numPages > pdfSignatureLimits.maxPages) fail('too_many_pages')
 
   const permissions = await document_.getPermissions()
-  if (permissions !== null && !permissions.has(MODIFY_CONTENTS)) fail('modification_not_permitted')
+  if (permissions !== null && !(permissions.has(MODIFY_CONTENTS) && permissions.has(MODIFY_ANNOTATIONS))) {
+    fail('modification_not_permitted')
+  }
 
   const pages: PdfPageReport[] = []
   for (let index = 0; index < document_.numPages; index += 1) {
@@ -185,6 +194,28 @@ async function readReport(document_: OpenDocument['document']): Promise<PdfDocum
     encrypted: handler !== null,
     permissions: permissions === null ? null : [...permissions].sort((left, right) => left - right),
     pages,
+  }
+}
+
+/**
+ * The writer opens the document too, before the visitor places anything.
+ *
+ * §9.3 of the record puts this in the opening sequence on purpose: the two
+ * engines do not accept exactly the same documents, and a document only the
+ * preview engine can open would otherwise look fine until the export failed.
+ * The writer's own document is dropped straight away — it is re-opened from the
+ * original bytes for each export, so a repeated export can never stamp twice.
+ */
+async function confirmWriterCanOpen(bytes: Uint8Array, report: PdfDocumentReport, password: string | undefined) {
+  try {
+    await PDFDocument.load(bytes.slice(), {
+      updateMetadata: false,
+      /* pdf-lib refuses any document carrying `/Encrypt`, even with an empty user password. */
+      ...(report.encrypted ? { password: password ?? '' } : {}),
+    })
+  }
+  catch {
+    fail(report.encrypted ? 'unsupported_encryption' : 'damaged_pdf')
   }
 }
 
@@ -206,14 +237,15 @@ async function openDocument(id: number, file: File, password: string | undefined
   const task = pdfjs.getDocument({ data: bytes.slice(), ...parserOptions(password) })
   const document_ = await task.promise
   const report = await readReport(document_)
-  open = { file, password, bytes, task, document: document_, report }
+  await confirmWriterCanOpen(bytes, report, password)
+  open = { password, bytes, task, document: document_, report }
 
   send({ type: 'document', id, report })
 }
 
 async function renderPage(id: number, index: number, scale: number) {
   const current = open ?? fail('damaged_pdf')
-  progress(id, 'preview')
+  progress(id, 'preview', index + 1, current.report.pageCount)
   const page = await current.document.getPage(index + 1)
   const viewport = page.getViewport({ scale })
   const canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
@@ -252,7 +284,7 @@ async function exportSigned(id: number, placements: SignatureExportRequest[], si
   if (!placements.length) fail('export_failed')
 
   const mode = pdfSignatureExportMode(current.report)
-  progress(id, 'apply')
+  progress(id, 'apply', 1, placements.length)
 
   let bytes: Uint8Array
   try {
@@ -267,7 +299,8 @@ async function exportSigned(id: number, placements: SignatureExportRequest[], si
     for (const signature of signatures) embedded.set(signature.id, await pdf.embedPng(signature.bytes))
 
     const pages = pdf.getPages()
-    for (const request of placements) {
+    for (const [index, request] of placements.entries()) {
+      progress(id, 'apply', index + 1, placements.length)
       const page = pages[request.page] ?? fail('export_failed')
       const image = embedded.get(request.signatureId) ?? fail('export_failed')
 
@@ -308,11 +341,13 @@ async function exportSigned(id: number, placements: SignatureExportRequest[], si
    * engine before it is offered. A full rewrite of an encrypted document is no
    * longer encrypted, which is why the read-back needs no password.
    */
+  let verifiedPageCount = current.report.pageCount
   if (pdfSignatureSelection.verifyExportBeforeDownload) {
     const verification = pdfjs.getDocument({ data: bytes.slice(), ...parserOptions(undefined) })
     try {
       const verified = await verification.promise
       if (verified.numPages !== current.report.pageCount) fail('export_unreadable')
+      verifiedPageCount = verified.numPages
     }
     catch (error) {
       throw error instanceof SignatureFailure ? error : new SignatureFailure('export_unreadable')
@@ -331,7 +366,7 @@ async function exportSigned(id: number, placements: SignatureExportRequest[], si
     id,
     report: {
       bytes: output,
-      pageCount: current.report.pageCount,
+      pageCount: verifiedPageCount,
       mode,
       decrypted: current.report.encrypted && mode === 'full-rewrite',
     },
@@ -354,7 +389,7 @@ self.addEventListener('message', (event: MessageEvent<PdfSignatureRequest>) => {
       send({
         type: 'failure',
         id: request.id,
-        code: error instanceof SignatureFailure ? error.code : classifyOpenFailure(error),
+        code: error instanceof SignatureFailure ? error.code : classifyFailure(error),
       })
     }
   })()

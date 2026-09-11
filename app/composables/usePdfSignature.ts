@@ -1,6 +1,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { createPdfSignatureSession, type PdfSignatureSession } from '@/features/tools/pdf-signature/engine'
 import {
+  pdfDisplayBox,
   pdfSignatureLimits,
   type PdfSignatureStage,
 } from '@/features/tools/pdf-signature/domain/reference'
@@ -13,6 +14,7 @@ import {
   placementSummary,
   placementsOnPage,
   removePlacement,
+  removePlacementsOfSignature,
   resizePlacement,
   selectPlacement,
   setPlacementRect,
@@ -20,7 +22,6 @@ import {
   undoPlacement,
   type PdfWorkspaceState,
 } from '@/features/tools/pdf-signature/domain/workspace'
-import { pdfDisplayBox } from '@/features/tools/pdf-signature/domain/reference'
 import { createLocalAssetRepository } from '@/features/shell/local-assets/repository'
 import { openLocalAssetStore } from '@/features/shell/local-assets/indexeddb-store'
 import { useLocalAssets } from './useLocalAssets'
@@ -62,7 +63,9 @@ const PREVIEW_CACHE_SIZE = 8
  * signed 50 MiB document that outlives its tab is the visitor's memory, not ours.
  */
 export function usePdfSignature(locale: () => LocaleCode) {
-  const session: PdfSignatureSession = createPdfSignatureSession()
+  /* `deviceMemory` is not in every browser's `Navigator`; when it is absent the shared ceiling stands. */
+  const device = (typeof navigator === 'undefined' ? {} : navigator) as { deviceMemory?: number }
+  const session: PdfSignatureSession = createPdfSignatureSession({ deviceMemory: device.deviceMemory })
   const repository = createLocalAssetRepository(openLocalAssetStore)
   const local = useLocalAssets()
 
@@ -82,7 +85,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
   const activeSignatureId = ref('')
 
   const busy = ref(false)
-  const stage = ref<PdfSignatureStage | ''>('')
+  const stage = ref<{ stage: PdfSignatureStage, page?: number, total?: number }>()
   const error = ref('')
   const message = ref<'opened' | 'cancelled' | 'exported' | 'signature-saved' | 'signature-removed' | ''>('')
   const output = ref('')
@@ -92,6 +95,8 @@ export function usePdfSignature(locale: () => LocaleCode) {
   let generation = 0
   let mounted = true
   let signatureCount = 0
+  /** Ids have to stay unique across deletes and undos, so they count up rather than off the list. */
+  let placementCount = 0
 
   const opened = computed(() => Boolean(report.value))
   const selected = computed(() => workspace.value.placements.find(placement => placement.id === workspace.value.selectedId))
@@ -155,7 +160,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
     const outcome = await session.renderPage(index, pdfSignatureLimits.previewScale, { onProgress: value => { stage.value = value } })
     if (!mounted || current !== generation) return
     busy.value = false
-    stage.value = ''
+    stage.value = undefined
     if (outcome.status === 'error') { error.value = outcome.error.code; return }
     if (outcome.status === 'cancelled') return
 
@@ -195,7 +200,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
     })
     if (!mounted || current !== generation) return
     busy.value = false
-    stage.value = ''
+    stage.value = undefined
 
     if (outcome.status === 'cancelled') { message.value = 'cancelled'; return }
     if (outcome.status === 'error') {
@@ -261,9 +266,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
     if (entry) URL.revokeObjectURL(entry.url)
     signatures.value = signatures.value.filter(signature => signature.id !== id)
     /* A placement without its signature cannot be exported, so it goes too. */
-    for (const placement of workspace.value.placements.filter(placement => placement.signatureId === id)) {
-      workspace.value = removePlacement(workspace.value, placement.id)
-    }
+    workspace.value = removePlacementsOfSignature(workspace.value, id)
     if (activeSignatureId.value === id) activeSignatureId.value = signatures.value.at(-1)?.id ?? ''
   }
 
@@ -271,6 +274,10 @@ export function usePdfSignature(locale: () => LocaleCode) {
   async function saveSignature(id: string, name: string) {
     const entry = signatures.value.find(signature => signature.id === id)
     if (!entry) return
+    /* The repository answers with the whole listing, so the new record is the
+     * one that was not there before — matching on the name would pick the wrong
+     * row as soon as two signatures share one. */
+    const before = new Set(local.records.value.map(record => record.id))
     const result = await repository.save({
       kind: 'signature',
       name,
@@ -279,8 +286,9 @@ export function usePdfSignature(locale: () => LocaleCode) {
     if (!mounted) return
     if (!result.ok) { error.value = `storage_${result.code}`; return }
 
+    const saved = result.value.records.find(record => record.kind === 'signature' && !before.has(record.id))
     signatures.value = signatures.value.map(signature => signature.id === id
-      ? { ...signature, name, savedId: result.value.records.find(record => record.name === name && record.kind === 'signature')?.id }
+      ? { ...signature, name, savedId: saved?.id }
       : signature)
     message.value = 'signature-saved'
     await local.refresh()
@@ -314,8 +322,9 @@ export function usePdfSignature(locale: () => LocaleCode) {
   function place() {
     const signature = activeSignature.value
     if (!signature || !report.value) return
+    placementCount += 1
     workspace.value = placeSignature(workspace.value, {
-      id: `placement-${workspace.value.placements.length + 1}-${pageIndex.value}`,
+      id: `placement-${placementCount}`,
       page: pageIndex.value,
       signature,
     })
@@ -345,7 +354,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
     )
     if (!mounted || current !== generation) return
     busy.value = false
-    stage.value = ''
+    stage.value = undefined
 
     if (outcome.status === 'cancelled') { message.value = 'cancelled'; void reopen(); return }
     if (outcome.status === 'error') { error.value = outcome.error.code; return }
@@ -370,7 +379,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
     generation += 1
     session.cancel()
     busy.value = false
-    stage.value = ''
+    stage.value = undefined
     message.value = 'cancelled'
     if (report.value) void reopen()
   }
@@ -379,7 +388,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
     generation += 1
     session.cancel()
     busy.value = false
-    stage.value = ''
+    stage.value = undefined
     error.value = ''
     message.value = ''
     closeDocument()
@@ -399,6 +408,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
   })
 
   return {
+    limits: session.limits,
     capabilities,
     preparing,
     online,
@@ -440,7 +450,8 @@ export function usePdfSignature(locale: () => LocaleCode) {
     forgetSavedSignature,
     place,
     select: (id: string) => update(state => selectPlacement(state, id)),
-    move: (delta: { x: number, y: number }) => update(state => selected.value ? movePlacement(state, selected.value.id, delta) : state),
+    move: (delta: { x: number, y: number }, options: { continuing?: boolean } = {}) =>
+      update(state => selected.value ? movePlacement(state, selected.value.id, delta, options) : state),
     resize: (factor: number) => update(state => selected.value ? resizePlacement(state, selected.value.id, factor) : state),
     setRect: (rect: { leftPt: number, topPt: number, widthPt: number }) => update(state => selected.value ? setPlacementRect(state, selected.value.id, rect) : state),
     remove: () => update(state => selected.value ? removePlacement(state, selected.value.id) : state),

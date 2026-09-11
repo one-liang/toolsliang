@@ -4,8 +4,8 @@ import { Download, FileText, Save, TriangleAlert, Trash2, Undo2, X } from '@luci
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import SignaturePad from '@/components/SignaturePad.vue'
-import { pdfSignatureErrors, pdfSignatureStageLabels, signatureInputErrors } from '@/features/tools/pdf-signature/content'
-import { pdfSignatureDisclosures, pdfSignatureLimits } from '@/features/tools/pdf-signature/domain/reference'
+import { isSignatureInputErrorCode, pdfSignatureErrors, pdfSignatureStageLabels, signatureInputErrors } from '@/features/tools/pdf-signature/content'
+import { pdfSignatureDisclosures } from '@/features/tools/pdf-signature/domain/reference'
 import { nudgeStepPt } from '@/features/tools/pdf-signature/domain/workspace'
 import { localAssetErrorMessage } from '@/features/shell/local-assets/content'
 import { formatStoredSize } from '@/features/shell/local-assets/usage'
@@ -27,24 +27,32 @@ import type { LocalAssetErrorCode } from '@/features/shell/local-assets/reposito
 const { locale } = useAppLocale()
 const en = computed(() => locale.value === 'en')
 
-const signature = usePdfSignature(() => locale.value)
+/* Destructured so the template reads the state directly, as the other workspaces do. */
+const {
+  limits, capabilities, preparing, online, passwordNeeded, report, opened, workspace, pageIndex,
+  preview, pagePlacements, geometry, summary, canUndo, signatures, activeSignature,
+  activeSignatureId, savedSignatures, maxPlacedWidthPt, busy, stage, error, message, output, outputInfo,
+  prepare, choose, openDocument, showPage, addSignature, dropSignature, saveSignature,
+  useSavedSignature, forgetSavedSignature, place, select, move, resize, setRect, remove, undo,
+  exportSigned, cancel, reset,
+} = usePdfSignature(() => locale.value)
 const fileInput = ref<HTMLInputElement>()
 const passwordInput = ref<HTMLInputElement>()
 const pageImage = ref<HTMLImageElement>()
 const passwordDraft = ref('')
 const signatureName = ref('')
-let dragging: { id: string, x: number, y: number } | undefined
+let dragging: { id: string, x: number, y: number, moved: boolean } | undefined
 
 const errorText = computed(() => {
-  const code = signature.error.value
+  const code = error.value
   if (!code) return ''
   if (code.startsWith('storage_')) {
     const message = localAssetErrorMessage(code.slice('storage_'.length) as LocalAssetErrorCode, locale.value)
     return `${message.title}。${message.recovery}`
   }
-  if (signatureInputErrors[code]) return signatureInputErrors[code]![locale.value]
+  if (isSignatureInputErrorCode(code)) return signatureInputErrors[code][locale.value]
   /* An engine that will not start offline is not an unsupported browser. */
-  if (code === 'unsupported_browser' && !signature.online.value) {
+  if (code === 'unsupported_browser' && !online.value) {
     return en.value
       ? 'The local PDF engine has not been stored on this device yet. Reconnect once to fetch it; after that this tool works offline.'
       : '本機 PDF 引擎還沒有存到這台裝置上。請連線一次取得引擎，之後就能離線使用。'
@@ -53,67 +61,73 @@ const errorText = computed(() => {
 })
 
 const status = computed(() => {
-  if (signature.busy.value && signature.stage.value) return pdfSignatureStageLabels[signature.stage.value]![locale.value]
-  if (signature.message.value === 'cancelled') return en.value ? 'Cancelled. Your file is unchanged and your placements are kept.' : '已取消。原檔未變更，已放置的簽名仍保留。'
-  if (signature.message.value === 'signature-saved') return en.value ? 'Signature saved on this device.' : '簽名已保存在這台裝置。'
-  if (signature.message.value === 'signature-removed') return en.value ? 'Saved signature deleted from this device.' : '已從這台裝置刪除保存的簽名。'
-  if (signature.message.value === 'exported') return en.value ? 'Done. Check the signature on the page, then download.' : '已完成。請確認頁面上的簽名後再下載。'
-  if (signature.message.value === 'opened' && signature.report.value) {
+  if (busy.value && stage.value) {
+    const { stage: name, page, total } = stage.value
+    const label = pdfSignatureStageLabels[name][locale.value]
+    if (page === undefined) return label
+    /* The two stages that count are counting different things. */
+    if (name === 'preview') return en.value ? `${label} (page ${page} of ${total})` : `${label}（第 ${page} 頁，共 ${total} 頁）`
+    return en.value ? `${label} (${page} of ${total})` : `${label}（第 ${page} 個，共 ${total} 個）`
+  }
+  if (message.value === 'cancelled') return en.value ? 'Cancelled. Your file is unchanged and your placements are kept.' : '已取消。原檔未變更，已放置的簽名仍保留。'
+  if (message.value === 'signature-saved') return en.value ? 'Signature saved on this device.' : '簽名已保存在這台裝置。'
+  if (message.value === 'signature-removed') return en.value ? 'Saved signature deleted from this device.' : '已從這台裝置刪除保存的簽名。'
+  if (message.value === 'exported') return en.value ? 'Done. Check the signature on the page, then download.' : '已完成。請確認頁面上的簽名後再下載。'
+  if (message.value === 'opened' && report.value) {
     return en.value
-      ? `Opened: ${signature.report.value.pageCount} pages.`
-      : `已開啟：共 ${signature.report.value.pageCount} 頁。`
+      ? `Opened: ${report.value.pageCount} pages.`
+      : `已開啟：共 ${report.value.pageCount} 頁。`
   }
   return ''
 })
 
-const pageNumbers = computed(() => Array.from({ length: signature.report.value?.pageCount ?? 0 }, (_, index) => index))
-const placedOnPage = computed(() => signature.pagePlacements.value)
-const geometry = computed(() => signature.geometry.value)
+const pageNumbers = computed(() => Array.from({ length: report.value?.pageCount ?? 0 }, (_, index) => index))
 
 /** CSS pixels per point, so a pointer drag can be expressed in the page's own units. */
 function pointScale() {
   const rect = pageImage.value?.getBoundingClientRect()
-  const display = geometry.value?.display.width ?? signature.preview.value?.width
+  const display = geometry.value?.display.width ?? preview.value?.width
   if (!rect?.width || !display) return 1
   return rect.width / display
 }
 
-function choose(event: Event) {
+function chooseFile(event: Event) {
   const input = event.target as HTMLInputElement
-  void signature.choose(Array.from(input.files ?? []))
+  void choose(Array.from(input.files ?? []))
   input.value = ''
 }
 
 async function unlock() {
-  await signature.openDocument(passwordDraft.value)
-  if (signature.passwordNeeded.value) {
+  await openDocument(passwordDraft.value)
+  if (passwordNeeded.value) {
     await nextTick()
     passwordInput.value?.focus()
   }
   else passwordDraft.value = ''
 }
 
-function useSignature(asset: Parameters<typeof signature.addSignature>[0]) {
-  const added = signature.addSignature(asset)
+function useSignature(asset: Parameters<typeof addSignature>[0]) {
+  const added = addSignature(asset)
   signatureName.value = added.name
-  if (signature.opened.value) signature.place()
-}
-
-function placeAgain() {
-  signature.place()
+  if (opened.value) place()
 }
 
 function startDrag(event: PointerEvent, id: string) {
-  signature.select(id)
-  dragging = { id, x: event.clientX, y: event.clientY }
-  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+  select(id)
+  dragging = { id, x: event.clientX, y: event.clientY, moved: false }
+  /* Capture keeps the drag alive outside the page image; a pointer the browser
+   * no longer tracks refuses it, and the drag is fine without it. */
+  try { (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId) }
+  catch { /* the drag continues without capture */ }
 }
 
 function drag(event: PointerEvent) {
   if (!dragging) return
   const scale = pointScale()
-  signature.move({ x: (event.clientX - dragging.x) / scale, y: (event.clientY - dragging.y) / scale })
-  dragging = { ...dragging, x: event.clientX, y: event.clientY }
+  /* Undo has to take the rectangle back to where the drag began, not back one
+   * pointer sample, so everything after the first movement continues the step. */
+  move({ x: (event.clientX - dragging.x) / scale, y: (event.clientY - dragging.y) / scale }, { continuing: dragging.moved })
+  dragging = { id: dragging.id, x: event.clientX, y: event.clientY, moved: true }
 }
 
 function endDrag() { dragging = undefined }
@@ -127,10 +141,10 @@ function keyPlacement(event: KeyboardEvent) {
     ArrowUp: { x: 0, y: -step },
     ArrowDown: { x: 0, y: step },
   }
-  if (moves[event.key]) { event.preventDefault(); signature.move(moves[event.key]!); return }
-  if (event.key === '+' || event.key === '=') { event.preventDefault(); signature.resize(1.1); return }
-  if (event.key === '-' || event.key === '_') { event.preventDefault(); signature.resize(1 / 1.1); return }
-  if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); signature.remove() }
+  if (moves[event.key]) { event.preventDefault(); move(moves[event.key]!); return }
+  if (event.key === '+' || event.key === '=') { event.preventDefault(); resize(1.1); return }
+  if (event.key === '-' || event.key === '_') { event.preventDefault(); resize(1 / 1.1); return }
+  if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); remove() }
 }
 
 function setNumber(field: 'leftPt' | 'topPt' | 'widthPt', value: string) {
@@ -138,7 +152,7 @@ function setNumber(field: 'leftPt' | 'topPt' | 'widthPt', value: string) {
   if (!current) return
   const parsed = Number(value)
   if (!Number.isFinite(parsed)) return
-  signature.setRect({
+  setRect({
     leftPt: field === 'leftPt' ? parsed : current.left,
     topPt: field === 'topPt' ? parsed : current.top,
     widthPt: field === 'widthPt' ? parsed : current.width,
@@ -146,6 +160,9 @@ function setNumber(field: 'leftPt' | 'topPt' | 'widthPt', value: string) {
 }
 
 function round(value: number) { return Math.round(value * 10) / 10 }
+
+/** The ceiling this device actually enforces, which is the number the visitor is told. */
+const maxMegabytes = computed(() => Math.floor(limits.maxBytes / 1024 / 1024))
 
 function savedLabel(asset: SignatureAsset) {
   return asset.savedId ? (en.value ? 'Saved' : '已保存') : ''
@@ -159,16 +176,16 @@ function savedLabel(asset: SignatureAsset) {
     <p class="pdf-signature__scope">{{ pdfSignatureDisclosures['not-a-digital-signature'][locale] }}</p>
     <p class="pdf-signature__scope">{{ pdfSignatureDisclosures['no-identity-verification'][locale] }}</p>
 
-    <p v-if="signature.preparing.value" role="status" class="field-help">{{ en ? 'Checking local PDF support…' : '正在檢查本機 PDF 支援…' }}</p>
-    <div v-else-if="signature.capabilities.value && !signature.capabilities.value.supported" class="capability-warning">
+    <p v-if="preparing" role="status" class="field-help">{{ en ? 'Checking local PDF support…' : '正在檢查本機 PDF 支援…' }}</p>
+    <div v-else-if="capabilities && !capabilities.supported" class="capability-warning">
       <p>{{ pdfSignatureErrors.unsupported_browser[locale] }}</p>
-      <Button variant="outline" @click="signature.prepare()">{{ en ? 'Check again' : '重新檢查' }}</Button>
+      <Button variant="outline" @click="prepare()">{{ en ? 'Check again' : '重新檢查' }}</Button>
     </div>
 
     <div
       class="pdf-signature__picker field-group"
       @dragover.prevent
-      @drop.prevent="signature.choose(Array.from($event.dataTransfer?.files ?? []))"
+      @drop.prevent="choose(Array.from($event.dataTransfer?.files ?? []))"
     >
       <FileText :size="24" aria-hidden="true" />
       <label for="pdf-signature-file">{{ en ? 'Choose a PDF' : '選擇 PDF 檔' }}</label>
@@ -178,20 +195,20 @@ function savedLabel(asset: SignatureAsset) {
         class="ui-input"
         type="file"
         accept="application/pdf,.pdf"
-        :disabled="signature.busy.value"
+        :disabled="busy"
         aria-describedby="pdf-signature-limits pdf-signature-error"
         :aria-invalid="Boolean(errorText)"
-        @change="choose"
+        @change="chooseFile"
       >
       <p id="pdf-signature-limits" class="field-help">
         {{ en
-          ? `PDF only, up to ${pdfSignatureLimits.maxPages} pages and ${pdfSignatureLimits.maxBytes / 1024 / 1024} MiB. You can also drop a file here.`
-          : `僅支援 PDF，最多 ${pdfSignatureLimits.maxPages} 頁、${pdfSignatureLimits.maxBytes / 1024 / 1024} MiB。也可將檔案拖曳至此。` }}
+          ? `PDF only, up to ${limits.maxPages} pages and ${maxMegabytes} MiB on this device. You can also drop a file here.`
+          : `僅支援 PDF，最多 ${limits.maxPages} 頁、${maxMegabytes} MiB（依這台裝置的可用記憶體）。也可將檔案拖曳至此。` }}
       </p>
       <p class="field-help">{{ pdfSignatureDisclosures['local-processing'][locale] }}</p>
     </div>
 
-    <form v-if="signature.passwordNeeded.value" class="pdf-signature__password field-group" @submit.prevent="unlock">
+    <form v-if="passwordNeeded" class="pdf-signature__password field-group" @submit.prevent="unlock">
       <label for="pdf-signature-password">{{ en ? 'Open password' : '開啟密碼' }}</label>
       <input
         id="pdf-signature-password"
@@ -200,12 +217,12 @@ function savedLabel(asset: SignatureAsset) {
         class="ui-input"
         type="password"
         autocomplete="off"
-        :disabled="signature.busy.value"
+        :disabled="busy"
         aria-describedby="pdf-signature-password-help"
       >
       <p id="pdf-signature-password-help" class="field-help">{{ pdfSignatureDisclosures['password-stays-on-device'][locale] }}</p>
       <div class="tool-workspace__actions">
-        <Button type="submit" :disabled="signature.busy.value">{{ en ? 'Open with password' : '用密碼開啟' }}</Button>
+        <Button type="submit" :disabled="busy">{{ en ? 'Open with password' : '用密碼開啟' }}</Button>
       </div>
     </form>
 
@@ -213,37 +230,37 @@ function savedLabel(asset: SignatureAsset) {
       <TriangleAlert v-if="errorText" :size="18" aria-hidden="true" />{{ errorText }}
     </p>
     <p role="status" class="pdf-signature__status">{{ status }}</p>
-    <div v-if="signature.busy.value" class="tool-workspace__actions">
-      <Button type="button" variant="outline" @click="signature.cancel()">
+    <div v-if="busy" class="tool-workspace__actions">
+      <Button type="button" variant="outline" @click="cancel()">
         <X :size="18" aria-hidden="true" />{{ en ? 'Cancel' : '取消' }}
       </Button>
     </div>
 
-    <template v-if="signature.opened.value && signature.report.value">
+    <template v-if="opened && report">
       <section class="pdf-signature__document" :aria-label="en ? 'Document' : '文件'">
         <p class="field-help" data-document-summary>
           {{ en
-            ? `${signature.report.value.pageCount} pages · ${signature.report.value.encrypted ? 'password protected' : 'not protected'}`
-            : `共 ${signature.report.value.pageCount} 頁 · ${signature.report.value.encrypted ? '有密碼保護' : '沒有密碼保護'}` }}
+            ? `${report.pageCount} pages · ${report.encrypted ? 'password protected' : 'not protected'}`
+            : `共 ${report.pageCount} 頁 · ${report.encrypted ? '有密碼保護' : '沒有密碼保護'}` }}
         </p>
       </section>
 
       <SignaturePad
         :locale="locale"
-        :max-placed-width-pt="signature.maxPlacedWidthPt.value"
-        :disabled="signature.busy.value"
+        :max-placed-width-pt="maxPlacedWidthPt"
+        :disabled="busy"
         @created="useSignature"
       />
 
-      <section v-if="signature.signatures.value.length" class="pdf-signature__signatures" :aria-label="en ? 'Signatures in this session' : '這次作業的簽名'">
+      <section v-if="signatures.length" class="pdf-signature__signatures" :aria-label="en ? 'Signatures in this session' : '這次作業的簽名'">
         <ul class="pdf-signature__signature-list">
-          <li v-for="asset in signature.signatures.value" :key="asset.id">
+          <li v-for="asset in signatures" :key="asset.id">
             <img :src="asset.url" :alt="en ? `Signature preview: ${asset.name}` : `簽名預覽：${asset.name}`" width="120">
             <span>{{ asset.name }} · {{ asset.width }} × {{ asset.height }} {{ savedLabel(asset) }}</span>
-            <Button type="button" variant="outline" @click="signature.activeSignatureId.value = asset.id; placeAgain()">
+            <Button type="button" variant="outline" @click="activeSignatureId = asset.id; place()">
               {{ en ? 'Place on this page' : '放到這一頁' }}
             </Button>
-            <Button type="button" variant="outline" @click="signature.dropSignature(asset.id)">
+            <Button type="button" variant="outline" @click="dropSignature(asset.id)">
               <Trash2 :size="16" aria-hidden="true" />{{ en ? 'Remove' : '移除' }}
             </Button>
           </li>
@@ -256,8 +273,8 @@ function savedLabel(asset: SignatureAsset) {
             <Button
               type="button"
               variant="outline"
-              :disabled="!signature.activeSignature.value || !signatureName.trim()"
-              @click="signature.activeSignature.value && signature.saveSignature(signature.activeSignature.value.id, signatureName.trim())"
+              :disabled="!activeSignature || !signatureName.trim()"
+              @click="activeSignature && saveSignature(activeSignature.id, signatureName.trim())"
             >
               <Save :size="18" aria-hidden="true" />{{ en ? 'Save on this device' : '保存在這台裝置' }}
             </Button>
@@ -271,45 +288,45 @@ function savedLabel(asset: SignatureAsset) {
           <select
             id="pdf-signature-page"
             class="ui-input"
-            :value="signature.pageIndex.value"
-            :disabled="signature.busy.value"
-            @change="signature.showPage(Number(($event.target as HTMLSelectElement).value))"
+            :value="pageIndex"
+            :disabled="busy"
+            @change="showPage(Number(($event.target as HTMLSelectElement).value))"
           >
             <option v-for="index in pageNumbers" :key="index" :value="index">
-              {{ en ? `Page ${index + 1} of ${signature.report.value.pageCount}` : `第 ${index + 1} 頁，共 ${signature.report.value.pageCount} 頁` }}
+              {{ en ? `Page ${index + 1} of ${report.pageCount}` : `第 ${index + 1} 頁，共 ${report.pageCount} 頁` }}
             </option>
           </select>
           <div class="tool-workspace__actions">
-            <Button type="button" variant="outline" :disabled="signature.pageIndex.value === 0 || signature.busy.value" @click="signature.showPage(signature.pageIndex.value - 1)">
+            <Button type="button" variant="outline" :disabled="pageIndex === 0 || busy" @click="showPage(pageIndex - 1)">
               {{ en ? 'Previous page' : '上一頁' }}
             </Button>
-            <Button type="button" variant="outline" :disabled="signature.pageIndex.value >= signature.report.value.pageCount - 1 || signature.busy.value" @click="signature.showPage(signature.pageIndex.value + 1)">
+            <Button type="button" variant="outline" :disabled="pageIndex >= report.pageCount - 1 || busy" @click="showPage(pageIndex + 1)">
               {{ en ? 'Next page' : '下一頁' }}
             </Button>
           </div>
         </div>
 
-        <div v-if="signature.preview.value" class="pdf-signature__canvas" data-page-preview>
+        <div v-if="preview" class="pdf-signature__canvas" data-page-preview>
           <img
             ref="pageImage"
-            :src="signature.preview.value.url"
-            :alt="en ? `Preview of page ${signature.pageIndex.value + 1}` : `第 ${signature.pageIndex.value + 1} 頁的預覽`"
-            :width="signature.preview.value.width"
-            :height="signature.preview.value.height"
+            :src="preview.url"
+            :alt="en ? `Preview of page ${pageIndex + 1}` : `第 ${pageIndex + 1} 頁的預覽`"
+            :width="preview.width"
+            :height="preview.height"
           >
           <button
-            v-for="placement in placedOnPage"
+            v-for="placement in pagePlacements"
             :key="placement.id"
             type="button"
             class="pdf-signature__placement"
-            :class="{ 'pdf-signature__placement--selected': placement.id === signature.workspace.value.selectedId }"
+            :class="{ 'pdf-signature__placement--selected': placement.id === workspace.selectedId }"
             :style="{
               left: `${placement.rect.x * 100}%`,
               top: `${placement.rect.y * 100}%`,
               width: `${placement.rect.width * 100}%`,
               height: `${placement.rect.height * 100}%`,
             }"
-            :aria-pressed="placement.id === signature.workspace.value.selectedId"
+            :aria-pressed="placement.id === workspace.selectedId"
             :aria-label="en
               ? `Placed signature. Arrow keys move it, plus and minus resize it, Delete removes it.`
               : '已放置的簽名。方向鍵移動、加減號縮放、Delete 刪除。'"
@@ -318,9 +335,9 @@ function savedLabel(asset: SignatureAsset) {
             @pointerup="endDrag"
             @pointercancel="endDrag"
             @keydown="keyPlacement"
-            @focus="signature.select(placement.id)"
+            @focus="select(placement.id)"
           >
-            <img :src="signature.signatures.value.find(asset => asset.id === placement.signatureId)?.url" alt="" aria-hidden="true">
+            <img :src="signatures.find(asset => asset.id === placement.signatureId)?.url" alt="" aria-hidden="true">
           </button>
         </div>
       </section>
@@ -340,9 +357,9 @@ function savedLabel(asset: SignatureAsset) {
             <input id="pdf-signature-width" class="ui-input" type="number" step="1" min="24" :value="round(geometry.width)" @change="setNumber('widthPt', ($event.target as HTMLInputElement).value)">
           </div>
         </div>
-        <p role="status" class="pdf-signature__summary" data-placement-summary>{{ signature.summary.value }}</p>
+        <p role="status" class="pdf-signature__summary" data-placement-summary>{{ summary }}</p>
         <div class="tool-workspace__actions">
-          <Button type="button" variant="outline" @click="signature.remove()">
+          <Button type="button" variant="outline" @click="remove()">
             <Trash2 :size="18" aria-hidden="true" />{{ en ? 'Delete this signature' : '刪除這個簽名' }}
           </Button>
         </div>
@@ -350,7 +367,7 @@ function savedLabel(asset: SignatureAsset) {
 
       <!-- Undo has to outlive the selection: the step most worth undoing is a delete. -->
       <div class="tool-workspace__actions pdf-signature__history">
-        <Button type="button" variant="outline" :disabled="!signature.canUndo.value" @click="signature.undo()">
+        <Button type="button" variant="outline" :disabled="!canUndo" @click="undo()">
           <Undo2 :size="18" aria-hidden="true" />{{ en ? 'Undo' : '復原' }}
         </Button>
       </div>
@@ -358,27 +375,27 @@ function savedLabel(asset: SignatureAsset) {
       <section class="pdf-signature__export" :aria-label="en ? 'Download' : '下載'">
         <p class="field-help">{{ pdfSignatureDisclosures['original-pages-untouched'][locale] }}</p>
         <!-- A full rewrite drops the document's own password, so this is said before the download exists. -->
-        <p v-if="signature.report.value.encrypted" class="pdf-signature__warning" data-decrypted-notice>
+        <p v-if="report.encrypted" class="pdf-signature__warning" data-decrypted-notice>
           {{ pdfSignatureDisclosures['decrypted-export'][locale] }}
         </p>
         <div class="tool-workspace__actions">
           <Button
             type="button"
-            :disabled="signature.busy.value || !signature.workspace.value.placements.length"
+            :disabled="busy || !workspace.placements.length"
             data-export
-            @click="signature.exportSigned()"
+            @click="exportSigned()"
           >
             {{ en ? 'Sign and prepare the download' : '加上簽名並準備下載' }}
           </Button>
         </div>
-        <template v-if="signature.output.value && signature.outputInfo.value">
+        <template v-if="output && outputInfo">
           <p class="field-help" data-export-summary>
             {{ en
-              ? `${signature.outputInfo.value.pageCount} pages · ${formatStoredSize(signature.outputInfo.value.bytes, locale)}`
-              : `共 ${signature.outputInfo.value.pageCount} 頁 · ${formatStoredSize(signature.outputInfo.value.bytes, locale)}` }}
+              ? `${outputInfo.pageCount} pages · ${formatStoredSize(outputInfo.bytes, locale)}`
+              : `共 ${outputInfo.pageCount} 頁 · ${formatStoredSize(outputInfo.bytes, locale)}` }}
           </p>
           <Button as-child class="pdf-signature__download">
-            <a :href="signature.output.value" download="signed.pdf">
+            <a :href="output" download="signed.pdf">
               <Download :size="18" aria-hidden="true" />{{ en ? 'Download the signed PDF' : '下載已簽名的 PDF' }}
             </a>
           </Button>
@@ -386,22 +403,22 @@ function savedLabel(asset: SignatureAsset) {
       </section>
 
       <div class="tool-workspace__actions">
-        <Button type="button" variant="outline" @click="signature.reset()">{{ en ? 'Close this document' : '關閉這份文件' }}</Button>
+        <Button type="button" variant="outline" @click="reset()">{{ en ? 'Close this document' : '關閉這份文件' }}</Button>
       </div>
     </template>
 
-    <section v-if="signature.savedSignatures.value.length" class="pdf-signature__saved" :aria-label="en ? 'Saved signatures' : '已保存的簽名'">
+    <section v-if="savedSignatures.length" class="pdf-signature__saved" :aria-label="en ? 'Saved signatures' : '已保存的簽名'">
       <p class="field-help">
         {{ en ? 'Saved on this device' : '保存在這台裝置' }} ·
-        {{ formatStoredSize(signature.savedSignatures.value.reduce((total, record) => total + record.bytes, 0), locale) }}
+        {{ formatStoredSize(savedSignatures.reduce((total, record) => total + record.bytes, 0), locale) }}
       </p>
       <ul class="pdf-signature__signature-list">
-        <li v-for="record in signature.savedSignatures.value" :key="record.id">
+        <li v-for="record in savedSignatures" :key="record.id">
           <span>{{ record.name }}</span>
-          <Button type="button" variant="outline" :disabled="!signature.opened.value || signature.busy.value" @click="signature.useSavedSignature(record.id)">
+          <Button type="button" variant="outline" :disabled="!opened || busy" @click="useSavedSignature(record.id)">
             {{ en ? 'Use on this page' : '用在這一頁' }}
           </Button>
-          <Button type="button" variant="outline" @click="signature.forgetSavedSignature(record.id)">
+          <Button type="button" variant="outline" @click="forgetSavedSignature(record.id)">
             <Trash2 :size="16" aria-hidden="true" />{{ en ? 'Delete' : '刪除' }}
           </Button>
         </li>

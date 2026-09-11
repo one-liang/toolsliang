@@ -237,6 +237,13 @@ test('保存的簽名是本機資產，可在工具頁重複使用與刪除', as
   await page.reload()
   await expect(page.locator('.pdf-signature__saved')).toContainText('我的簽名')
 
+  // A saved signature is there to be used again: open a document and place it.
+  await page.getByLabel('選擇 PDF 檔').setInputFiles(upload('rotated-pages'))
+  await expect(page.locator('[data-document-summary]')).toContainText('共 4 頁')
+  await page.getByRole('button', { name: '用在這一頁' }).click()
+  await expect(page.locator('.pdf-signature__placement')).toHaveCount(1)
+  await expect(page.locator('[data-export]')).toBeEnabled()
+
   // Nothing about the signature may reach a preference namespace.
   const stored = await page.evaluate(() => ({
     local: Object.entries(localStorage).map(([key, value]) => `${key}=${value}`).join('|'),
@@ -245,7 +252,7 @@ test('保存的簽名是本機資產，可在工具頁重複使用與刪除', as
   expect(stored.local).not.toContain('我的簽名')
   expect(stored.session).not.toContain('我的簽名')
 
-  await page.getByRole('button', { name: '刪除' }).first().click()
+  await page.locator('.pdf-signature__saved').getByRole('button', { name: '刪除', exact: true }).click()
   await expect(page.locator('.pdf-signature__saved')).toHaveCount(0)
 })
 

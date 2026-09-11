@@ -12,7 +12,7 @@
     "width": 0.3,
     "height": 0.09
   },
-  "workerBundleBytes": 4605383,
+  "workerBundleBytes": 4606186,
   "passwords": {
     "user": "toolsliang-t24",
     "owner": "toolsliang-owner"
@@ -101,8 +101,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 20,
+          "exportMs": 18,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -190,8 +192,10 @@
             "width": 743,
             "height": 1053
           },
-          "exportMs": 20,
+          "exportMs": 19,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -279,13 +283,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 6,
+          "firstPagePreviewMs": 5,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 20,
+          "exportMs": 19,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -366,6 +372,8 @@
           "exportMs": 19,
           "exportStages": [
             "apply",
+            "apply",
+            "apply",
             "write"
           ],
           "exportMode": "incremental-update",
@@ -427,13 +435,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 5,
+          "firstPagePreviewMs": 6,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 20,
+          "exportMs": 19,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -525,8 +535,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 21,
+          "exportMs": 18,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -618,8 +630,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 21,
+          "exportMs": 19,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -877,13 +891,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 15,
+          "firstPagePreviewMs": 16,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 30,
+          "exportMs": 29,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1038,13 +1054,15 @@
               "rotation": 270
             }
           ],
-          "firstPagePreviewMs": 4,
+          "firstPagePreviewMs": 5,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
           "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1135,6 +1153,8 @@
           "exportMs": 22,
           "exportStages": [
             "apply",
+            "apply",
+            "apply",
             "write"
           ],
           "exportMode": "incremental-update",
@@ -1221,13 +1241,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 5,
+          "firstPagePreviewMs": 4,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 23,
+          "exportMs": 22,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1305,8 +1327,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 22,
+          "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1369,13 +1393,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 4,
+          "firstPagePreviewMs": 5,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 23,
+          "exportMs": 22,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1467,8 +1493,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 25,
+          "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1560,8 +1588,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 24,
+          "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1824,8 +1854,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 31,
+          "exportMs": 36,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -1980,13 +2012,15 @@
               "rotation": 270
             }
           ],
-          "firstPagePreviewMs": 16,
+          "firstPagePreviewMs": 17,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 22,
+          "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -2069,13 +2103,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 13,
+          "firstPagePreviewMs": 16,
           "previewSize": {
             "width": 743,
             "height": 1053
           },
-          "exportMs": 22,
+          "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -2168,8 +2204,10 @@
             "width": 893,
             "height": 1263
           },
-          "exportMs": 23,
+          "exportMs": 22,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -2242,13 +2280,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 18,
+          "firstPagePreviewMs": 20,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 22,
+          "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -2311,13 +2351,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 15,
+          "firstPagePreviewMs": 20,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 23,
+          "exportMs": 22,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -2404,13 +2446,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 15,
+          "firstPagePreviewMs": 21,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 23,
+          "exportMs": 21,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -2497,13 +2541,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 16,
+          "firstPagePreviewMs": 18,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 23,
+          "exportMs": 22,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],
@@ -2761,13 +2807,15 @@
               "rotation": 0
             }
           ],
-          "firstPagePreviewMs": 47,
+          "firstPagePreviewMs": 49,
           "previewSize": {
             "width": 893,
             "height": 1263
           },
-          "exportMs": 30,
+          "exportMs": 28,
           "exportStages": [
+            "apply",
+            "apply",
             "apply",
             "write"
           ],

@@ -74,7 +74,24 @@ export const pdfSignatureErrors: Record<PdfSignatureFailureCode, LocalizedCopy> 
 }
 
 /** The signature itself is an image, so it has its own small vocabulary. */
-export const signatureInputErrors: Record<string, LocalizedCopy> = {
+export const signatureInputErrorCodes = [
+  'unsupported_heic',
+  'unsupported_format',
+  'signature_needs_alpha',
+  'signature_is_opaque',
+  'signature_too_large',
+  'signature_empty',
+  'signature_unreadable',
+  'multiple_files',
+] as const
+
+export type SignatureInputErrorCode = typeof signatureInputErrorCodes[number]
+
+export function isSignatureInputErrorCode(value: string): value is SignatureInputErrorCode {
+  return (signatureInputErrorCodes as readonly string[]).includes(value)
+}
+
+export const signatureInputErrors: Record<SignatureInputErrorCode, LocalizedCopy> = {
   unsupported_heic: {
     'zh-tw': '不支援 HEIC／HEIF 的簽名圖片。請改用透明背景的 PNG 或 WebP。',
     en: 'HEIC/HEIF signature images are not supported. Use a PNG or WebP with a transparent background.',
@@ -90,6 +107,10 @@ export const signatureInputErrors: Record<string, LocalizedCopy> = {
   signature_is_opaque: {
     'zh-tw': '這張圖片沒有任何透明區域，放到頁面上會遮住底下的內容。請改用去背後的簽名圖。',
     en: 'This image has no transparent area, so it will hide whatever is under it. Use a signature image with its background removed.',
+  },
+  signature_too_large: {
+    'zh-tw': '簽名圖片超過本機處理上限（25 MiB、2,400 萬像素、單邊 8,192 像素）。請改用較小的圖片。',
+    en: 'That signature image is over the local limit of 25 MiB, 24 megapixels, or 8,192 pixels per side. Use a smaller image.',
   },
   signature_empty: {
     'zh-tw': '還沒有簽名。請在簽名板上寫下簽名、輸入文字或匯入透明圖片。',

@@ -60,6 +60,13 @@ export interface SignatureExportRequest {
 /** Arrow keys move by the fine step; holding Shift moves by the coarse one. */
 export const nudgeStepPt = { fine: 1, coarse: 10 } as const
 
+/**
+ * How far back undo reaches. A drag is one step (see `movePlacement`), so this
+ * is a count of decisions rather than of pointer samples, and it keeps the
+ * history from growing for as long as a document stays open.
+ */
+export const placementHistoryLimit = 50
+
 /** A signature narrower than this is no longer something a reader can see. */
 const MIN_WIDTH_PT = 24
 /** A first placement takes this share of the page width, then keeps its own shape. */
@@ -92,21 +99,35 @@ function rectForWidth(page: PdfWorkspacePage, aspect: number, widthPt: number, l
   })
 }
 
-/** Every change goes through here, so the history can never miss one. */
+/**
+ * Every change goes through here, so the history can never miss one.
+ *
+ * `continuing` is what makes a drag one step instead of one per pointer sample:
+ * the movement that started the gesture recorded the position to go back to, and
+ * the rest of the gesture only changes where the rectangle is now.
+ */
 function withPlacements(
   state: PdfWorkspaceState,
   placements: PlacedSignature[],
   selectedId: string | null,
+  continuing = false,
 ): PdfWorkspaceState {
-  return { ...state, placements, selectedId, history: [...state.history, state.placements] }
+  const history = continuing ? state.history : [...state.history, state.placements].slice(-placementHistoryLimit)
+
+  return { ...state, placements, selectedId, history }
 }
 
-function replace(state: PdfWorkspaceState, id: string, change: (placement: PlacedSignature, page: PdfWorkspacePage) => PlacedSignature): PdfWorkspaceState {
+function replace(
+  state: PdfWorkspaceState,
+  id: string,
+  change: (placement: PlacedSignature, page: PdfWorkspacePage) => PlacedSignature,
+  continuing = false,
+): PdfWorkspaceState {
   const current = state.placements.find(placement => placement.id === id)
   if (!current) return state
 
   const next = change(current, pageOf(state, current.page))
-  return withPlacements(state, state.placements.map(placement => placement.id === id ? next : placement), id)
+  return withPlacements(state, state.placements.map(placement => placement.id === id ? next : placement), id, continuing)
 }
 
 export function placeSignature(
@@ -129,8 +150,17 @@ export function placeSignature(
   return withPlacements(state, [...state.placements, { id, page: index, signatureId: signature.id, rect, aspect }], id)
 }
 
-/** Moves by points of the display box; a rectangle pushed past an edge stops at it. */
-export function movePlacement(state: PdfWorkspaceState, id: string, delta: { x: number, y: number }): PdfWorkspaceState {
+/**
+ * Moves by points of the display box; a rectangle pushed past an edge stops at
+ * it. A pointer drag passes `continuing` for every movement after the first, so
+ * undo takes the rectangle back to where the drag began.
+ */
+export function movePlacement(
+  state: PdfWorkspaceState,
+  id: string,
+  delta: { x: number, y: number },
+  { continuing = false } = {},
+): PdfWorkspaceState {
   return replace(state, id, (placement, page) => {
     const display = pdfDisplayBox(page)
     return {
@@ -141,7 +171,7 @@ export function movePlacement(state: PdfWorkspaceState, id: string, delta: { x: 
         y: placement.rect.y + delta.y / display.height,
       }),
     }
-  })
+  }, continuing)
 }
 
 /** Scales the width and lets the signature's own shape decide the height. */
@@ -175,6 +205,18 @@ export function setPlacementRect(
 
 export function removePlacement(state: PdfWorkspaceState, id: string): PdfWorkspaceState {
   const placements = state.placements.filter(placement => placement.id !== id)
+  if (placements.length === state.placements.length) return state
+
+  return withPlacements(state, placements, placements.at(-1)?.id ?? null)
+}
+
+/**
+ * Every placement of one signature, in a single step. A signature that is gone
+ * cannot be exported, so its placements go with it — and undoing that is one
+ * action, because losing the signature was one action.
+ */
+export function removePlacementsOfSignature(state: PdfWorkspaceState, signatureId: string): PdfWorkspaceState {
+  const placements = state.placements.filter(placement => placement.signatureId !== signatureId)
   if (placements.length === state.placements.length) return state
 
   return withPlacements(state, placements, placements.at(-1)?.id ?? null)

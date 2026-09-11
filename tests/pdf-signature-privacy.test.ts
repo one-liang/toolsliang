@@ -77,8 +77,10 @@ it('密碼只在開檔訊息裡出現，不進入任何紀錄、檔名或錯誤�
   for (const source of [worker, engine]) {
     expect(source).not.toMatch(/console\.(log|info|warn|error)/)
   }
-  expect(worker).not.toMatch(/message:\s*[^)]*password/)
-  expect(worker).toMatch(/code: error instanceof SignatureFailure \? error\.code : classifyOpenFailure\(error\)/)
+  // No reply the worker posts may mention the password, whatever else it carries.
+  for (const line of worker.split('\n')) {
+    if (/\bsend\(|postMessage\(/.test(line)) expect(line, line.trim()).not.toMatch(/password/)
+  }
 })
 
 it('文案只填入已公布的上限與紀錄裡的句子，沒有任何來自使用者的值', () => {
