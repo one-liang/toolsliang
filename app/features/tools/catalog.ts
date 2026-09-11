@@ -8,6 +8,7 @@ import { ntdContentReview } from './ntd-uppercase/domain/sources'
 import { randomPickerContentReview } from './random-picker/domain/sources'
 import { taiwanCalendarContentReview } from './taiwan-calendar/domain/sources'
 import { customCalendarDefinition } from './custom-calendar/definition'
+import { pdfSignatureDefinition } from './pdf-signature/definition'
 import { deviceTimeDefinition } from './device-time/definition'
 
 export type LocaleCode = 'zh-tw' | 'en'
@@ -24,7 +25,7 @@ export const offlineAssetPathPrefix = '/assets/offline'
 export const toolIcons = [
   'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
   'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive', 'clock',
-  'calendar-plus',
+  'calendar-plus', 'pen-line',
 ] as const
 
 export type ToolIcon = typeof toolIcons[number]
@@ -350,6 +351,7 @@ const registeredTools: ToolDefinition[] = [
     contentReview: taiwanCalendarContentReview,
   },
   customCalendarDefinition,
+  pdfSignatureDefinition,
   {
     slug: 'document-counter', category: 'document', icon: 'file-text',
     availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },

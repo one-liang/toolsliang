@@ -1,0 +1,2914 @@
+{
+  "measuredAt": "2026-09-11",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpus": 10
+  },
+  "previewScale": 1.5,
+  "signatureRect": {
+    "x": 0.1,
+    "y": 0.03,
+    "width": 0.3,
+    "height": 0.09
+  },
+  "workerBundleBytes": 4606186,
+  "passwords": {
+    "user": "toolsliang-t24",
+    "owner": "toolsliang-owner"
+  },
+  "servedPaths": [
+    "/engine-worker.mjs",
+    "/favicon.ico",
+    "/fixtures/active-content.pdf",
+    "/fixtures/broken-xref.pdf",
+    "/fixtures/encrypted-aes-128.pdf",
+    "/fixtures/encrypted-rc4-128.pdf",
+    "/fixtures/object-stream.pdf",
+    "/fixtures/offset-crop-box.pdf",
+    "/fixtures/owner-password-restricted.pdf",
+    "/fixtures/page-cap-120.pdf",
+    "/fixtures/reference-20-page.pdf",
+    "/fixtures/rotated-pages.pdf",
+    "/fixtures/truncated.pdf",
+    "/harness.html",
+    "/vendor/pdf.mjs",
+    "/vendor/pdf.worker.mjs"
+  ],
+  "browsers": [
+    {
+      "name": "chromium",
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+        "offscreenCanvas": true,
+        "crossOriginIsolated": false
+      },
+      "runs": [
+        {
+          "fixture": "rotated-pages",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 4,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 90
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 180
+            },
+            {
+              "index": 3,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 270
+            }
+          ],
+          "firstPagePreviewMs": 5,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 18,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 7467,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 4,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 3,
+              "pageCount": 4,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 1262.84,
+              "displayHeight": 892.92,
+              "inkRatio": 0.112,
+              "seeThroughRatio": 0.87,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "offset-crop-box",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                50,
+                60,
+                545,
+                762
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                50,
+                60,
+                545,
+                762
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 5,
+          "previewSize": {
+            "width": 743,
+            "height": 1053
+          },
+          "exportMs": 19,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6833,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 742.5,
+              "displayHeight": 1053,
+              "inkRatio": 0.112,
+              "seeThroughRatio": 0.868,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 782379
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 742.5,
+              "displayHeight": 1053,
+              "inkRatio": 0.112,
+              "seeThroughRatio": 0.868,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 782379
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "object-stream",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 3,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 5,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 19,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6839,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 3,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 2,
+              "pageCount": 3,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "active-content",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 1,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 6,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 19,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 7031,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 1,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.119,
+              "seeThroughRatio": 0.872,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "broken-xref",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 6,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 19,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6785,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "encrypted-rc4-128",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": true,
+          "permissionBits": [
+            4,
+            8,
+            16,
+            32,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 6,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 18,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "full-rewrite",
+          "exportDecrypted": true,
+          "exportBytes": 6482,
+          "originalBytesArePrefix": false,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "encrypted-aes-128",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": true,
+          "permissionBits": [
+            4,
+            8,
+            16,
+            32,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 6,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 19,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "full-rewrite",
+          "exportDecrypted": true,
+          "exportBytes": 6532,
+          "originalBytesArePrefix": false,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "reference-20-page",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 20,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 3,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 4,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 5,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 6,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 7,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 8,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 9,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 10,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 11,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 12,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 13,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 14,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 15,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 16,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 17,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 18,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 19,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 16,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 29,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 21617201,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 20,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 19,
+              "pageCount": 20,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "owner-password-restricted",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "modification_not_permitted",
+          "expectedCode": "modification_not_permitted",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "truncated",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "damaged_pdf",
+          "expectedCode": "damaged_pdf",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "page-cap-120",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "too_many_pages",
+          "expectedCode": "too_many_pages",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        }
+      ]
+    },
+    {
+      "name": "firefox",
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Gecko/20100101 Firefox/153.0",
+        "offscreenCanvas": true,
+        "crossOriginIsolated": false
+      },
+      "runs": [
+        {
+          "fixture": "rotated-pages",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 4,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 90
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 180
+            },
+            {
+              "index": 3,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 270
+            }
+          ],
+          "firstPagePreviewMs": 5,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 7464,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 4,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 3,
+              "pageCount": 4,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 1262.84,
+              "displayHeight": 892.92,
+              "inkRatio": 0.112,
+              "seeThroughRatio": 0.87,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "offset-crop-box",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                50,
+                60,
+                545,
+                762
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                50,
+                60,
+                545,
+                762
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 3,
+          "previewSize": {
+            "width": 743,
+            "height": 1053
+          },
+          "exportMs": 22,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6830,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 742.5,
+              "displayHeight": 1053,
+              "inkRatio": 0.112,
+              "seeThroughRatio": 0.869,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 782379
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 742.5,
+              "displayHeight": 1053,
+              "inkRatio": 0.112,
+              "seeThroughRatio": 0.869,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 782379
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "object-stream",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 3,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 4,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 22,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6836,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 3,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 2,
+              "pageCount": 3,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "active-content",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 1,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 4,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 7028,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 1,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.119,
+              "seeThroughRatio": 0.872,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "broken-xref",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 5,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 22,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6782,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "encrypted-rc4-128",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": true,
+          "permissionBits": [
+            4,
+            8,
+            16,
+            32,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 4,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "full-rewrite",
+          "exportDecrypted": true,
+          "exportBytes": 6479,
+          "originalBytesArePrefix": false,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "encrypted-aes-128",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": true,
+          "permissionBits": [
+            4,
+            8,
+            16,
+            32,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 4,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "full-rewrite",
+          "exportDecrypted": true,
+          "exportBytes": 6529,
+          "originalBytesArePrefix": false,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "reference-20-page",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 20,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 3,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 4,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 5,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 6,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 7,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 8,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 9,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 10,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 11,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 12,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 13,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 14,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 15,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 16,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 17,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 18,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 19,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 24,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 36,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 21617198,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 20,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 19,
+              "pageCount": 20,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.115,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "owner-password-restricted",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "modification_not_permitted",
+          "expectedCode": "modification_not_permitted",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "truncated",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "damaged_pdf",
+          "expectedCode": "damaged_pdf",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        },
+        {
+          "fixture": "page-cap-120",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "too_many_pages",
+          "expectedCode": "too_many_pages",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 0
+        }
+      ]
+    },
+    {
+      "name": "webkit",
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15",
+        "offscreenCanvas": true,
+        "crossOriginIsolated": false
+      },
+      "runs": [
+        {
+          "fixture": "rotated-pages",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 4,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 90
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 180
+            },
+            {
+              "index": 3,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 270
+            }
+          ],
+          "firstPagePreviewMs": 17,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 7201,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 4,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 3,
+              "pageCount": 4,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 1262.84,
+              "displayHeight": 892.92,
+              "inkRatio": 0.113,
+              "seeThroughRatio": 0.871,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "offset-crop-box",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                50,
+                60,
+                545,
+                762
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                50,
+                60,
+                545,
+                762
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 16,
+          "previewSize": {
+            "width": 743,
+            "height": 1053
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6567,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 742.5,
+              "displayHeight": 1053,
+              "inkRatio": 0.113,
+              "seeThroughRatio": 0.869,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 782379
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 742.5,
+              "displayHeight": 1053,
+              "inkRatio": 0.113,
+              "seeThroughRatio": 0.869,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 782379
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "object-stream",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 3,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 16,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 22,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6573,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 3,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 2,
+              "pageCount": 3,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "active-content",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 1,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 20,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6765,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 1,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.119,
+              "seeThroughRatio": 0.873,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "broken-xref",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 20,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 22,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 6519,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "encrypted-rc4-128",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": true,
+          "permissionBits": [
+            4,
+            8,
+            16,
+            32,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 21,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 21,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "full-rewrite",
+          "exportDecrypted": true,
+          "exportBytes": 6216,
+          "originalBytesArePrefix": false,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "encrypted-aes-128",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 2,
+          "encrypted": true,
+          "permissionBits": [
+            4,
+            8,
+            16,
+            32,
+            256,
+            512,
+            1024,
+            2048
+          ],
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 18,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 22,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "full-rewrite",
+          "exportDecrypted": true,
+          "exportBytes": 6266,
+          "originalBytesArePrefix": false,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 1,
+              "pageCount": 2,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "reference-20-page",
+          "outcome": "ok",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "pageCount": 20,
+          "encrypted": false,
+          "permissionBits": null,
+          "pages": [
+            {
+              "index": 0,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 1,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 2,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 3,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 4,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 5,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 6,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 7,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 8,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 9,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 10,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 11,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 12,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 13,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 14,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 15,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 16,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 17,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 18,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            },
+            {
+              "index": 19,
+              "box": [
+                0,
+                0,
+                595.28,
+                841.89
+              ],
+              "rotation": 0
+            }
+          ],
+          "firstPagePreviewMs": 49,
+          "previewSize": {
+            "width": 893,
+            "height": 1263
+          },
+          "exportMs": 28,
+          "exportStages": [
+            "apply",
+            "apply",
+            "apply",
+            "write"
+          ],
+          "exportMode": "incremental-update",
+          "exportDecrypted": false,
+          "exportBytes": 21616935,
+          "originalBytesArePrefix": true,
+          "signedPages": [
+            {
+              "index": 0,
+              "pageCount": 20,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            },
+            {
+              "index": 19,
+              "pageCount": 20,
+              "widthPreserved": true,
+              "heightPreserved": true,
+              "rotationPreserved": true,
+              "displayWidth": 892.92,
+              "displayHeight": 1262.84,
+              "inkRatio": 0.116,
+              "seeThroughRatio": 0.874,
+              "strayInkPixels": 0,
+              "changedPixelsOutsidePlacement": 0,
+              "placementMarginPt": 4,
+              "comparedPixels": 1127859
+            }
+          ],
+          "untouchedPage": {
+            "index": 1,
+            "changedPixels": 0,
+            "comparedPixels": 1127859
+          },
+          "expectedCode": null,
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 2
+        },
+        {
+          "fixture": "owner-password-restricted",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "modification_not_permitted",
+          "expectedCode": "modification_not_permitted",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 1
+        },
+        {
+          "fixture": "truncated",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "damaged_pdf",
+          "expectedCode": "damaged_pdf",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 1
+        },
+        {
+          "fixture": "page-cap-120",
+          "outcome": "refused",
+          "openStages": [
+            "read",
+            "parse"
+          ],
+          "code": "too_many_pages",
+          "expectedCode": "too_many_pages",
+          "consoleErrors": [],
+          "workerError": null,
+          "unexpectedRequests": [],
+          "localBlobReads": 1
+        }
+      ]
+    }
+  ]
+}

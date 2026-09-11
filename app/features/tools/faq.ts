@@ -4,6 +4,7 @@ import { imageBackgroundRemoverFaq } from './image-background-remover/content'
 import { imageCompressorFaq } from './image-compressor/content'
 import { productImageWorkbenchFaq } from './product-image-workbench/content'
 import { customCalendarFaq } from './custom-calendar/content'
+import { pdfSignatureFaq } from './pdf-signature/content'
 import { deviceTimeFaq } from './device-time/content'
 import { bmiFaq } from './bmi-calculator/content'
 import { ntdFaq } from './ntd-uppercase/content'
@@ -34,6 +35,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'compliant-product-image': compliantProductImageFaq,
   'product-image-workbench': productImageWorkbenchFaq,
   'custom-calendar': customCalendarFaq,
+  'pdf-signature': pdfSignatureFaq,
 }
 
 const toolFaqIssues = validateToolFaq()
