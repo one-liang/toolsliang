@@ -450,9 +450,16 @@ export function getCategory(id: string) {
   return toolCategories.find(category => category.id === id)
 }
 
-export function getVisibleStatus(status: ToolStatusMetadata | undefined, now = new Date()) {
+/**
+ * NEW is the only status that follows a clock. Public surfaces are prerendered,
+ * so the clock has to be passed in: without one the label stays undecided
+ * rather than falling back to whatever date the caller happens to run on, which
+ * for a prerendered page is the build machine's and not the visitor's device.
+ */
+export function getVisibleStatus(status: ToolStatusMetadata | undefined, now?: Date) {
   if (!status) return undefined
   if (status.kind !== 'new') return status.kind
+  if (!now) return undefined
 
   const date = now.toISOString().slice(0, 10)
   if (status.startsAt && date < status.startsAt) return undefined

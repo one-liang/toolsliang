@@ -160,6 +160,13 @@ describe('tool catalog', () => {
     expect(getVisibleStatus(tool.status, new Date('2026-10-04T00:00:00Z'))).toBeUndefined()
   })
 
+  it('leaves NEW undecided without a clock, so a prerendered page cannot answer for the device', () => {
+    expect(getVisibleStatus(getTool('ntd-uppercase')!.status)).toBeUndefined()
+    expect(getVisibleStatus({ kind: 'pro' })).toBe('pro')
+    expect(getVisibleStatus({ kind: 'hot', source: 'site-pageviews' })).toBe('hot')
+    expect(getVisibleStatus(undefined)).toBeUndefined()
+  })
+
   it('reports missing browser capabilities before a workspace starts', () => {
     expect(getUnavailableCapabilities(['javascript', 'web-worker'], {
       javascript: true,
