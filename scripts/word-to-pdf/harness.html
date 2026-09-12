@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Word to PDF feasibility harness</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #fff; font: 14px/1.5 system-ui, sans-serif; }
+  #stage { position: absolute; left: 0; top: 0; width: 1000px; background: #fff; }
+  #log { position: fixed; right: 0; bottom: 0; max-width: 40vw; font: 11px/1.4 ui-monospace, monospace; color: #444; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<pre id="log"></pre>
+<script>
+/*
+ * The T26 measurement harness.
+ *
+ * One job is one pipeline converting one document in one browser. The page is
+ * reloaded between jobs by the runner, so nothing a library cached can carry
+ * into the next measurement.
+ *
+ * Everything it reports is observed here: what the rendered document contains,
+ * how long each stage took, how long the main thread went without returning to
+ * the event loop, and — for the pipelines that produce a file — what an
+ * independent PDF reader finds inside the result. It never claims a document
+ * looks like Word; it only reports what it can see.
+ */
+const stage = document.getElementById('stage')
+const logElement = document.getElementById('log')
+
+function log(message) {
+  logElement.textContent = `${message}\n${logElement.textContent}`.split('\n').slice(0, 12).join('\n')
+}
+
+/**
+ * The longest stretch in which the main thread never came back to the event
+ * loop. A four-millisecond timer is the finest the platform promises; every gap
+ * beyond that is work that would have frozen the interface of a real tool.
+ * `PerformanceObserver('longtask')` would be tidier and only Chromium has it.
+ */
+function stallWatcher() {
+  let last = performance.now()
+  let longest = 0
+  const total = { blockedMs: 0 }
+  const timer = setInterval(() => {
+    const now = performance.now()
+    const gap = now - last - 4
+    if (gap > longest) longest = gap
+    if (gap > 50) total.blockedMs += gap
+    last = now
+  }, 4)
+  return {
+    stop() {
+      clearInterval(timer)
+      return { longestStallMs: Math.round(longest), blockedMs: Math.round(total.blockedMs) }
+    },
+  }
+}
+
+async function loadScript(url) {
+  await new Promise((resolve, reject) => {
+    const element = document.createElement('script')
+    element.src = url
+    element.onload = resolve
+    element.onerror = () => reject(new Error(`script_load_failed ${url}`))
+    document.head.append(element)
+  })
+}
+
+/**
+ * Only Chromium answers this, and only for a cross-origin isolated page it
+ * could actually show. It resolves on the browser's next garbage collection,
+ * which costs tens of seconds per call, so the runner asks for it on a named
+ * subset of documents rather than on every job.
+ */
+async function sampleMemory(enabled) {
+  if (!enabled || typeof performance.measureUserAgentSpecificMemory !== 'function') return null
+  try {
+    const result = await performance.measureUserAgentSpecificMemory()
+    return result.bytes
+  }
+  catch {
+    return null
+  }
+}
+
+/** Lets the browser paint and settle before a stage is timed or a canvas is read. */
+function settle() {
+  return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)))
+}
+
+window.__environment = () => ({
+  userAgent: navigator.userAgent,
+  deviceMemoryGb: navigator.deviceMemory ?? null,
+  hardwareConcurrency: navigator.hardwareConcurrency ?? null,
+  crossOriginIsolated: Boolean(window.crossOriginIsolated),
+  memoryApi: typeof performance.measureUserAgentSpecificMemory === 'function' ? 'available' : 'absent',
+  longTaskObserver: typeof PerformanceObserver === 'function'
+    && Array.isArray(PerformanceObserver.supportedEntryTypes)
+    && PerformanceObserver.supportedEntryTypes.includes('longtask')
+    ? 'available'
+    : 'absent',
+  offscreenCanvas: typeof OffscreenCanvas === 'function',
+})
+
+/* ---------------------------------------------------------------- probes -- */
+
+const PAGE_SELECTOR = 'section.docx'
+
+function visibleText(root) {
+  return (root.innerText ?? root.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Whether each sentence survived, and whether it survived where it belongs.
+ * The two are separate on purpose: text that moved is a layout problem, text
+ * that vanished is a content problem, and a probe that reports one as the other
+ * would hide the difference the gate turns on.
+ */
+function orderedPresence(haystack, needles) {
+  let cursor = 0
+  return needles.map((needle) => {
+    const present = haystack.includes(needle)
+    const index = haystack.indexOf(needle, cursor)
+    const inOrder = index >= 0
+    if (inOrder) cursor = index + needle.length
+    return { value: needle, present, inOrder }
+  })
+}
+
+function tableShapes(root) {
+  return [...root.querySelectorAll('table')].map((table) => {
+    const rows = [...table.rows]
+    return {
+      rows: rows.length,
+      /* The widest row, counting a spanned cell once per column it covers. */
+      columns: rows.reduce((widest, row) => Math.max(widest, [...row.cells].reduce((count, cell) => count + (cell.colSpan || 1), 0)), 0),
+      cells: rows.reduce((count, row) => count + row.cells.length, 0),
+    }
+  })
+}
+
+function imageReport(root) {
+  const images = [...root.querySelectorAll('img')]
+  return {
+    count: images.length,
+    decoded: images.filter(image => image.naturalWidth > 0 && image.naturalHeight > 0).length,
+    sources: [...new Set(images.map(image => image.currentSrc || image.src).map(value => value.slice(0, 24)))],
+  }
+}
+
+/** The generated marker a list item shows, which lives in `::before`, not in the text. */
+function listMarkers(root) {
+  const markers = []
+  for (const element of root.querySelectorAll('p, li')) {
+    const content = getComputedStyle(element, '::before').content
+    if (content && content !== 'none' && content !== 'normal') markers.push(content.replace(/^"|"$/g, ''))
+    if (element.tagName === 'LI') markers.push(getComputedStyle(element).listStyleType)
+  }
+  return [...new Set(markers)].slice(0, 12)
+}
+
+/**
+ * The column count each page box actually applies. A two-column section that
+ * renders as one column keeps every word and still is not the document.
+ */
+function columnCounts(root) {
+  const counts = new Set()
+  for (const page of root.querySelectorAll(PAGE_SELECTOR)) {
+    counts.add(getComputedStyle(page).columnCount)
+    for (const child of page.children) counts.add(getComputedStyle(child).columnCount)
+  }
+  return [...counts].filter(value => value && value !== 'auto')
+}
+
+function pageBoxes(root) {
+  return [...root.querySelectorAll(PAGE_SELECTOR)].map((page) => {
+    const box = page.getBoundingClientRect()
+    return {
+      widthPx: Math.round(box.width),
+      heightPx: Math.round(box.height),
+      orientation: box.width > box.height ? 'landscape' : 'portrait',
+    }
+  })
+}
+
+function probe(root, declared) {
+  const text = visibleText(root)
+  const boxes = pageBoxes(root)
+  return {
+    renderedPages: boxes.length,
+    pageBoxes: boxes,
+    columnCounts: columnCounts(root),
+    orientations: boxes.map(box => box.orientation),
+    textLength: text.length,
+    declaredText: orderedPresence(text, declared.text),
+    absentText: declared.absentText.map(value => ({ value, present: text.includes(value) })),
+    headerText: declared.headerText.map(value => ({ value, present: text.includes(value) })),
+    footerText: declared.footerText.map(value => ({ value, present: text.includes(value) })),
+    footnoteText: declared.footnoteText.map(value => ({ value, present: text.includes(value) })),
+    endnoteText: declared.endnoteText.map(value => ({ value, present: text.includes(value) })),
+    commentText: declared.commentText.map(value => ({ value, present: text.includes(value) })),
+    equationText: declared.equationText.length
+      ? { markers: declared.equationText.map(value => ({ value, present: text.includes(value) })), elements: root.querySelectorAll('math, mjx-container, [class*="math"], [class*="oMath"]').length }
+      : null,
+    tables: tableShapes(root),
+    images: imageReport(root),
+    listMarkers: listMarkers(root),
+    links: [...new Set([...root.querySelectorAll('a[href]')].map(anchor => anchor.getAttribute('href')))].slice(0, 8),
+    /* A conversion that silently keeps the whole document on one canvas-sized block. */
+    contentHeightPx: Math.round(root.getBoundingClientRect().height),
+  }
+}
+
+/* ------------------------------------------------------------- pipelines -- */
+
+/** docx-preview: parse the package, then lay it out into page boxes in the DOM. */
+async function runDocxPreview(bytes, options, timings) {
+  const started = performance.now()
+  const parsed = await window.docx.parseAsync(new Blob([bytes]), options)
+  timings.parseMs = Math.round(performance.now() - started)
+
+  const renderStarted = performance.now()
+  const container = document.createElement('div')
+  stage.append(container)
+  await window.docx.renderAsync(new Blob([bytes]), container, undefined, options)
+  await settle()
+  timings.layoutMs = Math.round(performance.now() - renderStarted)
+  return { container, parsed }
+}
+
+/** mammoth: semantic HTML, no page model by design. */
+async function runMammoth(bytes, timings) {
+  const started = performance.now()
+  const result = await window.mammoth.convertToHtml({ arrayBuffer: bytes })
+  timings.parseMs = Math.round(performance.now() - started)
+
+  const renderStarted = performance.now()
+  const container = document.createElement('div')
+  /* A page's text column, so the rasterised result has a width a reader could use. */
+  container.style.width = '794px'
+  container.style.padding = '72px'
+  container.style.boxSizing = 'border-box'
+  container.innerHTML = result.value
+  stage.append(container)
+  await settle()
+  timings.layoutMs = Math.round(performance.now() - renderStarted)
+  return { container, messages: result.messages.map(message => `${message.type}:${message.message}`.slice(0, 160)) }
+}
+
+/**
+ * The fraction of a canvas that is not the paper. A rasteriser that produced a
+ * blank page reports a readable PDF and an empty one, so the ink has to be
+ * counted rather than assumed. Every fourth pixel is sampled; the number is a
+ * presence check, not a measurement of how much was drawn.
+ */
+function inkRatio(canvas) {
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  const { data } = context.getImageData(0, 0, canvas.width, canvas.height)
+  let inked = 0
+  let sampled = 0
+  for (let index = 0; index < data.length; index += 16) {
+    sampled += 1
+    if (data[index] < 245 || data[index + 1] < 245 || data[index + 2] < 245) inked += 1
+  }
+  return sampled === 0 ? 0 : Math.round((inked / sampled) * 10000) / 10000
+}
+
+/**
+ * Photographs the laid-out document and writes the photographs into a PDF.
+ *
+ * `pages` are the elements to shoot. When the pipeline produced no page model
+ * there is one tall element instead, and the pagination has to be invented by
+ * slicing it — which is exactly what a tool built this way would have to do.
+ */
+async function rasteriseToPdf(container, { scale, sliceHeightPx, imageFormat, imageQuality }, timings) {
+  const explicit = [...container.querySelectorAll(PAGE_SELECTOR)]
+  const rasterStarted = performance.now()
+  const shots = []
+
+  if (explicit.length) {
+    for (const page of explicit) {
+      const canvas = await window.html2canvas(page, { scale, backgroundColor: '#ffffff', logging: false, useCORS: false })
+      shots.push({ canvas, widthPx: page.getBoundingClientRect().width, heightPx: page.getBoundingClientRect().height, inkRatio: inkRatio(canvas) })
+    }
+  }
+  else {
+    const whole = await window.html2canvas(container, { scale, backgroundColor: '#ffffff', logging: false, useCORS: false })
+    const box = container.getBoundingClientRect()
+    const sliceCanvasHeight = Math.round(sliceHeightPx * scale)
+    const count = Math.max(1, Math.ceil(whole.height / sliceCanvasHeight))
+    for (let index = 0; index < count; index += 1) {
+      const slice = document.createElement('canvas')
+      slice.width = whole.width
+      slice.height = Math.min(sliceCanvasHeight, whole.height - index * sliceCanvasHeight)
+      const context = slice.getContext('2d')
+      context.fillStyle = '#ffffff'
+      context.fillRect(0, 0, slice.width, slice.height)
+      context.drawImage(whole, 0, -index * sliceCanvasHeight)
+      shots.push({ canvas: slice, widthPx: box.width, heightPx: slice.height / scale, inkRatio: inkRatio(slice) })
+    }
+  }
+  timings.rasteriseMs = Math.round(performance.now() - rasterStarted)
+
+  const writeStarted = performance.now()
+  const { jsPDF } = window.jspdf
+  let pdf = null
+  const pageSizes = []
+  for (const [index, shot] of shots.entries()) {
+    /* CSS pixels to PDF points: a CSS pixel is 1/96 inch, a point 1/72. */
+    const widthPt = shot.widthPx * 0.75
+    const heightPt = shot.heightPx * 0.75
+    pageSizes.push({ widthPt: Math.round(widthPt), heightPt: Math.round(heightPt) })
+    if (index === 0) pdf = new jsPDF({ unit: 'pt', format: [widthPt, heightPt], orientation: widthPt > heightPt ? 'landscape' : 'portrait', compress: true })
+    else pdf.addPage([widthPt, heightPt], widthPt > heightPt ? 'landscape' : 'portrait')
+    pdf.addImage(shot.canvas.toDataURL(imageFormat === 'JPEG' ? 'image/jpeg' : 'image/png', imageQuality), imageFormat, 0, 0, widthPt, heightPt)
+  }
+  const bytes = new Uint8Array(pdf.output('arraybuffer'))
+  timings.writePdfMs = Math.round(performance.now() - writeStarted)
+
+  return { bytes, pageSizes, shotCount: shots.length, inkRatios: shots.map(shot => shot.inkRatio) }
+}
+
+/** The independent reader. A file this cannot open is not a PDF, whatever wrote it. */
+async function readBackPdf(bytes, verifierUrls, declared) {
+  const pdfjs = await import(verifierUrls.module)
+  pdfjs.GlobalWorkerOptions.workerSrc = verifierUrls.worker
+  const loadingTask = pdfjs.getDocument({ data: bytes.slice(), isEvalSupported: false, disableAutoFetch: true, disableStream: true })
+  const document_ = await loadingTask.promise
+  const pages = []
+  let extracted = ''
+  for (let number = 1; number <= document_.numPages; number += 1) {
+    const page = await document_.getPage(number)
+    const viewport = page.getViewport({ scale: 1 })
+    const content = await page.getTextContent()
+    extracted += content.items.map(item => item.str ?? '').join('')
+    pages.push({
+      widthPt: Math.round(viewport.width),
+      heightPt: Math.round(viewport.height),
+      orientation: viewport.width > viewport.height ? 'landscape' : 'portrait',
+      textItems: content.items.length,
+    })
+  }
+  const normalised = extracted.replace(/\s+/g, ' ')
+  const report = {
+    readable: true,
+    pages: document_.numPages,
+    pageSizes: pages,
+    /* Zero across every page means the file carries pictures of words, not words. */
+    textItems: pages.reduce((total, page) => total + page.textItems, 0),
+    selectableText: declared.text.map(value => ({ value, present: normalised.includes(value) })),
+  }
+  await loadingTask.destroy()
+  return report
+}
+
+/* ------------------------------------------------------------------- run -- */
+
+window.__run = async (job) => {
+  const report = {
+    pipelineId: job.pipeline.id,
+    fixture: job.fixture.name,
+    output: job.pipeline.output,
+    outcome: 'ok',
+    stages: {},
+    error: null,
+    messages: [],
+  }
+  const watcher = stallWatcher()
+  try {
+    log(`${job.pipeline.id} · ${job.fixture.name}`)
+    for (const url of job.pipeline.scripts) await loadScript(url)
+
+    const baselineBytes = await sampleMemory(job.measureMemory)
+    const fetchStarted = performance.now()
+    const response = await fetch(job.fixture.url)
+    const bytes = await response.arrayBuffer()
+    report.stages.readMs = Math.round(performance.now() - fetchStarted)
+    report.inputBytes = bytes.byteLength
+
+    const timings = {}
+    const conversionStarted = performance.now()
+    let rendered = null
+    if (job.pipeline.libraries.includes('docx-preview')) {
+      rendered = await runDocxPreview(bytes, {
+        inWrapper: true,
+        breakPages: true,
+        ignoreLastRenderedPageBreak: false,
+        renderHeaders: true,
+        renderFooters: true,
+        renderFootnotes: true,
+        renderEndnotes: true,
+        renderChanges: false,
+        renderComments: false,
+        renderAltChunks: true,
+        useBase64URL: true,
+        experimental: true,
+        trimXmlDeclaration: true,
+      }, timings)
+    }
+    else {
+      rendered = await runMammoth(bytes, timings)
+      report.messages = rendered.messages ?? []
+    }
+
+    Object.assign(report.stages, timings)
+    /*
+     * The earliest moment a host could truthfully tell the user something has
+     * happened. No measured library reports progress, so this is the first
+     * stage boundary, not a callback — which is itself the answer to the
+     * specification's "first progress" budget.
+     */
+    report.stages.firstObservableMs = timings.parseMs ?? null
+    report.probe = probe(rendered.container, job.fixture.declared)
+
+    if (job.pipeline.output === 'pdf') {
+      const produced = await rasteriseToPdf(rendered.container, job.raster, timings)
+      Object.assign(report.stages, {
+        rasteriseMs: timings.rasteriseMs,
+        writePdfMs: timings.writePdfMs,
+      })
+      report.pdf = {
+        bytes: produced.bytes.byteLength,
+        writtenPages: produced.shotCount,
+        writtenPageSizes: produced.pageSizes,
+        inkRatios: produced.inkRatios,
+      }
+      try {
+        report.readBack = await readBackPdf(produced.bytes, job.verifierUrls, job.fixture.declared)
+      }
+      catch (error) {
+        report.readBack = { readable: false, error: `${error.name}: ${String(error.message).slice(0, 160)}` }
+      }
+    }
+
+    report.stages.conversionMs = Math.round(performance.now() - conversionStarted)
+    await settle()
+    const peakBytes = await sampleMemory(job.measureMemory)
+    report.memory = baselineBytes === null || peakBytes === null
+      ? null
+      : { baselineBytes, peakBytes, deltaBytes: peakBytes - baselineBytes }
+  }
+  catch (error) {
+    report.outcome = 'failed'
+    report.error = { name: error?.name ?? 'Error', message: String(error?.message ?? error).slice(0, 240) }
+  }
+  finally {
+    Object.assign(report, watcher.stop())
+  }
+  return report
+}
+
+window.__ready = true
+</script>
+</body>
+</html>

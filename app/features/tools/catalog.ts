@@ -353,6 +353,19 @@ const registeredTools: ToolDefinition[] = [
   customCalendarDefinition,
   pdfSignatureDefinition,
   {
+    /*
+     * Reserved by T26 (#28), not built. The feasibility gate in
+     * docs/adr/0017-do-not-publish-word-to-pdf-in-the-browser.md returned no-go,
+     * so the slug is held here — where every registry test can see it is not
+     * published — rather than left free for something else to claim.
+     */
+    slug: 'word-to-pdf', category: 'document', icon: 'file-text',
+    availability: { state: 'unpublished', reason: { 'zh-tw': '瀏覽器本機轉檔未通過可行性驗證。', en: 'Browser-local conversion did not pass its feasibility gate.' } },
+    name: { 'zh-tw': 'Word 轉 PDF', en: 'Word to PDF' },
+    description: { 'zh-tw': '在本機把 DOCX 轉成 PDF。', en: 'Turn a DOCX into a PDF on your own device.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
+  },
+  {
     slug: 'document-counter', category: 'document', icon: 'file-text',
     availability: { state: 'unpublished', reason: { 'zh-tw': '工具尚未完成。', en: 'This tool is not ready yet.' } },
     name: { 'zh-tw': '文件字數統計', en: 'Document counter' },
