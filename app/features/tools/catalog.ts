@@ -450,6 +450,14 @@ export function getCategory(id: string) {
   return toolCategories.find(category => category.id === id)
 }
 
+/**
+ * NEW is the only status whose visibility follows a clock, so it is the only
+ * one a prerendered surface has to leave to the visitor's device.
+ */
+export function isDateDerivedStatus(status: ToolStatusMetadata | undefined) {
+  return status?.kind === 'new'
+}
+
 export function getVisibleStatus(status: ToolStatusMetadata | undefined, now = new Date()) {
   if (!status) return undefined
   if (status.kind !== 'new') return status.kind

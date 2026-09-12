@@ -8,6 +8,7 @@ import {
   getUnavailableCapabilities,
   getTool,
   getVisibleStatus,
+  isDateDerivedStatus,
   isSupportedLocale,
   publishedToolCategories,
   publishedTools,
@@ -158,6 +159,13 @@ describe('tool catalog', () => {
 
     expect(getVisibleStatus(tool.status, new Date('2026-09-15T00:00:00Z'))).toBe('new')
     expect(getVisibleStatus(tool.status, new Date('2026-10-04T00:00:00Z'))).toBeUndefined()
+  })
+
+  it('names NEW as the only status a prerendered surface must leave to the device date', () => {
+    expect(isDateDerivedStatus(getTool('ntd-uppercase')!.status)).toBe(true)
+    expect(isDateDerivedStatus({ kind: 'pro' })).toBe(false)
+    expect(isDateDerivedStatus({ kind: 'hot', source: 'site-pageviews' })).toBe(false)
+    expect(isDateDerivedStatus(undefined)).toBe(false)
   })
 
   it('reports missing browser capabilities before a workspace starts', () => {

@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page, type TestInfo } from '@playwright/test'
 import { gotoHydrated, waitForHydration } from './support/hydration'
 import { inspectNetworkRequest } from './support/privacy-boundary'
+import { publishedTools } from '../../app/features/tools/catalog'
 
 const TOOL_ROUTE = '/zh-tw/tools/ntd-uppercase/'
 const DIRECTORY_ROUTE = '/zh-tw/tools/'
@@ -10,6 +11,16 @@ const THEME_STORAGE_KEY = 'toolsliang-theme'
 // Sub-pixel layout can report a 44px target as 43.999996; the same tolerance as the tool quality gate.
 const TOUCH_TARGET_TOLERANCE_PX = 0.001
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
+/** The NEW window is read from the registry so the check never pins a date that ages out. */
+const NEW_STATUS_TOOL = publishedTools.find(tool => tool.status?.kind === 'new' && tool.status.startsAt && tool.status.endsAt)!
+const NEW_STATUS_WINDOW = NEW_STATUS_TOOL.status as { startsAt: string; endsAt: string }
+const NEW_STATUS_TOOL_ROUTE = `/zh-tw/tools/${NEW_STATUS_TOOL.slug}/`
+
+function dayAfter(date: string) {
+  const next = new Date(`${date}T00:00:00Z`)
+  next.setUTCDate(next.getUTCDate() + 1)
+  return next.toISOString().slice(0, 10)
+}
 
 interface ShellFindings {
   consoleErrors: string[]
@@ -329,4 +340,28 @@ test('手機分類 drawer 在 light 與 dark 皆通過無障礙自動檢查', as
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toBeHidden()
   }
+})
+
+test('NEW 標籤由訪客裝置日期決定，預先產生的頁面跨過效期也不產生 hydration mismatch', async ({ page }) => {
+  // Every tool page is prerendered, so a NEW label baked into the HTML would
+  // carry the build machine's date; the console-error check in afterEach is
+  // what fails when the visitor's device disagrees with it.
+  const prerendered = await (await page.request.get(NEW_STATUS_TOOL_ROUTE)).text()
+  expect(prerendered, '預先產生的 HTML 不得帶入建置日期推導的 NEW 標籤').not.toContain('ui-badge--new')
+
+  await page.clock.setFixedTime(new Date(`${dayAfter(NEW_STATUS_WINDOW.endsAt)}T09:00:00Z`))
+  await gotoHydrated(page, NEW_STATUS_TOOL_ROUTE)
+  await expect(page.locator('.tool-heading__title-row .ui-badge--new')).toHaveCount(0)
+
+  await page.clock.setFixedTime(new Date(`${NEW_STATUS_WINDOW.startsAt}T09:00:00Z`))
+  await gotoHydrated(page, NEW_STATUS_TOOL_ROUTE)
+  await expect(page.locator('.tool-heading__title-row .ui-badge--new')).toHaveText('NEW')
+
+  await gotoHydrated(page, DIRECTORY_ROUTE)
+  const card = page.locator('.tool-card', { has: page.locator(`a[href="${NEW_STATUS_TOOL_ROUTE}"]`) })
+  await expect(card.locator('.ui-badge--new')).toHaveText('NEW')
+
+  await page.clock.setFixedTime(new Date(`${dayAfter(NEW_STATUS_WINDOW.endsAt)}T09:00:00Z`))
+  await gotoHydrated(page, DIRECTORY_ROUTE)
+  await expect(card.locator('.ui-badge--new')).toHaveCount(0)
 })
