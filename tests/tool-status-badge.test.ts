@@ -1,3 +1,5 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { join, relative, resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -47,7 +49,29 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
+const appDirectory = resolve(process.cwd(), 'app')
+
+function filesEvaluating(symbol: string, directory = appDirectory): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name)
+    if (entry.isDirectory()) return filesEvaluating(symbol, path)
+    if (!/\.(ts|vue)$/.test(entry.name)) return []
+    return readFileSync(path, 'utf8').includes(`${symbol}(`) ? [relative(appDirectory, path)] : []
+  })
+}
+
 describe('ToolStatusBadge', () => {
+  it('is the only surface that evaluates a status window, so every badge on the site is fixed at once', () => {
+    // The label appears on the tool page, the tool directory, saved tools, the
+    // landing cards, the sidebar, the category drawer and local search; they
+    // are covered by construction only as long as this stays the single caller.
+    // Sorted: directory order is the file system's, not something to assert on.
+    expect(filesEvaluating('getVisibleStatus').sort()).toEqual([
+      'components/ToolStatusBadge.vue',
+      'features/tools/catalog.ts',
+    ])
+  })
+
   it('keeps the NEW label out of prerendered HTML, because the build date is not the visitor device date', async () => {
     const inside = await renderServer(newStatus, INSIDE_WINDOW)
 

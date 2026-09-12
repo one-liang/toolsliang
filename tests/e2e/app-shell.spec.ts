@@ -11,15 +11,42 @@ const THEME_STORAGE_KEY = 'toolsliang-theme'
 // Sub-pixel layout can report a 44px target as 43.999996; the same tolerance as the tool quality gate.
 const TOUCH_TARGET_TOLERANCE_PX = 0.001
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
-/** The NEW window is read from the registry so the check never pins a date that ages out. */
-const NEW_STATUS_TOOL = publishedTools.find(tool => tool.status?.kind === 'new' && tool.status.startsAt && tool.status.endsAt)!
-const NEW_STATUS_WINDOW = NEW_STATUS_TOOL.status as { startsAt: string; endsAt: string }
-const NEW_STATUS_TOOL_ROUTE = `/zh-tw/tools/${NEW_STATUS_TOOL.slug}/`
+/**
+ * The NEW label appears only after hydration, so the surfaces carrying it must
+ * reserve its room: these are the boxes that would move if they did not.
+ */
+const BADGE_NEIGHBOURS = [
+  '.tool-heading__title-row', '.tool-heading__copy p', '.tool-contract',
+  '.app-sidebar .sidebar-group', '.tool-card__topline', '.tool-card__description',
+]
+
+/**
+ * The NEW window is read from the registry so the check never pins a date that
+ * ages out. It throws inside the test rather than at import: a registry with no
+ * dated NEW tool must fail this check alone, not every gate in this file.
+ */
+function toolWithNewWindow() {
+  const tool = publishedTools.find(item => item.status?.kind === 'new' && item.status.startsAt && item.status.endsAt)
+  if (!tool?.status?.startsAt || !tool.status.endsAt) throw new Error('註冊表需要一個帶 startsAt 與 endsAt 的已發布 NEW 工具，這項檢查才驗證得到任何事')
+
+  return { route: `/zh-tw/tools/${tool.slug}/`, startsAt: tool.status.startsAt, endsAt: tool.status.endsAt }
+}
 
 function dayAfter(date: string) {
   const next = new Date(`${date}T00:00:00Z`)
   next.setUTCDate(next.getUTCDate() + 1)
   return next.toISOString().slice(0, 10)
+}
+
+/** Page position and size of everything a late-arriving label could displace. */
+function badgeNeighbourGeometry(page: Page) {
+  return page.evaluate((selectors) => {
+    document.documentElement.scrollTop = 0
+    return selectors.map((selector) => {
+      const box = document.querySelector(selector)?.getBoundingClientRect()
+      return `${selector}: ${box ? `${Math.round(box.top)}×${Math.round(box.height)}` : '不存在'}`
+    })
+  }, BADGE_NEIGHBOURS)
 }
 
 interface ShellFindings {
@@ -343,25 +370,34 @@ test('手機分類 drawer 在 light 與 dark 皆通過無障礙自動檢查', as
 })
 
 test('NEW 標籤由訪客裝置日期決定，預先產生的頁面跨過效期也不產生 hydration mismatch', async ({ page }) => {
+  const tool = toolWithNewWindow()
+  const expired = new Date(`${dayAfter(tool.endsAt)}T09:00:00Z`)
+  const inside = new Date(`${tool.startsAt}T09:00:00Z`)
+
   // Every tool page is prerendered, so a NEW label baked into the HTML would
   // carry the build machine's date; the console-error check in afterEach is
   // what fails when the visitor's device disagrees with it.
-  const prerendered = await (await page.request.get(NEW_STATUS_TOOL_ROUTE)).text()
+  const prerendered = await (await page.request.get(tool.route)).text()
   expect(prerendered, '預先產生的 HTML 不得帶入建置日期推導的 NEW 標籤').not.toContain('ui-badge--new')
 
-  await page.clock.setFixedTime(new Date(`${dayAfter(NEW_STATUS_WINDOW.endsAt)}T09:00:00Z`))
-  await gotoHydrated(page, NEW_STATUS_TOOL_ROUTE)
+  await page.clock.setFixedTime(expired)
+  await gotoHydrated(page, tool.route)
   await expect(page.locator('.tool-heading__title-row .ui-badge--new')).toHaveCount(0)
+  const toolPageWithoutBadge = await badgeNeighbourGeometry(page)
 
-  await page.clock.setFixedTime(new Date(`${NEW_STATUS_WINDOW.startsAt}T09:00:00Z`))
-  await gotoHydrated(page, NEW_STATUS_TOOL_ROUTE)
+  await page.clock.setFixedTime(inside)
+  await gotoHydrated(page, tool.route)
   await expect(page.locator('.tool-heading__title-row .ui-badge--new')).toHaveText('NEW')
+  // The label lands on a painted page, so its arrival must not move anything.
+  expect(await badgeNeighbourGeometry(page), '標籤出現與否不得改變周圍版面').toEqual(toolPageWithoutBadge)
 
   await gotoHydrated(page, DIRECTORY_ROUTE)
-  const card = page.locator('.tool-card', { has: page.locator(`a[href="${NEW_STATUS_TOOL_ROUTE}"]`) })
+  const card = page.locator('.tool-card', { has: page.locator(`a[href="${tool.route}"]`) })
   await expect(card.locator('.ui-badge--new')).toHaveText('NEW')
+  const directoryWithBadge = await badgeNeighbourGeometry(page)
 
-  await page.clock.setFixedTime(new Date(`${dayAfter(NEW_STATUS_WINDOW.endsAt)}T09:00:00Z`))
+  await page.clock.setFixedTime(expired)
   await gotoHydrated(page, DIRECTORY_ROUTE)
   await expect(card.locator('.ui-badge--new')).toHaveCount(0)
+  expect(await badgeNeighbourGeometry(page), '工具目錄的標籤位置需由版面預留').toEqual(directoryWithBadge)
 })
