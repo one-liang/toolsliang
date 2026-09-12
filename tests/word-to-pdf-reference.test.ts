@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getPublicPageRoutes,
   getPublicToolRoutes,
   getTool,
+  publishedToolCategories,
   publishedTools,
   searchTools,
   siteOrigin,
@@ -9,6 +11,7 @@ import {
   unpublishedToolSlugs,
 } from '@/features/tools/catalog'
 import { renderToolSitemap } from '@/features/tools/sitemap'
+import { buildToolStructuredData } from '@/features/tools/structured-data'
 import {
   wordToPdfBudgets,
   wordToPdfCorpusRequirements,
@@ -27,7 +30,9 @@ import {
   wordToPdfReassessmentConditions,
   wordToPdfReferenceVersion,
   wordToPdfReservedSlug,
+  wordToPdfSpecStages,
   redistributableWordToPdfLibraries,
+  type WordToPdfForbiddenSurface,
 } from '@/features/tools/word-to-pdf/domain/reference'
 import {
   browserNames,
@@ -37,10 +42,12 @@ import {
   measuredLibrary,
   measuredRun,
   optionalRun,
+  type MeasuredRun,
   parseBudgets,
   parseExclusions,
   parseFidelityRows,
   parseFixtures,
+  parseFontRows,
   parseForbiddenSurfaces,
   parseForbiddenWording,
   parseGates,
@@ -49,6 +56,7 @@ import {
   parsePaginationRows,
   parsePipelines,
   parseReassessmentConditions,
+  parseSpecStages,
   parseTimings,
   parseVerdicts,
   sectionBody,
@@ -123,7 +131,20 @@ describe('vocabulary matches the decision record', () => {
 
   it('publishes exactly the documented forbidden surfaces and reassessment conditions', () => {
     expect([...wordToPdfForbiddenSurfaces]).toEqual(parseForbiddenSurfaces())
-    expect(wordToPdfReassessmentConditions.map(entry => entry.key)).toEqual(parseReassessmentConditions())
+    expect([...wordToPdfReassessmentConditions]).toEqual(parseReassessmentConditions())
+  })
+
+  it('maps every stage §12.13 names onto the stage that covers it', () => {
+    const documented = parseSpecStages()
+    expect(wordToPdfSpecStages.map(entry => entry.spec)).toEqual(documented.map(row => row.spec))
+    for (const row of documented) {
+      expect(wordToPdfSpecStages.find(entry => entry.spec === row.spec)?.coveredBy, row.spec).toBe(row.coveredBy)
+    }
+    /* A stage that is covered must name a stage a library actually performs. */
+    for (const entry of wordToPdfSpecStages) {
+      if (entry.coveredBy === null) continue
+      expect(wordToPdfLibraryStages, entry.spec).toContain(entry.coveredBy)
+    }
   })
 
   it('publishes exactly the documented budgets', () => {
@@ -198,6 +219,16 @@ describe('the record matches what was measured', () => {
         expect(measuredRun(browser, 'docx-preview', row.fixture).probe?.renderedPages, `${row.fixture}/${browser}`)
           .toBe(row.rendered[browser])
       }
+    }
+  })
+
+  it('measured the stalls against the budget the record publishes', () => {
+    expect(measurements.budgets.mainThreadTaskMs).toBe(wordToPdfBudgets.mainThreadTaskMs)
+    /* `blockedMs` only counts gaps past that budget, so a run with one is over it. */
+    for (const { browser, run } of everyRun()) {
+      if ((run.blockedMs ?? 0) === 0) continue
+      expect(run.longestStallMs ?? 0, `${browser}/${run.pipelineId}/${run.fixture}`)
+        .toBeGreaterThan(measurements.budgets.mainThreadTaskMs)
     }
   })
 
@@ -295,14 +326,32 @@ describe('the gate decides publication', () => {
     expect(getTool(wordToPdfReservedSlug)).toBeUndefined()
   })
 
+  /*
+   * One assertion per key in §9.2, so the list cannot grow a surface nothing
+   * checks. They all derive from `publishedTools` today, which is exactly why
+   * they are asserted separately: that is an implementation detail, and the
+   * boundary has to survive it changing.
+   */
   it('keeps the reserved slug off every surface §9.2 forbids', () => {
-    for (const route of getPublicToolRoutes()) expect(route).not.toContain(wordToPdfReservedSlug)
-    expect(renderToolSitemap(siteOrigin)).not.toContain(wordToPdfReservedSlug)
-    for (const locale of supportedLocales) {
-      for (const query of ['word', 'Word', 'pdf', '轉檔', 'docx']) {
-        expect(searchTools(query, locale).map(tool => tool.slug), `${locale}/${query}`)
-          .not.toContain(wordToPdfReservedSlug)
-      }
+    const surfaces: Record<WordToPdfForbiddenSurface, () => string> = {
+      'public-route': () => getPublicToolRoutes().join(' '),
+      'navigation-entry': () => JSON.stringify(publishedToolCategories),
+      'tool-catalog-entry': () => JSON.stringify(publishedTools),
+      'search-index-entry': () => supportedLocales
+        .flatMap(locale => ['word', 'Word', 'pdf', '轉檔', 'docx']
+          .flatMap(query => searchTools(query, locale).map(tool => tool.slug)))
+        .join(' '),
+      'sitemap-entry': () => renderToolSitemap(siteOrigin),
+      'structured-data': () => supportedLocales
+        .flatMap(locale => publishedTools.map(tool => JSON.stringify(buildToolStructuredData(tool, locale))))
+        .join(' '),
+      'seo-page': () => getPublicPageRoutes().join(' '),
+      'offline-asset': () => JSON.stringify(publishedTools.flatMap(tool => tool.offlineAssets ?? [])),
+    }
+
+    expect(Object.keys(surfaces).sort()).toEqual([...wordToPdfForbiddenSurfaces].sort())
+    for (const [surface, render] of Object.entries(surfaces)) {
+      expect(render(), surface).not.toContain(wordToPdfReservedSlug)
     }
   })
 
@@ -328,6 +377,47 @@ describe('the fidelity table is what the probes found', () => {
           expect(fidelityVerdict(run!, row.aspect), `${browser}/${pipelineId}/${row.fixture}/${row.aspect}`).toBe(documented)
         }
       }
+    }
+  })
+})
+
+describe('font resolution is measured, not assumed', () => {
+  it('repeats every font row from the measurement file', () => {
+    for (const row of parseFontRows()) {
+      for (const browser of browserNames) {
+        const declared = measuredRun(browser, 'docx-preview', row.fixture).probe?.declaredFonts
+          ?.find(font => font.family === row.family)
+        expect(declared, `${browser}/${row.fixture}/${row.family}`).toBeDefined()
+        expect(declared!.installed, `${browser}/${row.fixture}/${row.family} installed`).toBe(row.installed[browser])
+
+        for (const [pipelineId, carried] of [
+          ['docx-preview', row.carriedByDocxPreview],
+          ['mammoth', row.carriedByMammoth],
+        ] as const) {
+          const rendered = measuredRun(browser, pipelineId, row.fixture).probe?.renderedFonts
+            ?.some(font => font.family === row.family)
+          expect(rendered ?? false, `${browser}/${pipelineId}/${row.fixture}/${row.family}`).toBe(carried)
+        }
+      }
+    }
+  })
+
+  it('covers every family the corpus declares', () => {
+    const declared = new Set(measurements.fixtures.flatMap(fixture => fixture.declared.fontFamilies))
+    expect(declared.size).toBeGreaterThan(0)
+    expect(new Set(parseFontRows().map(row => row.family))).toEqual(declared)
+  })
+
+  it('asked for a family nobody could have installed, so substitution is observable', () => {
+    const invented = 'Corpus Imaginary Sans'
+    expect(measuredFixture('cjk-missing-font').declared.fontFamilies).toContain(invented)
+    for (const browser of browserNames) {
+      const font = measuredRun(browser, 'docx-preview', 'cjk-missing-font').probe?.declaredFonts
+        ?.find(entry => entry.family === invented)
+      expect(font?.installed, browser).toBe(false)
+      /* And it still reached the browser, so the substitution is the browser's, silently. */
+      expect(measuredRun(browser, 'docx-preview', 'cjk-missing-font').probe?.renderedFonts
+        ?.some(entry => entry.family === invented), browser).toBe(true)
     }
   })
 })
@@ -364,7 +454,7 @@ describe('the three browsers agreed, which is why the tables print one number', 
  * where showing the content is the failure — a deletion the author made, a
  * reviewer's comment — so it is never merged with `kept`.
  */
-function fidelityVerdict(run: { probe?: { declaredText: { present: boolean }[], absentText: { present: boolean }[], tables: { rows: number, columns: number }[], images: { decoded: number }, headerText: { present: boolean }[], footerText: { present: boolean }[], footnoteText: { present: boolean }[], endnoteText: { present: boolean }[], commentText: { present: boolean }[], listMarkers: string[], equationText: { markers: { present: boolean }[] } | null, renderedPages: number } }, aspect: string) {
+function fidelityVerdict(run: MeasuredRun, aspect: string) {
   const probe = run.probe
   if (!probe) return 'lost'
 
@@ -395,6 +485,14 @@ describe('the environment the numbers came from is recorded', () => {
     for (const browser of browserNames) {
       expect(measuredBrowser(browser).environment.userAgent).toBeTruthy()
     }
+  })
+
+  it('records whether WebAssembly was available, which §12.13 asks the spike to check', () => {
+    for (const browser of browserNames) {
+      expect(measuredBrowser(browser).environment.wasm, browser).toBe(true)
+    }
+    /* No measured pipeline uses it; the record has to say so rather than leave it open. */
+    expect(sectionBody('## 5. 效能、記憶體與主執行緒')).toContain('WebAssembly')
   })
 
   it('says which browsers could answer the memory question', () => {

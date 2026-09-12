@@ -126,6 +126,8 @@ function corpus() {
     hyperlinks: [],
     fields: [],
     equationText: [],
+    /* Families the document names in `w:rFonts`; §12.13 asks what happens to them. */
+    fontFamilies: [],
     ...value,
   })
 
@@ -155,6 +157,7 @@ function corpus() {
     declared: declare({
       pages: 1,
       text: ['Bold run', 'Italic run', 'Struck run', 'Superscript', 'Georgia serif run'],
+      fontFamilies: ['Georgia', 'Courier New', 'Calibri'],
     }),
     bytes: docx({
       body: [
@@ -187,6 +190,7 @@ function corpus() {
     declared: declare({
       pages: 1,
       text: ['繁體中文與 Latin script 在同一行混排', '標點符號：，。、；：「」（）？！'],
+      fontFamilies: ['Microsoft JhengHei', 'Calibri'],
     }),
     bytes: docx({
       body: [
@@ -208,6 +212,7 @@ function corpus() {
     declared: declare({
       pages: 1,
       text: ['這一段指定標楷體', '這一段指定細明體'],
+      fontFamilies: ['DFKai-SB', 'MingLiU', 'Corpus Imaginary Sans'],
     }),
     bytes: docx({
       body: [
@@ -1098,14 +1103,17 @@ function corpus() {
 }
 
 export function buildFixtures() {
-  return corpus().map(fixture => ({
-    extension: 'docx',
-    mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ...fixture,
-    filename: `${fixture.name}.${fixture.extension ?? 'docx'}`,
-    byteLength: fixture.bytes.length,
-    sha256: createHash('sha256').update(fixture.bytes).digest('hex'),
-  }))
+  return corpus().map((fixture) => {
+    const extension = fixture.extension ?? 'docx'
+    return {
+      mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ...fixture,
+      extension,
+      filename: `${fixture.name}.${extension}`,
+      byteLength: fixture.bytes.length,
+      sha256: createHash('sha256').update(fixture.bytes).digest('hex'),
+    }
+  })
 }
 
 /** Categories in the order the record prints them. */

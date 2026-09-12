@@ -58,6 +58,24 @@ export interface DeclaredContent {
   hyperlinks: string[]
   fields: string[]
   equationText: string[]
+  /** Families the document names in `w:rFonts`; §12.13 asks what happens to them. */
+  fontFamilies: string[]
+}
+
+/**
+ * One font family, as the browser answered for it.
+ *
+ * `installed` means the family changed the width of a measured string against
+ * at least one generic baseline, which is the only evidence that a real face
+ * backs it. A family that is asked for and not installed was substituted, and
+ * nothing in any pipeline said so.
+ */
+export interface MeasuredFont {
+  family: string
+  /** A CSS keyword naming a category rather than a face; never "installed". */
+  generic: boolean
+  installed: boolean
+  widths: { generic: string, width: number, baselineWidth: number }[]
 }
 
 export interface MeasuredFixture {
@@ -94,6 +112,8 @@ export interface MeasuredLibrary {
 
 export interface MeasuredPipeline {
   id: string
+  /** The library that reads the document; the harness is told, never left to infer. */
+  parser: string
   output: 'dom' | 'pdf'
   libraries: string[]
   stages: string[]
@@ -125,6 +145,9 @@ export interface MeasuredProbe {
   endnoteText: { value: string, present: boolean }[]
   commentText: { value: string, present: boolean }[]
   equationText: { markers: { value: string, present: boolean }[], elements: number } | null
+  /** Families the document asked for, and families the conversion ended up asking for. */
+  declaredFonts: MeasuredFont[]
+  renderedFonts: MeasuredFont[]
   tables: { rows: number, columns: number, cells: number }[]
   images: { count: number, decoded: number, sources: string[] }
   listMarkers: string[]
@@ -189,6 +212,7 @@ export interface MeasuredBrowser {
     memoryApi: string
     longTaskObserver: string
     offscreenCanvas: boolean
+    wasm: boolean
   }
   pageErrors: string[]
   runs: MeasuredRun[]
@@ -331,6 +355,27 @@ export function parseFidelityRows() {
   }))
 }
 
+/**
+ * §4.4: what happened to each font family the corpus asks for.
+ *
+ * Installation is per browser, because it turned out not to agree: the same
+ * machine resolves a family in one engine and substitutes it in another. The
+ * two "carried" columns are single, because whether a conversion passes the
+ * request on is a property of the conversion, and that did agree everywhere.
+ */
+export function parseFontRows() {
+  const pattern = /^\| `([a-z0-9-]+)` \| ([^|]+) \| (是|否) \| (是|否) \| (是|否) \| (是|否) \| (是|否) \|$/gm
+
+  return reader.tableRows('### 4.4 字型解析', pattern).map(([, fixture, family, chromium, firefox, webkit, docxPreview, mammoth]) => ({
+    fixture: fixture!,
+    family: family!.trim(),
+    installed: { chromium: chromium === '是', firefox: firefox === '是', webkit: webkit === '是' } as Record<string, boolean>,
+    /* Whether the conversion passed the document's request on to the browser at all. */
+    carriedByDocxPreview: docxPreview === '是',
+    carriedByMammoth: mammoth === '是',
+  }))
+}
+
 /** §5: the timings and stalls the budgets are judged against. */
 export function parseTimings() {
   const pattern = /^\| `([a-z0-9-]+)` \| `([a-z0-9-]+)` \| ([a-z]+) \| (\d+) \| (\d+) \| (\d+) \| ([\d-]+) \|$/gm
@@ -383,6 +428,16 @@ export function parseReassessmentConditions() {
   const pattern = /^\| `([a-z-]+)` \| ([^|]+) \|$/gm
 
   return reader.tableRows('### 9.3 重新評估條件', pattern).map(([, key]) => key!)
+}
+
+/** §9.5: the five stages §12.13 names, against the pipeline stage that covers each. */
+export function parseSpecStages() {
+  const pattern = /^\| `([a-z-]+)` \| (`[a-z-]+`|無) \| ([^|]+) \|$/gm
+
+  return reader.tableRows('### 9.5 規格階段對照', pattern).map(([, spec, coveredBy]) => ({
+    spec: spec!,
+    coveredBy: coveredBy === '無' ? null : coveredBy!.replace(/`/g, ''),
+  }))
 }
 
 /** §9.4: the budgets the record judged the gate against. */

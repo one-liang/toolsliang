@@ -1,10 +1,14 @@
 /**
- * The smallest ZIP writer a DOCX needs, and the reader the corpus checks itself with.
+ * The smallest ZIP writer a DOCX needs, plus the CRC-32 it is defined in terms of.
  *
  * A DOCX is an OPC package: a ZIP whose members are XML parts. Writing the
  * container here rather than pulling in an archiver keeps the corpus a pure
  * function of this repository — the bytes a measurement ran on can be rebuilt
  * from source alone, which is what makes the evaluation repeatable.
+ *
+ * `crc32` is exported because PNG chunks are checksummed with the same
+ * polynomial, and the corpus draws its own images; one implementation is easier
+ * to trust than two.
  *
  * Only what OPC actually uses is implemented: deflate and store, no data
  * descriptors, no ZIP64, no encryption. Anything larger than 4 GiB or more than

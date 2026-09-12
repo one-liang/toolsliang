@@ -20,9 +20,6 @@
  */
 export const permittedLicences = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause']
 
-/** What a library contributes to a conversion, in the terms the record uses. */
-export const stages = ['unzip', 'parse', 'layout', 'paginate', 'rasterise', 'write-pdf', 'read-pdf']
-
 export const libraries = [
   {
     id: 'jszip',
@@ -130,10 +127,14 @@ export const libraries = [
  * Both `pdf` pipelines end in the same rasteriser, because it is the only
  * redistributable way measured to get browser layout into a PDF without asking
  * the user to drive the print dialogue. That is a finding, not a shortcut.
+ *
+ * `parser` names which library reads the document, so the harness never has to
+ * infer it from the library list.
  */
 export const pipelines = [
   {
     id: 'docx-preview',
+    parser: 'docx-preview',
     output: 'dom',
     libraries: ['jszip', 'docx-preview'],
     stages: ['unzip', 'parse', 'layout', 'paginate'],
@@ -141,6 +142,7 @@ export const pipelines = [
   },
   {
     id: 'mammoth',
+    parser: 'mammoth',
     output: 'dom',
     libraries: ['mammoth'],
     stages: ['unzip', 'parse'],
@@ -148,6 +150,7 @@ export const pipelines = [
   },
   {
     id: 'docx-preview-raster-pdf',
+    parser: 'docx-preview',
     output: 'pdf',
     libraries: ['jszip', 'docx-preview', 'html2canvas', 'jspdf'],
     stages: ['unzip', 'parse', 'layout', 'paginate', 'rasterise', 'write-pdf'],
@@ -155,6 +158,7 @@ export const pipelines = [
   },
   {
     id: 'mammoth-raster-pdf',
+    parser: 'mammoth',
     output: 'pdf',
     libraries: ['mammoth', 'html2canvas', 'jspdf'],
     stages: ['unzip', 'parse', 'rasterise', 'write-pdf'],
@@ -236,5 +240,3 @@ export const exclusions = [
     sourceUrl: 'https://www.npmjs.com/package/pdfmake/v/0.3.11',
   },
 ]
-
-export const exclusionReasons = [...new Set(exclusions.map(entry => entry.reason))].sort()

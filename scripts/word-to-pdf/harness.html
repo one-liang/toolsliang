@@ -39,7 +39,7 @@ function log(message) {
  * beyond that is work that would have frozen the interface of a real tool.
  * `PerformanceObserver('longtask')` would be tidier and only Chromium has it.
  */
-function stallWatcher() {
+function stallWatcher(budgetMs) {
   let last = performance.now()
   let longest = 0
   const total = { blockedMs: 0 }
@@ -47,7 +47,8 @@ function stallWatcher() {
     const now = performance.now()
     const gap = now - last - 4
     if (gap > longest) longest = gap
-    if (gap > 50) total.blockedMs += gap
+    /* The specification's own per-task ceiling, passed in so there is one copy of it. */
+    if (gap > budgetMs) total.blockedMs += gap
     last = now
   }, 4)
   return {
@@ -102,6 +103,8 @@ window.__environment = () => ({
     ? 'available'
     : 'absent',
   offscreenCanvas: typeof OffscreenCanvas === 'function',
+  /* §12.13 asks the spike to check WASM. No measured pipeline uses it; the record says so. */
+  wasm: typeof WebAssembly === 'object' && typeof WebAssembly.instantiate === 'function',
 })
 
 /* ---------------------------------------------------------------- probes -- */
@@ -161,6 +164,74 @@ function listMarkers(root) {
   return [...new Set(markers)].slice(0, 12)
 }
 
+/** CSS keywords that name a category rather than a face; they are never "installed". */
+const GENERIC_FAMILIES = ['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui']
+
+/**
+ * Whether a font family resolves to a real face on this machine.
+ *
+ * §12.13 names font resolution as a stage and missing fonts as something the
+ * adapter must report. Nothing in the chain reports either, so this measures
+ * what happens instead. The same string is measured in the requested family
+ * backed by three different generic fallbacks; if the family exists, at least
+ * one of those widths must differ from the bare generic, because a face cannot
+ * match the metrics of serif, sans-serif and monospace at once. Identical
+ * widths everywhere mean the request did nothing and nobody was told.
+ *
+ * `document.fonts.check()` is deliberately not used: it answers "could this be
+ * rendered", which is true for any string, including a family nobody has.
+ */
+function fontResolution(requested) {
+  const ruler = document.createElement('span')
+  ruler.textContent = '字型替代測試 Font substitution probe 0123456789'
+  ruler.style.cssText = 'position:absolute;left:-9999px;top:0;white-space:nowrap;font-size:48px;visibility:hidden'
+  document.body.append(ruler)
+
+  const widthWith = (family) => {
+    ruler.style.fontFamily = family
+    return Math.round(ruler.getBoundingClientRect().width * 100) / 100
+  }
+
+  const baselines = ['monospace', 'serif', 'sans-serif'].map(generic => ({ generic, width: widthWith(generic) }))
+
+  const report = requested.map((family) => {
+    const generic = GENERIC_FAMILIES.includes(family)
+    const widths = generic
+      ? []
+      : baselines.map(baseline => ({
+        generic: baseline.generic,
+        width: widthWith(`"${family}", ${baseline.generic}`),
+        baselineWidth: baseline.width,
+      }))
+    return {
+      family,
+      generic,
+      /* A named family the browser really has: it changed at least one baseline. */
+      installed: widths.some(entry => entry.width !== entry.baselineWidth),
+      widths,
+    }
+  })
+
+  ruler.remove()
+  return report
+}
+
+/**
+ * The families the rendered document asks the browser for, in the order first
+ * seen. A conversion that drops font information entirely leaves only the
+ * harness's own defaults here, which is itself the answer.
+ */
+function requestedFamilies(root) {
+  const families = []
+  for (const element of root.querySelectorAll('*')) {
+    for (const family of getComputedStyle(element).fontFamily.split(',')) {
+      const name = family.trim().replace(/^["']|["']$/g, '')
+      if (name && !families.includes(name)) families.push(name)
+    }
+  }
+  return families.slice(0, 12)
+}
+
 /**
  * The column count each page box actually applies. A two-column section that
  * renders as one column keeps every word and still is not the document.
@@ -204,6 +275,14 @@ function probe(root, declared) {
     equationText: declared.equationText.length
       ? { markers: declared.equationText.map(value => ({ value, present: text.includes(value) })), elements: root.querySelectorAll('math, mjx-container, [class*="math"], [class*="oMath"]').length }
       : null,
+    /*
+     * Two lists, because they answer different questions: what the document
+     * asked for, and what the conversion ended up asking the browser for. A
+     * pipeline that drops font information entirely shows an empty first list
+     * and a generic second one.
+     */
+    declaredFonts: fontResolution(declared.fontFamilies),
+    renderedFonts: fontResolution(requestedFamilies(root)),
     tables: tableShapes(root),
     images: imageReport(root),
     listMarkers: listMarkers(root),
@@ -367,7 +446,7 @@ window.__run = async (job) => {
     error: null,
     messages: [],
   }
-  const watcher = stallWatcher()
+  const watcher = stallWatcher(job.budgets.mainThreadTaskMs)
   try {
     log(`${job.pipeline.id} · ${job.fixture.name}`)
     for (const url of job.pipeline.scripts) await loadScript(url)
@@ -382,7 +461,8 @@ window.__run = async (job) => {
     const timings = {}
     const conversionStarted = performance.now()
     let rendered = null
-    if (job.pipeline.libraries.includes('docx-preview')) {
+    /* Named by the pipeline, never inferred: a third parser must not default to mammoth. */
+    if (job.pipeline.parser === 'docx-preview') {
       rendered = await runDocxPreview(bytes, {
         inWrapper: true,
         breakPages: true,
@@ -399,9 +479,12 @@ window.__run = async (job) => {
         trimXmlDeclaration: true,
       }, timings)
     }
-    else {
+    else if (job.pipeline.parser === 'mammoth') {
       rendered = await runMammoth(bytes, timings)
       report.messages = rendered.messages ?? []
+    }
+    else {
+      throw new Error(`unknown_parser ${job.pipeline.parser}`)
     }
 
     Object.assign(report.stages, timings)

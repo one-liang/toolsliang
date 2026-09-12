@@ -15,19 +15,19 @@
  *   node scripts/evaluate-pdf-engine.mjs [--browsers=chromium,firefox,webkit]
  *                                        [--candidates=pdf-lib,pdfjs-dist]
  */
-import { createHash } from 'node:crypto'
-import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises'
-import { createServer } from 'node:http'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { cpus } from 'node:os'
-import { dirname, extname, join } from 'node:path'
-import { pipeline } from 'node:stream/promises'
-import { Readable } from 'node:stream'
-import { execFile } from 'node:child_process'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { promisify } from 'node:util'
-import { brotliCompress, constants } from 'node:zlib'
-import { chromium, firefox, webkit } from '@playwright/test'
+import {
+  launchers,
+  loadRuns,
+  preparePackage,
+  probeEnvironment,
+  runJob,
+  saveRun,
+  startServer,
+} from './support/measurement-harness.mjs'
 import { candidates as allCandidates, exclusions, permittedLicences } from './pdf-engine/candidates.mjs'
 import { ACTIVE_CONTENT_PROBE, buildFixtures, fixtureOwnerPassword, fixturePassword } from './pdf-engine/fixtures.mjs'
 
@@ -37,143 +37,16 @@ const OUTPUT = join(ROOT, 'docs', 'research', 'data', '009-pdf-engine-measuremen
 const HARNESS = join(ROOT, 'scripts', 'pdf-engine', 'harness.html')
 const PLACEMENT = join(ROOT, 'scripts', 'pdf-engine', 'placement.mjs')
 
-const compress = promisify(brotliCompress)
-const run = promisify(execFile)
-
 /** The preview zoom the workspace would open a page at. */
 const PREVIEW_SCALE = 1.5
 
 /** No single job may stall the matrix; past this the run is recorded as timed out. */
 const JOB_TIMEOUT_MS = 180_000
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.wasm': 'application/wasm',
-  '.pdf': 'application/pdf',
-}
-
 const selected = process.argv.find(argument => argument.startsWith('--candidates='))
 const candidates = selected
   ? allCandidates.filter(candidate => selected.split('=')[1].split(',').includes(candidate.id))
   : allCandidates
-
-async function sha256(path) {
-  const hash = createHash('sha256')
-  await pipeline(createReadStream(path), hash)
-  return hash.digest('hex')
-}
-
-async function exists(path) {
-  try {
-    await stat(path)
-    return true
-  }
-  catch {
-    return false
-  }
-}
-
-/** npm publishes `sha512-<base64>`; the tarball is rejected when it does not match. */
-async function verifyIntegrity(path, integrity) {
-  const [algorithm, expected] = integrity.split('-')
-  const hash = createHash(algorithm)
-  await pipeline(createReadStream(path), hash)
-  const digest = hash.digest('base64')
-  if (digest !== expected) throw new Error(`integrity_mismatch ${path}: expected ${expected}, measured ${digest}`)
-}
-
-async function download(url, path) {
-  await mkdir(dirname(path), { recursive: true })
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(`download_failed ${response.status} ${url}`)
-  await pipeline(Readable.fromWeb(response.body), createWriteStream(path))
-}
-
-/** Brotli at quality 5, the level a static host applies to a bundled asset. */
-async function transferSizes(path) {
-  const raw = await readFile(path)
-  const brotli = await compress(raw, {
-    params: {
-      [constants.BROTLI_PARAM_QUALITY]: 5,
-      [constants.BROTLI_PARAM_SIZE_HINT]: raw.length,
-    },
-  })
-  return { bytes: raw.length, brotliBytes: brotli.length }
-}
-
-async function prepareCandidate(candidate, files) {
-  const directory = join(WORK, 'packages', candidate.id)
-  const tarball = join(directory, 'package.tgz')
-  const url = `https://registry.npmjs.org/${candidate.package}/-/${candidate.package.split('/').pop()}-${candidate.version}.tgz`
-
-  if (!await exists(tarball)) {
-    process.stdout.write(`  downloading ${candidate.package}@${candidate.version}\n`)
-    await download(url, tarball)
-  }
-  await verifyIntegrity(tarball, candidate.integrity)
-
-  const extracted = join(directory, 'files')
-  const wanted = Object.values(candidate.files)
-  if (!await exists(join(extracted, wanted[0]))) {
-    await mkdir(extracted, { recursive: true })
-    await run('tar', ['xzf', tarball, '-C', extracted, ...wanted])
-  }
-
-  const served = {}
-  const assets = []
-  for (const [role, member] of Object.entries(candidate.files)) {
-    const path = join(extracted, member)
-    const route = `/lib/${candidate.id}/${member.replace('package/', '')}`
-    files.set(route, path)
-    served[role] = route
-    assets.push({ role, file: member.replace('package/', ''), sha256: await sha256(path), ...await transferSizes(path) })
-  }
-
-  return { urls: served, assets }
-}
-
-function startServer(files) {
-  /*
-   * The paths actually served. The per-job check is made from the browser's own
-   * request events, which see every origin; this list is the cross-check that
-   * the two agree about what the harness was asked for.
-   */
-  const served = []
-  const server = createServer(async (request, response) => {
-    const path = new URL(request.url, 'http://localhost').pathname
-    served.push(path)
-    /* Chromium asks for this on its own; without a route it lands in the harness console. */
-    if (path === '/favicon.ico') {
-      response.writeHead(204).end()
-      return
-    }
-
-    const target = files.get(path)
-    if (!target) {
-      response.writeHead(404).end('not found')
-      return
-    }
-    /* The memory API the harness samples is only offered to a cross-origin isolated page. */
-    response.setHeader('Cross-Origin-Opener-Policy', 'same-origin')
-    response.setHeader('Cross-Origin-Embedder-Policy', 'require-corp')
-    response.setHeader('Cross-Origin-Resource-Policy', 'same-origin')
-    response.setHeader('Content-Type', MIME[extname(target)] ?? 'application/octet-stream')
-    response.writeHead(200)
-    await pipeline(createReadStream(target), response)
-  })
-
-  return new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => resolve({ server, served, port: server.address().port }))
-  })
-}
-
-const LAUNCHERS = {
-  chromium: () => chromium.launch({ headless: false }),
-  firefox: () => firefox.launch(),
-  webkit: () => webkit.launch(),
-}
 
 /**
  * The password a document opens with, or `undefined` when it needs none. The
@@ -234,95 +107,13 @@ function runPath(browser, candidateId, fixture, variant) {
   return join(WORK, 'runs', `${browser}__${candidateId}__${fixture}__${variant}.json`)
 }
 
-async function loadRuns(browser) {
-  const directory = join(WORK, 'runs')
-  await mkdir(directory, { recursive: true })
-  const files = await readdir(directory)
-  const runs = []
-  for (const file of files.filter(name => name.startsWith(`${browser}__`) && name.endsWith('.json')).sort()) {
-    runs.push(JSON.parse(await readFile(join(directory, file), 'utf8')))
-  }
-  return runs
-}
-
-async function openHarness(browser, port, messages, requested = []) {
-  const page = await browser.newPage()
-  /*
-   * Context level, and the full URL. The server's own log only sees what it was
-   * asked to serve, so a document that persuaded an engine to fetch something
-   * elsewhere would leave no trace there. This sees every request the browser
-   * makes, including from workers, to any origin.
-   */
-  page.context().on('request', request => requested.push(request.url()))
-  page.on('pageerror', error => messages.push(String(error).slice(0, 200)))
-  page.on('console', message => {
-    if (message.type() === 'error') messages.push(message.text().slice(0, 200))
-  })
-  await page.goto(`http://127.0.0.1:${port}/harness.html`)
-  await page.waitForFunction('window.__ready === true', null, { timeout: 60_000 })
-  return page
-}
-
-async function runJob(browserName, browser, port, served, messages, payload, label) {
-  process.stdout.write(`  ${label}\n`)
-  served.length = 0
-  const requested = []
-  const page = await openHarness(browser, port, messages, requested)
-  await page.bringToFront()
-
-  const started = Date.now()
-  const report = await Promise.race([
-    page.evaluate(job => window.__run(job), payload),
-    new Promise(resolve => setTimeout(() => resolve({
-      candidateId: payload.candidate.id,
-      fixture: payload.fixture.name,
-      variant: payload.variant,
-      outcome: 'timeout',
-      error: { name: 'Timeout', message: `job_timeout_after_${JOB_TIMEOUT_MS}ms` },
-      stages: {},
-    }), JOB_TIMEOUT_MS)),
-  ])
-  report.wallClockMs = Date.now() - started
-  await page.close()
-
-  /*
-   * What the job was allowed to ask for. Anything else — the address a
-   * document's link action points at, a library reaching past the files it was
-   * given — is recorded rather than judged here.
-   */
-  const origin = `http://127.0.0.1:${port}`
-  const expected = new Set(['/harness.html', '/favicon.ico', '/lib/harness/placement.mjs',
-    payload.fixture.url, ...Object.values(payload.candidate.urls), ...Object.values(payload.verifierUrls)]
-    .map(path => `${origin}${path}`))
-  report.unexpectedRequests = [...new Set(requested
-    .map(url => url.replace(/[?#].*$/, ''))
-    .filter(url => !expected.has(url)))]
-  /*
-   * Anything the harness served that the browser never reported asking for. If
-   * the request events were missing traffic, the check above would be blind to
-   * the same extent, so this is recorded rather than filtered: the one entry it
-   * ever contains is the favicon, which Chromium and Firefox fetch outside the
-   * page's own request pipeline. Nothing is excluded here, so a second kind of
-   * blind spot would show up instead of being swept away.
-   */
-  report.unservedMismatch = served
-    .map(path => `${origin}${path}`)
-    .filter(url => !requested.some(asked => asked.replace(/[?#].*$/, '') === url))
-
-  await writeFile(runPath(browserName, report.candidateId, report.fixture, report.variant), `${JSON.stringify(report, null, 2)}\n`)
-  return report
-}
-
 async function evaluateBrowser(name, port, served, fixtures, prepared, verifierUrls) {
   const messages = []
-  const recorded = await loadRuns(name)
+  const directory = join(WORK, 'runs')
+  const recorded = await loadRuns(directory, name)
   const runs = [...recorded]
 
-  const probeBrowser = await LAUNCHERS[name]()
-  const probePage = await openHarness(probeBrowser, port, messages)
-  const environment = await probePage.evaluate('window.__environment()')
-  await probeBrowser.close()
-
+  const environment = await probeEnvironment(name, port, messages)
   const measureMemory = environment.memoryApi === 'available'
 
   for (const candidate of candidates) {
@@ -330,14 +121,14 @@ async function evaluateBrowser(name, port, served, fixtures, prepared, verifierU
      * A browser per candidate. Pages are cheap to reopen, and a library that
      * held tens of megabytes only really gives them back when its browser exits.
      */
-    const browser = await LAUNCHERS[name]()
+    const browser = await launchers[name]()
     try {
       for (const job of jobsFor(candidate, fixtures)) {
         const already = recorded.find(entry => entry.candidateId === candidate.id
           && entry.fixture === job.fixture.name && entry.variant === job.variant)
         if (already) continue
 
-        runs.push(await runJob(name, browser, port, served, messages, {
+        const payload = {
           candidate: { id: candidate.id, roles: candidate.roles, urls: prepared.get(candidate.id).urls },
           fixture: { name: job.fixture.name, url: `/fixtures/${job.fixture.name}.pdf`, expectation: job.fixture.expectation },
           operations: job.operations,
@@ -347,7 +138,28 @@ async function evaluateBrowser(name, port, served, fixtures, prepared, verifierU
           scale: PREVIEW_SCALE,
           measureMemory,
           verifierUrls,
-        }, `${name} · ${candidate.id} · ${job.fixture.name} · ${job.variant}`))
+        }
+
+        process.stdout.write(`  ${name} · ${candidate.id} · ${job.fixture.name} · ${job.variant}\n`)
+        const report = await runJob(browser, {
+          port,
+          served,
+          messages,
+          payload,
+          allowedPaths: ['/harness.html', '/favicon.ico', '/lib/harness/placement.mjs',
+            payload.fixture.url, ...Object.values(payload.candidate.urls), ...Object.values(verifierUrls)],
+          timeoutMs: JOB_TIMEOUT_MS,
+          onTimeout: () => ({
+            candidateId: candidate.id,
+            fixture: job.fixture.name,
+            variant: job.variant,
+            outcome: 'timeout',
+            error: { name: 'Timeout', message: `job_timeout_after_${JOB_TIMEOUT_MS}ms` },
+            stages: {},
+          }),
+        })
+        await saveRun(runPath(name, report.candidateId, report.fixture, report.variant), report)
+        runs.push(report)
       }
     }
     finally {
@@ -392,7 +204,7 @@ async function main() {
   process.stdout.write('packages\n')
   const prepared = new Map()
   for (const candidate of allCandidates) {
-    prepared.set(candidate.id, await prepareCandidate(candidate, files))
+    prepared.set(candidate.id, await preparePackage(candidate, { workDirectory: WORK, files }))
   }
 
   /* pdf.js reads every export back. It is a candidate as well, but here it is

@@ -224,6 +224,22 @@ export const wordToPdfCorpusRequirements = {
   ],
 } as const
 
+/**
+ * The five stages §12.13 names, against the pipeline stage that covers each.
+ *
+ * `font-resolution` has no owner, and that is the point: no measured library
+ * resolves fonts or reports a missing one. The browser substitutes silently and
+ * nothing in the chain is in a position to tell the user, which is why it is a
+ * gate of its own rather than a footnote.
+ */
+export const wordToPdfSpecStages = [
+  { spec: 'parse', coveredBy: 'parse' },
+  { spec: 'layout', coveredBy: 'layout' },
+  { spec: 'font-resolution', coveredBy: null },
+  { spec: 'pdf-render', coveredBy: 'write-pdf' },
+  { spec: 'validate', coveredBy: 'read-pdf' },
+] as const
+
 /** The budgets §12.13 sets, in the units the harness reports. */
 export const wordToPdfBudgets = {
   firstProgressMs: 250,
@@ -238,6 +254,7 @@ export const wordToPdfGateKeys = [
   'browser-support',
   'pagination',
   'content-fidelity',
+  'font-resolution',
   'output-text',
   'unsupported-input',
   'progress-and-cancellation',
@@ -271,6 +288,7 @@ export const wordToPdfGates: readonly WordToPdfGate[] = [
   { key: 'browser-support', verdict: 'pass' },
   { key: 'pagination', verdict: 'fail' },
   { key: 'content-fidelity', verdict: 'pass' },
+  { key: 'font-resolution', verdict: 'fail' },
   { key: 'output-text', verdict: 'fail' },
   { key: 'unsupported-input', verdict: 'fail' },
   { key: 'progress-and-cancellation', verdict: 'fail' },
@@ -306,22 +324,20 @@ export const wordToPdfForbiddenSurfaces = [
 
 export type WordToPdfForbiddenSurface = typeof wordToPdfForbiddenSurfaces[number]
 
-export interface WordToPdfReassessmentCondition {
-  key: string
-}
-
 /**
  * What would have to change before this is worth measuring again. These are
  * conditions on the world, not tasks for this project: none of them is
  * something the team can do by trying harder.
  */
-export const wordToPdfReassessmentConditions: readonly WordToPdfReassessmentCondition[] = [
-  { key: 'redistributable-layout-engine' },
-  { key: 'text-bearing-output' },
-  { key: 'worker-safe-conversion' },
-  { key: 'progress-and-cancellation-api' },
-  { key: 'maintained-rasteriser' },
-]
+export const wordToPdfReassessmentConditions = [
+  'redistributable-layout-engine',
+  'text-bearing-output',
+  'worker-safe-conversion',
+  'progress-and-cancellation-api',
+  'maintained-rasteriser',
+] as const
+
+export type WordToPdfReassessmentCondition = typeof wordToPdfReassessmentConditions[number]
 
 /**
  * Claims that may never appear about this tool, in either locale. They are

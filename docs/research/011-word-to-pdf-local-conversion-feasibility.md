@@ -134,7 +134,9 @@ node scripts/evaluate-word-to-pdf.mjs [--browsers=chromium,firefox,webkit] [--pi
 
 三個瀏覽器在這次量測中**每一格判定都相同**：330 次執行的成敗、算出的頁數、輸出的頁數、輸出檔的文字項目數與每一項保真判定，Chromium、Firefox 與 WebKit 完全一致。因此 §4.3 的表只印一組數字，而那是三個瀏覽器共同的結果，不是其中一個的。
 
-相同的是判定，不是像素。字型度量不同，同一份文件算出的頁框高度就不同——`flowing-overflow-no-breaks` 那一頁在 Chromium 與 WebKit 上高 1,536 px，在 Firefox 上高 1,316 px。這不影響任何一項判定，但也表示這份紀錄不曾宣稱三個瀏覽器畫出一樣的版面。
+相同的是判定，不是版面。字型度量不同，同一份文件算出的頁框高度就不同——`flowing-overflow-no-breaks` 那一頁在 Chromium 與 WebKit 上高 1,536 px，在 Firefox 上高 1,316 px。更明確的一項在 §4.4：同一台機器上，WebKit 解析得出微軟正黑體，Chromium 與 Firefox 解析不出來。這些都不影響任何一項判定，但也表示這份紀錄不曾宣稱三個瀏覽器畫出一樣的版面。
+
+整份矩陣另外跑過第二次（換掉主執行緒預算的來源、補上字型探針之後）。§3、§4.1、§4.2、§4.3 與 §6.1 的每一格都與第一次相同，只有 §5 的毫秒數在執行之間浮動。判定本身是可重現的。
 
 ### 4.1 開啟判定
 
@@ -383,74 +385,105 @@ node scripts/evaluate-word-to-pdf.mjs [--browsers=chromium,firefox,webkit] [--pi
 
 保真判定到此為止都是在 DOM 上量的。它說的是「內容有沒有進到版面裡」，不是「這一頁長得對不對」，後者在 §4.2，而這兩者在 `docx-preview` 上的答案剛好相反。
 
+### 4.4 字型解析
+
+規格 §12.13 把字型解析列為轉換的一個階段，也要求轉換器回報缺少的字型。這一節量的就是這件事。
+
+「有」表示這個字型家族在該瀏覽器上真的解析得到一張字體。判斷方式不是 `document.fonts.check()`——那個 API 回答的是「這串字畫得出來嗎」，對任何字串都成立，包含根本不存在的家族——而是把同一段文字分別以 `monospace`、`serif` 與 `sans-serif` 為後備量三次寬度：真的存在的字體不可能同時與這三種通用字族的度量一致，所以只要有一個寬度不同，這個家族在那個瀏覽器上就是真的解析得到。「傳遞」表示轉換把文件的字型要求交給了瀏覽器。
+
+| 文件 | 字型 | chromium 有 | firefox 有 | webkit 有 | `docx-preview` 傳遞 | `mammoth` 傳遞 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `latin-typography` | Georgia | 是 | 是 | 是 | 是 | 否 |
+| `latin-typography` | Courier New | 是 | 是 | 是 | 是 | 否 |
+| `latin-typography` | Calibri | 否 | 否 | 否 | 是 | 否 |
+| `cjk-latin-mixed` | Microsoft JhengHei | 否 | 否 | 是 | 是 | 否 |
+| `cjk-latin-mixed` | Calibri | 否 | 否 | 否 | 是 | 否 |
+| `cjk-missing-font` | DFKai-SB | 否 | 否 | 否 | 是 | 否 |
+| `cjk-missing-font` | MingLiU | 否 | 否 | 否 | 是 | 否 |
+| `cjk-missing-font` | Corpus Imaginary Sans | 否 | 否 | 否 | 是 | 否 |
+
+三件事。
+
+**沒有任何一條管線回報缺少的字型。** 這是規格明文要求的行為，而量到的是零。`docx-preview` 把 `w:rFonts` 的家族名原樣寫進 CSS，瀏覽器找不到就安靜地替代；`mammoth` 連要求都不傳遞，輸出的 HTML 只剩下 harness 自己的預設字型。兩者都沒有一個地方可以讓工具知道「這份文件要的字型這台裝置沒有」，因此也沒有地方可以告訴使用者。
+
+**測試集裡有一個不可能存在的家族。** `Corpus Imaginary Sans` 沒有任何一台機器裝得到，`docx-preview` 依然把它交給瀏覽器，量到的結果是「傳遞了，但沒有生效」。這讓「安靜替代」成為量得到的事實，而不是推論。
+
+**字型解析在三個瀏覽器之間不一致。** 同一台 macOS 機器上，WebKit 解析得出 `Microsoft JhengHei`，Chromium 與 Firefox 解析不出來。這是整個矩陣裡唯一一項三個瀏覽器不同意的量測，而它直接決定中文文件看起來長什麼樣。同一份 DOCX 在不同瀏覽器會得到不同的字體，工具無法預告，也無法在輸出裡註明。
+
+量測機器上，Calibri、標楷體與細明體三個瀏覽器都解析不到，微軟正黑體只有 WebKit 解析得到——那正是台灣使用者拿到一份 Word 文件時的常見處境。這份紀錄不把缺字型當成缺陷，而是當成必須被回報的狀況；沒有被回報才是缺陷。
+
 ## 5. 效能、記憶體與主執行緒
 
 記憶體只有 chromium 回答得了：`performance.measureUserAgentSpecificMemory()` 在 Firefox 與 WebKit 上都不存在，那兩欄是「沒有值」，不是「沒有用到記憶體」。這個 API 在下一次垃圾回收時才回覆，每次呼叫要花數十秒，因此只在六份具代表性的文件上取樣。
 
 | 管線 | 文件 | 瀏覽器 | 首個可觀察階段 ms | 轉換 ms | 最長阻塞 ms | 記憶體 MiB |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `docx-preview` | `plain-paragraphs` | chromium | 14 | 71 | 44 | 2 |
-| `docx-preview` | `plain-paragraphs` | firefox | 4 | 32 | 10 | - |
-| `docx-preview` | `plain-paragraphs` | webkit | 13 | 25 | 5 | - |
-| `docx-preview` | `inline-image` | chromium | 17 | 55 | 21 | 2 |
-| `docx-preview` | `inline-image` | firefox | 5 | 28 | 8 | - |
-| `docx-preview` | `inline-image` | webkit | 7 | 25 | 6 | - |
-| `docx-preview` | `image-gallery` | chromium | 18 | 55 | 32 | 2 |
-| `docx-preview` | `image-gallery` | firefox | 5 | 36 | 11 | - |
-| `docx-preview` | `image-gallery` | webkit | 8 | 24 | 4 | - |
-| `docx-preview` | `long-table-repeat-header` | chromium | 24 | 54 | 31 | 2 |
-| `docx-preview` | `long-table-repeat-header` | firefox | 8 | 26 | 9 | - |
-| `docx-preview` | `long-table-repeat-header` | webkit | 10 | 26 | 3 | - |
-| `docx-preview` | `reference-20-page` | chromium | 25 | 57 | 20 | 3 |
-| `docx-preview` | `reference-20-page` | firefox | 9 | 42 | 8 | - |
-| `docx-preview` | `reference-20-page` | webkit | 10 | 34 | 4 | - |
-| `docx-preview` | `large-120-page` | chromium | 27 | 63 | 20 | 3 |
-| `docx-preview` | `large-120-page` | firefox | 10 | 51 | 19 | - |
-| `docx-preview` | `large-120-page` | webkit | 12 | 42 | 13 | - |
-| `mammoth` | `plain-paragraphs` | chromium | 106 | 126 | 23 | 4 |
-| `mammoth` | `plain-paragraphs` | firefox | 101 | 108 | 9 | - |
-| `mammoth` | `plain-paragraphs` | webkit | 94 | 103 | 13 | - |
-| `mammoth` | `inline-image` | chromium | 175 | 240 | 65 | 4 |
-| `mammoth` | `inline-image` | firefox | 178 | 193 | 9 | - |
-| `mammoth` | `inline-image` | webkit | 187 | 202 | 15 | - |
-| `mammoth` | `image-gallery` | chromium | 628 | 652 | 27 | 4 |
-| `mammoth` | `image-gallery` | firefox | 683 | 713 | 41 | - |
-| `mammoth` | `image-gallery` | webkit | 887 | 919 | 26 | - |
-| `mammoth` | `long-table-repeat-header` | chromium | 124 | 142 | 34 | 4 |
-| `mammoth` | `long-table-repeat-header` | firefox | 116 | 126 | 26 | - |
-| `mammoth` | `long-table-repeat-header` | webkit | 95 | 105 | 16 | - |
-| `mammoth` | `reference-20-page` | chromium | 346 | 424 | 79 | 4 |
-| `mammoth` | `reference-20-page` | firefox | 349 | 379 | 37 | - |
-| `mammoth` | `reference-20-page` | webkit | 421 | 461 | 23 | - |
-| `mammoth` | `large-120-page` | chromium | 121 | 142 | 28 | 4 |
-| `mammoth` | `large-120-page` | firefox | 123 | 140 | 38 | - |
-| `mammoth` | `large-120-page` | webkit | 104 | 122 | 19 | - |
-| `docx-preview-raster-pdf` | `plain-paragraphs` | chromium | 15 | 199 | 43 | 8 |
-| `docx-preview-raster-pdf` | `plain-paragraphs` | firefox | 4 | 188 | 24 | - |
-| `docx-preview-raster-pdf` | `plain-paragraphs` | webkit | 6 | 171 | 45 | - |
-| `docx-preview-raster-pdf` | `inline-image` | chromium | 13 | 342 | 200 | 7 |
-| `docx-preview-raster-pdf` | `inline-image` | firefox | 4 | 177 | 11 | - |
-| `docx-preview-raster-pdf` | `inline-image` | webkit | 7 | 155 | 16 | - |
-| `docx-preview-raster-pdf` | `reference-20-page` | chromium | 25 | 1756 | 198 | 14 |
-| `docx-preview-raster-pdf` | `reference-20-page` | firefox | 9 | 1902 | 127 | - |
-| `docx-preview-raster-pdf` | `reference-20-page` | webkit | 10 | 1773 | 190 | - |
-| `mammoth-raster-pdf` | `plain-paragraphs` | chromium | 95 | 281 | 51 | 9 |
-| `mammoth-raster-pdf` | `plain-paragraphs` | firefox | 93 | 250 | 20 | - |
-| `mammoth-raster-pdf` | `plain-paragraphs` | webkit | 90 | 238 | 43 | - |
-| `mammoth-raster-pdf` | `inline-image` | chromium | 172 | 335 | 35 | 9 |
-| `mammoth-raster-pdf` | `inline-image` | firefox | 175 | 348 | 18 | - |
-| `mammoth-raster-pdf` | `inline-image` | webkit | 190 | 365 | 31 | - |
-| `mammoth-raster-pdf` | `reference-20-page` | chromium | 343 | 702 | 214 | 14 |
-| `mammoth-raster-pdf` | `reference-20-page` | firefox | 357 | 697 | 77 | - |
-| `mammoth-raster-pdf` | `reference-20-page` | webkit | 429 | 867 | 158 | - |
+| `docx-preview` | `plain-paragraphs` | chromium | 19 | 78 | 44 | 2 |
+| `docx-preview` | `plain-paragraphs` | firefox | 4 | 21 | 12 | - |
+| `docx-preview` | `plain-paragraphs` | webkit | 7 | 28 | 5 | - |
+| `docx-preview` | `inline-image` | chromium | 17 | 51 | 17 | 2 |
+| `docx-preview` | `inline-image` | firefox | 4 | 19 | 8 | - |
+| `docx-preview` | `inline-image` | webkit | 7 | 23 | 4 | - |
+| `docx-preview` | `image-gallery` | chromium | 19 | 50 | 25 | 2 |
+| `docx-preview` | `image-gallery` | firefox | 5 | 36 | 7 | - |
+| `docx-preview` | `image-gallery` | webkit | 7 | 27 | 6 | - |
+| `docx-preview` | `long-table-repeat-header` | chromium | 27 | 59 | 19 | 2 |
+| `docx-preview` | `long-table-repeat-header` | firefox | 9 | 27 | 10 | - |
+| `docx-preview` | `long-table-repeat-header` | webkit | 9 | 28 | 7 | - |
+| `docx-preview` | `reference-20-page` | chromium | 27 | 59 | 26 | 3 |
+| `docx-preview` | `reference-20-page` | firefox | 9 | 37 | 9 | - |
+| `docx-preview` | `reference-20-page` | webkit | 10 | 39 | 6 | - |
+| `docx-preview` | `large-120-page` | chromium | 29 | 83 | 24 | 3 |
+| `docx-preview` | `large-120-page` | firefox | 11 | 47 | 21 | - |
+| `docx-preview` | `large-120-page` | webkit | 11 | 45 | 12 | - |
+| `mammoth` | `plain-paragraphs` | chromium | 111 | 134 | 38 | 4 |
+| `mammoth` | `plain-paragraphs` | firefox | 104 | 115 | 14 | - |
+| `mammoth` | `plain-paragraphs` | webkit | 91 | 103 | 12 | - |
+| `mammoth` | `inline-image` | chromium | 180 | 212 | 37 | 4 |
+| `mammoth` | `inline-image` | firefox | 179 | 196 | 11 | - |
+| `mammoth` | `inline-image` | webkit | 183 | 207 | 11 | - |
+| `mammoth` | `image-gallery` | chromium | 642 | 675 | 36 | 4 |
+| `mammoth` | `image-gallery` | firefox | 691 | 726 | 46 | - |
+| `mammoth` | `image-gallery` | webkit | 887 | 931 | 25 | - |
+| `mammoth` | `long-table-repeat-header` | chromium | 130 | 151 | 38 | 4 |
+| `mammoth` | `long-table-repeat-header` | firefox | 116 | 127 | 26 | - |
+| `mammoth` | `long-table-repeat-header` | webkit | 96 | 111 | 17 | - |
+| `mammoth` | `reference-20-page` | chromium | 355 | 388 | 35 | 4 |
+| `mammoth` | `reference-20-page` | firefox | 359 | 394 | 41 | - |
+| `mammoth` | `reference-20-page` | webkit | 436 | 482 | 28 | - |
+| `mammoth` | `large-120-page` | chromium | 146 | 172 | 45 | 4 |
+| `mammoth` | `large-120-page` | firefox | 118 | 136 | 36 | - |
+| `mammoth` | `large-120-page` | webkit | 103 | 126 | 23 | - |
+| `docx-preview-raster-pdf` | `plain-paragraphs` | chromium | 12 | 211 | 47 | 8 |
+| `docx-preview-raster-pdf` | `plain-paragraphs` | firefox | 4 | 183 | 20 | - |
+| `docx-preview-raster-pdf` | `plain-paragraphs` | webkit | 6 | 166 | 39 | - |
+| `docx-preview-raster-pdf` | `inline-image` | chromium | 17 | 200 | 40 | 7 |
+| `docx-preview-raster-pdf` | `inline-image` | firefox | 4 | 175 | 12 | - |
+| `docx-preview-raster-pdf` | `inline-image` | webkit | 6 | 167 | 15 | - |
+| `docx-preview-raster-pdf` | `reference-20-page` | chromium | 27 | 1699 | 199 | 14 |
+| `docx-preview-raster-pdf` | `reference-20-page` | firefox | 8 | 1882 | 121 | - |
+| `docx-preview-raster-pdf` | `reference-20-page` | webkit | 10 | 1748 | 175 | - |
+| `mammoth-raster-pdf` | `plain-paragraphs` | chromium | 109 | 261 | 33 | 9 |
+| `mammoth-raster-pdf` | `plain-paragraphs` | firefox | 103 | 258 | 15 | - |
+| `mammoth-raster-pdf` | `plain-paragraphs` | webkit | 90 | 236 | 37 | - |
+| `mammoth-raster-pdf` | `inline-image` | chromium | 178 | 344 | 44 | 9 |
+| `mammoth-raster-pdf` | `inline-image` | firefox | 180 | 353 | 18 | - |
+| `mammoth-raster-pdf` | `inline-image` | webkit | 184 | 348 | 23 | - |
+| `mammoth-raster-pdf` | `reference-20-page` | chromium | 343 | 675 | 185 | 14 |
+| `mammoth-raster-pdf` | `reference-20-page` | firefox | 362 | 689 | 70 | - |
+| `mammoth-raster-pdf` | `reference-20-page` | webkit | 429 | 864 | 158 | - |
 
 規格 §12.13 的三個預算：首次進度 250 毫秒、二十頁文件三十秒、主執行緒單一工作 50 毫秒。
 
-**時間預算通過。** `docx-preview` 對 `reference-20-page` 的轉換是 34 至 57 毫秒，加上點陣化與寫檔的完整管線是 1,756 至 1,902 毫秒，比三十秒的預算低一個數量級以上。`docx-preview` 全部 126 次執行中，第一個可觀察階段最慢 43 毫秒。`mammoth` 比較慢，`image-gallery` 在 WebKit 上要 887 毫秒才有第一個可觀察階段，超過 250 毫秒的預算。
+**時間預算通過。** `docx-preview` 加上點陣化與寫檔的完整管線，對 `reference-20-page` 是 1,699 至 1,882 毫秒，比三十秒的預算低一個數量級以上。`docx-preview` 全部 126 次執行中，第一個可觀察階段最慢 35 毫秒。`mammoth` 比較慢，`image-gallery` 在 WebKit 上要 887 毫秒才有第一個可觀察階段，超過 250 毫秒的預算。
 
 **但「首次進度」這個預算在這裡量不到它想量的東西。** 沒有任何一個候選提供進度回呼：`docx-preview.parseAsync()` 與 `mammoth.convertToHtml()` 都是一個 Promise，中間不說話。表裡的「首個可觀察階段」是第一個階段**結束**的時間，也就是主機最早能誠實地告訴使用者「有事情發生了」的時刻，而不是一個進度事件。取消同理：兩者都不接受 `AbortSignal`，也沒有 cancel 方法。規格 §12.13 要求「所有長階段都可取消」，而可取消的長階段數量是零。
 
-**主執行緒預算失敗。** 330 次執行中有 21 次量到超過 50 毫秒的阻塞。單次最久的一段是 214 毫秒（`mammoth-raster-pdf` 對 `reference-20-page`），`docx-preview-raster-pdf` 對同一份文件是 198 毫秒；單次執行累積的阻塞時間最多 273 毫秒。這不是可以靠最佳化解決的：`docx-preview` 把文件渲染成 DOM，`html2canvas` 讀的是版面計算後的 DOM，兩者都需要 `document`，所以沒有一條管線能放進 Web Worker。ADR-0010 要求 PDF、圖片與模型這類重型 module 透過 Tool Engine 在 Worker 執行；這條路連進入那個介面的資格都沒有。
+**主執行緒預算失敗。** 330 次執行中有 15 次量到超過 50 毫秒的阻塞，單次最久的一段是 199 毫秒（`docx-preview-raster-pdf` 對 `reference-20-page`），單次執行累積的阻塞時間最多 267 毫秒。50 毫秒這個門檻不是 harness 自己訂的，它由量測腳本從規格的預算傳進去，量到的 `blockedMs` 與紀錄用來判定的是同一個數字。
+
+這不是可以靠最佳化解決的：`docx-preview` 把文件渲染成 DOM，`html2canvas` 讀的是版面計算後的 DOM，兩者都需要 `document`，所以沒有一條管線能放進 Web Worker。ADR-0010 要求 PDF、圖片與模型這類重型 module 透過 Tool Engine 在 Worker 執行；這條路連進入那個介面的資格都沒有。
+
+規格 §12.13 也要求這次驗證檢查 WebAssembly。三個瀏覽器都提供 WebAssembly，而**沒有任何一條被量測的管線用到它**：能用 WebAssembly 真正排版的候選（`zetajs` 背後的 LibreOffice 建置、`pandoc-wasm`）在 §2.3 因授權或無法自行散布而排除，剩下的全部是 JavaScript。所以 WASM 在這裡不是瓶頸，也不是解法。
 
 記憶體數字（chromium 峰值 2 至 14 MiB）低到必須加註：`measureUserAgentSpecificMemory()` 量的是 JavaScript 堆與 DOM，`html2canvas` 產生的畫布記憶體大部分不在裡面。這些數字可以用來比較管線之間的相對大小，不能用來推算行動裝置上的工作集。
 
@@ -571,17 +604,18 @@ node scripts/evaluate-word-to-pdf.mjs [--browsers=chromium,firefox,webkit] [--pi
 | `browser-support` | pass | 330 次執行的每一項判定在 Chromium、Firefox 與 WebKit 上完全一致（§4）。 |
 | `pagination` | fail | 沒有候選會計算分頁。沒有 Word 快取分頁點的文件變成一頁超長版面，`nextPage` 分節無效，換尺寸與換方向的分節晚一節才斷，橫向頁消失（§4.2）。 |
 | `content-fidelity` | pass | `docx-preview` 在元素層級保留了測試集宣告的每一項內容，也沒有洩漏刪除文字或註解（§4.3）。 |
+| `font-resolution` | fail | 規格要求回報缺少的字型，沒有任何一條管線回報。`docx-preview` 把家族名交給瀏覽器安靜替代，`mammoth` 連要求都不傳遞；同一台機器上三個瀏覽器的解析結果還不一致（§4.4）。 |
 | `output-text` | fail | 78 份輸出檔全部可讀回，全部 0 個文字項目：產出的是文字的照片，無法選取、搜尋或被輔助技術讀出（§6）。 |
 | `unsupported-input` | fail | 沒有候選辨識或拒絕巨集文件；四種不同的容器問題被壓成兩句無法分辨、且帶著第三方網址的訊息（§4.1）。 |
 | `progress-and-cancellation` | fail | 沒有候選提供進度回呼或取消介面，可取消的長階段數量是零（§5）。 |
-| `main-thread` | fail | 21 次執行超過 50 毫秒預算，單次最久一段 214 毫秒；兩條管線都需要 DOM，無法放進 Web Worker，不符合 ADR-0010（§5）。 |
-| `performance` | pass | `docx-preview` 對二十頁文件的完整管線是 1.8 至 1.9 秒，預算是三十秒；第一個可觀察階段最慢 43 毫秒（§5）。 |
+| `main-thread` | fail | 15 次執行超過 50 毫秒預算，單次最久一段 199 毫秒；兩條管線都需要 DOM，無法放進 Web Worker，不符合 ADR-0010（§5）。 |
+| `performance` | pass | `docx-preview` 對二十頁文件的完整管線是 1.7 至 1.9 秒，預算是三十秒；第一個可觀察階段最慢 35 毫秒（§5）。 |
 | `memory-headroom` | conditional | 只有 Chromium 提供記憶體 API，畫布記憶體多半不在計數內，行動裝置未實測（§5、§12）。 |
 | `privacy` | pass | 全部在本機執行，不需要任何伺服器端點；330 次執行的預期外請求總數為 0（§7）。 |
 
-五項 fail，結論為 **no-go**：Word 轉 PDF 不能在瀏覽器本機可靠完成，本站不發布這個工具。
+六項 fail，結論為 **no-go**：Word 轉 PDF 不能在瀏覽器本機可靠完成，本站不發布這個工具。
 
-值得說清楚的是失敗的形狀。`licence`、`privacy`、`performance`、`content-fidelity` 與 `browser-support` 都通過了——這條路不是慢、不是髒、也不是吃字。它失敗在兩件沒有人做的事：把 Word 文件排到紙上，以及把那張紙寫成文字而不是照片。這兩件事都不是任何一個候選的缺陷，它們沒有一個宣稱自己做得到。
+值得說清楚的是失敗的形狀。`licence`、`privacy`、`performance`、`content-fidelity` 與 `browser-support` 都通過了——這條路不是慢、不是髒、也不是吃字。它失敗在三件沒有人做的事：把 Word 文件排到紙上，把那張紙寫成文字而不是照片，以及在字型換掉的時候說一聲。這三件事都不是任何一個候選的缺陷，它們沒有一個宣稱自己做得到。
 
 ## 9. 結論與禁止事項
 
@@ -628,7 +662,19 @@ node scripts/evaluate-word-to-pdf.mjs [--browsers=chromium,firefox,webkit] [--pi
 | --- | ---: | --- |
 | `firstProgressMs` | 250 | 規格 §12.13 的首次進度預算。沒有候選提供進度介面，因此實際比對的是第一個階段結束的時間。 |
 | `referenceConversionMs` | 30,000 | 規格 §12.13 對二十頁代表性文件的桌面預算；實測最慢 1,902 毫秒。 |
-| `mainThreadTaskMs` | 50 | 規格 §12.13 的主執行緒單一工作上限；330 次執行中有 21 次超過，單次最久一段 214 毫秒。 |
+| `mainThreadTaskMs` | 50 | 規格 §12.13 的主執行緒單一工作上限，由量測腳本傳給 harness；330 次執行中有 15 次超過，單次最久一段 199 毫秒。 |
+
+### 9.5 規格階段對照
+
+規格 §12.13 把轉換分成五個階段。這張表列出每個階段由哪一個管線階段承擔，以及哪一個沒有人承擔。
+
+| 規格階段 | 由誰承擔 | 說明 |
+| --- | --- | --- |
+| `parse` | `parse` | `docx-preview` 或 `mammoth` 解析 WordprocessingML。 |
+| `layout` | `layout` | `docx-preview` 套用分節屬性並產生頁框；`mammoth` 不做版面。 |
+| `font-resolution` | 無 | 沒有任何候選解析字型或回報缺少的字型；瀏覽器安靜替代（§4.4）。 |
+| `pdf-render` | `write-pdf` | `jspdf` 寫出檔案，內容是點陣圖（§6）。 |
+| `validate` | `read-pdf` | `pdfjs-dist` 把每一份輸出重新開啟一次（§6.1）。 |
 
 ## 10. 禁止用語
 
@@ -660,6 +706,12 @@ node scripts/evaluate-word-to-pdf.mjs [--browsers=chromium,firefox,webkit] [--pi
 
 `macro-enabled` 的 `word/vbaProject.bin` 是一段說明文字加上 CFB 檔頭，不是編譯過的巨集。它測的是「文件宣告了巨集會不會被辨識」，不是「巨集會不會被執行」；後者這條路上沒有任何一個候選具備執行 VBA 的能力。
 
+字型的判定是「這台機器上解析得到嗎」，不是「替代後看起來像不像」。兩張字體的度量不同就足以讓 `installed` 為真，但它不保證字形、字重或中文字符集合適；量測機器上沒有的那些字型，替代成什麼樣子沒有被評估。這一節能證明「沒有人回報字型被換掉」，不能證明「換掉之後有多難看」。
+
+規格 §12.13 的無障礙條款——檔案選擇替代方式、文字化的保真警告、頁面與問題摘要、鍵盤操作、非視覺進度——適用於可行性介面與未來的產品。這次沒有建任何介面：整個量測由 Playwright 驅動 `scripts/word-to-pdf/harness.html`，那個頁面沒有控制項、沒有檔案輸入、也沒有任何 ARIA。因此這一條沒有被驗證，也不應該被當成已通過。這次唯一與無障礙有關的量測是 §6 的輸出檔零個文字項目，而那一項是失敗的。
+
+同樣沒有被驗證的是規格要求的「一次性可行性 adapter 放在重型 Tool Engine 契約之後」。沒有建，理由寫在 §5：兩條管線都需要 `document`，連進入那個介面的資格都沒有。
+
 主執行緒阻塞是用 4 毫秒間隔的計時器量的，記的是「事件迴圈多久沒有回來」。它會把瀏覽器自己的排版與繪製也算進去，所以小文件上量到的十幾毫秒不全是函式庫造成的。超過 50 毫秒的那 21 次落差夠大，但這個方法量不出 5 毫秒等級的差異。`PerformanceObserver` 的 `longtask` 只有 Chromium 提供，因此沒有採用。
 
 記憶體只有 Chromium 可量，另外兩個瀏覽器的欄位是「沒有值」而不是「沒有用到記憶體」；而且 `measureUserAgentSpecificMemory()` 不計入畫布配置的大部分記憶體，數字只能用於管線之間的相對比較。
@@ -680,6 +732,13 @@ node scripts/evaluate-word-to-pdf.mjs [--browsers=chromium,firefox,webkit] [--pi
 6. PDF 讀回第一版呼叫 `PDFDocumentProxy.destroy()`，那個方法不存在，78 份輸出檔全部記成「讀不回來」。改用 loading task 的 `destroy()` 之後才看見真正的結果：全部讀得回來，全部零個文字項目——比讀不回來嚴重得多。
 7. 第一版在每一次執行的前後都呼叫 `performance.measureUserAgentSpecificMemory()`。它在下一次垃圾回收才回覆，每次三十秒左右，整個矩陣會跑上四小時。改成只在六份代表性文件上取樣，總時間降到約一小時，記憶體證據沒有減少。
 8. 點陣化的著墨比例是後來才加的。在那之前「輸出檔可以讀回」和「輸出檔有內容」是同一個判斷，而點陣化器產生空白頁時兩者會分開；加上之後確認了 78 份輸出沒有一頁是空白的，所以 §6.2 的問題確實在點陣化本身，不在點陣化失敗。
+
+9. 審查指出規格 §12.13 明文要求「回報缺少的字型」，而第一版完全沒有量字型。補上探針之後才發現這是第六個失敗的閘門，不是一個註腳。
+10. 字型探針第一版用 `document.fonts.check()` 判斷字型在不在。它對 `Corpus Imaginary Sans` 回傳 true——那個 API 回答的是「畫得出來嗎」，用後備字型也算，對任何字串都成立。改成與三種通用字族逐一比對寬度之後，那個不存在的家族才正確地回報為沒有。
+11. 換成寬度比對的第一版只比一種後備字族（`monospace`）。那會讓任何度量恰好與等寬字相同的字體被誤判為不存在。改成 `monospace`、`serif` 與 `sans-serif` 三種：一張字體不可能同時與三者一致，只要有一個寬度不同就是真的被用上了。
+12. 補上字型探針之後整份矩陣重跑一次。§3、§4.1、§4.2、§4.3 與 §6.1 的每一格都與第一次相同，只有 §5 的毫秒數浮動——這是這份紀錄可重現性的直接證據，也是原本沒有的。
+13. 主執行緒的 50 毫秒門檻原本在 harness 裡寫死，是規格預算的第四份複本。改成由量測腳本傳入，並加上一項測試，確保量測時採用的門檻就是紀錄拿來判定的那一個。
+14. 審查指出 §9.2 列了八個禁止的公開面，測試只驗了其中三個。補成八個都各有一項斷言，並要求鍵值集合與文件一致，否則清單可以長出沒有人檢查的項目。
 
 ## 14. Standards／Spec 審查
 
