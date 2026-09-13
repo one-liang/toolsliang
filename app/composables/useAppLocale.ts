@@ -4,6 +4,7 @@ import type { LocaleCode } from '@/features/tools/catalog'
 
 export function useAppLocale() {
   const route = useRoute()
+  const pagesDemo = process.env.NUXT_PAGES_DEMO === 'true'
   const locale = computed<LocaleCode>(() => route.params.locale === 'en' ? 'en' : 'zh-tw')
   const alternateLocale = computed<LocaleCode>(() => locale.value === 'en' ? 'zh-tw' : 'en')
   const withLocale = (path = '') => `/${locale.value}${path}`
@@ -13,7 +14,7 @@ export function useAppLocale() {
     // The installed app opens the locale it was installed from, so the manifest follows the page.
     useHead({
       htmlAttrs: { lang: locale.value === 'en' ? 'en' : 'zh-Hant-TW' },
-      link: [{ rel: 'manifest', href: manifestPath(locale.value) }],
+      link: pagesDemo ? [] : [{ rel: 'manifest', href: manifestPath(locale.value) }],
     })
   })
 

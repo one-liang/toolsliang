@@ -27,7 +27,7 @@ usePageSeo({
 })
 
 useSeoMeta({
-  robots: () => savedOnly.value ? 'noindex, nofollow' : 'index, follow',
+  robots: () => (process.env.NUXT_PAGES_DEMO === 'true' || savedOnly.value) ? 'noindex, nofollow' : 'index, follow',
 })
 </script>
 

@@ -21,7 +21,7 @@ export type ToolCapability = 'javascript' | 'web-worker' | 'wasm' | 'webgl' | 'w
 export const siteOrigin = 'https://toolsliang.com'
 export const supportedLocales: LocaleCode[] = ['zh-tw', 'en']
 /** Root of every large first-party engine, model or font a tool downloads on first use. */
-export const offlineAssetPathPrefix = '/assets/offline'
+export const offlineAssetPathPrefix = `${process.env.NUXT_APP_BASE_URL || '/'}assets/offline`
 export const toolIcons = [
   'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
   'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive', 'clock',

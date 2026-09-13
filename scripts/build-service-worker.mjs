@@ -21,7 +21,10 @@ export async function buildServiceWorker(outfile, buildId) {
     target: ['chrome111', 'firefox115', 'safari16'],
     minify: true,
     legalComments: 'none',
-    define: { __SW_BUILD_ID__: JSON.stringify(buildId) },
+    define: {
+      __SW_BUILD_ID__: JSON.stringify(buildId),
+      'process.env.NUXT_APP_BASE_URL': JSON.stringify(process.env.NUXT_APP_BASE_URL || '/'),
+    },
   })
 
   return outfile

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "generate:demo": "NUXT_PAGES_DEMO=true NUXT_APP_BASE_URL=/toolsliang/ nuxt generate",
     "lint": "eslint .",
     "prepare": "nuxt prepare",
     "preview": "nuxt preview",
