@@ -21,13 +21,14 @@ const BADGE_NEIGHBOURS = [
 ]
 
 /**
- * The NEW window is read from the registry so the check never pins a date that
- * ages out. It throws inside the test rather than at import: a registry with no
- * dated NEW tool must fail this check alone, not every gate in this file.
+ * Read the NEW window of the same instant tool used by the other shell gates.
+ * A worker tool can remove its preparation message between measurements,
+ * moving the contract independently of the badge. Dates still come from the
+ * registry, and a missing window fails this test alone rather than its import.
  */
 function toolWithNewWindow() {
-  const tool = publishedTools.find(item => item.status?.kind === 'new' && item.status.startsAt && item.status.endsAt)
-  if (!tool?.status?.startsAt || !tool.status.endsAt) throw new Error('註冊表需要一個帶 startsAt 與 endsAt 的已發布 NEW 工具，這項檢查才驗證得到任何事')
+  const tool = publishedTools.find(item => `/zh-tw/tools/${item.slug}/` === TOOL_ROUTE && item.status?.kind === 'new')
+  if (!tool?.status?.startsAt || !tool.status.endsAt) throw new Error('App Shell 基準工具需要帶 startsAt 與 endsAt 的 NEW 標籤，這項檢查才驗證得到任何事')
 
   return { route: `/zh-tw/tools/${tool.slug}/`, startsAt: tool.status.startsAt, endsAt: tool.status.endsAt }
 }
