@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type Locator } from '@playwright/test'
 import { gotoHydrated, waitForHydration } from './support/hydration'
 import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
 
@@ -8,6 +8,9 @@ const EN_TOOL_ROUTE = '/en/tools/custom-calendar/'
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 // Sub-pixel layout can report a 44px target as 43.999996; the same tolerance as the App Shell gate.
 const TOUCH_TARGET_TOLERANCE_PX = 0.001
+// A physical press interval exposes movement between pointerdown and pointerup;
+// this is input duration, not a sleep to wait for scrolling or storage.
+const POINTER_PRESS_MS = 100
 
 /**
  * Everything a visitor types into this tool. All of it is saved on the device,
@@ -80,17 +83,23 @@ async function openDay(page: Page, date: string, locale: keyof typeof LABELS = '
   await day(page, date).click()
 }
 
+/** Finish focus-triggered scrolling before a real pointer press and release. */
+async function clickEntryAction(target: Locator, delay = 0) {
+  await target.evaluate(element => element.scrollIntoView({ behavior: 'instant', block: 'center' }))
+  await target.click({ delay })
+}
+
 async function addEntry(
   page: Page,
   values: { title: string, note?: string, mark?: string, start?: string, end?: string },
 ) {
-  await page.locator('[data-entry-action="add"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="add"]'))
   await page.locator('#custom-entry-title').fill(values.title)
   if (values.note) await page.locator('#custom-entry-note').fill(values.note)
   if (values.mark) await page.locator(`input[name="custom-entry-mark"][value="${values.mark}"]`).check()
   if (values.start) await page.locator('#custom-entry-start').fill(values.start)
   if (values.end) await page.locator('#custom-entry-end').fill(values.end)
-  await page.locator('[data-entry-action="save"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="save"]'), POINTER_PRESS_MS)
   // The form closes only once the device has accepted the write, so every
   // caller of a successful save waits for the transaction rather than the click.
   await expect(page.locator('.custom-calendar-form')).toHaveCount(0)
@@ -119,20 +128,20 @@ test('新增、編輯、刪除自訂項目，並在重新載入後保留', async
   await openDay(page, '2026-09-18')
   await expect(page.locator('.custom-calendar-entry')).toContainText(ENTRY_TITLE)
 
-  await page.locator('[data-entry-action="edit"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="edit"]'))
   await page.locator('#custom-entry-end').fill('2026-09-20')
-  await page.locator('[data-entry-action="save"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="save"]'), POINTER_PRESS_MS)
   await expect(page.locator('.custom-calendar-status')).toContainText('已更新')
   await expect(day(page, '2026-09-20'), '期間內每一天都要標示').toHaveAttribute('data-custom', 'day-off')
 
   // Deleting asks first, and the question is where the keyboard lands.
-  await page.locator('[data-entry-action="delete"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="delete"]'))
   await expect(page.locator('[data-entry-action="confirm-delete"]')).toBeFocused()
-  await page.locator('[data-entry-action="cancel-delete"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="cancel-delete"]'))
   await expect(page.locator('.custom-calendar-entry')).toHaveCount(1)
 
-  await page.locator('[data-entry-action="delete"]').click()
-  await page.locator('[data-entry-action="confirm-delete"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="delete"]'))
+  await clickEntryAction(page.locator('[data-entry-action="confirm-delete"]'))
   await expect(page.locator('.custom-calendar-status')).toContainText('已刪除')
   await expect(day(page, '2026-09-18')).not.toHaveAttribute('data-custom', /.*/)
 })
@@ -169,9 +178,9 @@ test('無法儲存的輸入會逐項說明，且不寫入裝置', async ({ page 
   await gotoTool(page)
   await openDay(page, '2026-09-18')
 
-  await page.locator('[data-entry-action="add"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="add"]'))
   await page.locator('#custom-entry-end').fill('2026-09-01')
-  await page.locator('[data-entry-action="save"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="save"]'))
 
   const error = page.locator('.custom-calendar-form__error')
   await expect(error).toContainText('請先填寫項目名稱')
@@ -181,10 +190,10 @@ test('無法儲存的輸入會逐項說明，且不寫入裝置', async ({ page 
   await page.locator('#custom-entry-title').fill(ENTRY_TITLE)
   await page.locator('#custom-entry-start').fill('2019-01-01')
   await page.locator('#custom-entry-end').fill('2019-01-02')
-  await page.locator('[data-entry-action="save"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="save"]'))
   await expect(error).toContainText('目前只能加在')
 
-  await page.locator('[data-entry-action="cancel"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="cancel"]'))
   await expect(page.locator('.custom-calendar-entry')).toHaveCount(0)
   await expect(page.locator('.custom-calendar-storage')).toContainText('這台裝置還沒有自訂行事曆內容')
 })
@@ -273,12 +282,12 @@ test('鍵盤可完成整段流程，網格只保留一個 Tab 停留點', async 
   await page.keyboard.press('Enter')
   await expect(page.locator('.custom-calendar-layers__official')).toContainText('民國 115 年')
 
-  await page.locator('[data-entry-action="add"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="add"]'))
   await expect(page.locator('#custom-entry-title'), '打開表單後焦點落在第一個欄位').toBeFocused()
   await page.keyboard.type(ENTRY_TITLE)
   await page.locator('input[name="custom-entry-mark"][value="day-off"]').focus()
   await page.keyboard.press('Space')
-  await page.locator('[data-entry-action="save"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="save"]'))
 
   await expect(page.locator('.custom-calendar-entry')).toContainText(ENTRY_TITLE)
   await expect(page.locator('.custom-calendar-status'), '狀態列可被聚焦，宣告剛剛發生的事').toBeFocused()
@@ -289,7 +298,6 @@ test('手機寬度可操作，並在 light 與 dark 模式通過 WCAG 2.2 AA', a
   await gotoTool(page)
   await openDay(page, '2026-09-18')
   await addEntry(page, { title: ENTRY_TITLE, note: ENTRY_NOTE, mark: 'day-off' })
-  await page.evaluate(() => window.scrollTo(0, 0))
 
   const layout = await page.locator('html').evaluate(element => ({
     clientWidth: element.clientWidth,
@@ -323,6 +331,12 @@ test('手機寬度可操作，並在 light 與 dark 模式通過 WCAG 2.2 AA', a
       await page.getByRole('button', { name: '切換色彩模式' }).click()
       await expect(page.locator('html')).toHaveClass(/dark/)
     }
+
+    // Focusing the import control and switching themes can scroll the page.
+    // Audit a fixed position after those actions: smooth scrolling lets the
+    // sticky top bar partially cover month buttons while axe measures them.
+    await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+    await expect.poll(() => page.evaluate(() => window.scrollY), '無障礙量測前頁面應停在頂端').toBe(0)
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
@@ -375,13 +389,13 @@ test('英文頁以英文說明與拒絕', async ({ page }) => {
   await openDay(page, '2026-09-18', 'en')
 
   await expect(page.locator('.custom-calendar-boundary')).toContainText('this device')
-  await page.locator('[data-entry-action="add"]').click()
-  await page.locator('[data-entry-action="save"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="add"]'))
+  await clickEntryAction(page.locator('[data-entry-action="save"]'))
   await expect(page.locator('.custom-calendar-form__error')).toContainText('Enter a name for this entry')
 
   await page.locator('#custom-entry-title').fill(ENTRY_TITLE)
   await page.locator('input[name="custom-entry-mark"][value="day-off"]').check()
-  await page.locator('[data-entry-action="save"]').click()
+  await clickEntryAction(page.locator('[data-entry-action="save"]'))
 
   await expect(page.locator('.custom-calendar-layers__custom')).toContainText('Custom day off')
   await expect(page.locator('.custom-calendar-caveats')).toContainText('never sync as cloud preferences')
@@ -416,8 +430,8 @@ test.describe('離線後的自訂行事曆', () => {
       await addEntry(page, { title: `${ENTRY_TITLE}-offline`, mark: 'note' })
       await expect(page.locator('.custom-calendar-entry')).toHaveCount(2)
 
-      await page.locator('.custom-calendar-entry').first().locator('[data-entry-action="delete"]').click()
-      await page.locator('[data-entry-action="confirm-delete"]').click()
+      await clickEntryAction(page.locator('.custom-calendar-entry').first().locator('[data-entry-action="delete"]'))
+      await clickEntryAction(page.locator('[data-entry-action="confirm-delete"]'))
       await expect(page.locator('.custom-calendar-entry')).toHaveCount(1)
     }
     finally {
