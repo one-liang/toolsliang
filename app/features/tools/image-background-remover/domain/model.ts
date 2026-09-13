@@ -46,7 +46,7 @@ export const portraitModelVersion = 'modnet-fp16-1'
  * would make the two modules import each other. `offlineAssetPathPrefix` still
  * governs the shape, and the tests hold these paths to it.
  */
-const assetRoot = '/assets/offline'
+const assetRoot = `${process.env.NUXT_APP_BASE_URL || '/'}assets/offline`
 
 export interface PortraitMattingModel {
   candidateId: string
