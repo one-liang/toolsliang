@@ -6,6 +6,9 @@ import { manifestPaths } from './app/features/pwa/manifest'
 import { themeBootstrapScript } from './app/features/shell/theme'
 import { getPublicPageRoutes, getPublicToolRoutes } from './app/features/tools/catalog'
 
+const pagesDemo = process.env.NUXT_PAGES_DEMO === 'true'
+const baseURL = process.env.NUXT_APP_BASE_URL || '/'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
@@ -13,6 +16,10 @@ export default defineNuxtConfig({
   css: ['@fontsource-variable/roboto', '~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
+    define: {
+      'process.env.NUXT_APP_BASE_URL': JSON.stringify(baseURL),
+      'process.env.NUXT_PAGES_DEMO': JSON.stringify(String(pagesDemo)),
+    },
     /**
      * Workers are emitted as ES modules so the one that loads its inference
      * runtime at run time can use `import()`. A chunk without imports of its
@@ -53,17 +60,19 @@ export default defineNuxtConfig({
     },
   },
   app: {
+    baseURL,
     head: {
       titleTemplate: '%s · toolsliang',
       meta: [
+        ...(pagesDemo ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
         { name: 'color-scheme', content: 'light dark' },
         { name: 'theme-color', content: '#f6f3f0' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-title', content: 'toolsliang' },
       ],
       link: [
-        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icons/icon-192.png' },
-        { rel: 'apple-touch-icon', sizes: '192x192', href: '/icons/icon-192.png' },
+        { rel: 'icon', type: 'image/png', sizes: '192x192', href: `${baseURL}icons/icon-192.png` },
+        { rel: 'apple-touch-icon', sizes: '192x192', href: `${baseURL}icons/icon-192.png` },
       ],
       script: [{ innerHTML: themeBootstrapScript, tagPosition: 'head' }],
     },

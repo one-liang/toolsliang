@@ -11,6 +11,7 @@ const APPLY_UPDATE_MESSAGE = { type: 'toolsliang:apply-update' }
  */
 export function usePwaUpdate() {
   const { locale } = useAppLocale()
+  const pagesDemo = process.env.NUXT_PAGES_DEMO === 'true'
   const { dirtyWorkspaces } = useDirtyWorkspaces()
   const hasWaitingWorker = useState('pwa-waiting-worker', () => false)
   const hasActiveController = useState('pwa-active-controller', () => false)
@@ -33,7 +34,7 @@ export function usePwaUpdate() {
 
   async function register() {
     // The worker is emitted by the production build, so `nuxt dev` stays uncached.
-    if (registered.value || import.meta.dev || !import.meta.client) return
+    if (pagesDemo || registered.value || import.meta.dev || !import.meta.client) return
     if (!('serviceWorker' in navigator)) return
     registered.value = true
 
