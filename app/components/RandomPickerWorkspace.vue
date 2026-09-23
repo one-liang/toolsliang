@@ -418,17 +418,16 @@ function prefersReducedMotion() {
     </section>
   </Card>
 
-  <section class="tool-reference picker-method" aria-labelledby="picker-method-title">
-    <div class="tool-section-heading">
-      <p class="eyebrow">{{ text.methodEyebrow }}</p>
-      <h2 id="picker-method-title">{{ text.methodTitle }}</h2>
+  <details class="tool-reference picker-method" aria-labelledby="picker-method-title">
+    <summary class="tool-contract__summary"><h2 id="picker-method-title">{{ text.methodTitle }}</h2></summary>
+    <div class="tool-contract__body">
       <p>{{ text.methodIntro }}</p>
+      <ol class="picker-method__steps">
+        <li v-for="step in method" :key="step.title">
+          <strong>{{ step.title }}</strong>
+          <span>{{ step.body }}</span>
+        </li>
+      </ol>
     </div>
-    <ol class="picker-method__steps">
-      <li v-for="step in method" :key="step.title">
-        <strong>{{ step.title }}</strong>
-        <span>{{ step.body }}</span>
-      </li>
-    </ol>
-  </section>
+  </details>
 </template>

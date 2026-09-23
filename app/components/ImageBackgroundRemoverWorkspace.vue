@@ -164,7 +164,6 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
 
 <template>
   <Card class="tool-workspace image-background-remover">
-    <p class="eyebrow">{{ locale === 'en' ? 'Portrait cutouts, on your device' : '人像去背，就在你的裝置' }}</p>
     <p class="image-background-remover__scope">{{ copy(portraitScopeNotice, locale) }}</p>
 
     <p v-if="preparing" role="status" class="field-help">{{ locale === 'en' ? 'Checking local model support…' : '正在檢查本機模型支援…' }}</p>

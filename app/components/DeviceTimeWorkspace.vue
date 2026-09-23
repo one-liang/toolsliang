@@ -62,7 +62,6 @@ onBeforeUnmount(() => {
 
 <template>
   <Card class="tool-workspace device-time">
-    <p class="eyebrow">{{ locale === 'en' ? 'Your device, right now' : '此刻，你的裝置時間' }}</p>
     <div v-if="reading?.ok" data-device-clock class="device-time__reading" aria-live="off">
       <p class="device-time__date">{{ reading.date }}</p>
       <time class="device-time__clock" :datetime="reading.datetime">{{ reading.time }}</time>

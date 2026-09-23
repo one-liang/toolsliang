@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LockKeyhole, Star } from '@lucide/vue'
+import { Star } from '@lucide/vue'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
@@ -64,45 +64,40 @@ usePageSeo({
 
     <SavedStorageNotice v-if="!storageAvailable" :locale="locale" />
 
-    <div v-if="tool.pagePresentation.showLocalProcessingStatement" class="local-processing-note">
-      <LockKeyhole :size="17" aria-hidden="true" />
-      <span>{{ copy(tool.localProcessingStatement, locale) }}</span>
-    </div>
-
     <ToolCapabilityGate :requirements="tool.capabilities" :locale="locale">
       <component :is="workspace" />
     </ToolCapabilityGate>
 
-    <section class="tool-contract" :aria-labelledby="`tool-answer-${tool.slug}`">
-      <div class="tool-section-heading">
-        <p class="eyebrow">{{ locale === 'en' ? 'Usage notes' : '使用備註' }}</p>
+    <details class="tool-contract" :aria-labelledby="`tool-answer-${tool.slug}`">
+      <summary class="tool-contract__summary">
         <h2 :id="`tool-answer-${tool.slug}`">{{ locale === 'en' ? 'Before you start' : '開始前先知道' }}</h2>
+      </summary>
+      <div class="tool-contract__body">
         <p>{{ copy(tool.seo.answer, locale) }}</p>
+        <dl>
+          <div>
+            <dt>{{ locale === 'en' ? 'Accepted input' : '可接受輸入' }}</dt>
+            <dd>{{ copy(tool.acceptedInput, locale) }}</dd>
+          </div>
+          <div>
+            <dt>{{ locale === 'en' ? 'Offline use' : '離線能力' }}</dt>
+            <dd><ToolOfflineStatus :tool="tool" :locale="locale" /></dd>
+          </div>
+        </dl>
       </div>
-      <dl>
-        <div>
-          <dt>{{ locale === 'en' ? 'Accepted input' : '可接受輸入' }}</dt>
-          <dd>{{ copy(tool.acceptedInput, locale) }}</dd>
-        </div>
-        <div>
-          <dt>{{ locale === 'en' ? 'Offline use' : '離線能力' }}</dt>
-          <dd><ToolOfflineStatus :tool="tool" :locale="locale" /></dd>
-        </div>
-      </dl>
-    </section>
+    </details>
 
-    <section v-if="faq.length" class="tool-contract tool-contract--faq" :aria-labelledby="`tool-faq-${tool.slug}`">
-      <div class="tool-section-heading">
-        <p class="eyebrow">{{ locale === 'en' ? 'Common questions' : '常見問題' }}</p>
+    <details v-if="faq.length" class="tool-contract tool-contract--faq" :aria-labelledby="`tool-faq-${tool.slug}`">
+      <summary class="tool-contract__summary">
         <h2 :id="`tool-faq-${tool.slug}`">{{ locale === 'en' ? 'What people ask about this tool' : '關於這個工具的常見問題' }}</h2>
-      </div>
+      </summary>
       <dl class="tool-faq">
         <div v-for="entry in faq" :key="entry.heading" class="tool-faq__item">
           <dt class="tool-faq__question">{{ entry.heading }}</dt>
           <dd class="tool-faq__answer">{{ entry.body }}</dd>
         </div>
       </dl>
-    </section>
+    </details>
 
     <section class="tool-contract tool-contract--sources" :aria-labelledby="`tool-sources-${tool.slug}`">
       <div class="tool-section-heading">

@@ -80,7 +80,6 @@ function shortcut(event: KeyboardEvent) {
 
 <template>
   <Card class="tool-workspace brand-promo" :aria-busy="locked" @keydown="shortcut">
-    <p class="eyebrow">{{ en ? 'Your assets, your device' : '你的素材，留在你的裝置' }}</p>
     <p class="field-help">{{ en ? 'Combine backgrounds, products, frames, and Logos. No text or price tags. PNG keeps transparent areas.' : '組合背景、商品圖、框版與 Logo，不含文字與價籤。PNG 會保留透明區域。' }}</p>
     <div class="tool-workspace__grid">
       <div class="field-group">

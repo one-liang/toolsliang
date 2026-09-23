@@ -95,7 +95,7 @@ test('下載模型後在本機去背，並下載透明 PNG', async ({ page }, te
 
 test('先說明只處理人像，並在載入模型前拒絕 HEIC／HEIF', async ({ page }) => {
   await gotoHydrated(page, '/zh-tw/tools/image-background-remover/')
-  await expect(page.getByText('這個工具使用人像去背模型', { exact: false }).first()).toBeVisible()
+  await expect(page.getByText('僅適用人像照片', { exact: false }).first()).toBeVisible()
 
   await page.getByLabel('選擇人像圖片', { exact: true }).setInputFiles({
     name: 'renamed.jpg',
@@ -169,7 +169,7 @@ test('鍵盤可完成準備、去背與下載，且觸控目標夠大', async ({
 
 test('英文頁以英文說明範圍與限制', async ({ page }) => {
   await gotoHydrated(page, '/en/tools/image-background-remover/')
-  await expect(page.getByText('This tool runs a portrait matting model', { exact: false }).first()).toBeVisible()
+  await expect(page.getByText('For photos of people only', { exact: false }).first()).toBeVisible()
   await page.getByLabel('Choose portrait image', { exact: true }).setInputFiles({
     name: 'renamed.jpg',
     mimeType: 'image/jpeg',

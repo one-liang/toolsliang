@@ -114,7 +114,6 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
 
 <template>
   <Card class="tool-workspace image-compressor">
-    <p class="eyebrow">{{ locale === 'en' ? 'Less space, on your device' : '圖片瘦身，就在你的裝置' }}</p>
     <div class="image-compressor__picker field-group" @dragover.prevent @drop.prevent="selectFiles(Array.from($event.dataTransfer?.files ?? []))">
       <Image :size="24" aria-hidden="true" />
       <label for="compressor-file">{{ locale === 'en' ? 'Choose image' : '選擇圖片' }}</label>
