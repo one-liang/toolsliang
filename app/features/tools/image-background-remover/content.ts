@@ -8,8 +8,8 @@ import { imageInputErrors } from '@/features/images/messages'
  * people-only tool and never claims otherwise.
  */
 export const portraitScopeNotice: LocalizedCopy = {
-  'zh-tw': '這個工具使用人像去背模型，只針對照片中的人處理。商品、動物或風景不在它的訓練範圍，結果通常不可用。',
-  en: 'This tool runs a portrait matting model, so it only separates people from a background. Products, animals, and scenery are outside what it was trained on and usually come out unusable.',
+  'zh-tw': '僅適用人像照片；商品、動物與風景不在模型處理範圍。',
+  en: 'For photos of people only; products, animals, and scenery are outside this model’s scope.',
 }
 
 export const backgroundRemovalErrors: Record<string, LocalizedCopy> = {

@@ -410,7 +410,6 @@ onBeforeUnmount(() => {
 
 <template>
   <Card class="tool-workspace compliant-product-image">
-    <p class="eyebrow">{{ en ? 'Channel specifications, checked on your device' : '通路規格，在你的裝置上核對' }}</p>
 
     <div class="field-group">
       <label for="compliant-preset">{{ en ? 'Channel preset' : '通路規格' }}</label>
@@ -626,8 +625,8 @@ onBeforeUnmount(() => {
       </a>
     </Button>
 
-    <section class="compliant-product-image__rules" :aria-label="en ? 'What this channel asks for' : '這個通路的規則'">
-      <h3>{{ en ? 'What this channel asks for' : '這個通路的規則' }}</h3>
+    <details class="compliant-product-image__rules" :aria-label="en ? 'What this channel asks for' : '這個通路的規則'">
+      <summary>{{ en ? 'What this channel asks for' : '這個通路的規則' }}（{{ preset.rules.length }}）</summary>
       <ul>
         <li v-for="rule in preset.rules" :key="rule.id">
           <strong>{{ ruleLine(rule) }}</strong>
@@ -635,7 +634,7 @@ onBeforeUnmount(() => {
           <q>{{ rule.quote }}</q>
         </li>
       </ul>
-    </section>
+    </details>
 
     <section data-preset-caveats class="compliant-product-image__caveats" :aria-label="en ? 'Before you rely on this' : '使用前必讀'">
       <h3>{{ en ? 'Before you rely on this' : '使用前必讀' }}</h3>
@@ -644,8 +643,8 @@ onBeforeUnmount(() => {
       </ul>
     </section>
 
-    <section data-excluded-channels class="compliant-product-image__excluded" :aria-label="en ? 'Channels without a preset' : '沒有 preset 的通路'">
-      <h3>{{ en ? 'Channels without a preset' : '沒有 preset 的通路' }}</h3>
+    <details data-excluded-channels class="compliant-product-image__excluded" :aria-label="en ? 'Channels without a preset' : '沒有 preset 的通路'">
+      <summary>{{ en ? 'Channels without a preset' : '沒有 preset 的通路' }}</summary>
       <ul>
         <li v-for="channel in compliantImageExcludedChannels" :key="channel.id">
           <strong>{{ channel.name[locale] }}</strong>
@@ -653,6 +652,6 @@ onBeforeUnmount(() => {
           <span class="compliant-product-image__meta">{{ en ? 'To be looked at again on' : '重新評估日期' }} <time :datetime="channel.recheckAt">{{ formatReviewDate(channel.recheckAt, locale) }}</time></span>
         </li>
       </ul>
-    </section>
+    </details>
   </Card>
 </template>

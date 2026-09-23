@@ -95,7 +95,7 @@ test('下載模型後在本機去背，並下載透明 PNG', async ({ page }, te
 
 test('先說明只處理人像，並在載入模型前拒絕 HEIC／HEIF', async ({ page }) => {
   await gotoHydrated(page, '/zh-tw/tools/image-background-remover/')
-  await expect(page.getByText('這個工具使用人像去背模型', { exact: false }).first()).toBeVisible()
+  await expect(page.getByText('僅適用人像照片', { exact: false }).first()).toBeVisible()
 
   await page.getByLabel('選擇人像圖片', { exact: true }).setInputFiles({
     name: 'renamed.jpg',

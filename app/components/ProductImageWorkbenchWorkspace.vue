@@ -417,7 +417,6 @@ async function dropItem(id: string) {
 
 <template>
   <Card class="tool-workspace product-image-workbench" :aria-busy="busy">
-    <p class="eyebrow">{{ en ? 'One local pass, from photos to a batch download' : '從原圖到整批下載，一次本機作業' }}</p>
     <p class="field-help">{{ copy(workbenchLocalNotice, locale) }}</p>
 
     <p v-if="preparing" role="status">{{ en ? 'Checking what this browser can run locally…' : '正在檢查這個瀏覽器可在本機執行的步驟…' }}</p>

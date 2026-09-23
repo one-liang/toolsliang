@@ -171,7 +171,6 @@ function savedLabel(asset: SignatureAsset) {
 
 <template>
   <Card class="tool-workspace pdf-signature">
-    <p class="eyebrow">{{ en ? 'Sign a PDF on your device' : '在你的裝置上簽 PDF' }}</p>
     <!-- §10 of the decision record: these two sentences come before any placement. -->
     <p class="pdf-signature__scope">{{ pdfSignatureDisclosures['not-a-digital-signature'][locale] }}</p>
     <p class="pdf-signature__scope">{{ pdfSignatureDisclosures['no-identity-verification'][locale] }}</p>
@@ -205,7 +204,6 @@ function savedLabel(asset: SignatureAsset) {
           ? `PDF only, up to ${limits.maxPages} pages and ${maxMegabytes} MiB on this device. You can also drop a file here.`
           : `僅支援 PDF，最多 ${limits.maxPages} 頁、${maxMegabytes} MiB（依這台裝置的可用記憶體）。也可將檔案拖曳至此。` }}
       </p>
-      <p class="field-help">{{ pdfSignatureDisclosures['local-processing'][locale] }}</p>
     </div>
 
     <form v-if="passwordNeeded" class="pdf-signature__password field-group" @submit.prevent="unlock">
