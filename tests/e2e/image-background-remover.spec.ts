@@ -169,7 +169,7 @@ test('鍵盤可完成準備、去背與下載，且觸控目標夠大', async ({
 
 test('英文頁以英文說明範圍與限制', async ({ page }) => {
   await gotoHydrated(page, '/en/tools/image-background-remover/')
-  await expect(page.getByText('This tool runs a portrait matting model', { exact: false }).first()).toBeVisible()
+  await expect(page.getByText('For photos of people only', { exact: false }).first()).toBeVisible()
   await page.getByLabel('Choose portrait image', { exact: true }).setInputFiles({
     name: 'renamed.jpg',
     mimeType: 'image/jpeg',

@@ -39,11 +39,11 @@ async function pressFocusForward(page: Page, testInfo: TestInfo) {
   await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Tab' : 'Tab')
 }
 
-test('工具開啟時即說明本機處理、公式、分級與使用限制', async ({ page }) => {
+test('工具開啟時即顯示公式、分級與使用限制', async ({ page }) => {
   const response = await gotoTool(page)
   expect(response?.ok(), `${TOOL_ROUTE} 應成功載入`).toBe(true)
 
-  await expect(page.getByText('身高、體重與結果只在此裝置計算，不會保存或送出。')).toBeVisible()
+  await expect(page.locator('.local-processing-note')).toHaveCount(0)
   await expect(page.getByLabel('身高（公分）')).toHaveValue('')
   await expect(page.getByLabel('體重（公斤）')).toHaveValue('')
   await expect(page.getByRole('alert')).toHaveCount(0)
