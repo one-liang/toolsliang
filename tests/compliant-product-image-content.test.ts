@@ -1,8 +1,6 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { hasLocalizedCopy, supportedLocales, type LocaleCode } from '@/features/tools/catalog'
+import { hasLocalizedCopy, publishedTools, supportedLocales, type LocaleCode } from '@/features/tools/catalog'
 import { getToolFaq } from '@/features/tools/faq'
-import { buildToolStructuredData } from '@/features/tools/structured-data'
 import {
   compliantImageCaveatKeys,
   compliantImageExcludedChannels,
@@ -31,7 +29,6 @@ import {
   compliantImageRoleLabels,
   compliantImageSizeIssues,
   compliantImageStages,
-  compliantProductImageFaq,
   constraintKindLabels,
   describeRuleValue,
   presetStatusLabels,
@@ -43,26 +40,14 @@ import { compliantProductImageDefinition } from '@/features/tools/compliant-prod
 import type { CompliantRenderInput } from '@/features/tools/compliant-product-image/types'
 import {
   parseCaveatSentences,
-  parseFaqQuestions,
   parseForbiddenWording,
   parseViewNoticeSentences,
   compliantImageDecisionRecord,
 } from './support/compliant-product-image-decision-record'
 
-const workspaceSource = readFileSync('app/components/CompliantProductImageWorkspace.vue', 'utf8')
-
-/** Everything a visitor can read on the tool page, in one locale. */
+/** Everything a visitor can read in the workbench's compliant branch, in one locale. */
 function visibleCopy(locale: LocaleCode) {
-  const tool = compliantProductImageDefinition
-
   return [
-    tool.name[locale],
-    tool.description[locale],
-    tool.acceptedInput[locale],
-    tool.localProcessingStatement[locale],
-    tool.seo.title[locale],
-    tool.seo.description[locale],
-    tool.seo.answer[locale],
     ...Object.values(compliantImageCaveats).map(copy => copy[locale]),
     ...Object.values(compliantImageNotices).map(copy => copy[locale]),
     ...Object.values(compliantImageErrors).map(copy => copy[locale]),
@@ -77,7 +62,6 @@ function visibleCopy(locale: LocaleCode) {
     ...Object.values(compliantImageChannelLabels).map(copy => copy[locale]),
     ...Object.values(compliantImageRoleLabels).map(copy => copy[locale]),
     ...Object.values(compliantImageExclusionLabels).map(copy => copy[locale]),
-    ...compliantProductImageFaq.flatMap(entry => [entry.heading[locale], entry.body[locale]]),
     ...compliantImagePresets.flatMap(preset => preset.rules.map(rule => describeRuleValue(rule, locale))),
   ]
 }
@@ -110,49 +94,6 @@ describe('the page never claims certification or approval', () => {
         forbidden.forEach(term => expect(sentence.toLowerCase(), term).not.toContain(term.toLowerCase()))
       })
     })
-  })
-
-  it('keeps every forbidden wording out of the structured data', () => {
-    const forbidden = parseForbiddenWording()
-
-    supportedLocales.forEach((locale) => {
-      const markup = JSON.stringify(buildToolStructuredData(compliantProductImageDefinition, locale)).toLowerCase()
-
-      forbidden.forEach(term => expect(markup, term).not.toContain(term.toLowerCase()))
-    })
-  })
-
-  it('shows the no-approval-guarantee sentence in the page metadata itself', () => {
-    const caveat = compliantImageCaveats['no-approval-guarantee']
-
-    expect(compliantProductImageDefinition.seo.answer['zh-tw']).toContain(caveat['zh-tw'].replace('。', ''))
-    expect(compliantProductImageDefinition.seo.answer.en).toContain(caveat.en.replace('.', ''))
-  })
-})
-
-describe('questions come only from the record', () => {
-  it('asks exactly the approved questions, in order, in both locales', () => {
-    expect(compliantProductImageFaq.map(entry => entry.heading['zh-tw']))
-      .toEqual(parseFaqQuestions().map(question => question['zh-tw']))
-    expect(compliantProductImageFaq.map(entry => entry.heading.en))
-      .toEqual(parseFaqQuestions().map(question => question.en))
-  })
-
-  it('publishes those questions on the tool page and in its markup', () => {
-    supportedLocales.forEach((locale) => {
-      const faq = getToolFaq(compliantProductImageDefinition.seo.contentKey, locale)
-
-      expect(faq.map(entry => entry.heading))
-        .toEqual(compliantProductImageFaq.map(entry => entry.heading[locale]))
-    })
-  })
-
-  it('answers the privacy question with the on-device boundary', () => {
-    const privacy = compliantProductImageFaq.at(-1)!
-
-    expect(privacy.body['zh-tw']).toContain('不會')
-    expect(privacy.body['zh-tw']).toContain('這台裝置')
-    expect(privacy.body.en.toLowerCase()).toContain('never')
   })
 })
 
@@ -222,27 +163,14 @@ describe('rules read as sentences', () => {
 })
 
 describe('tool registration', () => {
-  it('publishes the stable slug on both locale routes', () => {
+  it('keeps the slug reserved but publishes no standalone page, FAQ or route', () => {
     expect(compliantProductImageDefinition.slug).toBe('compliant-product-image')
-    expect(compliantProductImageDefinition.availability.state).toBe('published')
-    expect(compliantProductImageDefinition.seo.contentKey).toBe('compliant-product-image')
+    expect(compliantProductImageDefinition.availability.state).toBe('unpublished')
+    expect(publishedTools.some(tool => tool.slug === 'compliant-product-image')).toBe(false)
+    supportedLocales.forEach(locale => expect(getToolFaq('compliant-product-image', locale)).toEqual([]))
   })
 
-  it('runs in a worker and needs no download before first use', () => {
-    expect(compliantProductImageDefinition.processingClass).toBe('worker')
-    expect(compliantProductImageDefinition.capabilities).toContain('web-worker')
-    expect(compliantProductImageDefinition.offlineMode).toBe('ready')
-    expect(compliantProductImageDefinition.offlineAssets).toBeUndefined()
-  })
-
-  it('cites exactly the reviewed sources, and no other origin', () => {
-    expect(compliantProductImageDefinition.contentReview.sources.length).toBeGreaterThan(0)
-    compliantProductImageDefinition.contentReview.sources
-      .forEach(source => expect(source.url.startsWith('https://')).toBe(true))
-  })
-
-  it('says on the page that HEIC/HEIF is refused before decoding', () => {
-    expect(compliantProductImageDefinition.acceptedInput['zh-tw']).toContain('HEIC')
+  it('still refuses HEIC/HEIF before decoding in the workbench branch', () => {
     expect(compliantImageErrors.unsupported_heic).toBeDefined()
   })
 })
@@ -267,16 +195,5 @@ describe('the tool cannot add what a compliant output must not contain', () => {
       forbiddenCapabilities.forEach(capability =>
         expect(option.toLowerCase(), option).not.toContain(capability))
     })
-  })
-
-  it('offers no control for one, and says the promotional purpose lives elsewhere', () => {
-    const controls = [...workspaceSource.matchAll(/<label[^>]*>([\s\S]*?)<\/label>/g)]
-      .map(match => match[1]!.replace(/\{\{[\s\S]*?\}\}/g, ' '))
-
-    expect(controls.length).toBeGreaterThan(0)
-    // Only the guide frame may name a border, and only as something drawn over a preview.
-    expect(workspaceSource).not.toMatch(/v-model="(logo|watermarkText|priceTag|caption|overlayText)/)
-    forbiddenCapabilities.forEach(capability =>
-      controls.forEach(control => expect(control.toLowerCase(), capability).not.toContain(capability)))
   })
 })

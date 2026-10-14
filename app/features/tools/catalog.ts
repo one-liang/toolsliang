@@ -159,7 +159,6 @@ const registeredTools: ToolDefinition[] = [
   deviceTimeDefinition,
   imageCompressorDefinition,
   imageBackgroundRemoverDefinition,
-  compliantProductImageDefinition,
   brandPromoImageDefinition,
   productImageWorkbenchDefinition,
   {
@@ -352,6 +351,7 @@ const registeredTools: ToolDefinition[] = [
   },
   customCalendarDefinition,
   pdfSignatureDefinition,
+  compliantProductImageDefinition,
   {
     /*
      * Reserved by T26 (#28), not built. The feasibility gate in

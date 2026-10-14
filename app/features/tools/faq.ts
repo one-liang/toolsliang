@@ -1,5 +1,4 @@
 import { brandPromoImageFaq } from './brand-promo-image/content'
-import { compliantProductImageFaq } from './compliant-product-image/content'
 import { imageBackgroundRemoverFaq } from './image-background-remover/content'
 import { imageCompressorFaq } from './image-compressor/content'
 import { productImageWorkbenchFaq } from './product-image-workbench/content'
@@ -32,7 +31,6 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'device-time': deviceTimeFaq,
   'image-compressor': imageCompressorFaq,
   'image-background-remover': imageBackgroundRemoverFaq,
-  'compliant-product-image': compliantProductImageFaq,
   'product-image-workbench': productImageWorkbenchFaq,
   'custom-calendar': customCalendarFaq,
   'pdf-signature': pdfSignatureFaq,

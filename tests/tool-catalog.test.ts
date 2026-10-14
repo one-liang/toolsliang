@@ -47,12 +47,12 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'compliant-product-image', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar', 'pdf-signature'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar', 'pdf-signature'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
     expect(getTool('image-resizer')).toBeUndefined()
-    expect(toolsByCategory('image-commerce').map(tool => tool.slug)).toEqual(['image-compressor', 'image-background-remover', 'compliant-product-image', 'brand-promo-image', 'product-image-workbench'])
+    expect(toolsByCategory('image-commerce').map(tool => tool.slug)).toEqual(['image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench'])
     expect(publishedToolCategories.map(category => category.id)).toEqual(['calculation', 'time-calendar', 'random-selection', 'image-commerce', 'document'])
   })
 
@@ -179,7 +179,6 @@ describe('tool catalog', () => {
       '/zh-tw/tools/device-time/',
       '/zh-tw/tools/image-compressor/',
       '/zh-tw/tools/image-background-remover/',
-      '/zh-tw/tools/compliant-product-image/',
       '/zh-tw/tools/brand-promo-image/',
       '/zh-tw/tools/product-image-workbench/',
       '/zh-tw/tools/bmi-calculator/',
@@ -191,7 +190,6 @@ describe('tool catalog', () => {
       '/en/tools/device-time/',
       '/en/tools/image-compressor/',
       '/en/tools/image-background-remover/',
-      '/en/tools/compliant-product-image/',
       '/en/tools/brand-promo-image/',
       '/en/tools/product-image-workbench/',
       '/en/tools/bmi-calculator/',
