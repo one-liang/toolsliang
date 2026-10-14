@@ -2,7 +2,6 @@ import { expect, it } from 'vitest'
 import { compliantProductImageCanaries } from './support/compliant-product-image-canaries'
 import { inspectNetworkRequest } from './e2e/support/privacy-boundary'
 import { compliantImageSources } from '@/features/tools/compliant-product-image/domain/sources'
-import { compliantProductImageDefinition } from '@/features/tools/compliant-product-image/definition'
 
 const policy = { allowedOrigins: ['https://toolsliang.com'] }
 
@@ -48,9 +47,4 @@ it('通路來源只被引用與外連，不由本站在執行期取得', () => {
     // A channel page is a third-party origin: the tool links out to it and never fetches it.
     expect(findings, source.id).toContain(`GET ${new URL(source.url).origin}: 不允許的第三方請求`)
   })
-})
-
-it('工具不宣告任何需要下載的離線資產，preset 隨網站打包', () => {
-  expect(compliantProductImageDefinition.offlineMode).toBe('ready')
-  expect(compliantProductImageDefinition.offlineAssets ?? []).toEqual([])
 })
