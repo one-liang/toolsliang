@@ -1,5 +1,4 @@
 import type { LocaleCode, LocalizedCopy } from '../catalog'
-import type { ToolFaqEntry } from '../faq'
 import { imageInputErrors } from '@/features/images/messages'
 import type { RuleDisposition } from './domain/preset'
 import type { OutputSizeIssue } from './domain/render'
@@ -400,67 +399,3 @@ export function describeRuleValue(rule: CompliantImagePresetRule, locale: Locale
       return en ? 'Prohibited by the source wording quoted below' : '來源原文明列的禁止事項，見下方引文'
   }
 }
-
-/** §7.4 — the only questions this page may ask, answered from the sections it names. */
-export const compliantProductImageFaq: ToolFaqEntry[] = [
-  {
-    heading: {
-      'zh-tw': '合規主圖工具會保證商品圖被通路接受嗎？',
-      en: 'Does the compliant product image tool guarantee that a channel will accept my image?',
-    },
-    body: {
-      'zh-tw': '不會。這個工具只按照通路自己公開的規格協助你調整尺寸、比例、格式與容量，並把它無法判定的規則列出來。toolsliang 與各通路沒有合作或授權關係，實際規定以通路當下的公告為準。',
-      en: 'No. The tool only helps you match the dimensions, ratio, format and capacity a channel publishes for itself, and lists the rules it cannot judge. toolsliang has no partnership with any channel, and the channel\'s current announcement always governs.',
-    },
-  },
-  {
-    heading: {
-      'zh-tw': 'preset 的規格是從哪裡來的？',
-      en: 'Where do the preset specifications come from?',
-    },
-    body: {
-      'zh-tw': '來自四份公開頁面：Google 產品資料規格、Amazon 商品攝影說明、momo 商店規則中心與露天市集幫助中心。每個 preset 旁邊都標出來源標題、可點擊的原始網址與查核日期，每條規則也附上讀到它的那一句原文。',
-      en: 'From four public pages: the Google product data specification, Amazon\'s product photo guidance, the momo store rules centre and the Ruten help centre. Every preset shows its source title, a link to the original page and the date it was read, and every rule carries the sentence it was read from.',
-    },
-  },
-  {
-    heading: {
-      'zh-tw': '為什麼有些台灣通路沒有 preset？',
-      en: 'Why do some Taiwan channels have no preset?',
-    },
-    body: {
-      'zh-tw': '因為它們的規格頁沒辦法穩定引用：有的要執行 JavaScript 才讀得到，有的要登入，有的網站自己的存取規則不允許自動取得，有的根本沒有公開圖片規格。與其猜一組數字，這個工具寧可說沒有——頁面上列出被排除的通路、原因與重新評估的日期。',
-      en: 'Because their specification pages cannot be cited reliably: some need JavaScript, some need a sign-in, some sites\' own access rules disallow automated fetching, and some publish no image specification at all. Rather than invent numbers, the tool says so — the page lists each excluded channel, the reason and the date it will be looked at again.',
-    },
-  },
-  {
-    heading: {
-      'zh-tw': 'preset 過期的時候會怎麼樣？',
-      en: 'What happens when a preset passes its review deadline?',
-    },
-    body: {
-      'zh-tw': '每個 preset 從查核日算起 90 天內是有效的；之後 30 天仍可使用，但會標示待重新查核。超過寬限期就會停用，工具不會拿舊規格繼續判定輸出，而是請你直接看通路的最新公告。通路收攤或來源被撤下時，preset 會標為已停止維護。',
-      en: 'A preset is current for 90 days after the day its source was read. For another 30 days it still works but is flagged as due for review. Past that it is disabled — the tool stops judging outputs with stale rules and points you at the channel\'s announcement instead. If a channel closes or takes its page down, the preset is marked as no longer maintained.',
-    },
-  },
-  {
-    heading: {
-      'zh-tw': '哪些規則工具沒辦法自動判定？',
-      en: 'Which rules can the tool not judge automatically?',
-    },
-    body: {
-      'zh-tw': '只有尺寸、長寬比、格式、總像素與檔案大小能從一個輸出檔案直接讀出來。商品佔比與背景是否純色只提供輔助框與填色，由你判斷；促銷文字、邊框、浮水印與每則商品的圖片張數只能提醒你自行確認；浮水印與 Logo 的擺放位置則不在這個工具的範圍。每次輸出後，這些規則都會逐條列出來。',
-      en: 'Only dimensions, aspect ratio, format, total pixels and file size can be read off one output file. Product occupancy and whether the background is a solid colour get a guide frame and a fill colour, but you decide; promotional text, borders, watermarks and how many images a listing needs are reminders only; watermark and logo placement is outside this tool entirely. Every one of them is listed after each render.',
-    },
-  },
-  {
-    heading: {
-      'zh-tw': '我的商品圖片會被傳到伺服器嗎？',
-      en: 'Is my product image sent to a server?',
-    },
-    body: {
-      'zh-tw': '不會，也不會被送到任何地方。原圖、檔名、裁切參數、預覽與輸出只在這台裝置的瀏覽器記憶體處理，只有你主動下載才會保存輸出。通路規格已隨網站打包，使用時不會再連到任何通路，關閉工具即清除工作內容。',
-      en: 'No — they are never sent anywhere. The source image, its filename, the crop settings, the previews and the output stay in this device\'s browser memory, and the output is saved only when you download it. The channel presets ship with the site, so nothing is fetched from a channel while you work, and closing the tool clears the workspace.',
-    },
-  },
-]

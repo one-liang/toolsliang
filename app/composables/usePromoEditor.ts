@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { createPromoHistory, createPromoLayer, type PromoLayer, type PromoLayerKind, type PromoScene } from '@/features/tools/brand-promo-image/scene'
+import { createPromoHistory, createPromoLayer, reorderPromoLayers, type PromoLayer, type PromoLayerKind, type PromoScene } from '@/features/tools/brand-promo-image/scene'
 import { createPromoRenderer } from '@/features/tools/brand-promo-image/engine'
 import { createImageCompressor } from '@/features/tools/image-compressor/engine'
 import { createLocalAssetRepository } from '@/features/shell/local-assets/repository'
@@ -42,17 +42,34 @@ export function usePromoEditor() {
     if (busy.value || saving.value) return
     history.commit(next); sync()
   }
+  /**
+   * A gesture in progress on the preview: drawn straight away, but not a step
+   * in the history until `commit` is called once the pointer is released.
+   */
+  function preview(next: PromoScene) {
+    if (busy.value || saving.value) return
+    scene.value = next
+    clearOutput(); message.value = ''; error.value = ''
+  }
+  /** Puts the canvas back to the last committed step, for a gesture abandoned with Escape. */
+  function revert() { if (!busy.value && !saving.value) sync() }
   function patchLayer(patch: Partial<PromoLayer>) {
     commit({ ...scene.value, layers: scene.value.layers.map(layer => layer.id === selectedId.value ? { ...layer, ...patch } : layer) })
   }
+  /** Moves a layer to a position in the back-to-front order. */
+  function reorder(id: string, index: number) {
+    const layers = reorderPromoLayers(scene.value.layers, id, index)
+    if (layers !== scene.value.layers) commit({ ...scene.value, layers })
+  }
   function move(direction: number) {
-    const layers = [...scene.value.layers]
-    const index = layers.findIndex(layer => layer.id === selectedId.value)
+    const index = scene.value.layers.findIndex(layer => layer.id === selectedId.value)
     const target = index + direction
-    if (index < 0 || target < 0 || target >= layers.length) return
-    const [layer] = layers.splice(index, 1)
-    layers.splice(target, 0, layer!)
-    commit({ ...scene.value, layers })
+    if (index < 0 || target < 0 || target >= scene.value.layers.length) return
+    reorder(selectedId.value, target)
+  }
+  /** Brings the selected layer to the front, or sends it to the back. */
+  function moveToEdge(edge: 'front' | 'back') {
+    if (selectedId.value) reorder(selectedId.value, edge === 'front' ? scene.value.layers.length - 1 : 0)
   }
   function remove() { commit({ ...scene.value, layers: scene.value.layers.filter(layer => layer.id !== selectedId.value) }) }
   function undo() { if (!busy.value && !saving.value) { history.undo(); sync() } }
@@ -130,5 +147,5 @@ export function usePromoEditor() {
     Object.values(assets.value).forEach(asset => URL.revokeObjectURL(asset.url))
     assets.value = {}
   })
-  return { scene, assets, selectedId, selected, canUndo, canRedo, busy, saving, preparing, supported, error, message, stage, output, outputPreview, local, commit, patchLayer, move, remove, undo, redo, cancel, prepare, importFile, reuse, save, produce }
+  return { scene, assets, selectedId, selected, canUndo, canRedo, busy, saving, preparing, supported, error, message, stage, output, outputPreview, local, commit, preview, revert, patchLayer, reorder, move, moveToEdge, remove, undo, redo, cancel, prepare, importFile, reuse, save, produce }
 }

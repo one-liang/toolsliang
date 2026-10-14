@@ -91,6 +91,26 @@ it('模型尚未下載時說明首次下載，並且不允許開始去背', asyn
   expect(wrapper.find('button[type=submit]').attributes('disabled')).toBeDefined()
 })
 
+it('選好圖片後直接顯示預覽，而不是檔名與位元組數', async () => {
+  stubCache(true)
+  stubWorker((message, worker) => {
+    if (message.type === 'prepare') worker.onmessage?.({ data: { type: 'capabilities', supported: true, formats: ['image/png'] } })
+  })
+  const wrapper = mount(ImageBackgroundRemoverWorkspace)
+  mounted.push(wrapper)
+  await flushPromises()
+  await selectFile(wrapper, png())
+  const preview = wrapper.find('[data-image-source] img')
+  expect(preview.exists()).toBe(true)
+  expect(preview.attributes('src')).toBe('blob:preview')
+  expect(wrapper.text()).not.toContain('portrait.png')
+  expect(wrapper.text()).not.toContain('bytes')
+  await wrapper.findAll('button').find(button => button.text().includes('清除圖片'))!.trigger('click')
+  await flushPromises()
+  expect(wrapper.find('[data-image-source]').exists()).toBe(false)
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
+})
+
 it('先說明只處理人像，並在解碼前拒絕 HEIC／HEIF', async () => {
   stubCache(true)
   stubWorker((message, worker) => {

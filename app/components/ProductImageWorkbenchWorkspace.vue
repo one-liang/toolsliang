@@ -12,6 +12,7 @@ import { formatAssetSize } from '@/features/pwa/offline-assets'
 import { portraitScopeNotice } from '@/features/tools/image-background-remover/content'
 import { planPlacement } from '@/features/tools/compliant-product-image/domain/placement'
 import { compliantImagePresets, type CompliantImagePresetRule } from '@/features/tools/compliant-product-image/domain/reference'
+import { compliantImageSources } from '@/features/tools/compliant-product-image/domain/sources'
 import { checkOutputAgainstPreset, ruleDispositions } from '@/features/tools/compliant-product-image/domain/preset'
 import {
   compliantImageChannelLabels,
@@ -227,6 +228,8 @@ const placementStyle = computed(() => {
     height: `${spot.height / canvas.value.height * 100}%`,
   }
 })
+/** The channel's own page, so the rules can be read where they were published. */
+const presetSource = computed(() => compliantImageSources.find(item => item.id === preset.value.sourceId))
 const occupancy = computed(() => purpose.value === 'compliant' ? resolveOccupancyGuides(preset.value, evaluationDate.value) : [])
 const safeAreas = computed(() => purpose.value === 'compliant' ? resolveSafeAreaInsets(preset.value, evaluationDate.value) : [])
 const guideInset = (ratio: number) => `${((1 - Math.sqrt(ratio)) / 2) * 100}%`
@@ -509,7 +512,7 @@ async function dropItem(id: string) {
           </select>
           <p class="field-help">
             {{ en ? 'Reviewed' : '查核日' }} {{ preset.reviewedAt }} · {{ copy(presetStatusLabels[presetStatus], locale) }} ·
-            <NuxtLink :to="withLocale('/tools/compliant-product-image/')">{{ en ? 'See every rule and its source' : '查看完整規則與來源' }}</NuxtLink>
+            <a v-if="presetSource" :href="presetSource.url" target="_blank" rel="noopener noreferrer">{{ en ? 'Read the published channel specification' : '查看通路公開規格原文' }}</a>
           </p>
         </div>
 

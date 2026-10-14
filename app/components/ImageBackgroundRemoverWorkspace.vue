@@ -20,6 +20,8 @@ const source = shallowRef<File>()
 const result = shallowRef<BackgroundRemovalOutput>()
 const outputUrl = ref('')
 const originalUrl = ref('')
+/** The chosen file itself, so the visitor sees what they picked before anything runs. */
+const sourceUrl = ref('')
 const zoom = ref<string | number>(100)
 const fileInput = ref<HTMLInputElement>()
 const running = ref(false)
@@ -157,9 +159,17 @@ function cancel() {
 
 function reset() { cancel(); source.value = undefined; error.value = ''; message.value = ''; fileInput.value?.focus() }
 
-watch(source, clearResult)
+function setSourcePreview(file: File | undefined) {
+  if (sourceUrl.value) URL.revokeObjectURL(sourceUrl.value)
+  sourceUrl.value = ''
+  if (!file) return
+  try { sourceUrl.value = URL.createObjectURL(file) }
+  catch { /* the preview is a convenience; the run still works without it */ }
+}
+
+watch(source, (file) => { clearResult(); setSourcePreview(file) })
 onMounted(prepare)
-onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearResult(); source.value = undefined })
+onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearResult(); setSourcePreview(undefined); source.value = undefined })
 </script>
 
 <template>
@@ -208,7 +218,9 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
       <p id="remover-formats" class="field-help">JPEG · PNG · WebP · {{ locale === 'en' ? 'One image, up to 25 MiB / 24 MP. You can also drop a file here.' : '單張最多 25 MiB／2,400 萬像素。也可將檔案拖曳至此。' }}</p>
       <p class="field-help">{{ backgroundRemovalErrors.unsupported_heic![locale] }}</p>
     </div>
-    <p v-if="source" class="image-background-remover__filename">{{ source.name }} · {{ size(source.size) }}</p>
+    <figure v-if="source && sourceUrl && !result" class="image-background-remover__source" data-image-source>
+      <img :src="sourceUrl" :alt="locale === 'en' ? 'Preview of the chosen image' : '已選擇圖片的預覽'">
+    </figure>
 
     <form :aria-busy="running" @submit.prevent="removeBackground">
       <div class="tool-workspace__actions">

@@ -442,17 +442,17 @@ html[lang="zh-Hant-TW"] .landing-hero h1 { letter-spacing: -.045em; }
 .tool-page .breadcrumbs { margin-bottom: 16px; }
 .tool-page .tool-heading { margin-bottom: 20px; }
 .tool-page .tool-contract { margin-top: 16px; padding: clamp(16px, 3vw, 24px); }
-.tool-contract__summary, .compliant-product-image__rules summary, .compliant-product-image__excluded summary {
+.tool-contract__summary {
   display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px;
   list-style: none; cursor: pointer; font-weight: 700;
 }
-.tool-contract__summary::-webkit-details-marker, .compliant-product-image__rules summary::-webkit-details-marker, .compliant-product-image__excluded summary::-webkit-details-marker { display: none; }
-.tool-contract__summary::after, .compliant-product-image__rules summary::after, .compliant-product-image__excluded summary::after {
+.tool-contract__summary::-webkit-details-marker { display: none; }
+.tool-contract__summary::after {
   content: ''; inline-size: 20px; block-size: 20px; flex: none;
   background: var(--select-chevron) center / 20px no-repeat;
   transition: transform var(--duration-fast) var(--ease-standard);
 }
-details[open] > .tool-contract__summary::after, .compliant-product-image__rules[open] > summary::after, .compliant-product-image__excluded[open] > summary::after { transform: rotate(180deg); }
+details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .tool-contract__summary h2 { margin: 0; font-size: clamp(1.05rem, 2.5vw, 1.25rem); line-height: 1.35; }
 .tool-contract__body, .tool-contract--faq .tool-faq { padding-top: 12px; }
 .tool-contract__body > p:last-child { margin-bottom: 0; }
@@ -957,39 +957,27 @@ details[open] > .tool-contract__summary::after, .compliant-product-image__rules[
 
 /* Image workspaces: part of the precached shell stylesheet, including before hydration. */
 .image-compressor__picker,
-.image-background-remover__picker,
-.compliant-product-image__picker { padding: 24px; border: 1px dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.image-background-remover__picker { padding: 24px; border: 1px dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
 .image-compressor__picker > svg,
-.image-background-remover__picker > svg,
-.compliant-product-image__picker > svg { display: block; margin-bottom: 12px; color: var(--color-primary-strong); }
+.image-background-remover__picker > svg { display: block; margin-bottom: 12px; color: var(--color-primary-strong); }
 .image-compressor__picker input,
-.image-background-remover__picker input,
-.compliant-product-image__picker input { height: auto; min-height: 44px; max-width: 100%; }
+.image-background-remover__picker input { height: auto; min-height: 44px; max-width: 100%; }
 .image-compressor__picker input::file-selector-button,
-.image-background-remover__picker input::file-selector-button,
-.compliant-product-image__picker input::file-selector-button { min-height: 44px; padding: 8px 12px; margin-right: 8px; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-foreground); }
-.image-background-remover__filename,
-.compliant-product-image__filename { overflow-wrap: anywhere; margin: 16px 0; }
+.image-background-remover__picker input::file-selector-button { min-height: 44px; padding: 8px 12px; margin-right: 8px; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-foreground); }
 .image-compressor__status,
-.image-background-remover__status,
-.compliant-product-image__status { margin-top: 16px; }
+.image-background-remover__status { margin-top: 16px; }
 .image-compressor .field-error,
-.image-background-remover .field-error,
-.compliant-product-image .field-error { display: flex; align-items: flex-start; gap: 8px; }
+.image-background-remover .field-error { display: flex; align-items: flex-start; gap: 8px; }
 .image-compressor .field-error svg,
-.image-background-remover .field-error svg,
-.compliant-product-image .field-error svg { flex-shrink: 0; }
+.image-background-remover .field-error svg { flex-shrink: 0; }
 .image-compressor__comparison figure,
 .image-background-remover__comparison figure { min-width: 0; margin: 0; }
 .image-compressor__comparison figcaption,
 .image-background-remover__comparison figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
 .image-compressor__download,
-.image-background-remover__download,
-.compliant-product-image__download { margin-top: 16px; }
-.image-compressor__settings,
-.compliant-product-image__settings { padding: 0; margin: 24px 0 0; border: 0; min-width: 0; }
-.image-compressor__settings legend,
-.compliant-product-image__settings legend { margin-bottom: 16px; font-weight: 700; }
+.image-background-remover__download { margin-top: 16px; }
+.image-compressor__settings { padding: 0; margin: 24px 0 0; border: 0; min-width: 0; }
+.image-compressor__settings legend { margin-bottom: 16px; font-weight: 700; }
 .image-compressor__comparison { margin-top: 24px; }
 .image-compressor__comparison img { width: 100%; height: auto; max-height: var(--image-preview-max-height); object-fit: contain; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 
@@ -1005,64 +993,50 @@ details[open] > .tool-contract__summary::after, .compliant-product-image__rules[
 .image-background-remover__frame img { display: block; height: auto; max-width: none; }
 .image-background-remover__frame--alpha, .workbench__figure--alpha img, .workbench__thumb--alpha { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 .image-background-remover__coverage { font-weight: 600; }
+.image-background-remover__source { margin: 16px 0 0; }
+.image-background-remover__source img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); width: auto; height: auto; margin-inline: auto; object-fit: contain; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 
-/* Compliant product image: the source panel, the rule lists and the guide frames. */
-.compliant-product-image__source { margin: 20px 0 0; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
-.compliant-product-image__source h3 { margin: 0 0 8px; font-size: 1rem; }
-.compliant-product-image__source p { margin: 0 0 6px; font-size: .84rem; overflow-wrap: anywhere; }
-.compliant-product-image__source p:last-child { margin-bottom: 0; }
-.compliant-product-image__source [data-preset-status] { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 600; }
-.compliant-product-image__notices { margin: 16px 0; padding: 0; list-style: none; display: grid; gap: 12px; }
-.compliant-product-image__picker { margin-top: 16px; }
-.compliant-product-image__notices li { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid var(--color-warning); border-radius: var(--radius-sm); font-size: .84rem; }
-.compliant-product-image__notices svg { flex-shrink: 0; margin-top: 2px; }
-.compliant-product-image__color { min-height: 44px; padding: 4px; }
-.compliant-product-image__result { margin: 24px 0 0; }
-.compliant-product-image__result figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
-/*
- * The frame is the output canvas, not the image: it takes the target ratio and
- * the guides are inset as a share of it. A preview that set its own box would
- * letterbox inside the frame and put every guide somewhere the pixels are not.
- * `--frame-ratio` caps the height without breaking that ratio at any shape.
- */
-.compliant-product-image__frame { position: relative; overflow: hidden; width: min(100%, calc(var(--image-preview-max-height) * var(--frame-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); }
-.compliant-product-image__frame img { position: absolute; display: block; }
-.compliant-product-image__frame-fill { inset: 0; width: 100%; height: 100%; }
-.compliant-product-image__guide { position: absolute; display: flex; align-items: flex-start; justify-content: center; border: 2px dashed var(--color-primary-strong); pointer-events: none; }
-.compliant-product-image__guide span { margin-top: -1px; padding: 2px 8px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--color-foreground); color: var(--color-surface); font-size: .75rem; font-weight: 700; }
-.compliant-product-image__check, .compliant-product-image__rules, .compliant-product-image__caveats, .compliant-product-image__excluded { margin-top: 24px; }
-.compliant-product-image__check h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 1rem; }
-.compliant-product-image__check h3 svg { flex-shrink: 0; }
-.compliant-product-image__group { margin-top: 16px; }
-.compliant-product-image__group h4 { margin: 0 0 8px; font-size: .86rem; }
-.compliant-product-image__rules h3, .compliant-product-image__caveats h3, .compliant-product-image__excluded h3 { margin: 0 0 12px; font-size: 1rem; }
-.compliant-product-image__rules summary, .compliant-product-image__excluded summary { font-size: 1rem; }
-.compliant-product-image__rules[open] ul, .compliant-product-image__excluded[open] ul { padding-top: 12px; }
-.compliant-product-image__check ul, .compliant-product-image__rules ul, .compliant-product-image__excluded ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
-.compliant-product-image__check li, .compliant-product-image__rules li, .compliant-product-image__excluded li { display: grid; gap: 4px; padding-inline-start: 12px; border-inline-start: 3px solid var(--color-border); font-size: .84rem; }
-.compliant-product-image__check q, .compliant-product-image__rules q { color: var(--color-muted-foreground); font-size: .8rem; }
-.compliant-product-image__meta { color: var(--color-muted-foreground); font-size: .78rem; }
-.compliant-product-image__caveats ul { margin: 0; padding-inline-start: 20px; display: grid; gap: 8px; font-size: .84rem; }
 
 /* Brand compositions use the shared flat tool surface and image preview budget. */
 .brand-promo__editor { display: grid; gap: 24px; margin-block: 24px; }
 .brand-promo__layers, .brand-promo__preview { min-width: 0; }
 .brand-promo h2 { margin-block: 0 16px; font-size: 1.125rem; }
 .brand-promo__layers ol, .brand-promo__library ul { padding: 0; list-style: none; display: grid; gap: 8px; }
-.brand-promo__layers li > button { width: 100%; justify-content: flex-start; white-space: normal; text-align: start; }
+.brand-promo__layers li { display: flex; align-items: center; gap: 4px; border-radius: var(--radius-sm); }
+.brand-promo__layers li > button { flex: 1; min-width: 0; width: 100%; justify-content: flex-start; white-space: normal; text-align: start; }
+.brand-promo__grip { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; min-height: 44px; color: var(--color-muted-foreground); cursor: grab; }
+.brand-promo__layer--drop { outline: 2px dashed var(--color-primary-strong); outline-offset: 2px; }
+.brand-promo__layer--dragging { opacity: .5; }
+.brand-promo__thumb { flex: none; width: 32px; height: 32px; object-fit: contain; border-radius: 4px; background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; }
 .brand-promo__layers button[aria-pressed="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
 .brand-promo__controls { border: 0; padding: 0; margin-block: 24px; display: grid; gap: 16px; min-width: 0; }
 .brand-promo__controls legend { margin-bottom: 16px; font-weight: 650; }
 .brand-promo__filename, .brand-promo__library li { overflow-wrap: anywhere; }
-.brand-promo__canvas { position: relative; overflow: hidden; width: min(100%, calc(var(--image-preview-max-height) * var(--promo-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); background: var(--color-surface-subtle); }
-.brand-promo__canvas img { position: absolute; display: block; max-width: none; }
+/* The stage frame leaves room for handles just outside the canvas, and clips anything further out. */
+.brand-promo__stage-frame { overflow: hidden; padding: 12px; }
+.brand-promo__stage { position: relative; width: min(100%, calc(var(--image-preview-max-height) * var(--promo-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); background: var(--color-surface-subtle); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.brand-promo__stage:focus-visible { outline: 3px solid var(--color-primary-strong); outline-offset: 3px; }
+.brand-promo__canvas { position: absolute; inset: 0; overflow: hidden; }
+.brand-promo__canvas img { position: absolute; display: block; max-width: none; pointer-events: none; -webkit-user-drag: none; }
+.brand-promo__selection { position: absolute; box-sizing: border-box; border: 1px solid var(--color-primary-strong); box-shadow: 0 0 0 1px rgb(255 255 255 / .85); cursor: move; }
+.brand-promo__handle { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border: 2px solid var(--color-primary-strong); border-radius: 2px; background: #ffffff; touch-action: none; }
+/* A finger-sized hit area around each small visible handle. */
+.brand-promo__handle::before { content: ""; position: absolute; inset: -12px; }
+.brand-promo__handle--nw { left: 0; top: 0; cursor: nwse-resize; }
+.brand-promo__handle--n { left: 50%; top: 0; cursor: ns-resize; }
+.brand-promo__handle--ne { left: 100%; top: 0; cursor: nesw-resize; }
+.brand-promo__handle--e { left: 100%; top: 50%; cursor: ew-resize; }
+.brand-promo__handle--se { left: 100%; top: 100%; cursor: nwse-resize; }
+.brand-promo__handle--s { left: 50%; top: 100%; cursor: ns-resize; }
+.brand-promo__handle--sw { left: 0; top: 100%; cursor: nesw-resize; }
+.brand-promo__handle--w { left: 0; top: 50%; cursor: ew-resize; }
 .brand-promo__result { margin: 0; }
 .brand-promo__result img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); object-fit: contain; }
 .brand-promo__library { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border); }
 .brand-promo__library li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .brand-promo__library a { color: var(--color-primary-strong); text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; margin-right: 16px; }
 @media (min-width: 768px) {
-  .brand-promo__editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .brand-promo__editor { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
 }
 
 /* The workbench keeps the shared tool surface; only its step rail and stacked previews are new. */
@@ -1135,8 +1109,17 @@ details[open] > .tool-contract__summary::after, .compliant-product-image__rules[
 /* The page is the placement surface, so the overlay is positioned against the image itself. */
 .pdf-signature__canvas { position: relative; width: fit-content; max-width: 100%; margin-inline: auto; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: #ffffff; }
 .pdf-signature__canvas > img { display: block; width: auto; max-width: 100%; height: auto; max-height: calc(var(--image-preview-max-height) * 1.6); }
-.pdf-signature__placement { position: absolute; padding: 0; border: 2px dashed var(--color-primary-strong); border-radius: 2px; background: transparent; cursor: grab; touch-action: none; }
-.pdf-signature__placement > img { display: block; width: 100%; height: 100%; }
+.pdf-signature__canvas > img { -webkit-user-drag: none; user-select: none; }
+.pdf-signature__placement { position: absolute; padding: 0; border: 2px dashed var(--color-primary-strong); border-radius: 2px; background: transparent; cursor: move; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.pdf-signature__placement > img { display: block; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; }
+/* Corner handles: a small visible square inside a larger invisible hit area for fingers. */
+.pdf-signature__handle { position: absolute; width: 12px; height: 12px; border: 2px solid var(--color-primary-strong); border-radius: 2px; background: #ffffff; touch-action: none; }
+.pdf-signature__handle::before { content: ""; position: absolute; inset: -10px; }
+.pdf-signature__handle--top-left { top: -7px; left: -7px; cursor: nwse-resize; }
+.pdf-signature__handle--top-right { top: -7px; right: -7px; cursor: nesw-resize; }
+.pdf-signature__handle--bottom-left { bottom: -7px; left: -7px; cursor: nesw-resize; }
+.pdf-signature__handle--bottom-right { bottom: -7px; right: -7px; cursor: nwse-resize; }
+.pdf-signature__placement-hint { margin: 0; }
 .pdf-signature__placement--selected { border-style: solid; box-shadow: 0 0 0 2px var(--color-surface); }
 .pdf-signature__placement:focus-visible { outline: 3px solid var(--color-primary-strong); outline-offset: 3px; }
 .pdf-signature__disclosures { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border); }

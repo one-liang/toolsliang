@@ -3,7 +3,7 @@ import { createLocalWorker } from '../engine/local-worker'
 import { createWorkerEngine } from '../engine/worker-engine'
 import { validateImageInput } from '@/features/images/input'
 import { exceedsImageLimits, imageInputLimits } from '@/features/images/limits'
-import { promoLayerKinds, type PromoScene } from './scene'
+import { promoLayerKinds, promoScaleRange, type PromoScene } from './scene'
 
 export interface PromoInput { scene: PromoScene, files: Record<string, File> }
 export interface PromoWireOutput { bytes: ArrayBuffer, preview: ArrayBuffer, width: number, height: number }
@@ -18,7 +18,7 @@ export function createPromoRenderer() {
       for (const layer of scene.layers) {
         if (!promoLayerKinds.includes(layer.kind) || !['contain', 'cover'].includes(layer.fit)
           || ![layer.x, layer.y].every(value => Number.isFinite(value) && Math.abs(value) <= 1)
-          || !Number.isFinite(layer.scale) || layer.scale < 0.01 || layer.scale > 4
+          || [layer.scale, layer.scaleY ?? layer.scale].some(value => !Number.isFinite(value) || value < promoScaleRange.min || value > promoScaleRange.max)
           || !Number.isFinite(layer.opacity) || layer.opacity < 0 || layer.opacity > 1) return 'invalid_options'
         const file = files[layer.assetId]
         if (!file) return 'missing_asset'

@@ -34,6 +34,67 @@ async function outputPixels(page: Page) {
   }, url)
 }
 
+/** Drags the mouse by a share of the stage, so the numbers stay the same at any preview size. */
+async function dragBy(page: Page, from: { x: number, y: number }, share: { x: number, y: number }) {
+  const stage = (await page.locator('[data-promo-stage]').boundingBox())!
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(from.x + stage.width * share.x, from.y + stage.height * share.y, { steps: 8 })
+  await page.mouse.up()
+}
+
+async function percent(page: Page, label: string) {
+  return Number(await page.getByLabel(label, { exact: true }).inputValue())
+}
+
+test('在預覽上直接拖曳、拉角等比縮放、拉邊拉伸，並以快捷鍵調整圖層上下', async ({ page }) => {
+  await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
+  await add(page, 'background', '#ff0000')
+  await add(page, 'logo', '#0000ff')
+  await page.getByLabel('縮放（%）', { exact: true }).fill('50')
+  const stage = page.locator('[data-promo-stage]')
+  await stage.scrollIntoViewIfNeeded()
+  const box = (await stage.boundingBox())!
+
+  // Clicking the logo picks it, and dragging moves it by the same share of the canvas.
+  await dragBy(page, { x: box.x + box.width / 2, y: box.y + box.height / 2 }, { x: 0.1, y: 0 })
+  expect(Math.abs(await percent(page, '水平位置（%）') - 10)).toBeLessThanOrEqual(1)
+  await page.keyboard.press('Control+z')
+  await expect(page.getByLabel('水平位置（%）')).toHaveValue('0')
+  await page.keyboard.press('Control+Shift+z')
+  expect(Math.abs(await percent(page, '水平位置（%）') - 10)).toBeLessThanOrEqual(1)
+
+  // A corner scales proportionally: 500 px wide plus 100 px each way is 120%, so 50% becomes 60%.
+  const corner = (await page.locator('.brand-promo__handle--se').boundingBox())!
+  await dragBy(page, { x: corner.x + corner.width / 2, y: corner.y + corner.height / 2 }, { x: 0.1, y: 0.1 })
+  expect(Math.abs(await percent(page, '縮放（%）') - 60)).toBeLessThanOrEqual(1)
+  await expect(page.getByRole('button', { name: '還原原始比例', exact: true })).toHaveCount(0)
+
+  // An edge stretches one side, which the panel offers to undo.
+  const edge = (await page.locator('.brand-promo__handle--e').boundingBox())!
+  await dragBy(page, { x: edge.x + edge.width / 2, y: edge.y + edge.height / 2 }, { x: 0.05, y: 0 })
+  await expect(page.getByRole('button', { name: '還原原始比例', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '還原原始比例', exact: true }).click()
+  await expect(page.getByRole('button', { name: '還原原始比例', exact: true })).toHaveCount(0)
+
+  // Ctrl+[ sends the logo behind the background, and the front-first panel shows it.
+  await stage.focus()
+  await expect(page.locator('.brand-promo__layers ol li').first()).toContainText('Logo')
+  await page.keyboard.press('Control+BracketLeft')
+  await expect(page.locator('.brand-promo__layers ol li').first()).toContainText('背景')
+  await page.keyboard.press('Control+Shift+BracketRight')
+  await expect(page.locator('.brand-promo__layers ol li').first()).toContainText('Logo')
+
+  // Arrow keys on the focused preview nudge by one canvas pixel.
+  const before = await percent(page, '垂直位置（%）')
+  for (let step = 0; step < 10; step++) await page.keyboard.press('ArrowDown')
+  await expect(page.getByLabel('垂直位置（%）')).toHaveValue(String(before + 1))
+
+  await page.getByRole('button', { name: '產生 PNG', exact: true }).click()
+  await expect(page.getByRole('link', { name: '下載 PNG', exact: true })).toBeVisible()
+  expect((await outputPixels(page)).corner).toEqual([255, 0, 0, 255])
+})
+
 test('組合、鍵盤調整、圖層順序、復原重做與 PNG 像素輸出', async ({ page }, info) => {
   await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
   await add(page, 'background', '#ff0000')
