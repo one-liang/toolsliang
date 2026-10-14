@@ -6,7 +6,8 @@ import { Card } from '@/components/ui/card'
 import SignaturePad from '@/components/SignaturePad.vue'
 import { isSignatureInputErrorCode, pdfSignatureErrors, pdfSignatureStageLabels, signatureInputErrors } from '@/features/tools/pdf-signature/content'
 import { pdfSignatureDisclosures } from '@/features/tools/pdf-signature/domain/reference'
-import { nudgeStepPt } from '@/features/tools/pdf-signature/domain/workspace'
+import { nudgeStepPt, placementCorners, type PlacementCorner } from '@/features/tools/pdf-signature/domain/workspace'
+import type { NormalizedRect } from '@/features/tools/pdf-signature/domain/reference'
 import { localAssetErrorMessage } from '@/features/shell/local-assets/content'
 import { formatStoredSize } from '@/features/shell/local-assets/usage'
 import { usePdfSignature } from '@/composables/usePdfSignature'
@@ -19,10 +20,10 @@ import type { LocalAssetErrorCode } from '@/features/shell/local-assets/reposito
  *
  * Two rules shape the markup. The first two sentences of §10 of the decision
  * record are above everything a visitor can act on, so nobody places a signature
- * before reading what this is not. And every placement is reachable three ways —
- * pointer, arrow keys, and numeric fields — because a rectangle on a canvas is
- * the one thing a screen reader cannot read, so the numbers and the spoken
- * summary are the placement, not a description of it.
+ * before reading what this is not. And every placement is reachable two ways —
+ * dragging it (or a corner) on the page preview, and the arrow and plus/minus
+ * keys on the focused signature — while a spoken summary carries the numbers,
+ * because a rectangle on a canvas is the one thing a screen reader cannot read.
  */
 const { locale } = useAppLocale()
 const en = computed(() => locale.value === 'en')
@@ -33,7 +34,7 @@ const {
   preview, pagePlacements, geometry, summary, canUndo, signatures, activeSignature,
   activeSignatureId, savedSignatures, maxPlacedWidthPt, busy, stage, error, message, output, outputInfo,
   prepare, choose, openDocument, showPage, addSignature, dropSignature, saveSignature,
-  useSavedSignature, forgetSavedSignature, place, select, move, resize, setRect, remove, undo,
+  useSavedSignature, forgetSavedSignature, place, select, move, drag: dragTo, resize, resizeFromCorner, remove, undo,
   exportSigned, cancel, reset,
 } = usePdfSignature(() => locale.value)
 const fileInput = ref<HTMLInputElement>()
@@ -41,7 +42,12 @@ const passwordInput = ref<HTMLInputElement>()
 const pageImage = ref<HTMLImageElement>()
 const passwordDraft = ref('')
 const signatureName = ref('')
-let dragging: { id: string, x: number, y: number, moved: boolean } | undefined
+/**
+ * One pointer gesture on a placement: moving the whole signature, or pulling
+ * one of its corners. Both are measured from where the gesture began, so undo
+ * takes it back in one step and the signature stays under the pointer.
+ */
+let gesture: { id: string, corner?: PlacementCorner, origin: NormalizedRect, x: number, y: number, moved: boolean, pointerId: number } | undefined
 
 const errorText = computed(() => {
   const code = error.value
@@ -112,25 +118,38 @@ function useSignature(asset: Parameters<typeof addSignature>[0]) {
   if (opened.value) place()
 }
 
-function startDrag(event: PointerEvent, id: string) {
+function startGesture(event: PointerEvent, id: string, corner?: PlacementCorner) {
+  if (event.button !== 0 || busy.value) return
+  const target = (event.currentTarget as HTMLElement).closest<HTMLElement>('.pdf-signature__placement')
+  const placement = workspace.value.placements.find(candidate => candidate.id === id)
+  if (!target || !placement) return
+  /* Without this the browser starts dragging the signature image itself and
+   * cancels the pointer after the first movement: the drag that would not move. */
+  event.preventDefault()
+  target.focus({ preventScroll: true })
   select(id)
-  dragging = { id, x: event.clientX, y: event.clientY, moved: false }
-  /* Capture keeps the drag alive outside the page image; a pointer the browser
-   * no longer tracks refuses it, and the drag is fine without it. */
-  try { (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId) }
-  catch { /* the drag continues without capture */ }
+  gesture = { id, corner, origin: { ...placement.rect }, x: event.clientX, y: event.clientY, moved: false, pointerId: event.pointerId }
+  /* Capture keeps the gesture alive outside the page image; a pointer the
+   * browser no longer tracks refuses it, and the gesture is fine without it. */
+  try { target.setPointerCapture(event.pointerId) }
+  catch { /* the gesture continues without capture */ }
 }
 
-function drag(event: PointerEvent) {
-  if (!dragging) return
+function continueGesture(event: PointerEvent) {
+  if (!gesture || event.pointerId !== gesture.pointerId) return
   const scale = pointScale()
-  /* Undo has to take the rectangle back to where the drag began, not back one
-   * pointer sample, so everything after the first movement continues the step. */
-  move({ x: (event.clientX - dragging.x) / scale, y: (event.clientY - dragging.y) / scale }, { continuing: dragging.moved })
-  dragging = { id: dragging.id, x: event.clientX, y: event.clientY, moved: true }
+  const delta = { x: (event.clientX - gesture.x) / scale, y: (event.clientY - gesture.y) / scale }
+  if (!gesture.moved && Math.hypot(delta.x, delta.y) * scale < 1) return
+  /* Undo has to take the signature back to where the gesture began, not back
+   * one pointer sample, so everything after the first movement continues the step. */
+  if (gesture.corner) resizeFromCorner(gesture.corner, gesture.origin, delta, { continuing: gesture.moved })
+  else dragTo(gesture.origin, delta, { continuing: gesture.moved })
+  gesture.moved = true
 }
 
-function endDrag() { dragging = undefined }
+function endGesture(event: PointerEvent) {
+  if (gesture && event.pointerId === gesture.pointerId) gesture = undefined
+}
 
 /** The keyboard equivalent of dragging and resizing, on the placement itself. */
 function keyPlacement(event: KeyboardEvent) {
@@ -146,20 +165,6 @@ function keyPlacement(event: KeyboardEvent) {
   if (event.key === '-' || event.key === '_') { event.preventDefault(); resize(1 / 1.1); return }
   if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); remove() }
 }
-
-function setNumber(field: 'leftPt' | 'topPt' | 'widthPt', value: string) {
-  const current = geometry.value
-  if (!current) return
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return
-  setRect({
-    leftPt: field === 'leftPt' ? parsed : current.left,
-    topPt: field === 'topPt' ? parsed : current.top,
-    widthPt: field === 'widthPt' ? parsed : current.width,
-  })
-}
-
-function round(value: number) { return Math.round(value * 10) / 10 }
 
 /** The ceiling this device actually enforces, which is the number the visitor is told. */
 const maxMegabytes = computed(() => Math.floor(limits.maxBytes / 1024 / 1024))
@@ -311,6 +316,7 @@ function savedLabel(asset: SignatureAsset) {
             :alt="en ? `Preview of page ${pageIndex + 1}` : `第 ${pageIndex + 1} 頁的預覽`"
             :width="preview.width"
             :height="preview.height"
+            draggable="false"
           >
           <button
             v-for="placement in pagePlacements"
@@ -326,36 +332,40 @@ function savedLabel(asset: SignatureAsset) {
             }"
             :aria-pressed="placement.id === workspace.selectedId"
             :aria-label="en
-              ? `Placed signature. Arrow keys move it, plus and minus resize it, Delete removes it.`
-              : '已放置的簽名。方向鍵移動、加減號縮放、Delete 刪除。'"
-            @pointerdown="startDrag($event, placement.id)"
-            @pointermove="drag"
-            @pointerup="endDrag"
-            @pointercancel="endDrag"
+              ? `Placed signature. Drag it to move it, drag a corner to resize it. Arrow keys move it, plus and minus resize it, Delete removes it.`
+              : '已放置的簽名。拖曳可移動、拖曳四角可縮放；方向鍵移動、加減號縮放、Delete 刪除。'"
+            @pointerdown="startGesture($event, placement.id)"
+            @pointermove="continueGesture"
+            @pointerup="endGesture"
+            @pointercancel="endGesture"
+            @lostpointercapture="endGesture"
+            @dragstart.prevent
             @keydown="keyPlacement"
             @focus="select(placement.id)"
           >
-            <img :src="signatures.find(asset => asset.id === placement.signatureId)?.url" alt="" aria-hidden="true">
+            <img :src="signatures.find(asset => asset.id === placement.signatureId)?.url" alt="" aria-hidden="true" draggable="false">
+            <template v-if="placement.id === workspace.selectedId">
+              <span
+                v-for="corner in placementCorners"
+                :key="corner"
+                class="pdf-signature__handle"
+                :class="`pdf-signature__handle--${corner}`"
+                :data-corner="corner"
+                aria-hidden="true"
+                @pointerdown.stop="startGesture($event, placement.id, corner)"
+              />
+            </template>
           </button>
         </div>
       </section>
 
       <section v-if="geometry" class="pdf-signature__placement-fields" :aria-label="en ? 'Signature position' : '簽名位置'">
-        <div class="tool-workspace__grid">
-          <div class="field-group">
-            <label for="pdf-signature-left">{{ en ? 'From the left (pt)' : '距左（pt）' }}</label>
-            <input id="pdf-signature-left" class="ui-input" type="number" step="1" :value="round(geometry.left)" @change="setNumber('leftPt', ($event.target as HTMLInputElement).value)">
-          </div>
-          <div class="field-group">
-            <label for="pdf-signature-top">{{ en ? 'From the top (pt)' : '距上（pt）' }}</label>
-            <input id="pdf-signature-top" class="ui-input" type="number" step="1" :value="round(geometry.top)" @change="setNumber('topPt', ($event.target as HTMLInputElement).value)">
-          </div>
-          <div class="field-group">
-            <label for="pdf-signature-width">{{ en ? 'Width (pt)' : '寬度（pt）' }}</label>
-            <input id="pdf-signature-width" class="ui-input" type="number" step="1" min="24" :value="round(geometry.width)" @change="setNumber('widthPt', ($event.target as HTMLInputElement).value)">
-          </div>
-        </div>
-        <p role="status" class="pdf-signature__summary" data-placement-summary>{{ summary }}</p>
+        <p class="field-help pdf-signature__placement-hint">
+          {{ en
+            ? 'Drag the signature to where it belongs, and drag a corner to resize it. With the signature selected, arrow keys nudge it and + / - resize it.'
+            : '直接拖曳簽名到想要的位置，拖曳四個角可等比例縮放。選取簽名後，也能用方向鍵微調、按 + / - 縮放。' }}
+        </p>
+        <p role="status" class="sr-only" data-placement-summary>{{ summary }}</p>
         <div class="tool-workspace__actions">
           <Button type="button" variant="outline" @click="remove()">
             <Trash2 :size="18" aria-hidden="true" />{{ en ? 'Delete this signature' : '刪除這個簽名' }}

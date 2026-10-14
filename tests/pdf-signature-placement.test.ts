@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   canUndoPlacement,
   createPdfWorkspace,
+  dragPlacement,
   movePlacement,
   nudgeStepPt,
   placeSignature,
@@ -10,6 +11,7 @@ import {
   placementSummary,
   removePlacement,
   resizePlacement,
+  resizePlacementFromCorner,
   selectPlacement,
   setPlacementRect,
   signatureExportRequests,
@@ -200,5 +202,70 @@ describe('交給寫入引擎與說給使用者聽', () => {
   it('沒有選取時沒有幾何也沒有摘要', () => {
     expect(placementGeometry(workspace(), 'place-1')).toBeUndefined()
     expect(placementSummary(workspace(), 'place-1', 'zh-tw')).toBe('')
+  })
+})
+
+describe('在預覽上直接拖曳與拉角縮放', () => {
+  it('拖曳從手勢起點計算：碰到頁緣後往回拉，簽名仍跟著指標，而且只留下一步復原', () => {
+    const start = place()
+    const origin = start.placements[0]!.rect
+    const before = placementGeometry(start, 'place-1')!
+
+    let dragged = dragPlacement(start, 'place-1', { origin, delta: { x: -10_000, y: 0 } })
+    expect(placementGeometry(dragged, 'place-1')!.left).toBe(0)
+    dragged = dragPlacement(dragged, 'place-1', { origin, delta: { x: 30, y: -40 } }, { continuing: true })
+
+    const after = placementGeometry(dragged, 'place-1')!
+    expect(after.left).toBeCloseTo(before.left + 30, 4)
+    expect(after.top).toBeCloseTo(before.top - 40, 4)
+    expect(after.width).toBeCloseTo(before.width, 6)
+    expect(dragged.history).toHaveLength(start.history.length + 1)
+    expect(placementGeometry(undoPlacement(dragged), 'place-1')!.left).toBeCloseTo(before.left, 6)
+  })
+
+  it('拉右下角時左上角不動，簽名保持原本的長寬比', () => {
+    const start = place()
+    const origin = start.placements[0]!.rect
+    const before = placementGeometry(start, 'place-1')!
+
+    const grown = placementGeometry(resizePlacementFromCorner(start, 'place-1', { corner: 'bottom-right', origin, delta: { x: 60, y: 20 } }), 'place-1')!
+    expect(grown.left).toBeCloseTo(before.left, 6)
+    expect(grown.top).toBeCloseTo(before.top, 6)
+    expect(grown.width).toBeGreaterThan(before.width)
+    expect(grown.width / grown.height).toBeCloseTo(signature.width / signature.height, 6)
+  })
+
+  it('拉左上角時右下角不動', () => {
+    const start = place()
+    const origin = start.placements[0]!.rect
+    const before = placementGeometry(start, 'place-1')!
+
+    const shrunk = placementGeometry(resizePlacementFromCorner(start, 'place-1', { corner: 'top-left', origin, delta: { x: 30, y: 10 } }), 'place-1')!
+    expect(shrunk.width).toBeLessThan(before.width)
+    expect(shrunk.left + shrunk.width).toBeCloseTo(before.left + before.width, 6)
+    expect(shrunk.top + shrunk.height).toBeCloseTo(before.top + before.height, 6)
+  })
+
+  it('縮放不會小於看得見的寬度，也不會超出頁面', () => {
+    const start = place()
+    const origin = start.placements[0]!.rect
+
+    const tiny = placementGeometry(resizePlacementFromCorner(start, 'place-1', { corner: 'bottom-right', origin, delta: { x: -10_000, y: -10_000 } }), 'place-1')!
+    expect(tiny.width).toBeCloseTo(24, 6)
+
+    const huge = placementGeometry(resizePlacementFromCorner(start, 'place-1', { corner: 'bottom-right', origin, delta: { x: 10_000, y: 10_000 } }), 'place-1')!
+    expect(huge.left + huge.width).toBeLessThanOrEqual(huge.display.width + 1e-6)
+    expect(huge.top + huge.height).toBeLessThanOrEqual(huge.display.height + 1e-6)
+    expect(huge.width / huge.height).toBeCloseTo(signature.width / signature.height, 6)
+  })
+
+  it('一次拉角縮放只留下一步復原', () => {
+    const start = place()
+    const origin = start.placements[0]!.rect
+    let resized = resizePlacementFromCorner(start, 'place-1', { corner: 'bottom-right', origin, delta: { x: 10, y: 0 } })
+    for (const x of [20, 30, 40]) resized = resizePlacementFromCorner(resized, 'place-1', { corner: 'bottom-right', origin, delta: { x, y: 0 } }, { continuing: true })
+
+    expect(resized.history).toHaveLength(start.history.length + 1)
+    expect(undoPlacement(resized).placements[0]!.rect).toEqual(origin)
   })
 })

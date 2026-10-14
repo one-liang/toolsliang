@@ -100,7 +100,16 @@ test('多頁與旋轉 PDF：開啟、放置、預覽、輸出並保留未簽頁�
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/pdf-signature-signed-desktop.png', fullPage: true })
 })
 
-test('純鍵盤可以完成定位：方向鍵、數值欄位與文字摘要', async ({ page }) => {
+/** The placement as numbers, read back from the spoken summary. */
+async function placementNumbers(page: Page) {
+  const text = await page.locator('[data-placement-summary]').textContent()
+  const match = /([\d.,]+) pt from the left, ([\d.,]+) pt from the top, ([\d.,]+) pt wide and ([\d.,]+) pt tall/.exec(text ?? '')
+  if (!match) throw new Error(`unreadable placement summary: ${text}`)
+  const [left, top, width, height] = match.slice(1).map(value => Number(value.replace(/,/g, '')))
+  return { left: left!, top: top!, width: width!, height: height! }
+}
+
+test('純鍵盤可以完成定位：方向鍵、加減號與文字摘要', async ({ page }) => {
   await gotoHydrated(page, '/en/tools/pdf-signature/')
   await page.getByLabel('Choose a PDF').setInputFiles(upload('offset-crop-box'))
   await expect(page.locator('[data-document-summary]')).toContainText('2 pages')
@@ -110,30 +119,67 @@ test('純鍵盤可以完成定位：方向鍵、數值欄位與文字摘要', as
   await page.getByLabel('Name to write').fill('簽名測試用字')
   await page.locator('[data-signature-use]').click()
   await expect(page.locator('.pdf-signature__placement')).toHaveCount(1)
-
-  await page.getByLabel('From the left (pt)').fill('100')
-  await page.getByLabel('From the left (pt)').blur()
-  await page.getByLabel('From the top (pt)').fill('200')
-  await page.getByLabel('From the top (pt)').blur()
-  await page.getByLabel('Width (pt)').fill('180')
-  await page.getByLabel('Width (pt)').blur()
-  await expect(page.locator('[data-placement-summary]'))
-    .toContainText('100 pt from the left, 200 pt from the top, 180 pt wide')
+  // The position is dragged or keyed, never typed into "from the left" fields.
+  await expect(page.getByLabel('From the left (pt)')).toHaveCount(0)
 
   const placement = page.locator('.pdf-signature__placement')
   await placement.focus()
+  const start = await placementNumbers(page)
   await placement.press('ArrowRight')
-  await expect(page.locator('[data-placement-summary]')).toContainText('101 pt from the left')
-  await placement.press('Shift+ArrowDown')
-  await expect(page.locator('[data-placement-summary]')).toContainText('210 pt from the top')
+  await expect.poll(async () => (await placementNumbers(page)).left).toBeCloseTo(start.left + 1, 1)
+  await placement.press('Shift+ArrowUp')
+  await expect.poll(async () => (await placementNumbers(page)).top).toBeCloseTo(start.top - 10, 1)
   await placement.press('+')
-  await expect(page.getByLabel('Width (pt)')).toHaveValue('198')
+  await expect.poll(async () => (await placementNumbers(page)).width).toBeCloseTo(start.width * 1.1, 0)
   await placement.press('Delete')
-  await expect(page.locator('.pdf-signature__placement')).toHaveCount(0)
+  await expect(placement).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Undo' }).click()
   await expect(page.locator('.pdf-signature__placement')).toHaveCount(1)
   await expect(page.locator('[data-export]')).toBeEnabled()
+})
+
+test('在頁面預覽上直接拖曳簽名與拉角縮放，一次手勢一步復原', async ({ page }) => {
+  await gotoHydrated(page, '/en/tools/pdf-signature/')
+  await page.getByLabel('Choose a PDF').setInputFiles(upload('rotated-pages'))
+  await expect(page.locator('[data-document-summary]')).toContainText('4 pages')
+  await page.getByRole('radio', { name: 'Type' }).check()
+  await page.getByLabel('Name to write').fill('簽名測試用字')
+  await page.locator('[data-signature-use]').click()
+
+  const placement = page.locator('.pdf-signature__placement')
+  await expect(placement).toHaveCount(1)
+  await placement.scrollIntoViewIfNeeded()
+  const start = await placementNumbers(page)
+  const box = (await placement.boundingBox())!
+  const pointPerPixel = start.width / box.width
+
+  // Moving: the whole gesture lands, rather than stopping after the first pointer sample.
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2 - 60, box.y + box.height / 2 - 80, { steps: 8 })
+  await page.mouse.up()
+  const moved = await placementNumbers(page)
+  expect(moved.left).toBeCloseTo(start.left - 60 * pointPerPixel, 0)
+  expect(moved.top).toBeCloseTo(start.top - 80 * pointPerPixel, 0)
+  expect(moved.width).toBeCloseTo(start.width, 1)
+
+  // Resizing from the bottom-right corner keeps the top-left corner and the signature's shape.
+  const handle = (await page.locator('.pdf-signature__handle--bottom-right').boundingBox())!
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(handle.x + handle.width / 2 + 40, handle.y + handle.height / 2 + 20, { steps: 6 })
+  await page.mouse.up()
+  const resized = await placementNumbers(page)
+  expect(resized.left).toBeCloseTo(moved.left, 1)
+  expect(resized.top).toBeCloseTo(moved.top, 1)
+  expect(resized.width).toBeGreaterThan(moved.width)
+  expect(resized.width / resized.height).toBeCloseTo(moved.width / moved.height, 2)
+
+  await page.getByRole('button', { name: 'Undo' }).click()
+  expect((await placementNumbers(page)).width).toBeCloseTo(moved.width, 1)
+  await page.getByRole('button', { name: 'Undo' }).click()
+  expect((await placementNumbers(page)).left).toBeCloseTo(start.left, 1)
 })
 
 test('密碼保護檔：密碼留在裝置上，輸出不再帶有原本的保護', async ({ page }) => {

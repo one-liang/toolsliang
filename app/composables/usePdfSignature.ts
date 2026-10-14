@@ -3,11 +3,13 @@ import { createPdfSignatureSession, type PdfSignatureSession } from '@/features/
 import {
   pdfDisplayBox,
   pdfSignatureLimits,
+  type NormalizedRect,
   type PdfSignatureStage,
 } from '@/features/tools/pdf-signature/domain/reference'
 import {
   canUndoPlacement,
   createPdfWorkspace,
+  dragPlacement,
   movePlacement,
   placeSignature,
   placementGeometry,
@@ -16,11 +18,12 @@ import {
   removePlacement,
   removePlacementsOfSignature,
   resizePlacement,
+  resizePlacementFromCorner,
   selectPlacement,
-  setPlacementRect,
   signatureExportRequests,
   undoPlacement,
   type PdfWorkspaceState,
+  type PlacementCorner,
 } from '@/features/tools/pdf-signature/domain/workspace'
 import { createLocalAssetRepository } from '@/features/shell/local-assets/repository'
 import { openLocalAssetStore } from '@/features/shell/local-assets/indexeddb-store'
@@ -452,8 +455,11 @@ export function usePdfSignature(locale: () => LocaleCode) {
     select: (id: string) => update(state => selectPlacement(state, id)),
     move: (delta: { x: number, y: number }, options: { continuing?: boolean } = {}) =>
       update(state => selected.value ? movePlacement(state, selected.value.id, delta, options) : state),
+    drag: (origin: NormalizedRect, delta: { x: number, y: number }, options: { continuing?: boolean } = {}) =>
+      update(state => selected.value ? dragPlacement(state, selected.value.id, { origin, delta }, options) : state),
     resize: (factor: number) => update(state => selected.value ? resizePlacement(state, selected.value.id, factor) : state),
-    setRect: (rect: { leftPt: number, topPt: number, widthPt: number }) => update(state => selected.value ? setPlacementRect(state, selected.value.id, rect) : state),
+    resizeFromCorner: (corner: PlacementCorner, origin: NormalizedRect, delta: { x: number, y: number }, options: { continuing?: boolean } = {}) =>
+      update(state => selected.value ? resizePlacementFromCorner(state, selected.value.id, { corner, origin, delta }, options) : state),
     remove: () => update(state => selected.value ? removePlacement(state, selected.value.id) : state),
     undo: () => update(undoPlacement),
     exportSigned,

@@ -174,6 +174,75 @@ export function movePlacement(
   }, continuing)
 }
 
+/**
+ * A pointer drag measured from where the gesture began. Working from the
+ * starting rectangle rather than adding up pointer samples keeps the signature
+ * under the hand even after it has been held against an edge and pulled back.
+ */
+export function dragPlacement(
+  state: PdfWorkspaceState,
+  id: string,
+  { origin, delta }: { origin: NormalizedRect, delta: { x: number, y: number } },
+  { continuing = false } = {},
+): PdfWorkspaceState {
+  return replace(state, id, (placement, page) => {
+    const display = pdfDisplayBox(page)
+    return {
+      ...placement,
+      rect: clampNormalizedRect({
+        ...origin,
+        x: origin.x + delta.x / display.width,
+        y: origin.y + delta.y / display.height,
+      }),
+    }
+  }, continuing)
+}
+
+export const placementCorners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
+export type PlacementCorner = typeof placementCorners[number]
+
+/**
+ * A corner handle dragged `delta` points from where the gesture began. The
+ * opposite corner stays where it was, the signature keeps its own shape, and
+ * it never grows past the page or shrinks below what a reader can see.
+ */
+export function resizePlacementFromCorner(
+  state: PdfWorkspaceState,
+  id: string,
+  { corner, origin, delta }: { corner: PlacementCorner, origin: NormalizedRect, delta: { x: number, y: number } },
+  { continuing = false } = {},
+): PdfWorkspaceState {
+  return replace(state, id, (placement, page) => {
+    const display = pdfDisplayBox(page)
+    const sx = corner.endsWith('right') ? 1 : -1
+    const sy = corner.startsWith('bottom') ? 1 : -1
+    const left0 = origin.x * display.width
+    const top0 = origin.y * display.height
+    const width0 = origin.width * display.width
+    const height0 = origin.height * display.height
+    /* The pointer is projected onto the diagonal, so the corner follows the hand in either direction. */
+    const factor = 1 + (sx * delta.x * width0 + sy * delta.y * height0) / (width0 * width0 + height0 * height0)
+    const room = {
+      width: sx > 0 ? display.width - left0 : left0 + width0,
+      height: sy > 0 ? display.height - top0 : top0 + height0,
+    }
+    const maxWidth = Math.min(room.width, room.height * placement.aspect)
+    const width = Math.min(Math.max(width0 * factor, Math.min(MIN_WIDTH_PT, maxWidth)), maxWidth)
+    const height = width / placement.aspect
+
+    return {
+      ...placement,
+      rect: rectForWidth(
+        page,
+        placement.aspect,
+        width,
+        sx > 0 ? left0 : left0 + width0 - width,
+        sy > 0 ? top0 : top0 + height0 - height,
+      ),
+    }
+  }, continuing)
+}
+
 /** Scales the width and lets the signature's own shape decide the height. */
 export function resizePlacement(state: PdfWorkspaceState, id: string, factor: number): PdfWorkspaceState {
   return replace(state, id, (placement, page) => {
