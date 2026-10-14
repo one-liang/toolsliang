@@ -10,7 +10,7 @@ test.beforeEach(({ page }) => {
   page.on('console', message => { expect(imageCompressorCanaries.some(canary => message.text().includes(canary.value)), '主控台不得包含圖片內容').toBe(false) })
 })
 
-test('PNG 本機壓縮、縮放、透明度與下載', async ({ page }, testInfo) => {
+test('PNG 本機壓縮、維持原尺寸、透明度與下載', async ({ page }, testInfo) => {
   await gotoHydrated(page, '/en/tools/image-compressor/')
   const bytes = await page.evaluate(async () => {
     const canvas = document.createElement('canvas'); canvas.width = 80; canvas.height = 40
@@ -20,11 +20,12 @@ test('PNG 本機壓縮、縮放、透明度與下載', async ({ page }, testInfo
     return [...new Uint8Array(await blob.arrayBuffer())]
   })
   await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/png', buffer: Buffer.from(bytes) })
+  await expect(page.getByLabel('Maximum width')).toHaveCount(0)
+  await expect(page.getByLabel('Quality (0–100)')).toHaveCount(0)
+  await expect(page.locator('.image-compressor')).not.toContainText('private-image-canary.png')
   await page.getByLabel('Output format').selectOption('image/png')
-  await page.getByLabel('Maximum width').fill('40')
-  await page.getByLabel('Maximum height').fill('40')
   await page.getByRole('button', { name: 'Compress image', exact: true }).click()
-  await expect(page.locator('[data-image-result]')).toContainText('40 × 20')
+  await expect(page.locator('[data-image-result]')).toContainText('80 × 40')
   await expect(page.locator('[data-image-original]')).toContainText('80 × 40')
   const output = await page.getByRole('link', { name: 'Download image' }).getAttribute('href')
   const pixels = await page.evaluate(async (url) => {
@@ -33,7 +34,7 @@ test('PNG 本機壓縮、縮放、透明度與下載', async ({ page }, testInfo
     const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height
     const ctx = canvas.getContext('2d')!; ctx.drawImage(bitmap, 0, 0)
     const red = [...ctx.getImageData(5, 5, 1, 1).data]
-    const transparent = [...ctx.getImageData(35, 5, 1, 1).data]
+    const transparent = [...ctx.getImageData(70, 5, 1, 1).data]
     bitmap.close(); return { red, transparent, type: blob.type }
   }, output)
   expect(pixels).toEqual({ red: [255, 0, 0, 255], transparent: [0, 0, 0, 0], type: 'image/png' })
@@ -164,7 +165,7 @@ function mainThreadStallBudget(browser: string) {
   return browser === 'firefox' ? 600 : 250
 }
 
-for (const mobile of [false, true]) test(`12 MP JPEG 品質極值、主執行緒回應與處理預算（${mobile ? '手機版面' : '桌面版面'}）`, async ({ page }, testInfo) => {
+for (const mobile of [false, true]) test(`12 MP JPEG 建議品質、主執行緒回應與處理預算（${mobile ? '手機版面' : '桌面版面'}）`, async ({ page }, testInfo) => {
   test.setTimeout(60_000)
   if (mobile) await page.setViewportSize({ width: 375, height: 812 })
   await gotoHydrated(page, '/en/tools/image-compressor/')
@@ -182,8 +183,6 @@ for (const mobile of [false, true]) test(`12 MP JPEG 品質極值、主執行緒
     return await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]!); reader.readAsDataURL(blob) })
   })
   await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/jpeg', buffer: Buffer.from(bytes, 'base64') })
-  await page.getByLabel('Maximum width').fill('4000'); await page.getByLabel('Maximum height').fill('3000')
-  await page.getByLabel('Quality (0–100)').fill('0')
   await page.evaluate(() => {
     const metrics = { start: performance.now(), progressAt: 0, maxGap: 0, last: performance.now() }
     const timer = setInterval(() => { const now = performance.now(); metrics.maxGap = Math.max(metrics.maxGap, now - metrics.last); metrics.last = now }, 20)
@@ -193,22 +192,21 @@ for (const mobile of [false, true]) test(`12 MP JPEG 品質極值、主執行緒
     ;(document.querySelector('.image-compressor button[type=submit]') as HTMLButtonElement).click()
   })
   await expect(page.locator('[data-image-result]')).toContainText('4000 × 3000', { timeout: 8000 })
-  const low = await page.getByRole('link', { name: 'Download image' }).getAttribute('href')
+  const output = await page.getByRole('link', { name: 'Download image' }).getAttribute('href')
   const metrics = await page.evaluate(async (url) => {
     Reflect.get(window, 'stopMetrics')()
     const metrics = Reflect.get(window, 'compressionMetrics')
-    return { elapsed: performance.now() - metrics.start, progress: metrics.progressAt - metrics.start, maxGap: metrics.maxGap, lowBytes: (await fetch(url!).then(r => r.blob())).size }
-  }, low)
+    return { elapsed: performance.now() - metrics.start, progress: metrics.progressAt - metrics.start, maxGap: metrics.maxGap, outputBytes: (await fetch(url!).then(r => r.blob())).size }
+  }, output)
   expect(metrics.elapsed).toBeLessThan(8000)
   expect(metrics.progress).toBeGreaterThan(0); expect(metrics.progress).toBeLessThanOrEqual(250)
   expect(metrics.maxGap).toBeLessThan(mainThreadStallBudget(testInfo.project.name))
   await testInfo.attach('本機桌面效能量測', { body: JSON.stringify(metrics), contentType: 'application/json' })
-  await page.getByLabel('Quality (0–100)').fill('100')
+  // A q90 export re-encoded at the recommended quality must shrink, not merely fall back to the original.
+  expect(metrics.outputBytes).toBeLessThan(Buffer.from(bytes, 'base64').length)
+  await expect(page.locator('.image-compressor')).not.toContainText('kept the original image data')
+  await page.getByLabel('Output format').selectOption('image/png')
   await expect(page.getByRole('link', { name: 'Download image' })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Compress image', exact: true }).click()
-  await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 8000 })
-  const high = await page.getByRole('link', { name: 'Download image' }).getAttribute('href')
-  expect(await page.evaluate(async url => (await fetch(url!).then(r => r.blob())).size, high)).toBeGreaterThan(metrics.lowBytes)
 })
 
 test('鍵盤取消與重試、清除及離頁釋放 Blob URL', async ({ page }, testInfo) => {
@@ -296,7 +294,7 @@ test('損毀與超大像素輸入可修正，不遺失原檔', async ({ page }) 
   await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/png', buffer: oversized })
   await page.getByRole('button', { name: 'Compress image', exact: true }).click()
   await expect(page.locator('#compressor-error')).toContainText('exceeds the local limits')
-  await expect(page.locator('.image-compressor__filename')).toContainText('private-image-canary.png')
+  await expect(page.getByRole('button', { name: 'Clear image', exact: true })).toBeVisible()
   oversized.writeUInt32BE(80, 16); oversized.writeUInt32BE(40, 20)
   await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/png', buffer: oversized })
   await page.getByRole('button', { name: 'Compress image', exact: true }).click()
@@ -306,16 +304,16 @@ test('損毀與超大像素輸入可修正，不遺失原檔', async ({ page }) 
   await expect(page.locator('[data-image-result]')).toBeVisible()
 })
 
-test('解碼前估算記憶體並提供縮小尺寸的恢復方式', async ({ page }) => {
+test('解碼前估算記憶體並提供恢復方式', async ({ page }) => {
   await gotoHydrated(page, '/en/tools/image-compressor/')
   const input = Buffer.alloc(20 * 1024 * 1024)
   Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(input)
   input.writeUInt32BE(13, 8); input.write('IHDR', 12); input.writeUInt32BE(6000, 16); input.writeUInt32BE(4000, 20)
   await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/png', buffer: input })
-  await page.getByLabel('Maximum width').fill('6000'); await page.getByLabel('Maximum height').fill('4000')
   await page.getByRole('button', { name: 'Compress image', exact: true }).click()
   await expect(page.locator('#compressor-error')).toContainText('Not enough memory')
-  await expect(page.locator('.image-compressor__filename')).toContainText('private-image-canary.png')
+  await expect(page.locator('#compressor-error')).toContainText('Close other tabs and retry')
+  await expect(page.getByRole('button', { name: 'Clear image', exact: true })).toBeVisible()
 })
 
 test('JPEG 補白、WebP 依編碼能力提供透明輸出', async ({ page }) => {

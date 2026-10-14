@@ -3,8 +3,8 @@ export const imageCompressorDefinition: PublishedToolDefinition = {
   slug: 'image-compressor', category: 'image-commerce', icon: 'image',
   availability: { state: 'published', publishedAt: '2026-09-07' },
   name: { 'zh-tw': '圖片壓縮', en: 'Image Compressor' },
-  description: { 'zh-tw': '在裝置上調整圖片品質、尺寸與格式，比較後下載。', en: 'Adjust image quality, size, and format on your device, compare, and download.' },
-  aliases: { 'zh-tw': ['照片壓縮', '圖片縮小'], en: ['photo compressor', 'resize image'] },
+  description: { 'zh-tw': '在裝置上以建議品質壓縮圖片、維持原尺寸，比較後下載。', en: 'Compress images on your device at a recommended quality, keep their dimensions, compare, and download.' },
+  aliases: { 'zh-tw': ['照片壓縮', '圖片縮小'], en: ['photo compressor', 'reduce image size'] },
   keywords: { 'zh-tw': ['JPEG', 'PNG', 'WebP', '品質', '透明'], en: ['JPEG', 'PNG', 'WebP', 'quality', 'transparency'] },
   processingClass: 'worker', routeComponentKey: 'ImageCompressorWorkspace', offlineMode: 'ready', capabilities: ['javascript', 'web-worker'],
   acceptedInput: { 'zh-tw': '單張 JPEG、PNG 或 WebP；最多 25 MiB、2,400 萬像素、單邊 8,192 像素。不支援 HEIC／HEIF。', en: 'One JPEG, PNG, or WebP; up to 25 MiB, 24 megapixels, 8,192 pixels per side. HEIC/HEIF is not supported.' },
@@ -12,9 +12,9 @@ export const imageCompressorDefinition: PublishedToolDefinition = {
   pagePresentation: { showHeadingIcon: false, showLocalProcessingStatement: true },
   seo: {
     contentKey: 'image-compressor',
-    title: { 'zh-tw': '圖片壓縮：本機調整 JPEG、PNG、WebP 品質與尺寸', en: 'Image Compressor: resize JPEG, PNG, and WebP locally' },
-    description: { 'zh-tw': '圖片不離開裝置。調整 JPEG、PNG、WebP 的尺寸、品質與格式，比較預覽與大小後下載；不支援 HEIC／HEIF。', en: 'Keep images on your device. Resize and convert JPEG, PNG, and WebP, compare previews and sizes, then download. HEIC/HEIF is not supported.' },
-    answer: { 'zh-tw': 'JPEG／WebP 品質調整為有損編碼；PNG 不使用品質參數。格式與尺寸不變時，輸出不會比原檔大；換格式時請先比較大小。輸出不複製原始中繼資料；保留原檔以供封存。', en: 'JPEG/WebP quality adjustment uses lossy encoding; PNG ignores quality. With the same format and dimensions, output is never larger than the original; compare sizes when converting formats. Output does not copy source metadata; keep originals for archival use.' },
+    title: { 'zh-tw': '圖片壓縮：本機壓縮 JPEG、PNG、WebP，維持原尺寸', en: 'Image Compressor: compress JPEG, PNG, and WebP locally' },
+    description: { 'zh-tw': '圖片不離開裝置。以建議品質壓縮 JPEG、PNG、WebP 並維持原尺寸，比較預覽與大小後下載；不支援 HEIC／HEIF。', en: 'Keep images on your device. Compress JPEG, PNG, and WebP at a recommended quality without resizing, compare previews and sizes, then download. HEIC/HEIF is not supported.' },
+    answer: { 'zh-tw': 'JPEG／WebP 以建議品質 80 有損重新編碼並維持原尺寸；PNG 不使用品質參數。格式不變時，輸出不會比原檔大；換格式時請先比較大小。輸出不複製原始中繼資料；保留原檔以供封存。', en: 'JPEG/WebP are lossily re-encoded at a recommended quality of 80 without resizing; PNG ignores quality. With the same format, output is never larger than the original; compare sizes when converting formats. Output does not copy source metadata; keep originals for archival use.' },
   },
   contentReview: {
     reviewedAt: '2026-09-07', sourceEffectiveAt: '2026-09-07',
