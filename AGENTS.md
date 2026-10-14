@@ -7,3 +7,13 @@
 工具內容必須留在使用者裝置；若需求可能把檔案、圖片、文字、數值或處理結果送往伺服器或第三方，先停止實作並重新確認產品與隱私邊界。
 
 產品文件、PR、issue 與工作摘要使用繁體中文。程式碼識別字、穩定網址 slug 與分支名稱使用英文。
+
+## Agent skills
+
+### Issue tracker
+
+Issue 追蹤在 GitHub Issues（`one-liang/toolsliang`），透過 `gh` CLI 操作。See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context：根目錄 `CONTEXT.md` 加上 `docs/adr/`。See `docs/agents/domain.md`.
