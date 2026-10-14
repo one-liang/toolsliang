@@ -17,6 +17,9 @@ import { buildFixtures, fixturePassword } from '../../scripts/pdf-engine/fixture
  * separately by `scripts/verify-pdf-signature-output.mjs`, whose results
  * `tests/pdf-signature-output.test.ts` holds the product to.
  */
+// Sub-pixel layout can report a 44px target as 43.999878; the same tolerance as the App Shell gate.
+const TOUCH_TARGET_TOLERANCE_PX = 0.001
+
 guardToolContentBoundary(pdfSignatureCanaries, { allowedOrigins: ['http://127.0.0.1:4173'] })
 
 const fixtures = buildFixtures()
@@ -327,8 +330,8 @@ test('手機版面：簽名與定位的操作目標足夠大，亮暗模式都�
 
   for (const name of ['使用這個簽名', '加上簽名並準備下載', '下一頁', '復原']) {
     const box = await page.getByRole('button', { name }).first().boundingBox()
-    expect(box!.height, `${name} 的觸控目標高度`).toBeGreaterThanOrEqual(44)
-    expect(box!.width, `${name} 的觸控目標寬度`).toBeGreaterThanOrEqual(44)
+    expect(box!.height + TOUCH_TARGET_TOLERANCE_PX, `${name} 的觸控目標高度`).toBeGreaterThanOrEqual(44)
+    expect(box!.width + TOUCH_TARGET_TOLERANCE_PX, `${name} 的觸控目標寬度`).toBeGreaterThanOrEqual(44)
   }
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true)
