@@ -1003,20 +1003,41 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .brand-promo__layers, .brand-promo__preview { min-width: 0; }
 .brand-promo h2 { margin-block: 0 16px; font-size: 1.125rem; }
 .brand-promo__layers ol, .brand-promo__library ul { padding: 0; list-style: none; display: grid; gap: 8px; }
-.brand-promo__layers li > button { width: 100%; justify-content: flex-start; white-space: normal; text-align: start; }
+.brand-promo__layers li { display: flex; align-items: center; gap: 4px; border-radius: var(--radius-sm); }
+.brand-promo__layers li > button { flex: 1; min-width: 0; width: 100%; justify-content: flex-start; white-space: normal; text-align: start; }
+.brand-promo__grip { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; min-height: 44px; color: var(--color-muted-foreground); cursor: grab; }
+.brand-promo__layer--drop { outline: 2px dashed var(--color-primary-strong); outline-offset: 2px; }
+.brand-promo__layer--dragging { opacity: .5; }
+.brand-promo__thumb { flex: none; width: 32px; height: 32px; object-fit: contain; border-radius: 4px; background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; }
 .brand-promo__layers button[aria-pressed="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
 .brand-promo__controls { border: 0; padding: 0; margin-block: 24px; display: grid; gap: 16px; min-width: 0; }
 .brand-promo__controls legend { margin-bottom: 16px; font-weight: 650; }
 .brand-promo__filename, .brand-promo__library li { overflow-wrap: anywhere; }
-.brand-promo__canvas { position: relative; overflow: hidden; width: min(100%, calc(var(--image-preview-max-height) * var(--promo-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); background: var(--color-surface-subtle); }
-.brand-promo__canvas img { position: absolute; display: block; max-width: none; }
+/* The stage frame leaves room for handles just outside the canvas, and clips anything further out. */
+.brand-promo__stage-frame { overflow: hidden; padding: 12px; }
+.brand-promo__stage { position: relative; width: min(100%, calc(var(--image-preview-max-height) * var(--promo-ratio, 1))); margin-inline: auto; border: 1px solid var(--color-muted-foreground); background: var(--color-surface-subtle); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.brand-promo__stage:focus-visible { outline: 3px solid var(--color-primary-strong); outline-offset: 3px; }
+.brand-promo__canvas { position: absolute; inset: 0; overflow: hidden; }
+.brand-promo__canvas img { position: absolute; display: block; max-width: none; pointer-events: none; -webkit-user-drag: none; }
+.brand-promo__selection { position: absolute; box-sizing: border-box; border: 1px solid var(--color-primary-strong); box-shadow: 0 0 0 1px rgb(255 255 255 / .85); cursor: move; }
+.brand-promo__handle { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border: 2px solid var(--color-primary-strong); border-radius: 2px; background: #ffffff; touch-action: none; }
+/* A finger-sized hit area around each small visible handle. */
+.brand-promo__handle::before { content: ""; position: absolute; inset: -12px; }
+.brand-promo__handle--nw { left: 0; top: 0; cursor: nwse-resize; }
+.brand-promo__handle--n { left: 50%; top: 0; cursor: ns-resize; }
+.brand-promo__handle--ne { left: 100%; top: 0; cursor: nesw-resize; }
+.brand-promo__handle--e { left: 100%; top: 50%; cursor: ew-resize; }
+.brand-promo__handle--se { left: 100%; top: 100%; cursor: nwse-resize; }
+.brand-promo__handle--s { left: 50%; top: 100%; cursor: ns-resize; }
+.brand-promo__handle--sw { left: 0; top: 100%; cursor: nesw-resize; }
+.brand-promo__handle--w { left: 0; top: 50%; cursor: ew-resize; }
 .brand-promo__result { margin: 0; }
 .brand-promo__result img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); object-fit: contain; }
 .brand-promo__library { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border); }
 .brand-promo__library li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .brand-promo__library a { color: var(--color-primary-strong); text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; margin-right: 16px; }
 @media (min-width: 768px) {
-  .brand-promo__editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .brand-promo__editor { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
 }
 
 /* The workbench keeps the shared tool surface; only its step rail and stacked previews are new. */
