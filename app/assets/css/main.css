@@ -964,8 +964,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover__picker input { height: auto; min-height: 44px; max-width: 100%; }
 .image-compressor__picker input::file-selector-button,
 .image-background-remover__picker input::file-selector-button { min-height: 44px; padding: 8px 12px; margin-right: 8px; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-foreground); }
-.image-compressor__filename,
-.image-background-remover__filename { overflow-wrap: anywhere; margin: 16px 0; }
+.image-compressor__filename { overflow-wrap: anywhere; margin: 16px 0; }
 .image-compressor__status,
 .image-background-remover__status { margin-top: 16px; }
 .image-compressor .field-error,
@@ -995,6 +994,8 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover__frame img { display: block; height: auto; max-width: none; }
 .image-background-remover__frame--alpha, .workbench__figure--alpha img, .workbench__thumb--alpha { background-color: #ffffff; background-image: linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%), linear-gradient(45deg, #d8d2cc 25%, transparent 25%, transparent 75%, #d8d2cc 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 .image-background-remover__coverage { font-weight: 600; }
+.image-background-remover__source { margin: 16px 0 0; }
+.image-background-remover__source img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); width: auto; height: auto; margin-inline: auto; object-fit: contain; border: 1px solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 
 
 /* Brand compositions use the shared flat tool surface and image preview budget. */
