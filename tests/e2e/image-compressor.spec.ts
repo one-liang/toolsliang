@@ -249,6 +249,45 @@ test('鍵盤取消與重試、清除及離頁釋放 Blob URL', async ({ page }, 
   await expect.poll(() => page.evaluate(() => Reflect.get(window, 'activeImageUrls').size)).toBe(0)
 })
 
+test('已壓縮過的 JPEG／WebP 以預設設定處理時，輸出不比原檔大', async ({ page }) => {
+  await gotoHydrated(page, '/en/tools/image-compressor/')
+  // A product shot on a soft gradient, saved below the default quality: the shape of image that grew by 48%.
+  const sources = await page.evaluate(async () => {
+    const canvas = new OffscreenCanvas(1000, 1000)
+    const ctx = canvas.getContext('2d')!
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1000)
+    gradient.addColorStop(0, '#e4e4e6'); gradient.addColorStop(1, '#ffffff')
+    ctx.fillStyle = gradient; ctx.fillRect(0, 0, 1000, 1000)
+    let seed = 7
+    const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) | 0; return (seed >>> 0) / 2 ** 32 }
+    for (let i = 0; i < 1500; i++) {
+      const shade = 30 + Math.floor(random() * 90), radius = 4 + random() * 30
+      ctx.fillStyle = `rgb(${shade},${shade},${shade + Math.floor(random() * 30)})`
+      ctx.beginPath(); ctx.ellipse(250 + random() * 500, 150 + random() * 700, radius, radius * (0.3 + random()), random() * Math.PI, 0, Math.PI * 2); ctx.fill()
+    }
+    const sources: Array<{ type: string, base64: string, size: number }> = []
+    for (const [type, quality] of [['image/jpeg', 0.5], ['image/webp', 0.6]] as const) {
+      const blob = await canvas.convertToBlob({ type, quality })
+      if (blob.type !== type) continue
+      const base64 = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]!); reader.readAsDataURL(blob) })
+      sources.push({ type, base64, size: blob.size })
+    }
+    return sources
+  })
+  for (const source of sources) {
+    await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: source.type, buffer: Buffer.from(source.base64, 'base64') })
+    await expect(page.getByLabel('Output format')).toHaveValue(source.type)
+    await page.getByRole('button', { name: 'Compress image', exact: true }).click()
+    await expect(page.locator('[data-image-result]')).toContainText('1000 × 1000')
+    const url = await page.getByRole('link', { name: 'Download image' }).getAttribute('href')
+    const output = await page.evaluate(async url => { const blob = await fetch(url!).then(response => response.blob()); return { size: blob.size, type: blob.type } }, url)
+    expect(output.type).toBe(source.type)
+    expect(output.size, `${source.type} 輸出不得比原檔大`).toBeLessThanOrEqual(source.size)
+    await expect(page.locator('.image-compressor')).toContainText('kept the original image data')
+    await page.getByRole('button', { name: 'Clear image', exact: true }).click()
+  }
+})
+
 test('損毀與超大像素輸入可修正，不遺失原檔', async ({ page }) => {
   await gotoHydrated(page, '/en/tools/image-compressor/')
   const oversized = Buffer.alloc(33)

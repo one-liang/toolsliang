@@ -4,9 +4,10 @@ import { Download, Image, TriangleAlert } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { validateImageInput } from '@/features/images/input'
+import { imageSignature, validateImageInput } from '@/features/images/input'
 import { createImageCompressor } from '@/features/tools/image-compressor/engine'
 import { heicMessage, imageErrors, imageStages } from '@/features/tools/image-compressor/content'
+import { defaultOutputFormat } from '@/features/tools/image-compressor/output-settings'
 import type { CompressionOutput, ImageFormat } from '@/features/tools/image-compressor/types'
 import type { EngineCapabilities } from '@/features/tools/engine/contract'
 
@@ -18,7 +19,14 @@ const source = shallowRef<File>()
 const result = shallowRef<CompressionOutput>()
 const outputUrl = ref('')
 const originalUrl = ref('')
-const format = ref<ImageFormat>('image/jpeg')
+const sourceFormat = ref<ImageFormat>()
+/** Set only by the format field, so a choice carries over to the next image while untouched images follow their source. */
+const chosenFormat = ref<ImageFormat>()
+const offeredFormats = computed<ImageFormat[]>(() => capabilities.value?.supported ? capabilities.value.formats as ImageFormat[] : ['image/jpeg', 'image/png', 'image/webp'])
+const format = computed<ImageFormat>({
+  get: () => chosenFormat.value && offeredFormats.value.includes(chosenFormat.value) ? chosenFormat.value : defaultOutputFormat(sourceFormat.value, offeredFormats.value),
+  set: (value) => { chosenFormat.value = value },
+})
 const quality = ref<string | number>(80)
 const maxWidth = ref<string | number>(1920)
 const maxHeight = ref<string | number>(1920)
@@ -41,6 +49,16 @@ const status = computed(() => {
   return ''
 })
 const savings = computed(() => source.value && result.value ? Math.round((1 - result.value.blob.size / source.value.size) * 100) : 0)
+const sizeNote = computed(() => {
+  const en = locale.value === 'en'
+  if (result.value?.keptOriginal) {
+    return en
+      ? `The original is already leaner than these settings, so re-encoding would only add bytes. This kept the original image data and removed its metadata (${savings.value}% smaller). To shrink it further, lower the quality or dimensions, or choose another format.`
+      : `原圖已比這組設定更精簡，重新編碼只會變大，因此沿用原圖內容並移除中繼資料（減少 ${savings.value}%）。想再縮小，可調低品質、縮小尺寸或改用其他格式。`
+  }
+  if (savings.value >= 0) return en ? `${savings.value}% smaller` : `減少 ${savings.value}%`
+  return en ? `${-savings.value}% larger — keep the original if you prefer.` : `增加 ${-savings.value}% — 可以選擇保留原檔。`
+})
 const extension = computed(() => result.value?.format === 'image/jpeg' ? 'jpg' : result.value?.format === 'image/webp' ? 'webp' : 'png')
 function size(bytes: number) { return `${new Intl.NumberFormat(locale.value === 'en' ? 'en' : 'zh-TW').format(bytes)} bytes` }
 function clearResult() {
@@ -54,7 +72,6 @@ async function prepare() {
   const value = await engine.prepare()
   if (!mounted) return
   capabilities.value = value
-  if (value.supported && !value.formats.includes(format.value)) format.value = value.formats[0] as ImageFormat
   preparing.value = false
 }
 async function selectFiles(files: File[]) {
@@ -67,9 +84,10 @@ async function selectFiles(files: File[]) {
   validating.value = true
   try {
     const code = await validateImageInput(file)
+    const signature = code ? undefined : imageSignature(new Uint8Array(await file.slice(0, 16).arrayBuffer()))
     if (current !== generation) return
     if (code) { error.value = code; return }
-    clearResult(); source.value = file; message.value = 'selected'
+    clearResult(); source.value = file; sourceFormat.value = signature; message.value = 'selected'
   }
   catch { if (current === generation) error.value = 'read_failed' }
   finally {
@@ -106,8 +124,9 @@ function cancel() {
   ++generation; engine.cancel(); running.value = false; validating.value = false
   stage.value = ''; clearResult(); message.value = 'cancelled'
 }
-function reset() { cancel(); source.value = undefined; error.value = ''; message.value = ''; fileInput.value?.focus() }
-watch([format, quality, maxWidth, maxHeight], () => { clearResult(); error.value = '' })
+function reset() { cancel(); source.value = undefined; sourceFormat.value = undefined; error.value = ''; message.value = ''; fileInput.value?.focus() }
+// A new image already clears the result; only edits to the settings make an output stale.
+watch([chosenFormat, quality, maxWidth, maxHeight], () => { clearResult(); error.value = '' })
 onMounted(prepare)
 onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearResult(); source.value = undefined })
 </script>
@@ -134,9 +153,9 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
           <div class="field-group">
             <label for="compressor-format">{{ locale === 'en' ? 'Output format' : '輸出格式' }}</label>
             <select id="compressor-format" v-model="format" class="ui-input" aria-describedby="compressor-format-help">
-              <option v-for="item in (capabilities?.supported ? capabilities.formats : ['image/jpeg', 'image/png', 'image/webp'])" :key="item" :value="item">{{ item.replace('image/', '').toUpperCase() }}</option>
+              <option v-for="item in offeredFormats" :key="item" :value="item">{{ item.replace('image/', '').toUpperCase() }}</option>
             </select>
-            <p id="compressor-format-help" class="field-help">{{ locale === 'en' ? 'Only available encoders are offered. JPEG fills transparent areas with white.' : '只提供可用的編碼格式。JPEG 透明區會補白。' }}</p>
+            <p id="compressor-format-help" class="field-help">{{ locale === 'en' ? 'Only available encoders are offered. JPEG and WebP images keep their format by default. JPEG fills transparent areas with white.' : '只提供可用的編碼格式。JPEG、WebP 預設沿用原格式；JPEG 透明區會補白。' }}</p>
           </div>
           <div class="field-group">
             <label for="compressor-quality">{{ locale === 'en' ? 'Quality (0–100)' : '品質（0–100）' }}</label>
@@ -168,7 +187,7 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
       </figure>
     </div>
     <template v-if="result">
-      <p class="field-help">{{ savings >= 0 ? (locale === 'en' ? `${savings}% smaller` : `減少 ${savings}%`) : (locale === 'en' ? `${-savings}% larger — keep the original if you prefer.` : `增加 ${-savings}% — 可以選擇保留原檔。`) }}</p>
+      <p class="field-help">{{ sizeNote }}</p>
       <Button as-child class="image-compressor__download"><a :href="outputUrl" :download="`compressed-image.${extension}`"><Download :size="18" aria-hidden="true" />{{ locale === 'en' ? 'Download image' : '下載圖片' }}</a></Button>
     </template>
   </Card>

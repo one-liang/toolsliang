@@ -8,5 +8,7 @@ export interface CompressionWireOutput {
   height: number
   sourceWidth: number
   sourceHeight: number
+  /** The source's own coded pixels, without metadata: re-encoding at these settings would have been larger. */
+  keptOriginal: boolean
 }
 export interface CompressionOutput extends Omit<CompressionWireOutput, 'bytes' | 'preview'> { blob: Blob, preview: Blob }
