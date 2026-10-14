@@ -1,0 +1,23 @@
+# Text is LF in the repository and in every checkout, whatever core.autocrlf
+# says. Several files are checked byte for byte: calendar data against its
+# published checksum, research records parsed line by line by the reference
+# tests, and the inference runtime against its SHA-256 fingerprint. A Windows
+# checkout that turned them into CRLF broke all three.
+* text=auto eol=lf
+
+# Offline assets are served exactly as committed; their bytes are what the
+# fingerprints in the tool registry describe, so they are never converted.
+public/assets/offline/** -text
+
+*.onnx binary
+*.wasm binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary
