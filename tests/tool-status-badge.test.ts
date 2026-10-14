@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -56,7 +56,8 @@ function filesEvaluating(symbol: string, directory = appDirectory): string[] {
     const path = join(directory, entry.name)
     if (entry.isDirectory()) return filesEvaluating(symbol, path)
     if (!/\.(ts|vue)$/.test(entry.name)) return []
-    return readFileSync(path, 'utf8').includes(`${symbol}(`) ? [relative(appDirectory, path)] : []
+    /* Forward slashes on every platform, so the list reads the same on Windows. */
+    return readFileSync(path, 'utf8').includes(`${symbol}(`) ? [relative(appDirectory, path).split(sep).join('/')] : []
   })
 }
 
