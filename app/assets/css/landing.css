@@ -1,23 +1,21 @@
 /*
- * Landing world — neo-brutalist, flat, no shadows.
- * Scoped to the landing layout while the redesign is reviewed on this page
- * alone; the App Shell keeps the main.css system until it is approved.
+ * Landing layout. The tokens are main.css's (ADR-0020); the --nb-* names are
+ * local aliases so the landing's layout rules read as one block.
  */
 
 .landing-layout {
-  --nb-paper: #fff;
-  --nb-ink: #0b0b0b;
-  --nb-ink-soft: #3b3a36;
+  --nb-paper: var(--color-background);
+  --nb-ink: var(--color-foreground);
+  --nb-ink-soft: var(--ink-800);
   /* Text and rules on a colour fill stay dark in both themes: the fills do not invert. */
-  --nb-on-fill: #0b0b0b;
-  --nb-demo: #fff;
-  --nb-yellow: #ffd23f;
-  --nb-coral: #ff7f5c;
-  --nb-sky: #86bbff;
-  --nb-mint: #63dca8;
-  --nb-pink: #ff9ed8;
-  --nb-checker: #e6e4de;
-  --nb-rule: 2px;
+  --nb-on-fill: var(--fill-ink);
+  --nb-demo: var(--paper-0);
+  --nb-yellow: var(--yellow-400);
+  --nb-coral: var(--coral-400);
+  --nb-sky: var(--sky-400);
+  --nb-mint: var(--mint-400);
+  --nb-pink: var(--pink-400);
+  --nb-rule: var(--rule);
   --nb-radius-lg: 28px;
   --nb-radius: 20px;
   --nb-radius-sm: 12px;
@@ -35,16 +33,7 @@
   caret-color: var(--nb-ink);
 }
 
-.dark .landing-layout {
-  --nb-paper: #0f0f0e;
-  --nb-ink: #f4f2ec;
-  --nb-ink-soft: #c9c6bd;
-}
-
-html:has(.landing-layout) { scrollbar-color: #0b0b0b #fff; }
-html.dark:has(.landing-layout) { scrollbar-color: #f4f2ec #0f0f0e; }
-html:has(.landing-layout) body { background: #fff; }
-html.dark:has(.landing-layout) body { background: #0f0f0e; }
+.dark .landing-layout { --nb-ink-soft: var(--chalk-300); }
 
 .landing-layout ::selection { background: var(--nb-yellow); color: var(--nb-on-fill); }
 .landing-layout :focus-visible { outline: 3px solid var(--nb-ink); outline-offset: 3px; }
@@ -66,14 +55,12 @@ html.dark:has(.landing-layout) body { background: #0f0f0e; }
 .nb-header { border-bottom: var(--nb-rule) solid var(--nb-ink); background: var(--nb-paper); }
 .nb-header__inner { min-height: var(--nb-header); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .nb-header__nav { display: flex; align-items: center; gap: 8px; }
-.landing-layout .header-actions { gap: 8px; }
 
 .landing-layout .brand-mark { gap: 10px; color: var(--nb-ink); font-family: var(--nb-font); font-size: 1.3rem; font-weight: 800; font-stretch: 112%; letter-spacing: -.02em; }
 .landing-layout .brand-mark__symbol { width: 32px; height: 32px; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 9px; background: var(--nb-yellow); rotate: 0deg; }
 .landing-layout .brand-mark__symbol span { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--nb-on-fill); rotate: 0deg; }
 
-.nb-pill,
-.landing-layout .header-actions .ui-button {
+.nb-pill {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -88,11 +75,8 @@ html.dark:has(.landing-layout) body { background: #0f0f0e; }
   font-weight: 700;
   transition: background-color var(--nb-fast) ease, color var(--nb-fast) ease;
 }
-.landing-layout .header-actions .ui-button--size-icon { width: 44px; padding: 0; }
-.landing-layout .header-actions .locale-button { padding-inline: 14px 16px; }
 @media (hover: hover) and (pointer: fine) {
-  .nb-pill:hover,
-  .landing-layout .header-actions .ui-button:hover { border-color: var(--nb-ink); background: var(--nb-ink); color: var(--nb-paper); }
+  .nb-pill:hover { border-color: var(--nb-ink); background: var(--nb-ink); color: var(--nb-paper); }
 }
 
 /* Buttons */
@@ -215,6 +199,7 @@ html.dark:has(.landing-layout) body { background: #0f0f0e; }
 
 /* Sections */
 .nb-section { padding-top: clamp(72px, 9vw, 128px); }
+.nb-hero + .nb-section { padding-top: clamp(24px, 3vw, 48px); }
 .nb-section__title { max-width: 16ch; margin: 0 0 clamp(28px, 4vw, 48px); font-size: clamp(2.1rem, 1.3rem + 3vw, 3.9rem); font-weight: 800; line-height: 1.08; letter-spacing: -.03em; text-wrap: balance; }
 
 /* Category bento */
@@ -274,11 +259,11 @@ html.dark:has(.landing-layout) body { background: #0f0f0e; }
 
 /* Demo: a form with its amount written out, then signed */
 .nb-doc { width: 100%; height: 100%; display: grid; justify-items: center; }
-.nb-doc__page { width: min(100%, 440px); min-height: 100%; display: grid; grid-template-rows: auto auto 1fr auto; gap: 18px; padding: 20px 22px 18px; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 12px; background: #fff; color: var(--nb-on-fill); }
+.nb-doc__page { width: min(100%, 440px); min-height: 100%; display: grid; grid-template-rows: auto auto 1fr auto; gap: 18px; padding: 20px 22px 18px; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 12px; background: var(--paper-0); color: var(--nb-on-fill); }
 .nb-doc__top { display: flex; align-items: center; gap: 12px; }
-.nb-doc__tag { padding: 3px 10px; border-radius: 999px; background: var(--nb-on-fill); color: #fff; font-size: .75rem; font-weight: 800; letter-spacing: .06em; }
+.nb-doc__tag { padding: 3px 10px; border-radius: 999px; background: var(--nb-on-fill); color: var(--paper-0); font-size: .75rem; font-weight: 800; letter-spacing: .06em; }
 .nb-doc__lines { flex: 1; display: grid; gap: 6px; }
-.nb-doc__lines span { height: 7px; border-radius: 4px; background: #d9d7d0; }
+.nb-doc__lines span { height: 7px; border-radius: 4px; background: var(--ink-200); }
 .nb-doc__lines span + span { width: 70%; }
 .nb-doc__body { display: grid; align-content: start; gap: 9px; }
 .nb-doc__body span { height: 7px; border-radius: 4px; background: #e6e4de; }
@@ -306,12 +291,12 @@ html.dark:has(.landing-layout) body { background: #0f0f0e; }
 .nb-bmi__band { height: 100%; }
 .nb-bmi__band + .nb-bmi__band { border-left: var(--nb-rule) solid var(--nb-on-fill); }
 .nb-bmi__band--underweight { background: var(--nb-sky); }
-.nb-bmi__band--healthy-weight { background: #fff; }
+.nb-bmi__band--healthy-weight { background: var(--paper-0); }
 .nb-bmi__band--overweight { background: var(--nb-yellow); }
 .nb-bmi__band--obese { background: var(--nb-coral); }
 .nb-bmi__scale { position: relative; margin-top: 12px; }
 .nb-bmi__marker { position: absolute; top: -9px; bottom: -9px; left: calc(var(--pos) * 100%); width: 4px; translate: -50% 0; border-radius: 4px; background: var(--nb-on-fill); }
-.nb-bmi__pin { position: absolute; bottom: calc(100% + 12px); left: 50%; translate: -50% 0; padding: 3px 10px; border-radius: 999px; background: var(--nb-on-fill); color: #fff; font-size: .85rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nb-bmi__pin { position: absolute; bottom: calc(100% + 12px); left: 50%; translate: -50% 0; padding: 3px 10px; border-radius: 999px; background: var(--nb-on-fill); color: var(--paper-0); font-size: .85rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .nb-bmi__marker::before { content: ""; position: absolute; top: -10px; left: 50%; width: 14px; height: 14px; translate: -50% 0; border-radius: 50%; background: var(--nb-on-fill); }
 .nb-bmi__legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 20px 0 0; padding: 0; list-style: none; font-size: .9rem; font-weight: 700; }
 .nb-bmi__legend li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; }
@@ -382,7 +367,6 @@ html.dark:has(.landing-layout) body { background: #0f0f0e; }
 
 @media (max-width: 767px) {
   .nb-header__inner { min-height: 64px; }
-  .landing-layout .header-actions .locale-button { width: 44px; padding: 0; font-size: 0; }
   .nb-deck { padding-inline: 4px; }
   .nb-slip:nth-child(1) { margin-right: 4%; }
   .nb-slip:nth-child(2) { margin-left: 4%; }

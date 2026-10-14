@@ -32,7 +32,7 @@ export interface WebAppManifest {
 }
 
 /** Matches the light `--color-background` token the pre-paint theme script applies. */
-const THEME_COLOR = '#f6f3f0'
+const THEME_COLOR = '#ffffff'
 
 export const appIcons: AppIcon[] = [
   { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

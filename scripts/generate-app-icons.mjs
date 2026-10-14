@@ -12,10 +12,11 @@ import { fileURLToPath } from 'node:url'
 
 const OUTPUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons')
 
-// Design System tokens: --neutral-900, --neutral-50, --orange-400.
-const BACKGROUND = [0x2d, 0x28, 0x25]
-const MARK = [0xfc, 0xfa, 0xf8]
-const ACCENT = [0xff, 0x8c, 0x42]
+// Design System tokens: --yellow-400 for the tile, --ink-950 for the rule and the dot,
+// the same brand mark the header draws in CSS.
+const BACKGROUND = [0xff, 0xd2, 0x3f]
+const MARK = [0x0b, 0x0b, 0x0b]
+const ACCENT = [0x0b, 0x0b, 0x0b]
 
 const SAMPLES = 4
 
@@ -27,8 +28,8 @@ function insideRoundedSquare(x, y, half, radius) {
   return Math.hypot(dx, dy) <= radius
 }
 
-function insideDiamond(x, y, half) {
-  return Math.abs(x) + Math.abs(y) <= half
+function insideDot(x, y, radius) {
+  return Math.hypot(x, y) <= radius
 }
 
 /**
@@ -43,7 +44,7 @@ function renderIcon(size, { maskable }) {
   const markHalf = size * (maskable ? 0.28 : 0.335)
   const stroke = size * (maskable ? 0.055 : 0.066)
   const markRadius = markHalf * 0.31
-  const diamondHalf = size * (maskable ? 0.105 : 0.125)
+  const dotRadius = size * (maskable ? 0.085 : 0.1)
 
   for (let row = 0; row < size; row += 1) {
     for (let column = 0; column < size; column += 1) {
@@ -59,7 +60,7 @@ function renderIcon(size, { maskable }) {
           if (!insideRoundedSquare(x, y, centre, canvasRadius)) continue
           backgroundHits += 1
 
-          if (insideDiamond(x, y, diamondHalf)) accentHits += 1
+          if (insideDot(x, y, dotRadius)) accentHits += 1
           else if (
             insideRoundedSquare(x, y, markHalf, markRadius)
             && !insideRoundedSquare(x, y, markHalf - stroke, Math.max(markRadius - stroke, 0))

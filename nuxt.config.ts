@@ -13,7 +13,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   modules: ['shadcn-nuxt', '@nuxt/eslint'],
-  css: ['@fontsource-variable/roboto', '~/assets/css/main.css'],
+  css: ['@fontsource-variable/archivo/wdth.css', '~/assets/css/main.css'],
   vite: {
     plugins: [tailwindcss()],
     define: {
@@ -66,7 +66,7 @@ export default defineNuxtConfig({
       meta: [
         ...(pagesDemo ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
         { name: 'color-scheme', content: 'light dark' },
-        { name: 'theme-color', content: '#f6f3f0' },
+        { name: 'theme-color', content: '#ffffff' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-title', content: 'toolsliang' },
       ],

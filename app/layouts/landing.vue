@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import '@fontsource-variable/archivo/wdth.css'
 import '~/assets/css/landing.css'
 
 const { locale, withLocale } = useAppLocale()

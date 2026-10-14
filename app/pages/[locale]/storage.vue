@@ -22,7 +22,6 @@ useSeoMeta({ robots: 'noindex, follow' })
     <header class="tool-heading tool-heading--with-icon">
       <span class="tool-heading__icon"><HardDrive :size="26" aria-hidden="true" /></span>
       <div>
-        <p class="eyebrow">{{ copy.eyebrow }}</p>
         <h1>{{ copy.title }}</h1>
         <p>{{ copy.intro }}</p>
       </div>

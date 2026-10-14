@@ -68,7 +68,7 @@ test('英文頁以英文說明輸入錯誤', async ({ page }) => {
     .toHaveText('Enter digits only; a decimal point and thousands separators are allowed, for example 1,234.56.')
 })
 
-test('複製按鈕以淺色圖文呈現，且符合一般文字對比', async ({ page }) => {
+test('複製按鈕以反白圖文呈現，且符合一般文字對比', async ({ page }) => {
   await gotoTool(page)
 
   for (const mode of ['light', 'dark'] as const) {
@@ -97,7 +97,9 @@ test('複製按鈕以淺色圖文呈現，且符合一般文字對比', async ({
       }
     })
 
-    expect(contrast.foreground, `${mode} 模式圖示與文字應比按鈕背景亮`).toBeGreaterThan(contrast.background)
+    // Light mode is a black pill with white type; the dark theme inverts it to a light pill with ink type.
+    if (mode === 'light') expect(contrast.foreground, '亮色模式圖示與文字應比按鈕背景亮').toBeGreaterThan(contrast.background)
+    else expect(contrast.foreground, '暗色模式圖示與文字應比按鈕背景暗').toBeLessThan(contrast.background)
     expect(contrast.ratio, `${mode} 模式圖示與文字對比至少 4.5:1`).toBeGreaterThanOrEqual(4.5)
   }
 })

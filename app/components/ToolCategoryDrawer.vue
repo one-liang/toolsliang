@@ -57,8 +57,8 @@ watch(() => route.fullPath, () => {
             </NuxtLink>
           </section>
 
-          <section v-for="category in publishedToolCategories" :key="category.id" class="drawer-category">
-            <h3 class="drawer-category__title">{{ copy(category.name, locale) }}</h3>
+          <section v-for="category in publishedToolCategories" :key="category.id" :class="['drawer-category', `category-fill--${category.id}`]">
+            <h3 class="drawer-category__title"><span class="category-swatch" aria-hidden="true" />{{ copy(category.name, locale) }}</h3>
             <p class="drawer-category__description">{{ copy(category.description, locale) }}</p>
             <NuxtLink
               v-for="tool in toolsByCategory(category.id)"

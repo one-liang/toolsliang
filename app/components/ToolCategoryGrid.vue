@@ -12,9 +12,9 @@ const headingTag = computed(() => `h${props.headingLevel ?? 2}`)
 
 <template>
   <div class="category-grid">
-    <section v-for="category in publishedToolCategories" :key="category.id" class="category-panel">
+    <section v-for="category in publishedToolCategories" :key="category.id" :class="['category-panel', `category-fill--${category.id}`]">
       <header class="category-panel__header">
-        <component :is="headingTag">{{ copy(category.name, locale) }}</component>
+        <component :is="headingTag"><span class="category-swatch" aria-hidden="true" />{{ copy(category.name, locale) }}</component>
         <p>{{ copy(category.description, locale) }}</p>
       </header>
       <div class="category-panel__tools">

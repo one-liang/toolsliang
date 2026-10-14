@@ -200,9 +200,8 @@ function reset() {
 
   <section class="tool-reference" aria-labelledby="bmi-category-reference">
     <div class="tool-section-heading">
-      <p class="eyebrow">{{ text.formulaTitle }}</p>
       <h2 id="bmi-category-reference">{{ text.categoryTableTitle }}</h2>
-      <p><code class="bmi-formula">{{ text.formula }}</code></p>
+      <p><strong class="bmi-formula__label">{{ text.formulaTitle }}</strong> <code class="bmi-formula">{{ text.formula }}</code></p>
       <p>{{ text.formulaNote }}</p>
     </div>
 

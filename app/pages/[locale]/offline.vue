@@ -35,7 +35,6 @@ useHead(() => ({
 
     <section class="tool-contract" aria-labelledby="offline-available">
       <div class="tool-section-heading">
-        <p class="eyebrow">{{ locale === 'en' ? 'Available now' : '現在可以使用' }}</p>
         <h2 id="offline-available">{{ locale === 'en' ? 'Tools that work offline' : '可離線使用的工具' }}</h2>
         <p>
           {{ locale === 'en'
