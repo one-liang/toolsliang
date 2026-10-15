@@ -2,6 +2,7 @@ import { imageCompressorCanaries } from '../support/image-compressor-canaries'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import { gotoHydrated } from './support/hydration'
+import { settleTransitions } from './support/motion'
 import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
 
 guardToolContentBoundary(imageCompressorCanaries, { allowedOrigins: ['http://127.0.0.1:4173'] })
@@ -41,6 +42,7 @@ test('PNG 本機壓縮、維持原尺寸、透明度與下載', async ({ page },
   const download = page.waitForEvent('download')
   await page.getByRole('link', { name: 'Download image' }).click()
   expect((await download).suggestedFilename()).toBe('compressed-image.png')
+  await settleTransitions(page)
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-compressor-result-desktop.png', fullPage: true })
 })
@@ -183,6 +185,8 @@ for (const mobile of [false, true]) test(`12 MP JPEG 建議品質、主執行緒
     return await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]!); reader.readAsDataURL(blob) })
   })
   await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/jpeg', buffer: Buffer.from(bytes, 'base64') })
+  // The button stays disabled while the picked file is validated; a script click before then does nothing.
+  await expect(page.getByRole('button', { name: 'Compress image', exact: true })).toBeEnabled()
   await page.evaluate(() => {
     const metrics = { start: performance.now(), progressAt: 0, maxGap: 0, last: performance.now() }
     const timer = setInterval(() => { const now = performance.now(); metrics.maxGap = Math.max(metrics.maxGap, now - metrics.last); metrics.last = now }, 20)
