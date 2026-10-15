@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  bmiCaveats,
   bmiCategoryRangeText,
   bmiCopy,
   bmiCopyKeys,
@@ -15,8 +14,14 @@ import {
 } from '@/features/tools/bmi-calculator/domain/calculate'
 import { bmiCategories } from '@/features/tools/bmi-calculator/domain/reference'
 import { bmiCaveatKeys } from '@/features/tools/bmi-calculator/domain/sources'
-import { supportedLocales } from '@/features/tools/catalog'
+import { getTool, supportedLocales } from '@/features/tools/catalog'
 import { bmiDecisionRecord } from './support/bmi-decision-record'
+
+const tool = getTool('bmi-calculator')!
+
+function faqBody(question: string, locale: 'zh-tw' | 'en') {
+  return bmiFaq.find(entry => entry.heading['zh-tw'] === question)!.body[locale]
+}
 
 const allFields = [...bmiFieldsByUnitSystem.metric, ...bmiFieldsByUnitSystem.imperial] as BmiFieldId[]
 const allCodes: BmiFieldErrorCode[] = ['missing', 'invalid-number', 'non-positive', 'out-of-range']
@@ -24,7 +29,11 @@ const allCodes: BmiFieldErrorCode[] = ['missing', 'invalid-number', 'non-positiv
 function everyVisibleString() {
   return [
     ...bmiCopyKeys.flatMap(key => supportedLocales.map(locale => bmiCopy[key][locale])),
-    ...bmiCaveatKeys.flatMap(key => supportedLocales.map(locale => bmiCaveats[key][locale])),
+    ...supportedLocales.flatMap(locale => [
+      tool.seo.answer[locale],
+      tool.acceptedInput[locale],
+      ...tool.contentReview!.sources.flatMap(source => [source.title[locale], source.description?.[locale] ?? '']),
+    ]),
     ...bmiFaq.flatMap(entry => supportedLocales.flatMap(locale => [entry.heading[locale], entry.body[locale]])),
     ...bmiCategories.flatMap(category => supportedLocales.map(locale => category.name[locale])),
     ...allFields.flatMap(field => allCodes.flatMap(code => supportedLocales.map(locale =>
@@ -38,13 +47,26 @@ describe('bmi content', () => {
     expect(validateBmiContent()).toEqual([])
   })
 
-  it('shows every caveat the decision record requires, in both locales and in its published wording', () => {
-    expect(Object.keys(bmiCaveats)).toEqual([...bmiCaveatKeys])
+  /**
+   * §6.1 as revised for #82: the workspace holds only input and result, so the
+   * three limits that decide whether the number applies at all are one sentence
+   * of the before-you-start answer, and the other three are answered in the FAQ.
+   * The claims and their scope are the record's; only where they sit moved.
+   */
+  it('still states every caveat the decision record requires, in both locales', () => {
+    const where: Record<typeof bmiCaveatKeys[number], { text: (locale: 'zh-tw' | 'en') => string, says: Record<'zh-tw' | 'en', string[]> }> = {
+      'not-a-diagnosis': { text: locale => tool.seo.answer[locale], says: { 'zh-tw': ['不是醫療診斷'], en: ['not a medical diagnosis'] } },
+      'adults-only': { text: locale => tool.seo.answer[locale], says: { 'zh-tw': ['未滿 18 歲'], en: ['under 18'] } },
+      'pregnancy': { text: locale => tool.seo.answer[locale], says: { 'zh-tw': ['懷孕'], en: ['pregnancy'] } },
+      'body-composition': { text: locale => faqBody('BMI 可以看出體脂肪或健康狀況嗎？', locale), says: { 'zh-tw': ['不區分脂肪、肌肉與骨質'], en: ['does not distinguish fat, muscle, or bone mass'] } },
+      'older-adults': { text: locale => faqBody('BMI 可以看出體脂肪或健康狀況嗎？', locale), says: { 'zh-tw': ['長者'], en: ['older adults'] } },
+      'professional-advice': { text: locale => faqBody('BMI 可以看出體脂肪或健康狀況嗎？', locale), says: { 'zh-tw': ['醫事人員'], en: ['health professional'] } },
+    }
 
+    expect(Object.keys(where).sort()).toEqual([...bmiCaveatKeys].sort())
     for (const key of bmiCaveatKeys) {
       for (const locale of supportedLocales) {
-        expect(bmiCaveats[key][locale].trim(), `${key}/${locale} 免責內容不得留空`).not.toBe('')
-        expect(bmiDecisionRecord, `${key}/${locale} 必須沿用決策紀錄的原文`).toContain(bmiCaveats[key][locale])
+        for (const phrase of where[key].says[locale]) expect(where[key].text(locale), `${key}/${locale}`).toContain(phrase)
       }
     }
   })

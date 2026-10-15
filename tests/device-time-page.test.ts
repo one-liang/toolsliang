@@ -113,6 +113,15 @@ describe('裝置時間公開工具頁', () => {
     expect(page.get('[data-clock-capability]').text()).toContain('基本本機時間')
   })
 
+  it.each(['zh-tw', 'en'])('以 %s 在頁面下方說明這個工具怎麼處理你的內容，而不是列出技術規格', async (locale) => {
+    await openTool(locale)
+    expect(page.find('.tool-contract--sources').exists(), '沒有內容來源的工具不顯示資料來源').toBe(false)
+    const handling = page.get('.tool-contract--handling')
+    expect(handling.get('h2').text()).toBe(locale === 'en' ? 'How this tool handles your content' : '這個工具怎麼處理你的內容')
+    expect(handling.text()).toContain(locale === 'en' ? 'Readings are never sent or saved' : '不傳送或保存讀值')
+    expect(page.find('.tool-licences-link').exists(), '沒有用到需要標示授權的元件').toBe(false)
+  })
+
   it.each(['zh-tw', 'en'])('以 %s 提供可見 FAQ 並說明讀值與設定不保存', async (locale) => {
     await openTool(locale)
     expect(page.get('.tool-contract--faq').text()).toContain(locale === 'en' ? 'Why can device time be wrong?' : '為什麼裝置時間可能不準確？')

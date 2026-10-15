@@ -76,19 +76,18 @@ async function choose(wrapper: ReturnType<typeof mount>, file: File) {
   await flushPromises()
 }
 
-it('在可以放置任何簽名之前，就說明這不是憑證式數位簽章也不驗證身分', async () => {
+it('工作區只放操作，產品邊界的兩句話改由頁面下方的「開始前先知道」說明（#82）', async () => {
   stubWorker(capable)
   const wrapper = mount(PdfSignatureWorkspace)
   mounted.push(wrapper)
   await flushPromises()
 
-  const scope = wrapper.findAll('.pdf-signature__scope').map(node => node.text())
-  expect(scope[0]).toBe(pdfSignatureDisclosures['not-a-digital-signature']['zh-tw'])
-  expect(scope[1]).toBe(pdfSignatureDisclosures['no-identity-verification']['zh-tw'])
-
-  // Every sentence the record fixes is on the page, and none of them is rewritten.
   const text = wrapper.text()
-  for (const sentence of Object.values(pdfSignatureDisclosures)) expect(text).toContain(sentence['zh-tw'])
+  expect(wrapper.find('.pdf-signature__scope').exists()).toBe(false)
+  expect(wrapper.find('.pdf-signature__disclosures').exists()).toBe(false)
+  expect(text).not.toContain(pdfSignatureDisclosures['not-a-digital-signature']['zh-tw'])
+  expect(text).not.toContain(pdfSignatureDisclosures['no-identity-verification']['zh-tw'])
+  expect(wrapper.find('#pdf-signature-file').exists(), '一進來就能選檔案').toBe(true)
 })
 
 it('瀏覽器不支援時說明原因並提供重新檢查，不讓人先選檔案再失望', async () => {

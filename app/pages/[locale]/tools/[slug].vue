@@ -2,6 +2,7 @@
 import { Star } from '@lucide/vue'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
+import { openSourceComponentsFor } from '@/features/shell/open-source-licences'
 import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
 import { getToolFaq } from '@/features/tools/faq'
 import { buildToolStructuredData } from '@/features/tools/structured-data'
@@ -20,6 +21,7 @@ const saved = computed(() => isSaved(tool.value.slug))
 const category = computed(() => getCategory(tool.value.category)!)
 const workspace = computed(() => resolveToolWorkspace(tool.value.routeComponentKey)!)
 const faq = computed(() => getToolFaq(tool.value.seo.contentKey, locale.value))
+const shipsOpenSource = computed(() => openSourceComponentsFor(tool.value.slug).length > 0)
 
 useHead(() => ({ link: getToolWorkspaceAssets(tool.value.routeComponentKey).map(href => ({ rel: 'preload', as: 'fetch', href, crossorigin: 'anonymous' as const })) }))
 
@@ -99,7 +101,7 @@ usePageSeo({
       </dl>
     </details>
 
-    <section class="tool-contract tool-contract--sources" :aria-labelledby="`tool-sources-${tool.slug}`">
+    <section v-if="tool.contentReview" class="tool-contract tool-contract--sources" :aria-labelledby="`tool-sources-${tool.slug}`">
       <div class="tool-section-heading">
         <h2 :id="`tool-sources-${tool.slug}`">{{ locale === 'en' ? 'Sources and review' : '資料來源與審閱' }}</h2>
       </div>
@@ -113,16 +115,25 @@ usePageSeo({
           {{ locale === 'en' ? 'Reviewed' : '內容審閱日' }}：
           <time :datetime="tool.contentReview.reviewedAt">{{ formatReviewDate(tool.contentReview.reviewedAt, locale) }}</time>
         </span>
-        <span class="tool-contract__source-links">
-          <a
-            v-for="source in tool.contentReview.sources"
-            :key="source.url"
-            :href="source.url"
-            target="_blank"
-            rel="noopener noreferrer"
-          >{{ copy(source.title, locale) }}</a>
-        </span>
       </div>
+      <ul class="tool-contract__source-list">
+        <li v-for="source in tool.contentReview.sources" :key="source.url">
+          <a :href="source.url" target="_blank" rel="noopener noreferrer">{{ copy(source.title, locale) }}</a>
+          <span v-if="source.description">{{ copy(source.description, locale) }}</span>
+        </li>
+      </ul>
     </section>
+
+    <!-- A tool that cites no outside content says what happens to the visitor's instead of listing how it is built. -->
+    <section v-else class="tool-contract tool-contract--handling" :aria-labelledby="`tool-handling-${tool.slug}`">
+      <div class="tool-section-heading">
+        <h2 :id="`tool-handling-${tool.slug}`">{{ locale === 'en' ? 'How this tool handles your content' : '這個工具怎麼處理你的內容' }}</h2>
+      </div>
+      <p>{{ copy(tool.localProcessingStatement, locale) }}</p>
+    </section>
+
+    <p v-if="shipsOpenSource" class="tool-licences-link">
+      <NuxtLink :to="withLocale('/licenses/')">{{ locale === 'en' ? 'Open-source licences used by this tool' : '這個工具用到的開放原始碼授權' }}</NuxtLink>
+    </p>
   </main>
 </template>

@@ -1,16 +1,16 @@
 import { bmiSupportedRange, type BmiFieldError, type BmiFieldId } from './domain/calculate'
 import type { BmiCategory } from './domain/reference'
-import { bmiCaveatKeys, type BmiCaveatKey } from './domain/sources'
 import type { ToolFaqEntry } from '../faq'
 import { hasLocalizedCopy, type LocaleCode, type LocalizedCopy } from '../catalog'
 
 /**
  * Everything the BMI workspace and page say out loud. It sits beside the
  * calculator rather than inside the component because the health-information
- * boundary is reviewed as content: the caveats keep the wording published in
- * docs/research/001-bmi-formula-and-health-sources.md §6.1, and the questions
- * keep the ones approved in §7. Error messages are built from the shared range
- * constants so a bound can never be retyped into a message it does not match.
+ * boundary is reviewed as content: the questions keep the ones approved in
+ * docs/research/001-bmi-formula-and-health-sources.md §7, and together with the
+ * before-you-start answer they carry every caveat of §6.1. Error messages are
+ * built from the shared range constants so a bound can never be retyped into a
+ * message it does not match.
  */
 
 const { metric, imperial } = bmiSupportedRange
@@ -51,7 +51,6 @@ const bmiCopyEntries = {
     en: 'Categorized with the Health Promotion Administration adult standard.',
   },
   resetLabel: { 'zh-tw': '重設', en: 'Reset' },
-  caveatsTitle: { 'zh-tw': '這個結果不能用來做什麼', en: 'What this result cannot do' },
   formulaTitle: { 'zh-tw': '計算方式', en: 'How it is calculated' },
   formula: {
     'zh-tw': 'BMI ＝ 體重（公斤）÷ 身高（公尺）÷ 身高（公尺）',
@@ -65,41 +64,11 @@ const bmiCopyEntries = {
   categoryTableCaption: { 'zh-tw': '成人 BMI 分級與對應範圍', en: 'Adult BMI categories and their ranges' },
   categoryColumn: { 'zh-tw': '分級', en: 'Category' },
   rangeColumn: { 'zh-tw': 'BMI 範圍', en: 'BMI range' },
-  sourceLabel: { 'zh-tw': '分級依據', en: 'Category source' },
-  sourceUpdatedLabel: { 'zh-tw': '來源更新日', en: 'Source updated' },
 } satisfies Record<string, LocalizedCopy>
 
 export type BmiCopyKey = keyof typeof bmiCopyEntries
 export const bmiCopyKeys = Object.keys(bmiCopyEntries) as BmiCopyKey[]
 export const bmiCopy: Record<BmiCopyKey, LocalizedCopy> = bmiCopyEntries
-
-/** Section 6.1: shown next to the result, complete, in both locales. */
-export const bmiCaveats: Record<BmiCaveatKey, LocalizedCopy> = {
-  'not-a-diagnosis': {
-    'zh-tw': 'BMI 是體位篩檢的參考值，不是醫療診斷，也不用來評估疾病風險。',
-    en: 'BMI is a screening reference, not a medical diagnosis or a disease risk assessment.',
-  },
-  'adults-only': {
-    'zh-tw': '這裡的分級只適用 18 歲（含）以上成人；未滿 18 歲需依年齡與性別對照百分位。',
-    en: 'These categories apply to adults aged 18 and over; people under 18 need age- and sex-specific percentiles.',
-  },
-  'body-composition': {
-    'zh-tw': 'BMI 不區分脂肪、肌肉與骨質，也看不出脂肪長在哪裡。',
-    en: 'BMI does not distinguish fat, muscle, or bone mass, and does not show where fat is carried.',
-  },
-  'pregnancy': {
-    'zh-tw': '懷孕期間不適用；孕期體重另有以孕前 BMI 為基準的建議增重範圍。',
-    en: 'It does not apply during pregnancy; gestational weight gain follows guidance based on pre-pregnancy BMI.',
-  },
-  'older-adults': {
-    'zh-tw': '長者、肌肉量高或身體組成特殊的人，結果僅供參考。',
-    en: 'For older adults or people with atypical body composition, treat the result as reference only.',
-  },
-  'professional-advice': {
-    'zh-tw': '需要健康判斷或體重管理計畫時，請諮詢醫事人員。',
-    en: 'Consult a health professional for any health decision or weight management plan.',
-  },
-}
 
 /** Section 7: the visible questions, and the only ones the page publishes as structured data. */
 export const bmiFaq: ToolFaqEntry[] = [
@@ -141,15 +110,15 @@ export const bmiFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': 'BMI 可以看出體脂肪或健康狀況嗎？', en: 'Does BMI measure body fat or health?' },
     body: {
-      'zh-tw': '不能。BMI 不區分脂肪、肌肉與骨質，也看不出脂肪長在哪裡，它是體位篩檢的參考值，不是醫療診斷。',
-      en: 'No. BMI does not distinguish fat, muscle, or bone mass and does not show where fat is carried; it is a screening reference, not a medical diagnosis.',
+      'zh-tw': '不能。BMI 不區分脂肪、肌肉與骨質，也看不出脂肪長在哪裡，它是體位篩檢的參考值，不是醫療診斷。長者、肌肉量高或身體組成特殊的人，結果僅供參考；需要健康判斷或體重管理計畫時，請諮詢醫事人員。',
+      en: 'No. BMI does not distinguish fat, muscle, or bone mass and does not show where fat is carried; it is a screening reference, not a medical diagnosis. For older adults or people with atypical body composition, treat the result as reference only, and consult a health professional for any health decision or weight management plan.',
     },
   },
   {
     heading: { 'zh-tw': '英制身高體重怎麼換算？', en: 'How are imperial units converted?' },
     body: {
-      'zh-tw': '採用 NIST 公布的精確係數：1 英吋 ＝ 0.0254 公尺、1 英尺 ＝ 0.3048 公尺、1 磅 ＝ 0.45359237 公斤。工具不使用 703 近似式，因為它會在界線附近改變分級。',
-      en: 'With the exact NIST factors: 1 inch = 0.0254 m, 1 foot = 0.3048 m, 1 pound = 0.45359237 kg. The 703 approximation is not used, because it can shift the category near a boundary.',
+      'zh-tw': '採用美國國家標準與技術研究院公布的精確數值：1 英吋 ＝ 0.0254 公尺、1 英尺 ＝ 0.3048 公尺、1 磅 ＝ 0.45359237 公斤。工具不用常見的「乘以 703」簡便算法，因為它在分級界線附近可能算出不同的分級。',
+      en: 'With the exact values published by the US National Institute of Standards and Technology: 1 inch = 0.0254 m, 1 foot = 0.3048 m, 1 pound = 0.45359237 kg. The common “multiply by 703” shortcut is not used, because near a boundary it can land in a different category.',
     },
   },
   {
@@ -170,10 +139,6 @@ export function getBmiCopy(locale: LocaleCode): Record<BmiCopyKey, string> {
   return Object.fromEntries(
     bmiCopyKeys.map(key => [key, bmiCopy[key][locale]]),
   ) as Record<BmiCopyKey, string>
-}
-
-export function getBmiCaveats(locale: LocaleCode) {
-  return bmiCaveatKeys.map(key => ({ key, text: bmiCaveats[key][locale] }))
 }
 
 /**
@@ -250,13 +215,6 @@ export function validateBmiContent() {
 
   for (const key of bmiCopyKeys) {
     if (!hasLocalizedCopy(bmiCopy[key])) issues.push(`[copy:${key}] requires both locales`)
-  }
-
-  for (const key of bmiCaveatKeys) {
-    if (!hasLocalizedCopy(bmiCaveats[key])) issues.push(`[caveat:${key}] requires both locales`)
-  }
-  for (const key of Object.keys(bmiCaveats)) {
-    if (!bmiCaveatKeys.includes(key as BmiCaveatKey)) issues.push(`[caveat:${key}] is not a reviewed caveat`)
   }
 
   const questions = new Set<string>()

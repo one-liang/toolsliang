@@ -15,6 +15,7 @@ const { locale, withLocale } = useAppLocale()
         <nav class="nb-footer__nav" :aria-label="locale === 'en' ? 'Footer' : '頁尾導覽'">
           <NuxtLink :to="withLocale('/tools/')">{{ locale === 'en' ? 'All tools' : '全部工具' }}</NuxtLink>
           <NuxtLink :to="withLocale('/storage/')">{{ locale === 'en' ? 'Local assets' : '本機資產' }}</NuxtLink>
+          <NuxtLink :to="withLocale('/licenses/')">{{ locale === 'en' ? 'Open-source licences' : '開放原始碼授權' }}</NuxtLink>
         </nav>
       </div>
     </footer>

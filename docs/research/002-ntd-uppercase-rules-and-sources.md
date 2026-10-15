@@ -361,6 +361,11 @@
 | `written-amount-governs` | 票據上文字與號碼不符時，依票據法以文字為準，填寫後務必再核對一次大小寫金額。 | Under the Negotiable Instruments Act the written amount governs when it differs from the numerals, so re-check both fields after filling them in. |
 | `local-processing` | 金額只在你的瀏覽器換算，不會送出、不會保存。 | Amounts are converted in your browser only; nothing is sent or stored. |
 
+> **2026-10-15 修訂（#82）**：依使用者決定，工作區移除「抄寫前要知道」。隨用途出現的三則由工作區的用途規則摘要
+> （「寫到「元」為止」「元以下四捨五入」「中間的零不書寫」）表達；`purpose-differs` 是用途選項的說明；
+> `no-legal-effect` 與 `written-amount-governs` 併入「開始前先知道」；`local-processing` 由常見問題回答。
+> 主張與範圍不變，`tests/ntd-content.test.ts` 逐則確認它們仍在頁面上。
+
 ### 7.2 來源標示
 
 - 結果區塊旁必須顯示：所選用途、該用途的規則摘要、來源名稱與可點擊連結。
@@ -368,6 +373,9 @@
   更新識別碼與 `reviewedAt`，並同步本文件與測試。工具 slug `ntd-uppercase` 不隨之改變。
 - 中央銀行「國庫專戶存款支票使用須知」在頁面上必須標示為非現行法規，不得呈現為現行規定。
 - 中英文頁面都必須列出來源；英文頁不得只寫「Taiwan regulations」而不指名。
+
+> **2026-10-15 修訂（#82）**：工作區不再顯示來源連結與規則版本識別碼。各用途依據的來源改在頁面下方的
+> 「資料來源與審閱」以一句白話說明標出，例如票據交換所手冊的說明寫明「一般會計沒有法規限制可用的國字，寫法沿用這套票據實務」。
 
 ### 7.3 禁止用語
 

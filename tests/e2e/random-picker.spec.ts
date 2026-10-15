@@ -66,7 +66,9 @@ test('工具開啟即說明等機率作法、界線與來源', async ({ page }) 
   await expect(page.locator('.picker-method')).toContainText('Fisher–Yates')
   await expect(page.locator('.picker-method')).toContainText('拒絕取樣')
   await expect(page.getByRole('heading', { name: '關於這個工具的常見問題' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '資料來源與審閱' })).toBeVisible()
+  // #82: specifications and algorithms are not content sources.
+  await expect(page.getByRole('heading', { name: '資料來源與審閱' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: '這個工具怎麼處理你的內容' })).toBeVisible()
 })
 
 test('抽選結果由 live region 宣告，多名抽選不重複中選', async ({ page }) => {

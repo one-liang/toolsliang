@@ -473,6 +473,11 @@ Word to PDF 的可行性驗證（#28）可以直接沿用這裡的：授權與�
 
 這八句在工具頁、SEO 描述與說明區塊之間可以重新排列，但不得改寫。前兩句必須在使用者開始放置簽名之前就看得見，不能只放在頁尾；`decrypted-export` 必須在下載加密文件的簽名結果之前出現。
 
+> **2026-10-15 修訂（#82）**：依使用者決定，工作區只留操作與結果，前兩句與工作區底部的八句清單都移出工作區。
+> 前兩句一字不改地放在頁面下方「開始前先知道」，並由常見問題「這等於在 PDF 上簽名生效嗎？」再說一次；
+> `password-stays-on-device`、`saved-signature-is-local`、`original-pages-untouched` 與 `decrypted-export`
+> 仍是對應欄位與下載按鈕旁的說明。原本使用的程式庫（pdf.js、@cantoo/pdf-lib）改在「開放原始碼授權」頁標示，不列在「資料來源與審閱」。
+
 ### 10.2 禁止用語
 
 工具頁、metadata、結構化資料與任何說明文字中不得出現：具法律效力、法律效力保證、等同數位簽章、電子簽章認證、身分已驗證、經過公證、legally binding、legally valid、certified signature、verified identity。

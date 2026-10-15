@@ -105,8 +105,8 @@ export const compliantImageErrors: Record<string, LocalizedCopy> = {
     en: 'These output settings fall outside what this channel allows. Adjust the fields as described and retry.',
   },
   unsupported_browser: {
-    'zh-tw': '這個瀏覽器無法在背景處理圖片。請改用支援 Worker 與 OffscreenCanvas 的瀏覽器後重試。原圖未變更。',
-    en: 'This browser cannot process images in the background. Retry in a browser with Worker and OffscreenCanvas support. Your original is unchanged.',
+    'zh-tw': '這個瀏覽器無法在背景處理圖片。請改用最新版瀏覽器後重試。原圖未變更。',
+    en: 'This browser cannot process images in the background. Retry in an up-to-date browser. Your original is unchanged.',
   },
   unsupported_encoder: {
     'zh-tw': '這個瀏覽器無法輸出所選格式，請改選其他可用格式。原圖仍在此裝置。',

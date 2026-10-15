@@ -176,10 +176,6 @@ function savedLabel(asset: SignatureAsset) {
 
 <template>
   <Card class="tool-workspace pdf-signature">
-    <!-- §10 of the decision record: these two sentences come before any placement. -->
-    <p class="pdf-signature__scope">{{ pdfSignatureDisclosures['not-a-digital-signature'][locale] }}</p>
-    <p class="pdf-signature__scope">{{ pdfSignatureDisclosures['no-identity-verification'][locale] }}</p>
-
     <p v-if="preparing" role="status" class="field-help">{{ en ? 'Checking local PDF support…' : '正在檢查本機 PDF 支援…' }}</p>
     <div v-else-if="capabilities && !capabilities.supported" class="capability-warning">
       <p>{{ pdfSignatureErrors.unsupported_browser[locale] }}</p>
@@ -430,12 +426,6 @@ function savedLabel(asset: SignatureAsset) {
             <Trash2 :size="16" aria-hidden="true" />{{ en ? 'Delete' : '刪除' }}
           </Button>
         </li>
-      </ul>
-    </section>
-
-    <section class="pdf-signature__disclosures" :aria-label="en ? 'What this tool does and does not do' : '這個工具會做與不會做的事'">
-      <ul>
-        <li v-for="(sentence, key) in pdfSignatureDisclosures" :key="key">{{ sentence[locale] }}</li>
       </ul>
     </section>
   </Card>

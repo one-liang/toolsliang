@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getNtdCaveats,
   getNtdCopy,
   getNtdPurposeSummary,
-  ntdCaveats,
   ntdComparisonExamples,
   ntdErrorMessage,
   ntdFaq,
@@ -17,7 +15,9 @@ import {
   type NtdPurpose,
 } from '@/features/tools/ntd-uppercase/domain/reference'
 import { ntdCaveatKeys, ntdContentReview } from '@/features/tools/ntd-uppercase/domain/sources'
-import { supportedLocales } from '@/features/tools/catalog'
+import { getTool, supportedLocales } from '@/features/tools/catalog'
+
+const tool = getTool('ntd-uppercase')!
 
 /**
  * Section 7.3 forbids claiming legal effect, acceptance or that the tool
@@ -33,7 +33,8 @@ const forbiddenClaims = [
 function everyPublishedString() {
   return supportedLocales.flatMap(locale => [
     ...Object.values(getNtdCopy(locale)),
-    ...ntdCaveatKeys.map(key => ntdCaveats[key][locale]),
+    tool.seo.answer[locale],
+    ...ntdContentReview.sources.flatMap(source => [source.title[locale], source.description?.[locale] ?? '']),
     ...ntdFaq.flatMap(entry => [entry.heading[locale], entry.body[locale]]),
     ...ntdErrorCodes.flatMap(code => ntdPurposes.map(purpose => ntdErrorMessage(code, purpose, locale))),
   ])
@@ -44,23 +45,31 @@ describe('ntd uppercase content', () => {
     expect(validateNtdContent()).toEqual([])
   })
 
-  it('writes every reviewed caveat in both locales', () => {
-    for (const key of ntdCaveatKeys) {
-      expect(ntdCaveats[key]['zh-tw'].trim(), key).not.toBe('')
-      expect(ntdCaveats[key].en.trim(), key).not.toBe('')
+  /**
+   * §7.1 as revised for #82: the workspace keeps the purpose hint and the rules
+   * of the selected purpose, which carry the purpose caveats; the rest moved to
+   * the before-you-start answer and the FAQ. The claims are the record's.
+   */
+  it('still states every reviewed caveat, in both locales', () => {
+    const rules = (purpose: NtdPurpose, locale: 'zh-tw' | 'en') => Object.values(getNtdPurposeSummary(purpose, locale)).join('\n')
+    const privacy = ntdFaq.find(entry => entry.heading['zh-tw'].includes('上傳'))!
+    const where: Record<typeof ntdCaveatKeys[number], Record<'zh-tw' | 'en', [string, string]>> = {
+      'no-legal-effect': { 'zh-tw': [tool.seo.answer['zh-tw'], '不是法律或會計審查'], en: [tool.seo.answer.en, 'not legal or accounting review'] },
+      'purpose-differs': { 'zh-tw': [getNtdCopy('zh-tw').purposeHint, '三種用途的寫法不同'], en: [getNtdCopy('en').purposeHint, 'written differently'] },
+      'cheque-yuan-only': { 'zh-tw': [rules('cheque', 'zh-tw'), '寫到「元」為止'], en: [rules('cheque', 'en'), 'Written to 元 only'] },
+      'treasury-rounds-to-yuan': { 'zh-tw': [rules('treasury', 'zh-tw'), '元以下四捨五入'], en: [rules('treasury', 'en'), 'Rounds half-up'] },
+      'treasury-omits-zero': { 'zh-tw': [rules('treasury', 'zh-tw'), '中間的零不書寫'], en: [rules('treasury', 'en'), 'Omits the internal 零'] },
+      'written-amount-governs': { 'zh-tw': [tool.seo.answer['zh-tw'], '以文字為準'], en: [tool.seo.answer.en, 'the words govern'] },
+      'local-processing': { 'zh-tw': [privacy.body['zh-tw'], '不會送到'], en: [privacy.body.en, 'never stored'] },
     }
-  })
 
-  it('keeps a purpose caveat with its purpose and the rest always visible', () => {
-    const keysFor = (purpose: NtdPurpose) => getNtdCaveats('zh-tw', purpose).map(caveat => caveat.key)
-
-    expect(keysFor('accounting')).toEqual([
-      'no-legal-effect', 'purpose-differs', 'written-amount-governs', 'local-processing',
-    ])
-    expect(keysFor('cheque')).toContain('cheque-yuan-only')
-    expect(keysFor('cheque')).not.toContain('treasury-omits-zero')
-    expect(keysFor('treasury')).toEqual(expect.arrayContaining(['treasury-rounds-to-yuan', 'treasury-omits-zero']))
-    expect(keysFor('treasury')).not.toContain('cheque-yuan-only')
+    expect(Object.keys(where).sort()).toEqual([...ntdCaveatKeys].sort())
+    for (const key of ntdCaveatKeys) {
+      for (const locale of supportedLocales) {
+        const [text, phrase] = where[key][locale]
+        expect(text, `${key}/${locale}`).toContain(phrase)
+      }
+    }
   })
 
   it('says how to fix every refused amount, in both locales', () => {
@@ -95,19 +104,14 @@ describe('ntd uppercase content', () => {
     expect(getNtdPurposeSummary('treasury', 'en').fraction.toLowerCase()).toContain('round')
   })
 
-  it('cites the source that governs the chosen purpose, from the reviewed list', () => {
-    const reviewed = ntdContentReview.sources.map(source => source.url)
+  it('says on the source list which source governs each purpose', () => {
+    const source = (url: string) => ntdContentReview.sources.find(item => item.url === url)!
 
-    expect(getNtdPurposeSummary('treasury', 'zh-tw').source.url).toBe('https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296')
-    expect(getNtdPurposeSummary('cheque', 'zh-tw').source.title, '非現行法規必須標示').toContain('非現行法規')
-    expect(getNtdPurposeSummary('accounting', 'zh-tw').sourceNote, '一般會計沒有法規限制，必須說清楚').toContain('沒有法規限制')
-
-    for (const purpose of ntdPurposes) {
-      const summary = getNtdPurposeSummary(purpose, 'en')
-      expect(reviewed, `${purpose} 的來源必須在已審閱清單內`).toContain(summary.source.url)
-      expect(summary.source.title.trim()).not.toBe('')
-      expect(summary.sourceNote.trim()).not.toBe('')
-    }
+    expect(source('https://www.twnch.org.tw/manual.html').description!['zh-tw'], '一般會計沒有法規限制，必須說清楚').toContain('沒有法規限制')
+    expect(source('https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296').description!['zh-tw']).toContain('國庫付款憑單')
+    const cheque = source('https://www.law.cbc.gov.tw/Law/ShowAll?LawID=LA06C001001&LawDataType=1')
+    expect(cheque.title['zh-tw'], '非現行法規必須標示').toContain('非現行法規')
+    expect(cheque.description!['zh-tw']).toContain('支票')
   })
 
   it('warns that the treasury example covers one unit boundary only', () => {
@@ -162,8 +166,8 @@ describe('ntd uppercase content', () => {
     const privacy = ntdFaq.find(entry => entry.heading['zh-tw'].includes('上傳'))!
 
     expect(privacy.body['zh-tw']).toContain('瀏覽器')
-    expect(ntdCaveats['local-processing']['zh-tw']).toContain('不會送出')
-    expect(ntdCaveats['local-processing'].en).toContain('nothing is sent')
+    expect(privacy.body['zh-tw']).toContain('不會送到')
+    expect(privacy.body.en).toContain('never stored')
   })
 
   it('never claims legal effect, acceptance, or that it produces a document', () => {
