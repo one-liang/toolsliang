@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page, type Request } from '@playwright/test'
 import { backgroundRemoverCanaries } from '../support/image-background-remover-canaries'
 import { gotoHydrated, waitForHydration } from './support/hydration'
 import { settleTransitions } from './support/motion'
@@ -52,9 +52,9 @@ async function chooseAndWaitForModel(page: Page) {
 }
 
 /** Every request for the model files, from the page or from its Service Worker. */
-function recordModelRequests(context: BrowserContext) {
+function recordModelRequests(context: BrowserContext, only: (request: Request) => boolean = () => true) {
   const requests: string[] = []
-  context.on('request', (request) => { if (request.url().includes('/assets/offline/')) requests.push(request.url()) })
+  context.on('request', (request) => { if (request.url().includes('/assets/offline/') && only(request)) requests.push(request.url()) })
   return requests
 }
 
@@ -201,7 +201,9 @@ test('已準備好的裝置：重新開啟後直接去背，不出現任何下�
   await gotoHydrated(page, PAGE)
   await chooseAndWaitForModel(page)
 
-  const requests = recordModelRequests(context)
+  // Every run imports the runtime's loader by its address, answered from the
+  // device. What must not happen is fetching the files again to get ready.
+  const requests = recordModelRequests(context, request => request.resourceType() === 'fetch')
   await page.reload({ waitUntil: 'domcontentloaded' })
   await waitForHydration(page)
   await expect(page.locator(MODEL_READY)).toBeVisible()
