@@ -155,6 +155,7 @@
 }
 
 * { box-sizing: border-box; }
+/* Room above the sticky topbar, and below for the floating mobile nav; from 1024px the nav is gone, so the bottom shrinks there. */
 html { scroll-behavior: smooth; scroll-padding-block: 88px; }
 body {
   margin: 0;
@@ -579,14 +580,9 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .bmi-fields { display: grid; gap: 18px; align-content: start; }
 .bmi-fields__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .field-pending { margin: 7px 0 0; color: var(--color-muted-foreground); font-size: .8rem; font-weight: 700; }
-.picker-source { margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .8rem; }
-.picker-source a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
 .bmi-result__value { font-family: var(--font-mono); }
 .bmi-result__category { margin-top: 8px; font-size: .95rem; font-weight: 700; }
 .bmi-result__pending, .ntd-result__pending, .picker-result__pending { color: var(--color-muted-foreground); font-size: .9rem; }
-.picker-caveats { margin-top: 22px; padding: 18px 20px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
-.picker-caveats__title { margin: 0 0 10px; font-size: .95rem; font-weight: 800; }
-.picker-caveats ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; list-style: disc outside; color: var(--color-muted-foreground); font-size: .84rem; }
 .bmi-formula__label { margin-right: 8px; font-size: .86rem; }
 .bmi-formula { display: inline-block; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); font-size: .88rem; }
 .bmi-category-table th:nth-child(odd), .bmi-category-table td:nth-child(odd) { width: 45%; }
@@ -614,42 +610,94 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .ntd-examples tbody th { background: var(--color-surface); color: var(--color-foreground); font-family: var(--font-mono); font-size: .8rem; font-weight: 700; white-space: nowrap; }
 /* Wording cells are prose, not figures; the nth-child pair only matches the specificity of the .tool-reference default it replaces. */
 .ntd-examples td:nth-child(odd), .ntd-examples td:nth-child(even) { font-family: inherit; font-size: .84rem; }
-.picker-inputs { display: grid; align-content: start; gap: 0; }
+/* Random picker (#83): the list and its settings on one side; one stage holding the
+   result, the way it is shown and the buttons that act on it on the other. On a phone
+   the stage docks above the bottom navigation until the page scrolls past the
+   workspace, so drawing, drawing again and resetting never leave the result. */
+.picker-grid { display: flex; flex-direction: column; gap: 24px; }
+.picker-inputs { display: grid; align-content: start; gap: 0; min-width: 0; }
 .picker-list { width: 100%; min-height: 168px; height: auto; padding: 12px 14px; resize: vertical; line-height: 1.7; }
-.picker-add { margin-top: 18px; }
+.picker-summary { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.picker-summary li { padding: 5px 10px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface-subtle); font-size: .78rem; }
+.picker-add { margin-top: 20px; }
 .picker-add__row { display: flex; flex-wrap: wrap; gap: 8px; }
-.picker-add__row > .ui-input { flex: 1 1 180px; }
+.picker-add__row > .ui-input { flex: 1 1 160px; }
 .picker-add__button { flex: 0 0 auto; }
-.picker-summary__title { margin: 18px 0 0; font-size: .75rem; font-weight: 800; color: var(--color-muted-foreground); }
-.picker-summary { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 8px 0 0; padding: 0; list-style: none; }
-.picker-summary li { padding: 5px 10px; border: var(--rule) solid var(--color-border); border-radius: 999px; background: var(--color-surface-subtle); font-size: .78rem; }
-.picker-options { margin: 18px 0 0; padding: 0; border: 0; }
+.picker-options { min-width: 0; margin: 20px 0 0; padding: 0; border: 0; }
 .picker-options .field-help { margin: 0 0 10px; }
-.picker-count { margin-top: 18px; }
+.picker-count { margin-top: 20px; }
 .picker-count > .ui-input { max-width: 160px; }
-.picker-wheel-note { margin: 10px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); color: var(--color-muted-foreground); font-size: .8rem; }
-.picker-stage { display: grid; align-content: start; gap: 16px; }
-.picker-wheel { display: grid; justify-items: center; gap: 12px; }
+.picker-note { margin: 10px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); color: var(--color-muted-foreground); font-size: .8rem; }
+.picker-output { display: grid; align-content: start; gap: 20px; min-width: 0; }
+.picker-stage {
+  /* As large as a laptop screen leaves room for under the page heading, so the buttons below it stay in view. */
+  --picker-wheel-size: clamp(200px, calc(100svh - 510px), 280px);
+  display: grid; gap: 16px; padding: 16px 20px 20px;
+  border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-result-surface);
+}
+.picker-stage__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.picker-stage__title { margin: 0; font-size: 1rem; line-height: 1.3; letter-spacing: -.02em; }
+.picker-view { display: flex; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.picker-view__option { gap: 8px; padding-inline: 10px 14px; }
+.picker-stage .picker-note { margin: 0; padding: 0; background: none; }
+.picker-stage__body { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px; min-height: 5.5rem; }
+.picker-wheel { flex: 0 0 auto; width: var(--picker-wheel-size); max-width: 100%; }
 /* A rotated square grows its own bounding box; clipping it here keeps the page from scrolling sideways mid-spin. */
-.picker-wheel__frame { position: relative; width: min(320px, 100%); aspect-ratio: 1; overflow: hidden; }
-.picker-wheel__pointer { position: absolute; z-index: 1; top: 0; left: 50%; width: 0; height: 0; translate: -50% 0; border-inline: 9px solid transparent; border-top: 16px solid var(--color-primary-strong); }
+.picker-wheel__frame { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; }
+.picker-wheel__pointer {
+  position: absolute; z-index: 1; top: 0; left: 50%; width: 0; height: 0; translate: -50% 0;
+  border-inline: max(5px, calc(var(--picker-wheel-size) * .028)) solid transparent;
+  border-top: max(9px, calc(var(--picker-wheel-size) * .05)) solid var(--color-primary-strong);
+}
 .picker-wheel__disc { display: block; width: 100%; height: 100%; transition-property: transform; transition-timing-function: cubic-bezier(.16, .84, .36, 1); }
 .picker-wheel__slice { fill: var(--color-surface); stroke: var(--color-border-strong); stroke-width: 1; }
 .picker-wheel__slice--odd { fill: var(--color-surface-hover); }
 .picker-wheel__slice--won { stroke: var(--color-primary-strong); stroke-width: 3; }
 .picker-wheel__label { fill: var(--color-foreground); font-family: inherit; text-anchor: middle; dominant-baseline: middle; }
-.picker-progress { width: min(320px, 100%); height: 10px; overflow: hidden; border: var(--rule) solid var(--color-border); border-radius: 999px; background: var(--color-surface); }
+.picker-readout { flex: 1 1 8rem; display: grid; gap: 12px; min-width: 0; }
+.picker-progress { width: 100%; max-width: 240px; height: 10px; overflow: hidden; border: var(--rule) solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); }
 .picker-progress > span { display: block; height: 100%; background: var(--color-primary-strong); transition: width var(--duration-fast) linear; }
+.picker-result__list { margin: 0; padding: 0; list-style: none; animation: picker-arrive var(--duration-normal) var(--ease-enter); }
+.picker-result__item { font-size: clamp(1.4rem, 1rem + 1.2vw, 1.9rem); font-weight: 800; line-height: 1.25; letter-spacing: -.02em; overflow-wrap: anywhere; }
+/* Several names read as a numbered list that scrolls on its own, so the buttons below it never move off screen. */
+.picker-result--several .picker-result__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 4px 20px; max-height: 13.5rem; overflow-y: auto; padding: 2px 4px; list-style: decimal inside; border-radius: var(--radius-sm); }
+.picker-result--several .picker-result__item { font-size: 1.05rem; font-weight: 700; line-height: 1.5; letter-spacing: 0; }
+.picker-result--several .picker-result__item::marker { color: var(--color-muted-foreground); font-variant-numeric: tabular-nums; }
+.picker-result__spinning { margin: 0; color: var(--color-muted-foreground); font-size: .9rem; font-weight: 700; }
+.picker-result__pending { margin: 0; }
+.picker-stage__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.picker-draw { flex: 1 1 9rem; }
+.picker-candidates-block { display: grid; gap: 8px; }
+.picker-candidates__title { margin: 0; color: var(--color-muted-foreground); font-size: .78rem; font-weight: 700; }
 .picker-candidates { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 0; padding: 0; list-style: none; color: var(--color-muted-foreground); font-size: .78rem; }
-.picker-candidates li { padding: 3px 8px; border: var(--rule) solid var(--color-border); border-radius: 999px; background: var(--color-surface); }
-.picker-result__list { display: grid; gap: 6px; margin: 0; padding-left: 22px; }
-.picker-result__item { font-size: clamp(1.05rem, 2.4vw, 1.35rem); font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
-.picker-result__spinning { margin: 0; color: var(--color-muted-foreground); font-size: .9rem; }
-.picker-source a + a { margin-left: 10px; }
-.picker-method__steps { display: grid; gap: 12px; margin: 0; padding-left: 20px; }
-.picker-method__steps li { padding-left: 4px; }
-.picker-method__steps strong { display: block; margin-bottom: 3px; font-size: .92rem; }
-.picker-method__steps span { color: var(--color-muted-foreground); font-size: .86rem; line-height: 1.65; }
+.picker-candidates li { padding: 3px 8px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); overflow-wrap: anywhere; }
+@keyframes picker-arrive { from { opacity: 0; translate: 0 6px; } }
+@media (min-width: 768px) {
+  .picker-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
+}
+@media (max-width: 767.98px) {
+  /* The stage and the wheel's names become items of the column, so the stage can dock against the whole workspace. */
+  .picker-output { display: contents; }
+  .picker-stage { --picker-wheel-size: 104px; gap: 10px; padding: 12px 14px 14px; }
+  .picker-stage__body { flex-wrap: nowrap; gap: 14px; min-height: 0; }
+  /* At this size a slice cannot carry a readable name; the result beside it and the list below do. */
+  .picker-stage .picker-wheel__label { display: none; }
+  .picker-readout { flex-basis: 0; }
+  .picker-result__item { font-size: 1.3rem; }
+  /* Two columns, and a height that ends mid-row, so a list longer than the dock shows that it scrolls. */
+  .picker-result--several .picker-result__list { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: 4px 12px; max-height: 6.4rem; }
+  .picker-result__pending { font-size: .84rem; }
+}
+@media (max-width: 359.98px) {
+  /* The stage still names itself to assistive technology; on the narrowest phones its title gives way to the controls. */
+  .picker-stage__title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .picker-stage__actions .ui-button { padding-inline: 12px; }
+  .picker-draw { flex-basis: auto; }
+}
+/* Docked only when the screen is tall enough to keep the list readable above it (not in landscape or at 200% zoom). */
+@media (max-width: 767.98px) and (min-height: 600px) {
+  .picker-stage { position: sticky; z-index: 5; bottom: 88px; }
+}
 .calendar-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
 .calendar-toolbar__year { display: grid; gap: 8px; }
 .calendar-toolbar__year label { font-size: .86rem; font-weight: 700; }
@@ -993,6 +1041,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 }
 
 @media (min-width: 1024px) {
+  html { scroll-padding-bottom: 24px; }
   .app-sidebar { display: flex; }
   .app-shell__content { margin-left: var(--sidebar-width); }
   .app-shell--collapsed .app-shell__content { margin-left: var(--sidebar-collapsed); }
@@ -1201,7 +1250,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .signature-pad__panel { display: grid; gap: 12px; }
 
 /* One ruled card per tool: what used to be a panel inside it is a section under a hairline. */
-:is(.ntd-rules, .picker-caveats, .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources, .custom-calendar-day, .custom-calendar-agenda-panel, .custom-calendar-storage, .custom-calendar-caveats, .image-background-remover__model, .workbench__model, .workbench__check) {
+:is(.ntd-rules, .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources, .custom-calendar-day, .custom-calendar-agenda-panel, .custom-calendar-storage, .custom-calendar-caveats, .image-background-remover__model, .workbench__model, .workbench__check) {
   padding: 16px 0 0; border: 0; border-top: 1px solid var(--color-border-subtle); border-radius: 0; background: none;
 }
 /* A table keeps a frame; it is data, not a card. */
