@@ -4,6 +4,13 @@ import { gotoHydrated, waitForHydration } from './support/hydration'
 import { inspectNetworkRequest, inspectWebSocketFrame } from './support/privacy-boundary'
 
 const instant = '2031-07-08T09:10:11Z'
+/**
+ * The fake clock has to start before the instant it pauses at. `pauseAt` fast-forwards
+ * and refuses to move backwards, and the installed clock keeps running in real time
+ * until then: starting exactly at the instant failed whenever the page read the clock
+ * (the workspace's own one-second tick) between the two calls.
+ */
+const clockStart = Date.parse(instant) - 60_000
 // Sub-pixel layout can report a 44px target as 43.99994; the same tolerance as the App Shell gate.
 const TOUCH_TARGET_TOLERANCE_PX = 0.001
 const canaries = [
@@ -70,7 +77,7 @@ for (const locale of ['zh-tw', 'en'] as const) {
     })
     await gotoHydrated(page, `/${locale}/tools/device-time/`)
     await page.locator('[data-device-clock]').waitFor()
-    await page.clock.install({ time: new Date(instant) })
+    await page.clock.install({ time: clockStart })
     await page.clock.pauseAt(new Date(instant))
     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
     const clock = page.locator('[data-device-clock]')
@@ -133,7 +140,7 @@ for (const locale of ['zh-tw', 'en'] as const) {
 }
 
 test('背景停止更新、回到前景校正', async ({ page }) => {
-  await page.clock.install({ time: new Date(instant) })
+  await page.clock.install({ time: clockStart })
   await page.clock.pauseAt(new Date(instant))
   await gotoHydrated(page, '/en/tools/device-time/')
   await page.locator('[data-hour-cycle="h23"]').check()
