@@ -22,6 +22,18 @@ export interface UpdatePromptCopy {
 }
 
 /**
+ * Whether a registration holds a new version queued behind a running one.
+ * `waiting` alone does not say so: the very first install also passes through
+ * `waiting` on its way to `active`, and Firefox hands a page that reloads during
+ * that moment the registration in exactly this state. Offering an update then
+ * puts a "new version" banner over the page with nothing to replace. Only a
+ * waiting worker beside an active one is a new version.
+ */
+export function hasWaitingVersion(registration: { waiting: unknown, active: unknown }): boolean {
+  return Boolean(registration.waiting && registration.active)
+}
+
+/**
  * A waiting version is always an offer, never an event. `confirm-before-reload`
  * is the strongest outcome available, so unfinished work in a workspace can only
  * ever be discarded by an explicit choice.

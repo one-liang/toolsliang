@@ -120,6 +120,27 @@ test.describe('可安裝的應用外殼', () => {
  * usable Service Worker lifecycle. The shared, browser-independent policy is
  * covered by the unit suite, and every other check here runs everywhere.
  */
+/**
+ * The very first worker passes through `waiting` on its way to `active`, and
+ * Firefox hands a page that reloads during that moment the registration in
+ * exactly this state. Nothing older is running, so once the worker takes
+ * control no update banner may cover the page. Firefox is where this timing
+ * shows, so unlike the update flow below it is not Chromium-only; Playwright's
+ * WebKit has no Service Worker lifecycle to wait for.
+ */
+test('首次安裝途中重新載入，不會誤報有新版本', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'Playwright 的 WebKit 沒有可驗證的 Service Worker 生命週期')
+  await gotoHydrated(page, TOOL_ROUTE)
+  // Settled first, so the reload never cuts off a route prefetch still in flight.
+  await page.waitForLoadState('networkidle')
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await waitForHydration(page)
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 20_000 })
+  // The banner follows the controller by one render; two frames let it appear if it were going to.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  await expect(page.locator('[data-pwa-update]')).toHaveCount(0)
+})
+
 test.describe('漸進式離線與更新控制', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'Service Worker 生命週期只在 Chromium 可驗證')
 
