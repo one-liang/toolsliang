@@ -11,6 +11,7 @@ import {
   taiwanCalendarPublishableYears,
   taiwanCalendarReferenceVersion,
 } from '@/features/tools/taiwan-calendar/domain/sources'
+import { dgpa2026DaysOff, dgpa2026DaysOffTotal, dgpa2026MakeupWorkdays } from './support/dgpa-2026-office-calendar'
 import { setTestRoute } from './support/nuxt-stubs'
 
 const CURRENT_YEAR = 2026
@@ -203,30 +204,62 @@ describe('one day in detail', () => {
 })
 
 describe('what the page has to say about its data', () => {
-  it('shows the dataset edition, publisher, licence and retrieval date of the year on screen', async () => {
+  it('keeps no explainer above or beside the calendar: only the controls, the grid and the day', async () => {
     const wrapper = await mountWorkspace()
-    const sources = wrapper.get('.calendar-sources')
+
+    // Everything that used to be a section of its own now lives folded under the edition line.
+    expect(wrapper.find('.calendar-workspace > .calendar-caveats').exists()).toBe(false)
+    expect(wrapper.find('.calendar-workspace > .calendar-sources').exists()).toBe(false)
+    expect(wrapper.get('.calendar-edition__details').attributes('open')).toBeUndefined()
+    expect(wrapper.get('.calendar-edition__details').find('.calendar-caveats').exists()).toBe(true)
+  })
+
+  it('credits the publisher, edition and licence of the year on screen, never folded away', async () => {
+    const wrapper = await mountWorkspace()
+    const line = wrapper.get('.calendar-edition__line')
+
+    // The Open Government Data Licence lapses without this attribution, so it is
+    // outside the details element and readable without opening anything.
+    expect(line.element.closest('details')).toBeNull()
+    expect(line.text()).toContain('行政院人事行政總處')
+    expect(line.text()).toContain('115年中華民國政府行政機關辦公日曆表')
+    expect(line.text()).toContain('交通部中央氣象署')
+    expect(line.text()).toContain('中華民國 115 年日曆資料表')
+    expect(line.text()).toContain('政府資料開放授權條款')
+    expect(line.findAll('a').map(link => link.attributes('href'))).toEqual(expect.arrayContaining([
+      taiwanCalendarDatasets[0].url,
+      taiwanCalendarDatasets[1].url,
+      taiwanCalendarDatasets[0].licenceUrl,
+    ]))
+    expect(line.find('.calendar-edition__revised').exists()).toBe(false)
+  })
+
+  it('keeps the dates, the cross-check and the contract version in the details under the line', async () => {
+    const wrapper = await mountWorkspace()
+    const sources = wrapper.get('.calendar-edition__details .calendar-sources')
 
     expect(sources.text()).toContain('115年中華民國政府行政機關辦公日曆表')
-    expect(sources.text()).toContain('行政院人事行政總處')
+    expect(sources.text()).toContain('2026-09-06')
     expect(sources.text()).toContain(taiwanCalendarReferenceVersion)
     expect(sources.findAll('a').map(link => link.attributes('href')))
       .toEqual(expect.arrayContaining([taiwanCalendarDatasets[0].licenceUrl, taiwanCalendarDatasets[0].url]))
   })
 
-  it('carries every disclaimer beside the calendar, not only in the footer', async () => {
+  it('folds every disclaimer into the details beside the calendar, not into the footer', async () => {
     const wrapper = await mountWorkspace()
-    const caveats = wrapper.get('.calendar-caveats').text()
+    const caveats = wrapper.get('.calendar-edition__details .calendar-caveats').text()
 
     Object.values(taiwanCalendarCaveats).forEach(caveat => expect(caveats).toContain(caveat['zh-tw']))
     expect(wrapper.findAll('.calendar-caveats__emphasised')).toHaveLength(0)
     expect(wrapper.find('.calendar-revised').exists()).toBe(false)
   })
 
-  it('emphasises the revision disclaimer on the year the authority reissued', async () => {
+  it('says on the line itself that the year was reissued, and emphasises the disclaimer inside', async () => {
     const wrapper = await mountWorkspace()
     await selectYear(wrapper, 2025)
 
+    expect(wrapper.get('.calendar-edition__line').text()).toContain('1141020')
+    expect(wrapper.get('.calendar-edition__revised').text()).toBe('（修正版）')
     expect(wrapper.get('.calendar-caveats__emphasised').text())
       .toBe(taiwanCalendarCaveats['edition-may-change']['zh-tw'])
     expect(wrapper.get('.calendar-revised').text()).not.toBe('')
@@ -255,7 +288,124 @@ describe('what the page has to say about its data', () => {
   })
 })
 
+describe('the whole year at once', () => {
+  async function showYearView(wrapper: Workspace) {
+    await wrapper.get('input[name="calendar-view"][value="year"]').setValue(true)
+    await settle()
+    return wrapper
+  }
+
+  const OFF_KINDS = ['weekend', 'national-holiday', 'substitute-holiday', 'bridge-holiday']
+
+  function yearCells(wrapper: Workspace) {
+    return wrapper.findAll('.calendar-year-view .calendar-day')
+  }
+
+  it('lays out twelve months of the year and every one of its days', async () => {
+    const wrapper = await showYearView(await mountWorkspace())
+
+    expect(wrapper.get('.calendar-workspace').attributes('data-calendar-view')).toBe('year')
+    expect(wrapper.find('.calendar-grid').exists(), '月檢視的網格不同時出現').toBe(false)
+    expect(wrapper.findAll('.calendar-mini').map(month => month.attributes('data-month')))
+      .toEqual(Array.from({ length: 12 }, (_, index) => String(index + 1)))
+    expect(yearCells(wrapper)).toHaveLength(365)
+    expect(wrapper.get('.calendar-mini caption').text()).toBe('1 月')
+  })
+
+  it('gives 2026 the same days off and workdays as the DGPA announced, day by day', async () => {
+    const wrapper = await showYearView(await mountWorkspace())
+    const announced = dgpa2026DaysOff()
+    const shown = yearCells(wrapper)
+
+    expect(announced.size, '公告的全年放假日數').toBe(dgpa2026DaysOffTotal)
+    for (const cell of shown) {
+      const date = cell.attributes('data-date')!
+      expect(OFF_KINDS.includes(cell.attributes('data-kind')!), date).toBe(announced.has(date))
+    }
+    expect(shown.filter(cell => OFF_KINDS.includes(cell.attributes('data-kind')!))).toHaveLength(dgpa2026DaysOffTotal)
+    expect(shown.filter(cell => cell.attributes('data-kind') === 'makeup-workday').map(cell => cell.attributes('data-date')))
+      .toEqual(dgpa2026MakeupWorkdays)
+  })
+
+  it('tells a day off from a workday in words, not only in colour', async () => {
+    const wrapper = await showYearView(await mountWorkspace())
+    const workday = officialDayKindLabels.workday['zh-tw']
+
+    for (const cell of yearCells(wrapper)) {
+      const kind = cell.attributes('data-kind')!
+      const label = cell.attributes('aria-label')!
+      const flag = cell.find('.calendar-day__flag')
+
+      expect(label, cell.attributes('data-date')).toContain(officialDayKindLabels[kind as never]['zh-tw'])
+      expect(label.includes(workday), cell.attributes('data-date')).toBe(!OFF_KINDS.includes(kind))
+      // An ordinary weekend is named by its column; every day the calendar names carries a flag.
+      if (kind === 'workday' || kind === 'weekend') expect(flag.exists()).toBe(false)
+      else expect(flag.text(), cell.attributes('data-date')).toBe('休')
+    }
+    expect(wrapper.get('.calendar-legend').text()).toContain('上班日')
+    expect(wrapper.get('.calendar-legend').text()).toContain('放假日')
+    expect(wrapper.get('.calendar-legend').text()).toContain('休')
+  })
+
+  it('flags a makeup workday as a day at work', async () => {
+    const wrapper = await showYearView(await mountWorkspace())
+    await selectYear(wrapper, 2024)
+
+    expect(dayCell(wrapper, '2024-02-17').attributes('data-kind')).toBe('makeup-workday')
+    expect(dayCell(wrapper, '2024-02-17').get('.calendar-day__flag').text()).toBe('班')
+    expect(dayCell(wrapper, '2024-02-17').attributes('aria-label')).toContain('補班日')
+  })
+
+  it('opens a picked day in the month view, selected and focused', async () => {
+    const wrapper = await showYearView(await mountWorkspace())
+
+    await dayCell(wrapper, '2026-02-16').trigger('click')
+    await settle()
+
+    expect(wrapper.get('.calendar-workspace').attributes('data-calendar-view')).toBe('month')
+    expect((wrapper.get('input[name="calendar-view"][value="month"]').element as HTMLInputElement).checked).toBe(true)
+    expect(wrapper.get('.calendar-grid').attributes('data-month')).toBe('2')
+    expect(wrapper.get('.calendar-day--selected').attributes('data-date')).toBe('2026-02-16')
+    expect(wrapper.get('.calendar-detail').text()).toContain('農曆除夕')
+    expect(document.activeElement?.getAttribute('data-date')).toBe('2026-02-16')
+  })
+
+  it('walks the whole year with the arrow keys and keeps one tab stop', async () => {
+    const wrapper = await showYearView(await mountWorkspace())
+
+    expect(yearCells(wrapper).filter(cell => cell.attributes('tabindex') === '0')).toHaveLength(1)
+    await dayCell(wrapper, '2026-01-31').trigger('keydown', { key: 'ArrowRight' })
+    await settle()
+
+    expect(document.activeElement?.getAttribute('data-date')).toBe('2026-02-01')
+    expect(wrapper.get('.calendar-workspace').attributes('data-calendar-view')).toBe('year')
+    expect(yearCells(wrapper).filter(cell => cell.attributes('tabindex') === '0').map(cell => cell.attributes('data-date')))
+      .toEqual(['2026-02-01'])
+  })
+
+  it('stays in the year view across years, and refuses an unannounced one without a grid', async () => {
+    const wrapper = await showYearView(await mountWorkspace())
+    await selectYear(wrapper, 2027)
+    expect(yearCells(wrapper)).toHaveLength(365)
+    expect(dayCell(wrapper, '2027-12-31').get('.calendar-day__flag').text()).toBe('休')
+
+    const unannounced = taiwanCalendarPublishableYears.lastYear + 1
+    await selectYear(wrapper, unannounced)
+    expect(wrapper.find('.calendar-year-view').exists()).toBe(false)
+    expect(wrapper.get('.calendar-status').text())
+      .toContain(taiwanCalendarViewErrorMessage('year-not-announced', unannounced, 'zh-tw'))
+  })
+})
+
 describe('the English page', () => {
+  it('names the view switch apart from the year picker', async () => {
+    const wrapper = await mountWorkspace('en')
+    const names = wrapper.findAll('.calendar-view__option').map(option => option.text())
+
+    expect(names).toEqual(['One month', 'Whole year'])
+    expect(names).not.toContain(wrapper.get('label[for="calendar-year"]').text())
+  })
+
   it('answers in English, keeping the Taiwanese names the source uses', async () => {
     const wrapper = await mountWorkspace('en')
     await dayCell(wrapper, '2026-06-19').trigger('click')
