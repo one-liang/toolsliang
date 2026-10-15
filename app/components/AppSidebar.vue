@@ -84,7 +84,7 @@ const toggleLabel = computed(() => props.collapsed
       </section>
 
       <section v-for="category in publishedToolCategories" :key="category.id" class="sidebar-group">
-        <h2 :class="['sidebar-group__title', { 'sr-only': props.collapsed }]">{{ copy(category.name, locale) }}</h2>
+        <h2 :class="['sidebar-group__title', { 'sr-only': props.collapsed }]"><span :class="['category-swatch', `category-fill--${category.id}`]" aria-hidden="true" />{{ copy(category.name, locale) }}</h2>
         <NuxtLink
           v-for="tool in toolsByCategory(category.id)"
           :key="tool.slug"

@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildLandingStructuredData,
-  getFeaturedTools,
+  getLandingCategories,
   getLandingCopy,
   getLandingFaq,
-  getLandingPrivacyPoints,
   landingCopyKeys,
   validateLandingContent,
 } from '@/features/landing/content'
@@ -20,14 +19,30 @@ describe('landing content registry', () => {
     expect(validateLandingContent()).toEqual([])
   })
 
-  it('highlights published tools only, without duplicates', () => {
-    const featured = getFeaturedTools()
+  it('places every published tool in exactly one landing category', () => {
+    for (const locale of supportedLocales) {
+      const slugs = getLandingCategories(locale).flatMap(category => category.tools.map(tool => tool.slug))
 
-    expect(featured.length).toBeGreaterThan(0)
-    expect(new Set(featured.map(tool => tool.slug)).size).toBe(featured.length)
-    for (const tool of featured) {
-      expect(publishedTools).toContain(tool)
+      expect(slugs).toHaveLength(publishedTools.length)
+      expect(new Set(slugs)).toEqual(new Set(publishedTools.map(tool => tool.slug)))
+      for (const category of getLandingCategories(locale)) {
+        expect(category.pitch.trim()).not.toBe('')
+        for (const tool of category.tools) expect(tool.tagline.trim(), `${locale} ${tool.slug} 缺少一句話介紹`).not.toBe('')
+      }
     }
+  })
+
+  it('counts the tools it advertises from the catalog', () => {
+    expect(getLandingCopy('zh-tw').catalogTitle).toContain(String(publishedTools.length))
+    expect(getLandingCopy('en').catalogTitle).toContain(String(publishedTools.length))
+  })
+
+  it('leaves the boundaries to the FAQ instead of repeating them above it', () => {
+    const copy = getLandingCopy('zh-tw')
+    for (const claim of ['不用註冊', '不上傳', '本機', '瀏覽器']) {
+      expect(copy.heroIntro + copy.heroTitleLead + copy.heroTitleTail + copy.catalogTitle, `首頁上半部不得重複「${claim}」`).not.toContain(claim)
+    }
+    expect(getLandingFaq('zh-tw').map(entry => entry.heading)).toContain('檔案會被上傳到伺服器嗎？')
   })
 
   it('ships every landing string in both locales', () => {
@@ -39,19 +54,21 @@ describe('landing content registry', () => {
     }
   })
 
-  it('keeps privacy commitments and FAQ aligned across locales', () => {
-    const zhPoints = getLandingPrivacyPoints('zh-tw')
-    const enPoints = getLandingPrivacyPoints('en')
-    expect(zhPoints.length).toBeGreaterThanOrEqual(3)
-    expect(enPoints).toHaveLength(zhPoints.length)
-
+  it('keeps the FAQ aligned across locales and lists the published tools', () => {
     const zhFaq = getLandingFaq('zh-tw')
     const enFaq = getLandingFaq('en')
     expect(zhFaq.length).toBeGreaterThanOrEqual(3)
     expect(enFaq).toHaveLength(zhFaq.length)
-    for (const entry of [...zhFaq, ...enFaq, ...zhPoints, ...enPoints]) {
+    for (const entry of [...zhFaq, ...enFaq]) {
       expect(entry.heading.trim()).not.toBe('')
       expect(entry.body.trim()).not.toBe('')
+    }
+
+    for (const locale of supportedLocales) {
+      const toolList = getLandingFaq(locale).at(-1)!.body
+      for (const category of getLandingCategories(locale)) {
+        for (const tool of category.tools) expect(toolList).toContain(tool.name)
+      }
     }
   })
 })

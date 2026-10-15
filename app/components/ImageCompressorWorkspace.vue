@@ -101,7 +101,7 @@ function choose(event: Event) {
 }
 async function compress() {
   if (!source.value || busy.value || !capabilities.value?.supported) return
-  clearResult(); error.value = ''; running.value = true; stage.value = ''
+  clearResult(); error.value = ''; running.value = true; stage.value = 'reading'
   const current = ++generation
   // Every accepted image fits within the largest side, so the output keeps the source dimensions.
   const outcome = await engine.run({ file: source.value, format: format.value, quality: recommendedQuality, maxWidth: imageInputLimits.maxSide, maxHeight: imageInputLimits.maxSide }, { onProgress: progress => { stage.value = progress.stage } })

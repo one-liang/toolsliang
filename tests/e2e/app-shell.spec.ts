@@ -250,7 +250,7 @@ test('中英文切換保留目前工具，並套用對應字體', async ({ page 
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
 
   const englishFont = await page.locator('body').evaluate(element => getComputedStyle(element).fontFamily)
-  expect(englishFont, '英文介面使用 Roboto').toContain('Roboto')
+  expect(englishFont, '英文介面使用自架的 Archivo').toContain('Archivo')
 
   await page.getByRole('link', { name: '繁中' }).click()
   await expect(page).toHaveURL(/\/zh-tw\/tools\/ntd-uppercase\/$/)
@@ -305,11 +305,12 @@ test('Design System Page 可驗證 loading、disabled、error、success 與互�
   expect(focusStyle.style, 'focus 必須有可見輪廓').not.toBe('none')
   expect(focusStyle.width, 'focus 輪廓至少 3px').toBeGreaterThanOrEqual(3)
 
+  // Hover fills the control yellow; the 2px ink rule stays, so the change is the background.
   const hoverDemo = page.locator('[data-state-demo="hover"]')
-  const restingBorder = await hoverDemo.evaluate(element => getComputedStyle(element).borderColor)
+  const restingFill = await hoverDemo.evaluate(element => getComputedStyle(element).backgroundColor)
   await hoverDemo.hover()
-  await expect.poll(() => hoverDemo.evaluate(element => getComputedStyle(element).borderColor))
-    .not.toBe(restingBorder)
+  await expect.poll(() => hoverDemo.evaluate(element => getComputedStyle(element).backgroundColor))
+    .not.toBe(restingFill)
 
   const activeDemo = page.locator('[data-state-demo="active"]')
   const restingBackground = await activeDemo.evaluate(element => getComputedStyle(element).backgroundColor)
@@ -337,8 +338,8 @@ test('Design System Page 在 light 與 dark 皆符合 WCAG 2.2 AA 與主色對�
       await expect(page.locator('html')).toHaveClass(/dark/)
     }
 
-    const primaryContrast = await contrastAgainstBackground(page, '.eyebrow')
-    expect(primaryContrast, `${mode} 模式暖橘主色文字對比至少 4.5:1`).toBeGreaterThanOrEqual(4.5)
+    const secondaryContrast = await contrastAgainstBackground(page, '.ds-intro > p')
+    expect(secondaryContrast, `${mode} 模式次要文字對比至少 4.5:1`).toBeGreaterThanOrEqual(4.5)
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])

@@ -13,6 +13,16 @@
 
 正式網站預定使用 `toolsliang.com`。
 
+## 線上 Demo
+
+GitHub Pages：<https://one-liang.github.io/toolsliang/>
+
+- 繁體中文首頁：<https://one-liang.github.io/toolsliang/zh-tw/>
+- 英文首頁：<https://one-liang.github.io/toolsliang/en/>
+- 工具目錄：<https://one-liang.github.io/toolsliang/zh-tw/tools/>
+
+`develop` 每次更新都會自動重新發布。Demo 不提供 PWA 安裝、離線快取與帳號同步，範圍與限制見 [GitHub Pages demo](./docs/GITHUB_PAGES_DEMO.md)。
+
 ## 本機開發
 
 ```bash

@@ -189,6 +189,18 @@ test('英文頁以英文回答，並保留來源使用的中文名稱', async ({
   await expect(page.locator('.calendar-refusal')).toContainText('has not been announced yet')
 })
 
+test('選取的日子在滑鼠停留時維持反白，不換成 hover 底色', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await gotoTool(page)
+  await showMonth(page, 2026, 1)
+  const selected = day(page, '2026-01-01')
+  await selected.click()
+  await page.mouse.move(0, 0)
+  const resting = await selected.evaluate(element => getComputedStyle(element).backgroundColor)
+  await selected.hover()
+  await expect.poll(() => selected.evaluate(element => getComputedStyle(element).backgroundColor)).toBe(resting)
+})
+
 test('月曆在 light 與 dark 模式皆通過 WCAG 2.2 AA 自動檢查', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await gotoTool(page)

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { LockKeyhole, ShieldCheck } from '@lucide/vue'
+import { ArrowRight } from '@lucide/vue'
 import {
   buildLandingStructuredData,
-  getFeaturedTools,
+  getLandingCategories,
   getLandingCopy,
-  getLandingPrivacyPoints,
 } from '@/features/landing/content'
 import { isSupportedLocale } from '@/features/tools/catalog'
 
@@ -15,8 +14,10 @@ definePageMeta({
 
 const { locale, withLocale } = useAppLocale()
 const t = computed(() => getLandingCopy(locale.value))
-const privacyPoints = computed(() => getLandingPrivacyPoints(locale.value))
-const featuredTools = getFeaturedTools()
+const categories = computed(() => getLandingCategories(locale.value))
+const root = ref<HTMLElement>()
+
+useLandingMotion(root)
 
 usePageSeo({
   locale,
@@ -28,67 +29,51 @@ usePageSeo({
 </script>
 
 <template>
-  <main id="main-content" class="landing-main" tabindex="-1">
-    <section class="landing-hero" aria-labelledby="landing-title">
-      <p class="eyebrow">{{ t.heroEyebrow }}</p>
-      <h1 id="landing-title">{{ t.heroTitle }}</h1>
-      <p class="landing-hero__intro">{{ t.heroIntro }}</p>
-      <ToolSearch :locale="locale" large />
-      <p class="landing-search-note">
-        <ShieldCheck :size="16" aria-hidden="true" />
-        <span>{{ t.heroSearchNote }}</span>
-      </p>
-      <div class="landing-hero__actions">
-        <Button as-child size="lg">
-          <NuxtLink :to="withLocale('/tools/')">{{ t.heroBrowseAll }}</NuxtLink>
-        </Button>
+  <main id="main-content" ref="root" class="nb-main" tabindex="-1">
+    <section class="nb-wrap nb-hero" aria-labelledby="landing-title">
+      <div class="nb-hero__copy">
+        <h1 id="landing-title" class="nb-hero__title">
+          <span>{{ t.heroTitleLead }}</span>
+          <span><span class="nb-mark">{{ t.heroTitleTail }}</span></span>
+        </h1>
+        <p class="nb-hero__intro">{{ t.heroIntro }}</p>
+        <ToolSearch :locale="locale" large />
+        <div class="nb-hero__actions">
+          <NuxtLink class="nb-button nb-button--ink" :to="withLocale('/tools/')">
+            {{ t.heroBrowseAll }}
+            <ArrowRight :size="20" :stroke-width="2.5" aria-hidden="true" />
+          </NuxtLink>
+        </div>
+      </div>
+      <LandingHeroDeck :locale="locale" :label="t.heroDeckLabel" />
+    </section>
+
+    <section class="nb-wrap nb-section landing-catalog" aria-labelledby="catalog-title">
+      <h2 id="catalog-title" class="nb-section__title">{{ t.catalogTitle }}</h2>
+      <div class="nb-bento">
+        <LandingCategoryBlock v-for="category in categories" :key="category.id" :category="category" :locale="locale">
+          <LandingDemoCutout v-if="category.id === 'image-commerce'" :locale="locale" />
+          <LandingDemoSignature v-else-if="category.id === 'document'" :locale="locale" />
+          <LandingDemoClock v-else-if="category.id === 'time-calendar'" :locale="locale" />
+          <LandingDemoBmi v-else-if="category.id === 'calculation'" :locale="locale" />
+          <LandingDemoWheel v-else-if="category.id === 'random-selection'" :locale="locale" />
+        </LandingCategoryBlock>
       </div>
     </section>
 
-    <section class="landing-section landing-privacy" aria-labelledby="privacy-title">
-      <header class="section-heading">
-        <p class="eyebrow">{{ t.privacyEyebrow }}</p>
-        <h2 id="privacy-title">{{ t.privacyTitle }}</h2>
-        <p>{{ t.privacyBody }}</p>
-      </header>
-      <ul class="landing-privacy__points">
-        <li v-for="point in privacyPoints" :key="point.heading" class="landing-privacy__point">
-          <span class="landing-privacy__icon"><LockKeyhole :size="20" aria-hidden="true" /></span>
-          <div>
-            <h3>{{ point.heading }}</h3>
-            <p>{{ point.body }}</p>
-          </div>
-        </li>
-      </ul>
-    </section>
-
-    <section class="landing-section landing-featured" aria-labelledby="featured-title">
-      <header class="section-heading">
-        <p class="eyebrow">{{ t.featuredEyebrow }}</p>
-        <h2 id="featured-title">{{ t.featuredTitle }}</h2>
-        <p>{{ t.featuredIntro }}</p>
-      </header>
-      <div class="landing-featured__grid">
-        <ToolCard v-for="tool in featuredTools" :key="tool.slug" :tool="tool" :locale="locale" />
-      </div>
-    </section>
-
-    <section class="landing-section landing-catalog" aria-labelledby="catalog-title">
-      <header class="section-heading">
-        <p class="eyebrow">{{ t.catalogEyebrow }}</p>
-        <h2 id="catalog-title">{{ t.catalogTitle }}</h2>
-        <p>{{ t.catalogIntro }}</p>
-      </header>
-      <ToolCategoryGrid :locale="locale" :heading-level="3" />
-    </section>
-
-    <section class="landing-section landing-faq" aria-labelledby="faq-title">
-      <header class="section-heading">
-        <p class="eyebrow">{{ t.faqEyebrow }}</p>
-        <h2 id="faq-title">{{ t.faqTitle }}</h2>
-        <p>{{ t.faqIntro }}</p>
-      </header>
+    <section class="nb-wrap nb-section nb-faq landing-faq" aria-labelledby="faq-title">
+      <h2 id="faq-title" class="nb-section__title">{{ t.faqTitle }}</h2>
       <LandingFaq :locale="locale" />
+    </section>
+
+    <section class="nb-close" aria-labelledby="close-title">
+      <div class="nb-wrap nb-close__inner">
+        <h2 id="close-title" class="nb-close__title">{{ t.closeTitle }}</h2>
+        <NuxtLink class="nb-button nb-button--yellow" :to="withLocale('/tools/')">
+          {{ t.closeAction }}
+          <ArrowRight :size="20" :stroke-width="2.5" aria-hidden="true" />
+        </NuxtLink>
+      </div>
     </section>
   </main>
 </template>

@@ -29,8 +29,8 @@ describe('web app manifest', () => {
   })
 
   it('uses the approved light theme and background colors', () => {
-    expect(zh.theme_color).toBe('#f6f3f0')
-    expect(zh.background_color).toBe('#f6f3f0')
+    expect(zh.theme_color).toBe('#ffffff')
+    expect(zh.background_color).toBe('#ffffff')
   })
 
   it('declares a maskable and an any-purpose icon at the installable sizes', () => {

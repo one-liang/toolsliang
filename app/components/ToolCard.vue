@@ -9,7 +9,7 @@ const { isSaved } = useSavedTools()
 </script>
 
 <template>
-  <Card class="tool-card">
+  <Card :class="['tool-card', `category-fill--${tool.category}`]">
     <NuxtLink class="tool-card__link" :to="`/${locale}/tools/${tool.slug}/`">
       <span class="tool-card__icon"><ToolIcon :name="tool.icon" /></span>
       <span class="tool-card__body">

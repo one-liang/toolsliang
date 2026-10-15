@@ -1,7 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import LandingPage from '@/pages/[locale]/index.vue'
-import { getFeaturedTools, getLandingFaq } from '@/features/landing/content'
+import { getLandingCategories, getLandingFaq } from '@/features/landing/content'
+import { getNtdDemo } from '@/features/landing/demos'
 import { publishedTools, unpublishedToolSlugs } from '@/features/tools/catalog'
 import { landingGlobals, setTestRoute } from './support/nuxt-stubs'
 
@@ -11,12 +12,13 @@ function mountLanding(locale: 'zh-tw' | 'en' = 'zh-tw') {
 }
 
 describe('landing page', () => {
-  it('opens every published tool from the category grid', () => {
+  it('lists every published tool exactly once in the category blocks', () => {
     const wrapper = mountLanding()
-    const hrefs = wrapper.findAll('a').map(link => link.attributes('href'))
+    const hrefs = wrapper.findAll('.nb-block .nb-tool').map(link => link.attributes('href'))
 
+    expect(hrefs).toHaveLength(publishedTools.length)
     for (const tool of publishedTools) {
-      expect(hrefs, `${tool.slug} 必須可從首頁進入`).toContain(`/zh-tw/tools/${tool.slug}/`)
+      expect(hrefs, `${tool.slug} 必須可從首頁分類進入`).toContain(`/zh-tw/tools/${tool.slug}/`)
     }
   })
 
@@ -28,27 +30,35 @@ describe('landing page', () => {
     }
   })
 
-  it('offers local search with a visible on-device notice', () => {
+  it('offers the local tool search in the hero', () => {
     const wrapper = mountLanding()
 
-    expect(wrapper.get('.tool-search--large input').attributes('type')).toBe('search')
-    expect(wrapper.get('.landing-search-note').text()).toContain('瀏覽器')
+    expect(wrapper.get('.nb-hero .tool-search--large input').attributes('type')).toBe('search')
   })
 
   it('keeps one h1 and a continuous heading hierarchy', () => {
     const wrapper = mountLanding()
 
     expect(wrapper.findAll('h1')).toHaveLength(1)
-    expect(wrapper.findAll('.landing-section > .section-heading h2').length).toBeGreaterThanOrEqual(3)
-    expect(wrapper.findAll('.category-panel h2'), '首頁分類標題位於區段標題之下').toHaveLength(0)
-    expect(wrapper.findAll('.category-panel h3').length).toBeGreaterThan(0)
+    expect(wrapper.findAll('main > section h2').length).toBeGreaterThanOrEqual(3)
+    expect(wrapper.findAll('.nb-block h2'), '分類標題位於區段標題之下').toHaveLength(0)
+    expect(wrapper.findAll('.nb-block h3')).toHaveLength(getLandingCategories('zh-tw').length)
   })
 
-  it('highlights the editorial tool selection', () => {
+  it('shows what a tool produces with the tool’s own output', () => {
     const wrapper = mountLanding()
-    const featured = wrapper.get('.landing-featured')
+    const deck = wrapper.get('.nb-deck')
 
-    expect(featured.findAll('.tool-card')).toHaveLength(getFeaturedTools().length)
+    expect(deck.text()).toContain(getNtdDemo().wording)
+    expect(deck.findAll('a').map(link => link.attributes('href'))).toContain('/zh-tw/tools/ntd-uppercase/')
+  })
+
+  it('states the privacy boundary once, as a visible question, not as a section of its own', () => {
+    const wrapper = mountLanding()
+    const questions = wrapper.findAll('.landing-faq__question').map(question => question.text())
+
+    expect(questions).toContain('檔案會被上傳到伺服器嗎？')
+    expect(wrapper.findAll('main > section').map(section => section.attributes('aria-labelledby'))).not.toContain('privacy-title')
   })
 
   it('answers the visible questions in both locales', () => {
