@@ -97,8 +97,8 @@ test('只開啟頁面、還沒選照片時不取得模型；選好照片才開�
 
 /**
  * A request a Service Worker answers is not routed through Playwright, so
- * the tests that hold back or fail the model files run without one. The
- * offline restart below covers the Service Worker path.
+ * the tests that hold back, fail or turn away the model files run without
+ * one. The offline restart below covers the Service Worker path.
  */
 test.describe('模型還沒到達時', () => {
   test.use({ serviceWorkers: 'block' })
@@ -195,6 +195,41 @@ test.describe('模型還沒到達時', () => {
     await page.getByRole('button', { name: '開始去背' }).click()
     await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
   })
+
+  test('離線時說明原因並提供重試；回到連線後按重試會接續去背', async ({ page, context }) => {
+    // The dropped connection and the turned-away request are both the conditions under test.
+    expectOfflineRequests(page)
+    // While Playwright emulates being offline, WebKit cannot read any Blob or
+    // File — not even one just built in memory — and reads them again once back
+    // online. A browser that really loses its connection still reads local
+    // files, so the photo is chosen while online, and its background start is
+    // turned away so the model is still missing when the connection drops.
+    await context.route(MODEL_FILES, route => route.abort('internetdisconnected'))
+    await gotoHydrated(page, PAGE)
+    await waitForCapabilityCheck(page)
+    const turnedAway = page.waitForEvent('requestfailed', request => request.url().includes('/assets/offline/'))
+    await choosePortrait(page)
+    await turnedAway
+    // A background start that fails says nothing until the visitor asks to start.
+    await expect(page.getByRole('alert')).toHaveText('')
+
+    await context.setOffline(true)
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')))
+    await expect(page.locator('[data-tool-offline]')).toHaveAttribute('data-tool-offline', 'blocked-offline')
+    await page.getByRole('button', { name: '開始去背' }).click()
+    await expect(page.getByRole('alert')).toContainText('目前沒有網路')
+    await expect(page.getByRole('alert')).toContainText('用過一次後，離線也能使用')
+    await expect(page.getByRole('button', { name: '重試' })).toBeEnabled()
+    await expect(page.locator('[data-image-result]')).toHaveCount(0)
+
+    await context.unroute(MODEL_FILES)
+    await context.setOffline(false)
+    await page.waitForFunction(() => navigator.onLine)
+    await page.evaluate(() => window.dispatchEvent(new Event('online')))
+    await page.getByRole('button', { name: '重試' }).click()
+    await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
+    await expect(page.getByRole('alert')).toHaveText('')
+  })
 })
 
 test('已準備好的裝置：重新開啟後直接去背，不出現任何下載或準備字樣，也不再取得模型', async ({ page, context }) => {
@@ -247,31 +282,6 @@ test('先說明只處理人像，並在載入模型前拒絕 HEIC／HEIF', async
   await expect(page.getByRole('button', { name: '開始去背' })).toBeDisabled()
   // A refused file is not a sign the visitor will use the tool.
   expect(requests).toEqual([])
-})
-
-test('離線時說明原因並提供重試；回到連線後按重試會接續去背', async ({ page, context }) => {
-  await gotoHydrated(page, PAGE)
-  // Cutting the connection before the capability check answers would test a
-  // half-loaded page instead of an offline one.
-  await waitForCapabilityCheck(page)
-  expectOfflineRequests(page)
-  await context.setOffline(true)
-  await page.evaluate(() => window.dispatchEvent(new Event('offline')))
-  await expect(page.locator('[data-tool-offline]')).toHaveAttribute('data-tool-offline', 'blocked-offline')
-
-  await choosePortrait(page)
-  await page.getByRole('button', { name: '開始去背' }).click()
-  await expect(page.getByRole('alert')).toContainText('目前沒有網路')
-  await expect(page.getByRole('alert')).toContainText('用過一次後，離線也能使用')
-  await expect(page.getByRole('button', { name: '重試' })).toBeEnabled()
-  await expect(page.locator('[data-image-result]')).toHaveCount(0)
-
-  await context.setOffline(false)
-  await page.waitForFunction(() => navigator.onLine)
-  await page.evaluate(() => window.dispatchEvent(new Event('online')))
-  await page.getByRole('button', { name: '重試' }).click()
-  await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
-  await expect(page.getByRole('alert')).toHaveText('')
 })
 
 test('取消推論後不交付部分結果，重試仍可完成', async ({ page }) => {

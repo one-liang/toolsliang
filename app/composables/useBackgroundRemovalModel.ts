@@ -47,7 +47,10 @@ export function useBackgroundRemovalModel() {
     const phases = assets.map(entry => entry.state.value)
     if (phases.some(state => state.phase === 'blocked-offline')) return 'offline'
     const failed = phases.find(state => state.phase === 'failed')
-    if (failed) return failed.failureReason === 'digest-mismatch' ? 'digest-mismatch' : 'failed'
+    if (failed?.failureReason === 'digest-mismatch') return 'digest-mismatch'
+    // A transfer that broke off while the device lost its connection is
+    // explained by the connection, which is also what the visitor can fix.
+    if (failed) return online.value ? 'failed' : 'offline'
     return 'cancelled'
   }
 

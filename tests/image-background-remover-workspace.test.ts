@@ -238,6 +238,23 @@ it('準備失敗時說明原因並提供重試，重試會重新取得並接續�
   expect(requests.filter(isModelRequest).length).toBe(before + backgroundRemovalAssets.length)
 })
 
+it('準備到一半斷線時，說明的是沒有網路，而不是籠統的失敗', async () => {
+  stubCache(false)
+  let dropConnection = () => {}
+  const dropped = new Promise<void>((resolve) => { dropConnection = resolve })
+  // The photo is chosen while online; the connection drops while the visitor is already waiting on that same transfer.
+  stubNetwork(async () => { await dropped; setOnline(false); throw new Error('network went away') })
+  stubWorker(succeeds)
+  const wrapper = await mountWorkspace()
+  await selectFile(wrapper, png())
+  await start(wrapper)
+  expect(wrapper.find('[data-model-preparing]').exists()).toBe(true)
+  dropConnection()
+  await vi.waitFor(() => expect(wrapper.find('[role=alert]').text()).toContain('目前沒有網路'))
+  expect(wrapper.find('[role=alert]').text()).not.toContain('去背功能沒有準備完成')
+  expect(submit(wrapper).text()).toBe('重試')
+})
+
 it('收到的檔案與公布的版本不符時捨棄不用，說明原因並提供重試', async () => {
   const stored = stubCache(false)
   stubNetwork(async () => new Response(new Uint8Array([9, 9, 9])))
