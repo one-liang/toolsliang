@@ -117,6 +117,22 @@ describe('offline asset download state', () => {
     expect(state.phase).toBe('cached')
     expect(offlineAssetProgress(state)).toBe(1)
   })
+
+  it('treats a stored copy the browser cleared as missing, so the next request fetches it again', () => {
+    const state = stateAfter([{ type: 'inspected', cached: true }, { type: 'evicted' }])
+    expect(state).toMatchObject({ phase: 'idle', receivedBytes: 0 })
+    expect(reduceOfflineAsset(state, { type: 'requested', online: true }).phase).toBe('downloading')
+  })
+
+  it('does not let an eviction notice interrupt a download already under way', () => {
+    const state = stateAfter([
+      { type: 'inspected', cached: false },
+      { type: 'requested', online: true },
+      { type: 'progress', receivedBytes: 1_000 },
+      { type: 'evicted' },
+    ])
+    expect(state).toMatchObject({ phase: 'downloading', receivedBytes: 1_000 })
+  })
 })
 
 describe('tool offline readiness', () => {
@@ -145,10 +161,18 @@ describe('tool offline readiness', () => {
 
   it('describes every readiness state in both locales without promising more than it delivers', () => {
     expect(describeOfflineReadiness('ready', 'zh-tw')).toBe('離線可用：首次載入後即可離線使用。')
-    expect(describeOfflineReadiness('prepared', 'zh-tw')).toBe('已下載所需資源，可離線使用。')
-    expect(describeOfflineReadiness('needs-download', 'zh-tw')).toBe('首次使用需下載所需資源，下載後即可離線使用。')
-    expect(describeOfflineReadiness('blocked-offline', 'zh-tw')).toBe('目前離線，需連線下載所需資源後才能使用。')
+    expect(describeOfflineReadiness('prepared', 'zh-tw')).toBe('離線可用：這台裝置已經準備好，離線也能使用。')
+    expect(describeOfflineReadiness('needs-download', 'zh-tw')).toBe('用過一次後，離線也能使用。')
+    expect(describeOfflineReadiness('blocked-offline', 'zh-tw')).toBe('目前離線。第一次使用需要連上網路，用過一次後，離線也能使用。')
     expect(describeOfflineReadiness('ready', 'en')).toContain('offline')
-    expect(describeOfflineReadiness('blocked-offline', 'en')).toContain('online')
+    expect(describeOfflineReadiness('needs-download', 'en')).toBe('After you use it once, it works offline too.')
+    expect(describeOfflineReadiness('blocked-offline', 'en')).toContain('internet connection')
+  })
+
+  it('never asks a visitor to download anything: the tool gets its files ready on its own', () => {
+    for (const readiness of ['ready', 'prepared', 'needs-download', 'blocked-offline'] as const) {
+      expect(describeOfflineReadiness(readiness, 'zh-tw')).not.toContain('下載')
+      expect(describeOfflineReadiness(readiness, 'en').toLowerCase()).not.toContain('download')
+    }
   })
 })

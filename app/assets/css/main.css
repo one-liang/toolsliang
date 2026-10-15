@@ -940,22 +940,9 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .tool-offline { display: grid; gap: 12px; }
 .tool-offline__summary { margin: 0; }
 
-.offline-asset {
-  display: grid;
-  gap: 10px;
-  padding: 14px;
-  border: var(--rule) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-subtle);
-}
-.offline-asset__copy { display: grid; gap: 4px; }
-.offline-asset__meta { color: var(--color-muted-foreground); font-size: .82rem; }
-.offline-asset__status { margin: 0; color: var(--color-muted-foreground); font-size: .88rem; line-height: 1.6; }
+/* The progress bar for files a tool gets ready on first use (portrait model). */
 .offline-asset__progress { block-size: 10px; border: var(--rule) solid var(--color-border); border-radius: 999px; background: var(--color-surface); overflow: hidden; }
-.offline-asset__percent { margin: 0; color: var(--color-muted-foreground); font-size: .82rem; font-variant-numeric: tabular-nums; }
 .offline-asset__progress > span { display: block; block-size: 100%; background: var(--color-primary-strong); transition: inline-size var(--duration-fast) var(--ease-standard); }
-.offline-asset__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.offline-asset__actions > .ui-button { min-height: 44px; }
 
 .offline-page__heading { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
 .offline-page__icon { display: grid; place-items: center; inline-size: 52px; block-size: 52px; flex: none; border-radius: var(--radius-md); background: var(--color-warning-surface); color: var(--color-warning); }
@@ -1041,8 +1028,9 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 
 /* Portrait background remover: only what the shared image workspace rules do not cover. */
 .image-background-remover__scope { margin: 0 0 16px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
-.image-background-remover__model { margin: 24px 0; padding: 16px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); display: grid; gap: 12px; }
-.image-background-remover__model-status { margin: 0; line-height: 1.6; }
+.image-background-remover__preparing { display: grid; gap: 8px; max-width: 420px; margin-top: 16px; }
+.image-background-remover__preparing-label { display: flex; justify-content: space-between; gap: 12px; margin: 0; font-size: .9rem; }
+.image-background-remover__preparing-label > span:last-child { color: var(--color-muted-foreground); font-variant-numeric: tabular-nums; }
 .image-background-remover__zoom { margin-top: 24px; }
 .image-background-remover__zoom input[type="range"] { min-height: 44px; padding: 0; }
 .image-background-remover__comparison { margin-top: 16px; }

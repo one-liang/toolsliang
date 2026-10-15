@@ -1,6 +1,5 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import OfflineAssetDownloadComponent from '@/components/OfflineAssetDownload.vue'
 import ToolOfflineStatus from '@/components/ToolOfflineStatus.vue'
 import type { PublishedToolDefinition, ToolOfflineAsset } from '@/features/tools/catalog'
 
@@ -9,7 +8,6 @@ const engine: ToolOfflineAsset = {
   version: '2026-09-01',
   url: '/assets/offline/demo-engine-2026-09-01.wasm',
   bytes: 2_000_000,
-  /** SHA-256 of the two million zero bytes the stubbed downloads serve. */
   sha256: '13aea96040f2133033d103008d5d96cfe98b3361f7202d77bea97b2424a7a6cd',
   label: { 'zh-tw': '去背模型', en: 'Background removal model' },
 }
@@ -21,15 +19,10 @@ const heavyTool = {
 
 const readyTool = { offlineMode: 'ready' } as Pick<PublishedToolDefinition, 'offlineMode' | 'offlineAssets'>
 
-/** Minimal Cache API double: the component only ever reads and writes by URL. */
+/** Minimal Cache API double: the component only ever reads by URL. */
 function installCacheStorage(seeded: string[] = []) {
   const store = new Set(seeded)
-  const cache = {
-    match: vi.fn(async (url: string) => store.has(url) ? new Response('cached') : undefined),
-    put: vi.fn(async (url: string) => { store.add(url) }),
-  }
-  vi.stubGlobal('caches', { open: vi.fn(async () => cache) })
-  return { cache, store }
+  vi.stubGlobal('caches', { open: vi.fn(async () => ({ match: vi.fn(async (url: string) => store.has(url) ? new Response('cached') : undefined) })) })
 }
 
 function setOnline(online: boolean) {
@@ -37,23 +30,8 @@ function setOnline(online: boolean) {
   window.dispatchEvent(new Event(online ? 'online' : 'offline'))
 }
 
-/** A body that yields one chunk, then waits for the test to release the rest. */
-function streamingResponse(chunks: Uint8Array[], totalBytes: number) {
-  let index = 0
-  return new Response(new ReadableStream<Uint8Array>({
-    pull(controller) {
-      if (index >= chunks.length) return controller.close()
-      controller.enqueue(chunks[index]!)
-      index += 1
-    },
-  }), { headers: { 'content-length': String(totalBytes), 'content-type': 'application/wasm' } })
-}
-
-function mountStatus(tool = heavyTool) {
-  return mount(ToolOfflineStatus, {
-    props: { tool, locale: 'zh-tw' as const },
-    global: { components: { OfflineAssetDownload: OfflineAssetDownloadComponent } },
-  })
+function mountStatus(tool = heavyTool, locale: 'zh-tw' | 'en' = 'zh-tw') {
+  return mount(ToolOfflineStatus, { props: { tool, locale } })
 }
 
 // Globals are replaced rather than unstubbed: the shared Nuxt stubs are
@@ -61,121 +39,60 @@ function mountStatus(tool = heavyTool) {
 beforeEach(() => setOnline(true))
 
 describe('tool offline status', () => {
-  it('states that a lightweight tool needs no download at all', () => {
+  it('states that a lightweight tool needs no first use at all', () => {
     installCacheStorage()
     const wrapper = mountStatus(readyTool)
 
     expect(wrapper.attributes('data-tool-offline')).toBe('ready')
     expect(wrapper.text()).toContain('離線可用')
-    expect(wrapper.find('[data-offline-asset]').exists()).toBe(false)
   })
 
-  it('explains the download a heavy tool needs before any work starts', async () => {
+  it('tells a new visitor the tool works offline after one use, with nothing to download or press', async () => {
     installCacheStorage()
+    const request = vi.fn()
+    vi.stubGlobal('fetch', request)
     const wrapper = mountStatus()
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="idle"]').exists()).toBe(true))
+    await vi.waitFor(() => expect(wrapper.attributes('data-tool-offline')).toBe('needs-download'))
 
-    expect(wrapper.attributes('data-tool-offline')).toBe('needs-download')
-    expect(wrapper.text()).toContain('首次使用需下載所需資源')
-    expect(wrapper.text()).toContain('去背模型')
-    expect(wrapper.text()).toContain('2 MB')
-    expect(wrapper.text()).toContain('2026-09-01')
+    expect(wrapper.text()).toBe('用過一次後，離線也能使用。')
+    expect(wrapper.find('button').exists()).toBe(false)
+    expect(wrapper.find('[role="progressbar"]').exists()).toBe(false)
+    // The note only reads what is on the device; getting the files ready is the workspace's job.
+    expect(request).not.toHaveBeenCalled()
   })
 
-  it('reports a tool as prepared when the declared version is already cached', async () => {
+  it('says so in English as well', async () => {
+    installCacheStorage()
+    const wrapper = mountStatus(heavyTool, 'en')
+    await vi.waitFor(() => expect(wrapper.attributes('data-tool-offline')).toBe('needs-download'))
+    expect(wrapper.text()).toBe('After you use it once, it works offline too.')
+  })
+
+  it('reports a tool as ready offline when the declared version is already on the device, without any download wording', async () => {
     installCacheStorage([engine.url])
     const wrapper = mountStatus()
 
     await vi.waitFor(() => expect(wrapper.attributes('data-tool-offline')).toBe('prepared'))
-    expect(wrapper.text()).toContain('已下載，可離線使用')
+    expect(wrapper.text()).toContain('離線也能使用')
+    expect(wrapper.text()).not.toContain('下載')
   })
 
-  it('refuses the download while offline and offers it again once the device is back online', async () => {
+  it('explains that the first use needs a connection while offline, and recovers when the device is back online', async () => {
     installCacheStorage()
     setOnline(false)
     const wrapper = mountStatus()
 
     await vi.waitFor(() => expect(wrapper.attributes('data-tool-offline')).toBe('blocked-offline'))
     expect(wrapper.text()).toContain('目前離線')
-    expect(wrapper.text()).toContain('還無法下載這個資源')
-    expect(wrapper.find('[data-offline-asset] button').attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).toContain('第一次使用需要連上網路')
 
     setOnline(true)
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset] button').attributes('disabled')).toBeUndefined())
-    expect(wrapper.text()).toContain('尚未下載')
+    await vi.waitFor(() => expect(wrapper.attributes('data-tool-offline')).toBe('needs-download'))
   })
 
-  it('announces the phase without repeating every progress tick', async () => {
-    installCacheStorage()
-    let release = () => {}
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(new ReadableStream<Uint8Array>({
-      start(controller) {
-        controller.enqueue(new Uint8Array(500_000))
-        release = () => controller.close()
-      },
-    }), { headers: { 'content-length': '2000000' } })))
-
+  it('treats a superseded version on the device as not ready', async () => {
+    installCacheStorage(['/assets/offline/demo-engine-2026-01-01.wasm'])
     const wrapper = mountStatus()
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="idle"]').exists()).toBe(true))
-    await wrapper.find('[data-offline-asset] button').trigger('click')
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="downloading"]').exists()).toBe(true))
-
-    const live = wrapper.find('.offline-asset__status')
-    expect(live.attributes('role')).toBe('status')
-    expect(live.text()).toBe('下載中…')
-    expect(live.text()).not.toContain('%')
-
-    const progressbar = wrapper.find('[role="progressbar"]')
-    expect(progressbar.attributes('aria-valuenow')).toBe('25')
-    expect(wrapper.find('.offline-asset__percent').text()).toBe('25%')
-
-    release()
-  })
-
-  it('shows progress and stores the version once the download completes', async () => {
-    const { store } = installCacheStorage()
-    vi.stubGlobal('fetch', vi.fn(async () => streamingResponse([new Uint8Array(1_000_000), new Uint8Array(1_000_000)], 2_000_000)))
-
-    const wrapper = mountStatus()
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="idle"]').exists()).toBe(true))
-    await wrapper.find('[data-offline-asset] button').trigger('click')
-
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="cached"]').exists()).toBe(true))
-    expect(store.has(engine.url)).toBe(true)
-    expect(wrapper.attributes('data-tool-offline')).toBe('prepared')
-  })
-
-  it('keeps a failed download retryable and stores nothing', async () => {
-    const { store } = installCacheStorage()
-    const failing = vi.fn(async () => { throw new Error('network unavailable') })
-    vi.stubGlobal('fetch', failing)
-
-    const wrapper = mountStatus()
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="idle"]').exists()).toBe(true))
-    await wrapper.find('[data-offline-asset] button').trigger('click')
-
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="failed"]').exists()).toBe(true))
-    expect(wrapper.text()).toContain('下載未完成')
-    expect(wrapper.text()).toContain('重新下載')
-    expect(store.size).toBe(0)
-
-    vi.stubGlobal('fetch', vi.fn(async () => streamingResponse([new Uint8Array(2_000_000)], 2_000_000)))
-    await wrapper.find('[data-offline-asset] button').trigger('click')
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="cached"]').exists()).toBe(true))
-    expect(store.has(engine.url)).toBe(true)
-  })
-
-  it('never sends anything but the versioned asset URL', async () => {
-    installCacheStorage()
-    const request = vi.fn(async () => streamingResponse([new Uint8Array(2_000_000)], 2_000_000))
-    vi.stubGlobal('fetch', request)
-
-    const wrapper = mountStatus()
-    await vi.waitFor(() => expect(wrapper.find('[data-offline-asset-phase="idle"]').exists()).toBe(true))
-    await wrapper.find('[data-offline-asset] button').trigger('click')
-    await vi.waitFor(() => expect(request).toHaveBeenCalled())
-
-    expect(request.mock.calls[0]?.[0]).toBe(engine.url)
-    expect(JSON.stringify(request.mock.calls)).not.toContain('demo-engine@')
+    await vi.waitFor(() => expect(wrapper.attributes('data-tool-offline')).toBe('needs-download'))
   })
 })
