@@ -95,68 +95,104 @@ test('只開啟頁面、還沒選照片時不取得模型；選好照片才開�
   await expect.poll(() => requests.length).toBeGreaterThan(0)
 })
 
-test('選好照片就在背景準備；按開始時若未完成，顯示準備進度並自動接續去背，輸出透明 PNG', async ({ page, context }, testInfo) => {
-  const requests = recordModelRequests(context)
-  const release = await holdModel(context)
-  await gotoHydrated(page, PAGE)
-  await expect(page.locator(WORKSPACE)).toHaveAttribute('data-model-ready', 'false')
+/**
+ * A request a Service Worker answers is not routed through Playwright, so
+ * the tests that hold back or fail the model files run without one. The
+ * offline restart below covers the Service Worker path.
+ */
+test.describe('模型還沒到達時', () => {
+  test.use({ serviceWorkers: 'block' })
 
-  await choosePortrait(page)
-  await expect.poll(() => requests.length, '選好照片時就開始取得模型').toBeGreaterThan(0)
-  await expect(page.locator('[data-model-preparing]')).toHaveCount(0)
+  test('選好照片就在背景準備；按開始時若未完成，顯示準備進度並自動接續去背，輸出透明 PNG', async ({ page, context }, testInfo) => {
+    const requests = recordModelRequests(context)
+    const release = await holdModel(context)
+    await gotoHydrated(page, PAGE)
+    await expect(page.locator(WORKSPACE)).toHaveAttribute('data-model-ready', 'false')
 
-  await page.getByRole('button', { name: '開始去背' }).click()
-  const preparing = page.locator('[data-model-preparing]')
-  await expect(preparing).toContainText('準備中')
-  await expect(preparing.getByRole('progressbar')).toBeVisible()
-  await expect(page.getByRole('status').filter({ hasText: '準備中，完成後會自動開始去背。' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '取消', exact: true })).toBeVisible()
-  await expect(page.locator(WORKSPACE)).not.toContainText('下載')
-  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-background-remover-preparing.png', fullPage: true })
+    await choosePortrait(page)
+    await expect.poll(() => requests.length, '選好照片時就開始取得模型').toBeGreaterThan(0)
+    await expect(page.locator('[data-model-preparing]')).toHaveCount(0)
 
-  release()
-  // No second press: the run follows on its own once the model has arrived.
-  await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
-  await expect(preparing).toHaveCount(0)
-  await expect(page.locator('[data-image-result]')).toContainText('512 × 512')
-  await expect(page.locator('[data-image-original]')).toContainText('512 × 512')
+    await page.getByRole('button', { name: '開始去背' }).click()
+    const preparing = page.locator('[data-model-preparing]')
+    await expect(preparing).toContainText('準備中')
+    await expect(preparing.getByRole('progressbar')).toBeVisible()
+    await expect(page.getByRole('status').filter({ hasText: '準備中，完成後會自動開始去背。' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '取消', exact: true })).toBeVisible()
+    await expect(page.locator(WORKSPACE)).not.toContainText('下載')
+    if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-background-remover-preparing.png', fullPage: true })
 
-  const output = await page.getByRole('link', { name: '下載透明 PNG' }).getAttribute('href')
-  const pixels = await page.evaluate(async (url) => {
-    const blob = await fetch(url!).then(response => response.blob())
-    const bitmap = await createImageBitmap(blob)
-    const canvas = document.createElement('canvas')
-    canvas.width = bitmap.width
-    canvas.height = bitmap.height
-    const context = canvas.getContext('2d', { willReadFrequently: true })!
-    context.drawImage(bitmap, 0, 0)
-    const { width, height } = bitmap
-    const data = context.getImageData(0, 0, width, height).data
-    let opaque = 0
-    for (let index = 3; index < data.length; index += 4) if (data[index]! > 200) opaque += 1
-    bitmap.close()
-    return {
-      type: blob.type,
-      corner: [...context.getImageData(2, 2, 1, 1).data],
-      face: [...context.getImageData(256, 190, 1, 1).data],
-      opaqueShare: opaque / (width * height),
-    }
-  }, output)
+    release()
+    // No second press: the run follows on its own once the model has arrived.
+    await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
+    await expect(preparing).toHaveCount(0)
+    await expect(page.locator('[data-image-result]')).toContainText('512 × 512')
+    await expect(page.locator('[data-image-original]')).toContainText('512 × 512')
 
-  expect(pixels.type).toBe('image/png')
-  // The drawn background must become transparent and the drawn person must not.
-  expect(pixels.corner[3]).toBeLessThan(16)
-  expect(pixels.face[3]).toBeGreaterThan(200)
-  expect(pixels.opaqueShare).toBeGreaterThan(0.1)
-  expect(pixels.opaqueShare).toBeLessThan(0.8)
+    const output = await page.getByRole('link', { name: '下載透明 PNG' }).getAttribute('href')
+    const pixels = await page.evaluate(async (url) => {
+      const blob = await fetch(url!).then(response => response.blob())
+      const bitmap = await createImageBitmap(blob)
+      const canvas = document.createElement('canvas')
+      canvas.width = bitmap.width
+      canvas.height = bitmap.height
+      const context = canvas.getContext('2d', { willReadFrequently: true })!
+      context.drawImage(bitmap, 0, 0)
+      const { width, height } = bitmap
+      const data = context.getImageData(0, 0, width, height).data
+      let opaque = 0
+      for (let index = 3; index < data.length; index += 4) if (data[index]! > 200) opaque += 1
+      bitmap.close()
+      return {
+        type: blob.type,
+        corner: [...context.getImageData(2, 2, 1, 1).data],
+        face: [...context.getImageData(256, 190, 1, 1).data],
+        opaqueShare: opaque / (width * height),
+      }
+    }, output)
 
-  const download = page.waitForEvent('download')
-  await page.getByRole('link', { name: '下載透明 PNG' }).click()
-  expect((await download).suggestedFilename()).toBe('background-removed.png')
+    expect(pixels.type).toBe('image/png')
+    // The drawn background must become transparent and the drawn person must not.
+    expect(pixels.corner[3]).toBeLessThan(16)
+    expect(pixels.face[3]).toBeGreaterThan(200)
+    expect(pixels.opaqueShare).toBeGreaterThan(0.1)
+    expect(pixels.opaqueShare).toBeLessThan(0.8)
 
-  await settleTransitions(page)
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
-  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-background-remover-result.png', fullPage: true })
+    const download = page.waitForEvent('download')
+    await page.getByRole('link', { name: '下載透明 PNG' }).click()
+    expect((await download).suggestedFilename()).toBe('background-removed.png')
+
+    await settleTransitions(page)
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
+    if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-background-remover-result.png', fullPage: true })
+  })
+
+  test('準備失敗時說明原因並提供重試；等待中取消不交付結果，再開始即可完成', async ({ page, context }) => {
+    // The failed transfer is the condition under test; the browser reports it as a network error.
+    expectOfflineRequests(page)
+    await context.route(MODEL_FILES, route => route.abort('internetdisconnected'))
+    await gotoHydrated(page, PAGE)
+    await choosePortrait(page)
+    await page.getByRole('button', { name: '開始去背' }).click()
+    await expect(page.getByRole('alert')).toContainText('去背功能沒有準備完成')
+    await expect(page.getByRole('button', { name: '重試' })).toBeEnabled()
+    await expect(page.locator('[data-image-result]')).toHaveCount(0)
+
+    await context.unroute(MODEL_FILES)
+    const release = await holdModel(context)
+    await page.getByRole('button', { name: '重試' }).click()
+    await expect(page.locator('[data-model-preparing]')).toContainText('準備中')
+    await expect(page.getByRole('alert')).toHaveText('')
+
+    await page.getByRole('button', { name: '取消', exact: true }).click()
+    await expect(page.getByText('已取消。原圖未變更，可重新去背。')).toBeVisible()
+    await expect(page.locator('[data-model-preparing]')).toHaveCount(0)
+    await expect(page.locator('[data-image-result]')).toHaveCount(0)
+
+    release()
+    await page.getByRole('button', { name: '開始去背' }).click()
+    await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
+  })
 })
 
 test('已準備好的裝置：重新開啟後直接去背，不出現任何下載或準備字樣，也不再取得模型', async ({ page, context }) => {
@@ -232,33 +268,6 @@ test('離線時說明原因並提供重試；回到連線後按重試會接續�
   await page.getByRole('button', { name: '重試' }).click()
   await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
   await expect(page.getByRole('alert')).toHaveText('')
-})
-
-test('準備失敗時說明原因並提供重試；等待中取消不交付結果，再開始即可完成', async ({ page, context }) => {
-  // The failed transfer is the condition under test; the browser reports it as a network error.
-  expectOfflineRequests(page)
-  await context.route(MODEL_FILES, route => route.abort('internetdisconnected'))
-  await gotoHydrated(page, PAGE)
-  await choosePortrait(page)
-  await page.getByRole('button', { name: '開始去背' }).click()
-  await expect(page.getByRole('alert')).toContainText('去背功能沒有準備完成')
-  await expect(page.getByRole('button', { name: '重試' })).toBeEnabled()
-  await expect(page.locator('[data-image-result]')).toHaveCount(0)
-
-  await context.unroute(MODEL_FILES)
-  const release = await holdModel(context)
-  await page.getByRole('button', { name: '重試' }).click()
-  await expect(page.locator('[data-model-preparing]')).toContainText('準備中')
-  await expect(page.getByRole('alert')).toHaveText('')
-
-  await page.getByRole('button', { name: '取消', exact: true }).click()
-  await expect(page.getByText('已取消。原圖未變更，可重新去背。')).toBeVisible()
-  await expect(page.locator('[data-model-preparing]')).toHaveCount(0)
-  await expect(page.locator('[data-image-result]')).toHaveCount(0)
-
-  release()
-  await page.getByRole('button', { name: '開始去背' }).click()
-  await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
 })
 
 test('取消推論後不交付部分結果，重試仍可完成', async ({ page }) => {
