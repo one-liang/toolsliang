@@ -334,3 +334,53 @@ test.describe('離線後的本機資產', () => {
     }
   })
 })
+
+test('品牌宣傳圖以前保存的框版、Logo 與背景仍可辨識並逐筆刪除', async ({ page }) => {
+  await gotoHydrated(page, STORAGE_ROUTE)
+  await expect(page.locator('.local-assets__empty')).toBeVisible()
+  await expect(page.locator('main'), '說明這些素材為什麼還在').toContainText('以前在品牌宣傳圖保存的框版、Logo 與背景')
+
+  // The records exactly as the brand promo image wrote them before it stopped saving assets.
+  await page.evaluate(async (records) => {
+    await new Promise<void>((resolve, reject) => {
+      const opening = indexedDB.open('toolsliang-local-assets')
+      opening.onerror = () => reject(opening.error)
+      opening.onsuccess = () => {
+        const transaction = opening.result.transaction('assets', 'readwrite')
+        for (const record of records) {
+          transaction.objectStore('assets').put({
+            ...record,
+            version: 1,
+            bytes: 8,
+            payload: { format: 'binary', mediaType: 'image/png', bytes: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]) },
+            createdAt: '2026-09-09T02:00:00.000Z',
+            updatedAt: '2026-09-09T02:00:00.000Z',
+          })
+        }
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject(transaction.error)
+      }
+    })
+  }, [
+    { id: 'promo-frame', kind: 'frame', name: `${ASSET_NAME}-frame.png` },
+    { id: 'promo-logo', kind: 'logo', name: `${ASSET_NAME}-logo.png` },
+    { id: 'promo-background', kind: 'background', name: `${ASSET_NAME}-background.png` },
+  ])
+
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await waitForHydration(page)
+
+  await expect(rows(page)).toHaveCount(3)
+  for (const kind of ['框版', 'Logo', '背景']) await expect(page.locator('.local-assets__kinds')).toContainText(kind)
+
+  for (let remaining = 3; remaining > 0; remaining--) {
+    await rows(page).first().locator('[data-asset-action="delete"]').click()
+    await page.locator('[data-asset-action="confirm-delete"]').click()
+    await expect(rows(page)).toHaveCount(remaining - 1)
+  }
+  await expect(page.locator('.local-assets__error')).toHaveCount(0)
+
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await waitForHydration(page)
+  await expect(page.locator('.local-assets__empty'), '刪除後重新載入不得復活').toBeVisible()
+})
