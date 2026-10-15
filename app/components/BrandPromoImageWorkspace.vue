@@ -309,11 +309,12 @@ function shortcut(event: KeyboardEvent) {
             :key="item"
             variant="outline"
             :data-promo-add="item"
+            :aria-label="lead(en ? 'Add' : '加入', item) + labels[item]"
             :disabled="locked || preparing || !supported"
             aria-describedby="promo-error"
             @click="pick(item)"
           >
-            <span class="sr-only">{{ lead(en ? 'Add' : '加入', item) }}</span>{{ labels[item] }}
+            {{ labels[item] }}
           </Button>
         </div>
         <input id="promo-file" ref="fileInput" class="brand-promo__file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" tabindex="-1" aria-hidden="true" @change="choose">
