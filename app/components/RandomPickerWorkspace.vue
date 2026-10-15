@@ -275,8 +275,8 @@ function prefersReducedMotion() {
         <fieldset class="picker-options">
           <legend>{{ text.duplicatesLegend }}</legend>
           <p id="picker-duplicates-help" class="field-help">{{ text.duplicatesHint }}</p>
-          <div class="picker-options__row">
-            <label v-for="option in duplicateOptions" :key="option.id" class="picker-option">
+          <div class="choice-group picker-options__row">
+            <label v-for="option in duplicateOptions" :key="option.id" class="choice-option picker-option">
               <input
                 v-model="duplicates"
                 type="radio"
@@ -307,8 +307,8 @@ function prefersReducedMotion() {
         <fieldset class="picker-options">
           <legend>{{ text.presentationLegend }}</legend>
           <p id="picker-presentation-help" class="field-help">{{ text.presentationHint }}</p>
-          <div class="picker-options__row">
-            <label v-for="option in presentationOptions" :key="option.id" class="picker-option">
+          <div class="choice-group picker-options__row">
+            <label v-for="option in presentationOptions" :key="option.id" class="choice-option picker-option">
               <input
                 v-model="presentation"
                 type="radio"

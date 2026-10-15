@@ -285,7 +285,10 @@ input[type="file"]::file-selector-button {
 .ui-badge--error { border-color: var(--color-destructive); background: var(--color-destructive-surface); color: var(--color-destructive); }
 
 .ui-card { border: var(--rule) solid var(--card-border); border-radius: var(--radius-lg); background: var(--card-bg); box-shadow: var(--card-shadow); }
+/* A control is a block of its own: it never shares a line with its label, and no
+   text strut opens a gap under it before the help that follows. */
 .ui-input {
+  display: block;
   width: 100%;
   min-height: 44px;
   border: var(--rule) solid var(--input-border);
@@ -307,6 +310,25 @@ select.ui-input {
   background-repeat: no-repeat;
   background-position: right 16px center;
 }
+/* A choice: a radio or checkbox and its text on one centred line inside a pill. The
+   dot sits almost concentric with the rounded end, so the gaps around it read even. */
+.choice-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice-option {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px 8px 12px;
+  border: var(--rule) solid var(--input-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  font-size: .86rem;
+  cursor: pointer;
+}
+.choice-option input { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; accent-color: var(--color-primary-strong); cursor: inherit; }
+.choice-option:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); color: var(--color-primary-strong); font-weight: 700; }
+.choice-option:has(input:disabled) { opacity: .55; cursor: not-allowed; }
 .ui-separator { width: 100%; height: var(--rule); background: var(--color-border); }
 
 /* shared brand and header */
@@ -423,7 +445,7 @@ select.ui-input {
 .local-asset__name { margin: 0; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
 .local-asset__meta { margin: 4px 0 0; color: var(--color-muted-foreground); font-size: .8rem; line-height: 1.55; }
 .local-asset__actions { display: flex; align-items: center; gap: 6px; }
-.local-asset__rename { grid-column: 1 / -1; display: grid; gap: 6px; padding-top: 4px; }
+.local-asset__rename { grid-column: 1 / -1; display: grid; gap: 8px; padding-top: 4px; }
 .local-asset__rename label { font-size: .78rem; font-weight: 700; color: var(--color-muted-foreground); }
 .local-asset__rename-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 .local-asset .local-assets__confirm { grid-column: 1 / -1; }
@@ -514,11 +536,21 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .tool-reference th { background: var(--color-surface-subtle); color: var(--color-foreground); font-size: .75rem; letter-spacing: .025em; }
 .tool-reference td:nth-child(odd) { font-family: var(--font-mono); }
 .tool-reference tr:last-child td { border-bottom: 0; }
+/* A notice never touches the block above or below it. Vertical margins collapse, so a
+   neighbour that asks for a larger gap keeps it, and the ends of a container add none. */
+.capability-checking, .capability-warning { margin-block: 16px; }
+.capability-checking:first-child, .capability-warning:first-child { margin-top: 0; }
+.capability-checking:last-child, .capability-warning:last-child { margin-bottom: 0; }
 .capability-checking { padding: 16px; color: var(--color-muted-foreground); }
-.capability-warning { padding: 16px; border: var(--rule) solid var(--color-warning); border-radius: var(--radius-md); color: var(--color-foreground); background: var(--color-surface-subtle); }
+.capability-warning { display: grid; justify-items: start; gap: 12px; padding: 16px; border: var(--rule) solid var(--color-warning); border-radius: var(--radius-md); color: var(--color-foreground); background: var(--color-surface-subtle); }
 .tool-workspace { padding: clamp(16px, 3vw, 24px); border-radius: var(--radius-lg); }
 .tool-workspace__grid { display: grid; gap: 20px; }
-.field-group label { display: inline-block; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
+/* A grid of fields, or a field after a paragraph, opens a new section of the form. Zero
+   specificity, so a gap a component sets for itself still wins; a legend keeps its own. */
+:where(:not(legend) + .tool-workspace__grid, p + .field-group) { margin-top: 16px; }
+/* A field label sits on its own line above its control. A label wrapping its own radio
+   or checkbox is a choice, laid out by .choice-option instead. */
+.field-group label:not(.choice-option) { display: block; width: fit-content; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
 .field-help { margin: 8px 0 0; color: var(--color-muted-foreground); font-size: .78rem; }
 .field-error { margin: 7px 0 0; color: var(--color-destructive); font-size: .8rem; font-weight: 700; }
 .result-panel { min-height: 148px; display: flex; flex-direction: column; justify-content: center; padding: 22px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-result-surface); }
@@ -533,9 +565,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 }
 .bmi-units { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; padding: 0; border: 0; }
 .bmi-units legend, .ntd-purposes legend, .picker-options legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
-.bmi-units__option, .ntd-purposes__option, .picker-option { display: inline-flex; min-height: 44px; align-items: center; gap: 12px; padding: 8px 16px; border: var(--rule) solid var(--input-border); border-radius: var(--radius-full); background: var(--color-surface); font-size: .86rem; cursor: pointer; }
-.bmi-units__option:has(input:checked), .ntd-purposes__option:has(input:checked), .picker-option:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); color: var(--color-primary-strong); font-weight: 700; }
-.bmi-units__option input, .ntd-purposes__option input, .picker-option input, .workbench__purpose input { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; accent-color: var(--color-primary-strong); }
 .bmi-fields { display: grid; gap: 18px; align-content: start; }
 .bmi-fields__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .field-pending { margin: 7px 0 0; color: var(--color-muted-foreground); font-size: .8rem; font-weight: 700; }
@@ -556,7 +585,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .bmi-category-table__scroll { overflow-x: auto; }
 .ntd-purposes { margin: 0 0 20px; padding: 0; border: 0; }
 .ntd-purposes .field-help { margin: 0 0 10px; }
-.ntd-purposes__options { display: flex; flex-wrap: wrap; gap: 8px; }
 .ntd-rules__title { margin: 18px 0 0; font-size: .75rem; font-weight: 800; color: var(--color-muted-foreground); }
 .ntd-rules { display: grid; gap: 8px; margin: 8px 0 0; padding: 14px 16px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
 .ntd-rules div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: baseline; }
@@ -586,7 +614,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .picker-summary li { padding: 5px 10px; border: var(--rule) solid var(--color-border); border-radius: 999px; background: var(--color-surface-subtle); font-size: .78rem; }
 .picker-options { margin: 18px 0 0; padding: 0; border: 0; }
 .picker-options .field-help { margin: 0 0 10px; }
-.picker-options__row { display: flex; flex-wrap: wrap; gap: 8px; }
 .picker-count { margin-top: 18px; }
 .picker-count > .ui-input { max-width: 160px; }
 .picker-wheel-note { margin: 10px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); color: var(--color-muted-foreground); font-size: .8rem; }
@@ -750,7 +777,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .custom-calendar-form__error-title { font-weight: 700; }
 .custom-calendar-form__actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .custom-calendar-form__actions > .ui-button { min-height: 44px; }
-.custom-calendar-field { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
+.custom-calendar-field { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
 .custom-calendar-field > label, .custom-calendar-field legend { padding: 0; font-size: .86rem; font-weight: 700; }
 .custom-calendar-field .field-help { margin: 0; }
 .custom-calendar-field__error { display: block; margin-top: 4px; color: var(--color-destructive); font-weight: 700; }
@@ -760,8 +787,10 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .custom-calendar-mark-option__label { font-size: .88rem; font-weight: 700; }
 .custom-calendar-mark-option__hint { grid-column: 2; color: var(--color-muted-foreground); font-size: .78rem; line-height: 1.5; }
 .custom-calendar-mark-option:focus-within { border-color: var(--color-primary-strong); }
-.custom-calendar-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.custom-calendar-dates > div { display: grid; gap: 6px; }
+/* A date control cannot shrink below its own picker (about 166px), so the two dates sit
+   side by side only when both fit and stack otherwise, instead of overlapping. */
+.custom-calendar-dates { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 14px 10px; }
+.custom-calendar-dates > div { display: grid; gap: 8px; }
 .custom-calendar-dates label { font-size: .82rem; font-weight: 700; }
 .custom-calendar-dates .ui-input { min-height: 44px; }
 .custom-calendar-dates .field-help { grid-column: 1 / -1; }
@@ -853,7 +882,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .component-label { width: 100%; color: var(--color-muted-foreground); font-size: .72rem; font-weight: 750; text-transform: uppercase; }
 .component-row--fields { align-items: flex-start; }
 .component-row--fields label { flex: 1 1 180px; font-size: .75rem; font-weight: 700; }
-.component-row--fields label span { display: block; margin-bottom: 5px; }
+.component-row--fields label span { display: block; margin-bottom: 8px; }
 .ds-subheading { margin: 34px 0 4px; font-size: 1.05rem; font-weight: 780; letter-spacing: -.01em; }
 .ds-subheading__note { max-width: 720px; margin: 0 0 16px; color: var(--color-muted-foreground); font-size: .84rem; line-height: 1.55; }
 .state-matrix { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -1084,7 +1113,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .workbench__controls legend { margin-bottom: 12px; font-weight: 650; }
 .workbench__purpose { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-sm); }
 .workbench__purpose label { display: grid; gap: 4px; }
-.workbench__purpose input { margin-top: 4px; }
+.workbench__purpose input { width: 18px; height: 18px; flex: 0 0 18px; margin: 4px 0 0; accent-color: var(--color-primary-strong); }
 .workbench__figure { margin: 24px 0 0; }
 .workbench__figure img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); margin-inline: auto; object-fit: contain; }
 .workbench__figure figcaption { margin-top: 12px; font-size: .84rem; overflow-wrap: anywhere; }
@@ -1157,11 +1186,8 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .pdf-signature__download { margin-top: 16px; }
 /* The signature pad: a writing line, wide and shallow, with no scroll of its own. */
 .signature-pad { margin-top: 24px; padding-top: 24px; border-top: var(--rule) solid var(--color-border); }
-.signature-pad__forms { padding: 0; margin: 0 0 16px; border: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 12px; }
+.signature-pad__forms { padding: 0; margin: 0 0 16px; border: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .signature-pad__forms legend { margin-bottom: 12px; font-weight: 650; }
-.signature-pad__form { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-sm); }
-.signature-pad__form input { width: 18px; height: 18px; flex: none; margin: 0; accent-color: var(--color-primary-strong); }
-.signature-pad__form:has(input:checked) { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
 .signature-pad__canvas { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; border: var(--rule) dashed var(--color-muted-foreground); border-radius: var(--radius-sm); background-color: var(--color-surface); touch-action: none; }
 .signature-pad__imported-note { overflow-wrap: anywhere; }
 .pdf-signature__history { margin-top: 16px; }

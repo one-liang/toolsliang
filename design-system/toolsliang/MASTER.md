@@ -93,6 +93,7 @@ toolsliang 採「無陰影的新粗獷工具站」：白紙、墨色 2px 邊界�
 ## Spacing、radius、border、shadow、z-index
 
 - Spacing：以 4px 為基線（`0 / 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 64 / 80`），元件內距允許 2px 半階（6、10、14、18、22）；目前沒有 spacing token，數值寫在元件規則內。
+- 表單間距：欄位標籤自成一行、位於控制項上方，兩者相距 8px；控制項（`.ui-input`）是區塊元素，不與標籤並排在同一列。工作區內的提示框（`.capability-warning`、`.capability-checking`）與上下區塊至少相距 16px，一組欄位或欄位網格接在段落之後也留 16px；垂直 margin 互相合併，元件自己要求的較大間距仍然有效。
 - Radius：`radius-sm=12px`、`radius-md=16px`、`radius-lg=20px`、`radius-xl=28px`、`radius-full=999px`。按鈕、搜尋框與選項為膠囊；分類區塊與工具頁標頭用 28px。
 - Border：`--rule: 2px` 的墨色邊界是主要結構；容器內再分隔時改用 `border-subtle` 細線，避免框中框都用全重邊界。不使用寬於 1px 的彩色側邊條紋。
 - Shadow：無。任何元件、overlay 與 hover 都不使用陰影；品牌宣傳圖選取框與 PDF 簽名選取框外的白色描邊，是在任意圖片上辨識選取的輪廓，不是深度。
@@ -138,6 +139,10 @@ toolsliang 採「無陰影的新粗獷工具站」：白紙、墨色 2px 邊界�
 ### 工具狀態標籤
 
 膠囊、1.5px 墨色框：`NEW` 薄荷底、`PRO` 黃底、`熱門` 珊瑚底、`常用` 白底。`PRO` 只保留視覺語意，不得據此限制匿名使用。
+
+### 選項（radio／checkbox）
+
+一行文字的選項使用 `.choice-option`，並排的一組放在 `.choice-group`（間距 8px）：至少 44px 高的膠囊、2px `input-border`，18px 的圓點與文字以同一條中線垂直置中、相距 10px；左內距 12px 讓圓點接近膠囊圓弧的圓心，右內距 18px。選取時套用上表的 Selected 規則，停用時 opacity 55%。包住 radio 或 checkbox 的標籤是選項，不套用欄位標籤的樣式。帶說明文字的卡片式選項（自訂行事曆的日別、商品圖工作台的用途）把圓點對齊第一行標題。
 
 ## WCAG 2.2 AA
 

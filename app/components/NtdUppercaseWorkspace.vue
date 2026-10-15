@@ -94,8 +94,8 @@ function clear() {
     <fieldset class="ntd-purposes">
       <legend>{{ text.purposeLegend }}</legend>
       <p id="ntd-purpose-help" class="field-help">{{ text.purposeHint }}</p>
-      <div class="ntd-purposes__options">
-        <label v-for="option in purposeOptions" :key="option.id" class="ntd-purposes__option">
+      <div class="choice-group ntd-purposes__options">
+        <label v-for="option in purposeOptions" :key="option.id" class="choice-option ntd-purposes__option">
           <input
             v-model="purpose"
             type="radio"

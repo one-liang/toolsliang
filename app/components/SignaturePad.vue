@@ -385,7 +385,7 @@ watch(form, (value) => {
   <section class="signature-pad" :aria-label="locale === 'en' ? 'Make a signature' : '建立簽名'">
     <fieldset class="signature-pad__forms">
       <legend>{{ locale === 'en' ? 'Signature form' : '簽名方式' }}</legend>
-      <label v-for="key in signatureFormKeys" :key="key" class="signature-pad__form">
+      <label v-for="key in signatureFormKeys" :key="key" class="choice-option signature-pad__form">
         <input v-model="form" type="radio" name="signature-form" :value="key" :disabled="disabled">
         <PenLine v-if="key === 'drawn'" :size="16" aria-hidden="true" />
         <Type v-else-if="key === 'typed'" :size="16" aria-hidden="true" />
