@@ -134,7 +134,7 @@ function choose(event: Event) {
 
 async function removeBackground() {
   if (!source.value || busy.value || !capabilities.value?.supported || !modelReady.value) return
-  clearResult(); error.value = ''; running.value = true; stage.value = ''
+  clearResult(); error.value = ''; running.value = true; stage.value = 'reading'
   const current = ++generation
   const outcome = await engine.run({ file: source.value }, { onProgress: progress => { stage.value = progress.stage } })
   if (current !== generation || !mounted) return
