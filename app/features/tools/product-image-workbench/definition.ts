@@ -24,15 +24,6 @@ export const productImageWorkbenchDefinition: PublishedToolDefinition = {
     contentKey: 'product-image-workbench',
     title: { 'zh-tw': '商品圖工作台：本機完成去背、合規尺寸與品牌素材', en: 'Product Image Workbench: local cutout, compliant sizing, brand assets' },
     description: { 'zh-tw': '在瀏覽器裡把商品圖依序完成去背、通路合規尺寸與框版 Logo，中間結果不必重複匯出匯入，圖片與輸出都不離開裝置。', en: 'Take a product image through cutout, channel-compliant sizing, and frame or Logo composition in the browser, without exporting and importing between steps. Images and output never leave your device.' },
-    answer: { 'zh-tw': '工作台把三個既有的本機引擎串成一次作業：人像去背、合規主圖的尺寸與背景、品牌宣傳圖的框版與 Logo。合規主圖與品牌宣傳圖是兩條分支，合規分支不加入框版、Logo 或促銷文字，也不保證通路審核通過。任何步驟失敗或取消都只影響那一步，先前成果保留；瀏覽器不支援某個步驟時只停用該步驟。', en: 'The workbench chains three engines that already run locally: portrait matting, compliant sizing and background, and promotional frame or Logo composition. Compliant and promotional outputs are separate branches; the compliant branch adds no frame, Logo, or promotional text and never guarantees channel approval. A failed or cancelled step affects only that step, and an unsupported step is disabled on its own.' },
-  },
-  contentReview: {
-    reviewedAt: '2026-09-09', sourceEffectiveAt: '2026-09-09',
-    sourceEdition: { 'zh-tw': 'toolsliang 圖片工具組合決策與商品圖工作台第一版規格', en: 'toolsliang image tool composition decisions and Product Image Workbench v1 specification' },
-    sources: [
-      { title: { 'zh-tw': '獨立圖片工具可組合為商品圖工作台', en: 'Independent image tools compose into a product image workbench' }, url: 'https://github.com/one-liang/toolsliang/blob/develop/docs/adr/0004-compose-image-tools-into-a-workbench.md' },
-      { title: { 'zh-tw': '合規主圖與品牌宣傳圖是不同輸出目的', en: 'Compliant and promotional product images are different outputs' }, url: 'https://github.com/one-liang/toolsliang/blob/develop/docs/adr/0012-separate-compliant-and-promotional-product-images.md' },
-      { title: { 'zh-tw': '工具內容只在使用者裝置上處理', en: 'Tool content is processed on the user device only' }, url: 'https://github.com/one-liang/toolsliang/blob/develop/docs/adr/0001-tool-content-stays-on-device.md' },
-    ],
+    answer: { 'zh-tw': '工作台把三件事串成一次作業，全部在這台裝置上完成：人像去背、合規主圖的尺寸與背景、品牌宣傳圖的框版與 Logo。合規主圖與品牌宣傳圖是兩條分支，合規分支不加入框版、Logo 或促銷文字，也不保證通路審核通過。任何步驟失敗或取消都只影響那一步，先前成果保留；瀏覽器不支援某個步驟時只停用該步驟。', en: 'The workbench chains three jobs into one pass, all on this device: portrait cutout, compliant sizing and background, and promotional frame or Logo composition. Compliant and promotional outputs are separate branches; the compliant branch adds no frame, Logo, or promotional text and never guarantees channel approval. A failed or cancelled step affects only that step, and an unsupported step is disabled on its own.' },
   },
 }

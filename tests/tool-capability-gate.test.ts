@@ -23,7 +23,7 @@ describe('ToolCapabilityGate', () => {
     })
 
     await wrapper.vm.$nextTick()
-    expect(wrapper.get('[role="alert"]').text()).toContain('WebGPU')
+    expect(wrapper.get('[role="alert"]').text()).toContain('graphics-card computing')
     expect(wrapper.find('.workspace-fixture').exists()).toBe(false)
   })
 })

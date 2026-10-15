@@ -1,8 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import BmiCalculatorWorkspace from '@/components/BmiCalculatorWorkspace.vue'
-import { bmiCaveats } from '@/features/tools/bmi-calculator/content'
-import { bmiCaveatKeys } from '@/features/tools/bmi-calculator/domain/sources'
 import { setTestRoute } from './support/nuxt-stubs'
 
 function mountWorkspace(locale: 'zh-tw' | 'en' = 'zh-tw') {
@@ -89,12 +87,10 @@ describe('BMI workspace', () => {
     expect(wrapper.get('.bmi-result__value').text(), '換算後的結果仍是同一個人').toBe('22.5')
   })
 
-  it('names the reviewed source and its update date beside the result', () => {
-    const source = mountWorkspace().get('.bmi-source')
+  it('names the standard the category comes from, in the result itself', async () => {
+    const wrapper = await enterMetric(mountWorkspace(), '170', '65')
 
-    expect(source.text()).toContain('成人健康體位標準')
-    expect(source.text()).toContain('2025年9月11日')
-    expect(source.get('a').attributes('href')).toBe('https://www.hpa.gov.tw/Pages/Detail.aspx?nodeid=542&pid=9737')
+    expect(wrapper.get('.result-panel').text()).toContain('國民健康署成人健康體位標準')
   })
 
   it('returns to an empty workspace after a reset', async () => {
@@ -106,11 +102,12 @@ describe('BMI workspace', () => {
     expect(wrapper.get('.result-panel').text()).toContain('填入身高與體重')
   })
 
-  it('shows every reviewed caveat beside the result', async () => {
+  it('holds only input and result, leaving the caveats and sources to the page below (#82)', async () => {
     const wrapper = await enterMetric(mountWorkspace(), '170', '65')
-    const caveats = wrapper.get('.bmi-caveats').text()
 
-    for (const key of bmiCaveatKeys) expect(caveats, `${key} 免責內容必須呈現`).toContain(bmiCaveats[key]['zh-tw'])
+    expect(wrapper.find('.bmi-caveats').exists()).toBe(false)
+    expect(wrapper.find('.bmi-source').exists()).toBe(false)
+    expect(wrapper.get('.bmi-workspace').findAll('h2')).toHaveLength(0)
   })
 
   it('publishes the formula and the full category table', () => {
@@ -129,7 +126,7 @@ describe('BMI workspace', () => {
 
     expect(wrapper.get('label[for="bmi-height-centimetres"]').text()).toBe('Height (cm)')
     expect(wrapper.get('.result-panel').text()).toContain('Healthy weight')
-    expect(wrapper.get('.bmi-caveats').text()).toContain('not a medical diagnosis')
+    expect(wrapper.get('.result-panel').text()).toContain('Health Promotion Administration adult standard')
   })
 
   it('keeps height and weight out of device storage', async () => {

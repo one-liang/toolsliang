@@ -83,7 +83,7 @@ describe('批次的說明文字', () => {
 describe('每個步驟說自己引擎的話', () => {
   it('相同代碼在不同步驟給出該步驟的解釋', () => {
     expect(workbenchErrorMessage('cutout', 'unsupported_browser', 'zh-tw')).toContain('去背模型')
-    expect(workbenchErrorMessage('layout', 'unsupported_browser', 'zh-tw')).toContain('OffscreenCanvas')
+    expect(workbenchErrorMessage('layout', 'unsupported_browser', 'zh-tw')).toContain('背景處理圖片')
     expect(workbenchErrorMessage('layout', 'unsupported_browser', 'zh-tw'))
       .not.toBe(workbenchErrorMessage('cutout', 'unsupported_browser', 'zh-tw'))
   })

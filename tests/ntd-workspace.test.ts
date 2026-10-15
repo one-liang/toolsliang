@@ -1,8 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import NtdUppercaseWorkspace from '@/components/NtdUppercaseWorkspace.vue'
-import { ntdCaveats } from '@/features/tools/ntd-uppercase/content'
-import { ntdReferenceVersion } from '@/features/tools/ntd-uppercase/domain/sources'
 import { setTestRoute } from './support/nuxt-stubs'
 
 function mountWorkspace(locale: 'zh-tw' | 'en' = 'zh-tw') {
@@ -130,32 +128,20 @@ describe('NTD uppercase workspace', () => {
     expect(wrapper.find('.ntd-copy-status').text()).toBe('')
   })
 
-  it('shows the caveats of the chosen purpose beside the result', async () => {
+  it('holds only input, rules and result, leaving the caveats and sources to the page below (#82)', async () => {
     const wrapper = await enterAmount(mountWorkspace(), '1018')
-    const caveats = () => wrapper.get('.ntd-caveats').text()
 
-    expect(caveats()).toContain(ntdCaveats['no-legal-effect']['zh-tw'])
-    expect(caveats()).toContain(ntdCaveats['local-processing']['zh-tw'])
-    expect(caveats()).not.toContain(ntdCaveats['treasury-omits-zero']['zh-tw'])
-
-    await selectPurpose(wrapper, 'treasury')
-    expect(caveats()).toContain(ntdCaveats['treasury-omits-zero']['zh-tw'])
-    expect(caveats()).toContain(ntdCaveats['treasury-rounds-to-yuan']['zh-tw'])
+    expect(wrapper.find('.ntd-caveats').exists()).toBe(false)
+    expect(wrapper.find('.ntd-source').exists()).toBe(false)
+    expect(wrapper.get('.tool-workspace').findAll('a')).toHaveLength(0)
   })
 
-  it('names the rule version and cites the source of the chosen purpose', async () => {
-    const wrapper = mountWorkspace()
-    const source = () => wrapper.get('.ntd-source')
+  it('still says what the chosen purpose changes, beside the amount', async () => {
+    const wrapper = await enterAmount(mountWorkspace(), '1018')
 
-    expect(source().text()).toContain(ntdReferenceVersion)
-    expect(source().text(), '一般會計不受法規限制，必須說清楚').toContain('沒有法規限制')
-    expect(source().get('a').attributes('href')).toBe('https://www.twnch.org.tw/manual.html')
-
-    await selectPurpose(wrapper, 'treasury')
-    expect(source().get('a').attributes('href')).toBe('https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296')
-
+    expect(wrapper.text(), '三種用途寫法不同，必須先選').toContain('三種用途的寫法不同')
     await selectPurpose(wrapper, 'cheque')
-    expect(source().get('a').text(), '非現行法規必須標示').toContain('非現行法規')
+    expect(wrapper.get('.ntd-rules').text()).toContain('寫到「元」為止')
   })
 
   it('warns only the treasury purpose about zeros on several unit boundaries', async () => {
@@ -193,7 +179,7 @@ describe('NTD uppercase workspace', () => {
 
     expect(wrapper.get('label[for="ntd-amount"]').text()).toBe('Amount (NTD)')
     expect(wrapper.get('.ntd-result__wording').text(), '結果本身仍是繁體中文單據用語').toBe('新臺幣零元伍角')
-    expect(wrapper.get('.ntd-caveats').text()).toContain('not legal or accounting review')
+    expect(wrapper.get('.ntd-rules').text()).toContain('Keeps 角 and 分')
 
     await selectPurpose(wrapper, 'cheque')
     expect(wrapper.get('[role="alert"]').text()).toBe('A cheque amount is written to 元 only; confirm the amount with the payee, then enter a whole number.')

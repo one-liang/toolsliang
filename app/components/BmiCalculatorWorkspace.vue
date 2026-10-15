@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input'
 import {
   bmiCategoryRangeText,
   bmiFieldErrorMessage,
-  getBmiCaveats,
   getBmiCopy,
 } from '@/features/tools/bmi-calculator/content'
 import {
@@ -18,19 +17,14 @@ import {
   type BmiUnitSystem,
 } from '@/features/tools/bmi-calculator/domain/calculate'
 import { bmiCategories } from '@/features/tools/bmi-calculator/domain/reference'
-import { bmiContentReview } from '@/features/tools/bmi-calculator/domain/sources'
-import { formatReviewDate } from '@/features/tools/catalog'
 
 const { locale } = useAppLocale()
 const text = computed(() => getBmiCopy(locale.value))
-const caveats = computed(() => getBmiCaveats(locale.value))
 const categoryRows = computed(() => bmiCategories.map(category => ({
   id: category.id,
   name: category.name[locale.value],
   range: bmiCategoryRangeText(category),
 })))
-/** The standard the categories come from, cited where the result is read. */
-const primarySource = bmiContentReview.sources[0]!
 
 const unitSystem = ref<BmiUnitSystem>('metric')
 const values = ref<Record<BmiFieldId, string>>({
@@ -184,18 +178,6 @@ function reset() {
         {{ text.resetLabel }}
       </Button>
     </div>
-
-    <section class="bmi-caveats" :aria-label="text.caveatsTitle">
-      <h2 class="bmi-caveats__title">{{ text.caveatsTitle }}</h2>
-      <ul>
-        <li v-for="caveat in caveats" :key="caveat.key">{{ caveat.text }}</li>
-      </ul>
-      <p class="bmi-source">
-        {{ text.sourceLabel }}：<a :href="primarySource.url" target="_blank" rel="noopener noreferrer">{{ primarySource.title[locale] }}</a>
-        （{{ text.sourceUpdatedLabel }}
-        <time :datetime="bmiContentReview.sourceEffectiveAt">{{ formatReviewDate(bmiContentReview.sourceEffectiveAt, locale) }}</time>）
-      </p>
-    </section>
   </Card>
 
   <section class="tool-reference" aria-labelledby="bmi-category-reference">

@@ -200,15 +200,15 @@ export const taiwanCalendarFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '放假日的資料是哪裡來的？', en: 'Where do the holidays come from?' },
     body: {
-      'zh-tw': '來自行政院人事行政總處編製、行政院核定的「中華民國政府行政機關辦公日曆表」，經政府資料開放平臺以 CSV 發布。每一天的日別都對應到那份表格的一格備註，這一頁把採用的版本、來源發布日與本站擷取日一起標出來，讓你可以回到來源核對同一份檔案。',
-      en: 'From the government agency office calendar compiled by the Directorate-General of Personnel Administration and approved by the Executive Yuan, published as CSV on Taiwan\'s open data platform. Every day here maps to one annotated cell of that table, and this page shows the edition, the source publication date, and the date this site retrieved it so you can check the same file at the source.',
+      'zh-tw': '來自行政院人事行政總處編製、行政院核定的「中華民國政府行政機關辦公日曆表」，公開在政府資料開放平臺。每一天上班或放假，都對應到那份表格裡的一筆紀錄；這一頁會標出採用的版本、來源發布日與本站取得資料的日期，讓你可以回到來源核對同一份資料。',
+      en: 'From the government agency office calendar compiled by the Directorate-General of Personnel Administration and approved by the Executive Yuan, published on Taiwan\'s open data platform. Whether each day is a workday or a day off maps to one entry of that table, and this page shows the edition, the source publication date, and the date this site retrieved it so you can check the same data at the source.',
     },
   },
   {
     heading: { 'zh-tw': '農曆與節氣是誰算的？', en: 'Who calculates the lunar dates and solar terms?' },
     body: {
-      'zh-tw': '交通部中央氣象署每年出版的日曆資料表。這個工具不自己推算農曆或節氣，只採用氣象署公布的值，並以香港天文台的對照表逐日交叉核對；兩邊對不起來的年度不會發布。節氣的時刻以臺灣時判定，因為用世界時判斷會讓部分節氣早一天。',
-      en: 'The Central Weather Administration, in the calendar data tables it publishes each year. This tool never computes a lunar date or a solar term itself: it uses the administration\'s published values and cross-checks every day against the Hong Kong Observatory conversion table, and a year where the two disagree is not published. Terms are read in Taiwan time, because reading them in UTC moves some of them a day earlier.',
+      'zh-tw': '交通部中央氣象署每年出版的日曆資料表。這個工具不自己推算農曆或節氣，只採用氣象署公布的值，並以香港天文台的對照表逐日交叉核對；兩邊對不起來的年度不會發布。節氣落在哪一天以臺灣時間為準；如果改用格林威治時間判斷，有些節氣會早一天。',
+      en: 'The Central Weather Administration, in the calendar data tables it publishes each year. This tool never computes a lunar date or a solar term itself: it uses the administration\'s published values and cross-checks every day against the Hong Kong Observatory conversion table, and a year where the two disagree is not published. Terms are dated in Taiwan time; dating them in Greenwich time would move some of them a day earlier.',
     },
   },
   {
@@ -221,7 +221,7 @@ export const taiwanCalendarFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '已經公布的假日還會改嗎？', en: 'Can an announced holiday still change?' },
     body: {
-      'zh-tw': '會。民國 114 年就是實例：原本公布的版本裡沒有孔子誕辰紀念日、臺灣光復紀念日與行憲紀念日的假，1141020 修正版新增了這三個放假日，連帶多了兩個補假。因此每一年都標出目前採用的版本字串，修正過的年度會另外註明；請以這裡標示的版本為準。',
+      'zh-tw': '會。民國 114 年就是實例：原本公布的版本裡沒有孔子誕辰紀念日、臺灣光復紀念日與行憲紀念日的假，1141020 修正版新增了這三個放假日，連帶多了兩個補假。因此每一年都標出目前採用的版本，修正過的年度會另外註明；請以這裡標示的版本為準。',
       en: 'Yes. 2025 is the example: the edition first published gave no day off for Confucius\'s Birthday, Retrocession Day, or Constitution Day, and the reissue of 20 October 2025 added all three plus two substitute holidays. That is why every year names the edition it is built from, and a reissued year says so.',
     },
   },
@@ -256,15 +256,15 @@ export const taiwanCalendarFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '離線時看到的是最新的嗎？', en: 'Is what I see offline up to date?' },
     body: {
-      'zh-tw': '不一定。離線時看到的是這台裝置先前下載的版本，如果來源在那之後發布了修正版，你不會知道。每一年都標出採用的版本與本站擷取日，離線時請對照那兩個值；還沒下載過的年度會直接說明，不會給你一張空白的月曆。',
+      'zh-tw': '不一定。離線時看到的是這台裝置先前下載的版本，如果來源在那之後發布了修正版，你不會知道。每一年都標出採用的版本與本站取得資料的日期，離線時請對照這兩項；還沒下載過的年度會直接說明，不會給你一張空白的月曆。',
       en: 'Not necessarily. Offline you are reading whatever this device downloaded earlier, and a reissue published since then will not have reached you. Every year shows the edition it uses and the date this site retrieved it, so you can tell; a year this device has never downloaded says so rather than showing an empty grid.',
     },
   },
   {
     heading: { 'zh-tw': '我的行程會被上傳嗎？', en: 'Are my events uploaded?' },
     body: {
-      'zh-tw': '這個工具不接受任何個人行程，所以沒有可以上傳的東西。年份與選到的日期只留在這個瀏覽器分頁裡，不會寫進網址、不會被保存，也不會送到 toolsliang 或第三方服務；行事曆資料在建置時就已經打包進這個網站，開啟頁面後不會向任何來源發出請求。',
-      en: 'The tool accepts no personal event, so there is nothing to upload. The year and the day you select stay in this browser tab: they are never written into the URL, stored, or sent to toolsliang or a third-party service. The calendar data is baked into the site at build time, so opening the page makes no request to any source.',
+      'zh-tw': '這個工具不接受任何個人行程，所以沒有可以上傳的東西。年份與選到的日期只留在這個瀏覽器分頁裡，不會寫進網址、不會被保存，也不會送到 toolsliang 或第三方服務；行事曆資料已經跟著網站一起提供，開啟頁面後不會再向任何來源查詢。',
+      en: 'The tool accepts no personal event, so there is nothing to upload. The year and the day you select stay in this browser tab: they are never written into the URL, stored, or sent to toolsliang or a third-party service. The calendar data ships with the site, so opening the page asks no source for anything.',
     },
   },
 ]

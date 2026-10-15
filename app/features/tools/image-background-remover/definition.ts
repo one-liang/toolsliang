@@ -21,14 +21,4 @@ export const imageBackgroundRemoverDefinition: PublishedToolDefinition = {
     description: { 'zh-tw': '人像照片不離開裝置。AI 模型在瀏覽器本機執行，分離人物與背景後下載透明 PNG；首次使用需下載模型，不支援 HEIC／HEIF，也不處理商品圖。', en: 'Keep portrait photos on your device. An AI model runs locally in your browser to separate a person from the background and download a transparent PNG. First use downloads the model; HEIC/HEIF and product photos are not supported.' },
     answer: { 'zh-tw': '這是人像去背：模型只學過把人和背景分開，商品、動物與風景不在範圍內。首次使用會下載模型與推論資源到這台裝置，之後即使離線也能使用；髮絲、半透明與低對比邊緣不保證準確，請放大檢查後再使用。', en: 'This is portrait matting: the model was trained to separate people from a background, so products, animals, and scenery are out of scope. First use downloads the model and runtime to this device and later runs work offline. Hair, semi-transparent areas, and low-contrast edges are not guaranteed, so zoom in and check before using the result.' },
   },
-  contentReview: {
-    reviewedAt: '2026-09-08', sourceEffectiveAt: '2026-09-07',
-    sourceEdition: { 'zh-tw': 'toolsliang 去背模型評估紀錄 007 與 MODNet、ONNX Runtime Web 一手來源（2026-09-07 查閱）', en: 'toolsliang background removal evaluation record 007, with the MODNet and ONNX Runtime Web primary sources (accessed September 7, 2026)' },
-    sources: [
-      { title: { 'zh-tw': 'MODNet 程式庫與 Apache-2.0 授權', en: 'MODNet repository and Apache-2.0 licence' }, url: 'https://github.com/ZHKKKe/MODNet/blob/master/LICENSE' },
-      { title: { 'zh-tw': 'ONNX Runtime Web 執行提供者', en: 'ONNX Runtime Web execution providers' }, url: 'https://onnxruntime.ai/docs/execution-providers/' },
-      { title: { 'zh-tw': 'W3C WebAssembly Core 2.0', en: 'W3C WebAssembly Core 2.0' }, url: 'https://www.w3.org/TR/wasm-core-2/' },
-      { title: { 'zh-tw': 'PNG 圖片格式', en: 'PNG format' }, url: 'https://www.w3.org/TR/png-3/' },
-    ],
-  },
 }
