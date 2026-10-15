@@ -139,8 +139,8 @@ export const pdfSignatureFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': 'PDF 會被傳送到伺服器嗎？', en: 'Is my PDF sent to a server?' },
     body: {
-      'zh-tw': `不會。${pdfSignatureDisclosures['local-processing']['zh-tw']}工具沒有任何可以接收檔案的端點，關閉分頁就會清掉工作內容。`,
-      en: `No. ${pdfSignatureDisclosures['local-processing'].en} There is no endpoint here that could receive a file, and closing the tab clears the workspace.`,
+      'zh-tw': `不會。${pdfSignatureDisclosures['local-processing']['zh-tw']}這個網站也沒有任何接收檔案的地方，關閉分頁就會清掉工作內容。`,
+      en: `No. ${pdfSignatureDisclosures['local-processing'].en} This site has nowhere that could receive a file, and closing the tab clears the workspace.`,
     },
   },
   {

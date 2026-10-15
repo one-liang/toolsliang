@@ -13,7 +13,7 @@ export const technicalTerms: Array<{ name: string, pattern: RegExp, locales?: Lo
   { name: 'sampling algorithm', pattern: /拒絕取樣|rejection sampling|模數偏差|\bmodulo\b/i },
   { name: 'browser storage interface', pattern: /IndexedDB|localStorage|sessionStorage|Cache Storage|Service Worker|\bPWA\b/i },
   { name: 'standards body or specification', pattern: /WHATWG|\bW3C\b|ECMAScript|\bIntl\b|\bMDN\b|ISO 32000|\bRFC ?\d|NIST SP|Handbook 44/i },
-  { name: 'programming interface', pattern: /\bAPI\b/ },
+  { name: 'programming interface', pattern: /\bAPI\b|端點|\bendpoints?\b/ },
   { name: 'model runtime', pattern: /ONNX|WebAssembly|\bWASM\b|WebGL|WebGPU|\bruntime\b/i },
   { name: 'drawing interface', pattern: /OffscreenCanvas|ImageBitmap|HTML Canvas|\bCanvas\b/ },
   // English says "canvas" for the artboard a visitor lays out; Chinese copy says 畫布.
