@@ -120,6 +120,8 @@ test.describe('模型還沒到達時', () => {
     await expect(page.getByRole('status').filter({ hasText: '準備中，完成後會自動開始去背。' })).toBeVisible()
     await expect(page.getByRole('button', { name: '取消', exact: true })).toBeVisible()
     await expect(page.locator(WORKSPACE)).not.toContainText('下載')
+    await settleTransitions(page)
+    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
     if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-background-remover-preparing.png', fullPage: true })
 
     release()
