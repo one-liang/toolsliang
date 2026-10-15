@@ -203,7 +203,6 @@ for (const locale of ['zh-tw', 'en']) {
     }
     for (const theme of ['light', 'dark']) {
       if (theme === 'dark') await page.getByRole('button', { name: locale === 'en' ? 'Toggle color theme' : '切換色彩模式' }).click()
-      await settleTransitions(page)
       expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
       if (info.project.name === 'chromium') await page.screenshot({ path: `artifacts/brand-promo-${locale}-${theme}.png`, fullPage: true })
     }
