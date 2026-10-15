@@ -50,8 +50,8 @@ const rocYearCopyEntries = {
   matchBadge: { 'zh-tw': '你查的年份', en: 'Your year' },
   tableTitle: { 'zh-tw': '民國西元對照表', en: 'ROC and Gregorian year table' },
   tableFormula: {
-    'zh-tw': `換算方式：西元年＝民國年＋${rocYearOffset}；民國年＝西元年－${rocYearOffset}。`,
-    en: `How it works: Gregorian year = ROC year + ${rocYearOffset}; ROC year = Gregorian year − ${rocYearOffset}.`,
+    'zh-tw': `換算方式：西元年＝民國年＋${rocYearOffset}`,
+    en: `How it works: Gregorian year = ROC year + ${rocYearOffset}`,
   },
   rocColumn: { 'zh-tw': '民國', en: 'ROC' },
   gregorianColumn: { 'zh-tw': '西元', en: 'Gregorian' },

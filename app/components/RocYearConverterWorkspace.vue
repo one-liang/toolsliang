@@ -145,7 +145,8 @@ onMounted(() => scrollToRow(currentYear, 'auto'))
       </div>
     </Card>
 
-    <section class="roc-year__table" aria-labelledby="roc-year-table-title">
+    <!-- The scrolling box below is the one named region, so the table has a single landmark. -->
+    <section class="roc-year__table">
       <h2 id="roc-year-table-title" class="roc-year__table-title">{{ text.tableTitle }}</h2>
       <p class="roc-year__table-range">{{ tableRange }}</p>
       <p class="roc-year__formula">{{ text.tableFormula }}</p>
@@ -219,7 +220,7 @@ onMounted(() => scrollToRow(currentYear, 'auto'))
 .roc-year__scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); }
 .roc-year__scroll table { width: 100%; border-spacing: 0; font-variant-numeric: tabular-nums; }
 .roc-year__scroll thead th { position: sticky; z-index: 1; top: 0; background: var(--color-surface-subtle); font-size: .75rem; }
-.roc-year__scroll th, .roc-year__scroll td { width: 50%; padding: 8px 14px; border-bottom: 1px solid var(--color-border-subtle); text-align: left; }
+.roc-year__scroll th, .roc-year__scroll td { width: 50%; padding: 6px 14px; border-bottom: 1px solid var(--color-border-subtle); text-align: left; }
 .roc-year__scroll tbody th { font-weight: 700; }
 .roc-year__scroll tbody tr:last-child > * { border-bottom: 0; }
 .roc-year__cell-year { margin-right: 6px; }
@@ -231,5 +232,7 @@ onMounted(() => scrollToRow(currentYear, 'auto'))
 
 @media (min-width: 768px) {
   .roc-year { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+  /* Beside the workspace the table takes the workspace's height instead of adding its own. */
+  .roc-year__frame { min-height: 200px; }
 }
 </style>

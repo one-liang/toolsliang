@@ -122,6 +122,7 @@ describe('ROC year converter workspace', () => {
     expect(region.attributes('tabindex')).toBe('0')
     expect(region.attributes('role')).toBe('region')
     expect(region.attributes('aria-labelledby')).toBe('roc-year-table-title')
+    expect(wrapper.findAll('[aria-labelledby="roc-year-table-title"]'), '同一個名稱只對應一個區域').toHaveLength(1)
   })
 
   it('speaks English on the English page', async () => {
