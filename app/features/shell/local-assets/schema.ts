@@ -7,6 +7,11 @@
  */
 export const localAssetKinds = ['calendar', 'background', 'frame', 'logo', 'signature'] as const
 
+/*
+ * No tool writes `background`, `frame` or `logo` any more: the brand promo image
+ * stopped saving assets. They stay known kinds so what a device saved there
+ * earlier still reads back and can be deleted from the asset manager.
+ */
 export type LocalAssetKind = typeof localAssetKinds[number]
 
 export const LOCAL_ASSET_DB_NAME = 'toolsliang-local-assets'
