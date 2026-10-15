@@ -155,7 +155,6 @@
 }
 
 * { box-sizing: border-box; }
-/* Room above the sticky topbar, and below for the floating mobile nav; from 1024px the nav is gone, so the bottom shrinks there. */
 html { scroll-behavior: smooth; scroll-padding-block: 88px; }
 body {
   margin: 0;
@@ -675,6 +674,12 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 @media (min-width: 768px) {
   .picker-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
 }
+/* The result buttons sit near the bottom of a laptop screen. The page keeps 88px below for the phone's bottom
+   navigation, which is gone from 1024px, so focusing them would scroll the page for nothing; only this page
+   shrinks it, leaving every other tool where develop has it. */
+@media (min-width: 1024px) {
+  html:has(.picker-stage) { scroll-padding-bottom: 24px; }
+}
 @media (max-width: 767.98px) {
   /* The stage and the wheel's names become items of the column, so the stage can dock against the whole workspace. */
   .picker-output { display: contents; }
@@ -1041,7 +1046,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 }
 
 @media (min-width: 1024px) {
-  html { scroll-padding-bottom: 24px; }
   .app-sidebar { display: flex; }
   .app-shell__content { margin-left: var(--sidebar-width); }
   .app-shell--collapsed .app-shell__content { margin-left: var(--sidebar-collapsed); }
