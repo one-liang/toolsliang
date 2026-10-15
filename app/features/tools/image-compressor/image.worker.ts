@@ -1,4 +1,5 @@
 import { stripJpegMetadata } from '../../images/jpeg-metadata'
+import { originalAsOutput } from '../../images/original-as-output'
 import { imageDimensions } from '../../images/dimensions'
 import { exceedsImageLimits } from '../../images/limits'
 import { imageSignature } from '../../images/input'
@@ -54,7 +55,11 @@ async function compress(input: CompressionInput) {
     const blob = await canvas.convertToBlob({ type: input.format, quality: input.quality })
     if (blob.type !== input.format) { send({ type: 'error', code: 'unsupported_encoder' }); return }
     const encoded = await blob.arrayBuffer()
-    const output: CompressionWireOutput = { bytes: input.format === 'image/jpeg' ? stripJpegMetadata(new Uint8Array(encoded)) : encoded, preview: await (await preview.convertToBlob({ type: 'image/png' })).arrayBuffer(), format: input.format, width: outWidth, height: outHeight, sourceWidth, sourceHeight }
+    const reencoded = input.format === 'image/jpeg' ? stripJpegMetadata(new Uint8Array(encoded)) : encoded
+    // A source saved leaner than these settings only grows when re-encoded. Keeping format and size, it is itself a valid answer.
+    const original = format === input.format && outWidth === sourceWidth && outHeight === sourceHeight ? originalAsOutput(bytes) : undefined
+    const delivered = original && original.byteLength <= reencoded.byteLength ? original : reencoded
+    const output: CompressionWireOutput = { bytes: delivered, preview: await (await preview.convertToBlob({ type: 'image/png' })).arrayBuffer(), format: input.format, width: outWidth, height: outHeight, sourceWidth, sourceHeight, keptOriginal: delivered === original }
     send({ type: 'result', output }, [output.bytes, output.preview])
   }
   catch (error) { send({ type: 'error', code: error instanceof RangeError ? 'memory_limit' : failure }) }

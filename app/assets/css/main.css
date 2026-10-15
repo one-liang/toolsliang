@@ -993,8 +993,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover__picker > svg { display: block; margin-bottom: 12px; color: var(--color-primary-strong); }
 .image-compressor__picker input,
 .image-background-remover__picker input { height: auto; min-height: 44px; max-width: 100%; }
-
-.image-compressor__filename { overflow-wrap: anywhere; margin: 16px 0; }
 .image-compressor__status,
 .image-background-remover__status { margin-top: 16px; }
 .image-compressor .field-error,

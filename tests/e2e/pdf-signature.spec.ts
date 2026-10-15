@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { gotoHydrated } from './support/hydration'
+import { settleTransitions } from './support/motion'
 import { guardToolContentBoundary } from './support/tool-content-boundary'
 import { pdfSignatureCanaries } from '../support/pdf-signature-canaries'
 import { buildFixtures, fixturePassword } from '../../scripts/pdf-engine/fixtures.mjs'
@@ -99,6 +100,7 @@ test('多頁與旋轉 PDF：開啟、放置、預覽、輸出並保留未簽頁�
   await page.getByRole('link', { name: 'Download the signed PDF' }).click()
   expect((await download).suggestedFilename()).toBe('signed.pdf')
 
+  await settleTransitions(page)
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/pdf-signature-signed-desktop.png', fullPage: true })
 })

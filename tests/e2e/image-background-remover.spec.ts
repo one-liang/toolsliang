@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { backgroundRemoverCanaries } from '../support/image-background-remover-canaries'
 import { gotoHydrated } from './support/hydration'
+import { settleTransitions } from './support/motion'
 import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
 
 guardToolContentBoundary(backgroundRemoverCanaries, { allowedOrigins: ['http://127.0.0.1:4173'] })
@@ -89,6 +90,7 @@ test('下載模型後在本機去背，並下載透明 PNG', async ({ page }, te
   await page.getByRole('link', { name: '下載透明 PNG' }).click()
   expect((await download).suggestedFilename()).toBe('background-removed.png')
 
+  await settleTransitions(page)
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-background-remover-result.png', fullPage: true })
 })
