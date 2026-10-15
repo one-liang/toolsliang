@@ -118,10 +118,6 @@ const landingToolTaglines: Record<string, LocalizedCopy> = {
     'zh-tw': '國定假日、補班日、農曆與節氣',
     en: 'Public holidays, make-up workdays, lunar dates and solar terms',
   },
-  'custom-calendar': {
-    'zh-tw': '在台灣行事曆加上自己的休假與排班',
-    en: 'Add your own days off and shifts to the Taiwan calendar',
-  },
   'device-time': {
     'zh-tw': '這台裝置的時間、時區與 UTC 時差',
     en: 'Your device’s time, time zone and UTC offset',

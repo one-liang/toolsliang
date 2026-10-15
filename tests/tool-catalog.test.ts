@@ -3,6 +3,7 @@ import {
   categoriesForTools,
   formatReviewDate,
   getPublicToolRoutes,
+  getWithdrawnToolRedirects,
   resolvePublishedTools,
   resolveToolSlug,
   getUnavailableCapabilities,
@@ -11,10 +12,13 @@ import {
   isSupportedLocale,
   publishedToolCategories,
   publishedTools,
+  searchTools,
   toolCategories,
   toolsByCategory,
+  unpublishedToolSlugs,
   validateToolRegistry,
   type PublishedToolDefinition,
+  type UnpublishedToolDefinition,
 } from '@/features/tools/catalog'
 import { bmiContentReview } from '@/features/tools/bmi-calculator/domain/sources'
 import { ntdContentReview } from '@/features/tools/ntd-uppercase/domain/sources'
@@ -47,7 +51,7 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar', 'pdf-signature'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'pdf-signature'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
@@ -133,24 +137,37 @@ describe('tool catalog', () => {
     expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明名單留在裝置').toContain('此裝置')
   })
 
-  it('registers the custom calendar as a local-asset tool over the official calendar', () => {
-    const tool = getTool('custom-calendar')!
+  it('withdraws the custom calendar from every public lookup but keeps its slug reserved (ADR-0021)', () => {
+    expect(getTool('custom-calendar')).toBeUndefined()
+    expect(unpublishedToolSlugs, 'ADR-0011：下架的 slug 仍保留在註冊表').toContain('custom-calendar')
+    expect(toolsByCategory('time-calendar').map(tool => tool.slug)).not.toContain('custom-calendar')
+    expect(searchTools('自訂行事曆', 'zh-tw').map(tool => tool.slug)).not.toContain('custom-calendar')
+    expect(searchTools('custom calendar', 'en').map(tool => tool.slug)).not.toContain('custom-calendar')
+    expect(resolveToolSlug('custom-calendar'), '已收藏的裝置不得留下壞掉的常用項目').toBeUndefined()
+  })
 
-    expect(tool).toMatchObject({
-      category: 'time-calendar',
-      processingClass: 'instant',
-      routeComponentKey: 'CustomCalendarWorkspace',
-      offlineMode: 'ready',
-      capabilities: ['javascript'],
-      pagePresentation: {
-        showHeadingIcon: false,
-        showLocalProcessingStatement: true,
-      },
-      seo: { contentKey: 'custom-calendar' },
-    })
-    expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明自訂項目留在裝置').toContain('這台裝置')
-    expect(tool.seo.answer['zh-tw'], '工具頁必須說明資料可能因瀏覽器清除而消失').toContain('匯出')
-    expect(tool.acceptedInput['zh-tw'], '可接受輸入必須說明只收自訂項目').toContain('自訂')
+  it('forwards every locale of a withdrawn tool page to its published successor', () => {
+    expect(getWithdrawnToolRedirects()).toEqual([
+      { from: '/zh-tw/tools/custom-calendar/', to: '/zh-tw/tools/taiwan-calendar/' },
+      { from: '/en/tools/custom-calendar/', to: '/en/tools/taiwan-calendar/' },
+    ])
+    for (const { from } of getWithdrawnToolRedirects()) {
+      expect(getPublicToolRoutes(), '轉址來源不是可索引的工具頁').not.toContain(from)
+    }
+  })
+
+  it('rejects a withdrawn tool that forwards to a tool visitors cannot open', () => {
+    const withdrawn: UnpublishedToolDefinition = {
+      slug: 'retired-tool', category: 'document', icon: 'file-text',
+      availability: { state: 'unpublished', reason: { 'zh-tw': '工具已下架。', en: 'Withdrawn.' }, redirectTo: 'image-resizer' },
+      name: { 'zh-tw': '舊工具', en: 'Retired tool' },
+      description: { 'zh-tw': '已下架。', en: 'Withdrawn.' },
+      aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
+    }
+    const unbuilt: UnpublishedToolDefinition = { ...withdrawn, slug: 'image-resizer', availability: { state: 'unpublished', reason: withdrawn.availability.reason } }
+
+    expect(validateToolRegistry([withdrawn, unbuilt])).toContain('[retired-tool] a withdrawn tool must redirect to a published tool: image-resizer')
+    expect(validateToolRegistry([{ ...withdrawn, availability: { ...withdrawn.availability, redirectTo: 'ntd-uppercase' } }, getTool('ntd-uppercase')!])).toEqual([])
   })
 
   it('expires NEW status from its registered date range', () => {
@@ -185,7 +202,6 @@ describe('tool catalog', () => {
       '/zh-tw/tools/ntd-uppercase/',
       '/zh-tw/tools/random-picker/',
       '/zh-tw/tools/taiwan-calendar/',
-      '/zh-tw/tools/custom-calendar/',
       '/zh-tw/tools/pdf-signature/',
       '/en/tools/device-time/',
       '/en/tools/image-compressor/',
@@ -196,7 +212,6 @@ describe('tool catalog', () => {
       '/en/tools/ntd-uppercase/',
       '/en/tools/random-picker/',
       '/en/tools/taiwan-calendar/',
-      '/en/tools/custom-calendar/',
       '/en/tools/pdf-signature/',
     ])
     expect(isSupportedLocale('tw')).toBe(false)
