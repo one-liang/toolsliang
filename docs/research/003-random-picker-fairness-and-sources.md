@@ -269,6 +269,12 @@ limit = 2^32 − (2^32 mod n)      // 最大的 n 的倍數
 | `wheel-is-presentation` | 輪盤只是呈現方式，結果在動畫開始前就已經決定；跳過或取消動畫都不會改變結果。 | The wheel is presentation only: the result is decided before the animation starts, and skipping or cancelling it changes nothing. |
 | `local-processing` | 名單與結果只在你的瀏覽器處理，不會送出、不會保存，關閉分頁後就消失。 | The list and the result are processed in your browser only; nothing is sent or stored, and both are gone when you close the tab. |
 
+> **2026-10-16 修訂（#83）**：工具重新設計成一個畫面完成抽選、再抽一次與重設，結果區旁不再列出「看結果前要知道」。
+> 六則免責的主張與範圍不變，改由同一頁的白話內容承擔：`equal-probability-scope`、`no-audit`、`not-a-lottery`、
+> `wheel-is-presentation` 與 `local-processing` 由 §7.4 的常見問題回答（`no-audit` 另寫在「開始前先知道」）；
+> `duplicates-share-chances` 仍在名單真的有重複時顯示，位置改在「重複項目」設定下方。上表保留作為審閱過的主張，
+> `tests/random-picker-content.test.ts` 逐則檢查它在頁面上仍有中英文的說法。
+
 ### 7.2 來源標示
 
 - 結果區塊旁必須顯示等機率的作法摘要（§3）、規則版本識別碼與可點擊來源連結。
@@ -279,6 +285,9 @@ limit = 2^32 − (2^32 mod n)      // 最大的 n 的倍數
 > **2026-10-15 修訂（#82）**：§8 的三個來源是技術規格與演算法，不是工具回答內容的來源，因此工具頁下方不再列出，
 > 改以「這個工具怎麼處理你的內容」說明名單的處理方式；「開始前先知道」與常見問題以白話說明等機率，不寫演算法名稱。
 > 工作區內的作法說明與來源連結由 #83 重新設計時處理。
+>
+> **2026-10-16 修訂（#83）**：工作區不再顯示作法摘要、規則版本識別碼與來源連結；作法改由常見問題以白話說明，
+> 不出現演算法名稱。規則版本識別碼仍是本文件與 `domain/sources.ts` 共用的審閱版本，改版時照上方規則更新。
 
 ### 7.3 禁止用語
 
@@ -304,13 +313,14 @@ certified fair、provably fair、tamper-proof、guaranteed fair 等對應說法�
 
 ## 8. 來源清單
 
-「頁面呈現」標記為「是」的來源會登錄到工具註冊的 `contentReview.sources`，在中英文工具頁上可點擊。
+「頁面呈現」原本標記為「是」的來源會在中英文工具頁上可點擊。#82 把它們移出工具頁下方，#83 再移出工作區，
+因此三個來源目前都只留在本文件作為查核依據，`tests/random-picker-reference.test.ts` 檢查沒有任何一個標記為頁面呈現。
 
 | 來源 | 版本／日期 | 用途 | 頁面呈現 | 連結 |
 | --- | --- | --- | --- | --- |
-| W3C Web Cryptography API | W3C Recommendation，2017-01-26 | `crypto.getRandomValues` 的密碼學強度要求 | 是 | <https://www.w3.org/TR/WebCryptoAPI/> |
-| MDN Web Docs：Crypto.getRandomValues() | 2026-09-05 擷取 | 瀏覽器支援度與 `Uint32Array` 用法 | 是 | <https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues> |
-| R. Durstenfeld, Algorithm 235: Random permutation, CACM 7(7) | 1964-07 | Fisher–Yates 部分洗牌的原始演算法 | 是 | <https://dl.acm.org/doi/10.1145/364520.364540> |
+| W3C Web Cryptography API | W3C Recommendation，2017-01-26 | `crypto.getRandomValues` 的密碼學強度要求 | 否 | <https://www.w3.org/TR/WebCryptoAPI/> |
+| MDN Web Docs：Crypto.getRandomValues() | 2026-09-05 擷取 | 瀏覽器支援度與 `Uint32Array` 用法 | 否 | <https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues> |
+| R. Durstenfeld, Algorithm 235: Random permutation, CACM 7(7) | 1964-07 | Fisher–Yates 部分洗牌的原始演算法 | 否 | <https://dl.acm.org/doi/10.1145/364520.364540> |
 
 ## 9. 已收斂的問題
 
@@ -323,7 +333,8 @@ certified fair、provably fair、tamper-proof、guaranteed fair 等對應說法�
 ## 10. 已知風險
 
 1. **使用者可能重抽到滿意為止。** 這是本機抽選的本質限制，工具無法偵測，也不宣稱能防止。
-   §7.1 的 `no-audit` 必須恆常呈現，不能只在說明頁出現。
+   §7.1 的 `no-audit` 必須恆常呈現，不能只在說明頁出現。#83 起它寫在同一個工具頁的「開始前先知道」與常見問題，
+   不再列在結果旁；它仍在工具頁上，不在另一個說明頁。
 2. **「保留重複」容易被誤解成不公平。** 同名兩筆各佔一個機會在數學上仍然等機率，
    但使用者可能認為「同一個人被算兩次」。因此名單真的出現重複時，介面必須主動說明目前策略，
    並指出切換方式（`duplicates-share-chances`）。
@@ -333,8 +344,8 @@ certified fair、provably fair、tamper-proof、guaranteed fair 等對應說法�
 | 決策 | 模組 |
 | --- | --- |
 | 上限、策略、錯誤 key、測試向量 | `app/features/tools/random-picker/domain/reference.ts` |
-| 規則版本、免責 key、來源清單 | `app/features/tools/random-picker/domain/sources.ts` |
+| 規則版本、免責 key | `app/features/tools/random-picker/domain/sources.ts` |
 | 名單解析（§4） | `app/features/tools/random-picker/domain/list.ts` |
 | 取樣與抽選（§3、§5.2、§5.3） | `app/features/tools/random-picker/domain/draw.ts` |
 | 輪盤幾何（§6.3 第 8 條） | `app/features/tools/random-picker/domain/wheel.ts` |
-| 介面文案、免責、FAQ（§5.2、§7） | `app/features/tools/random-picker/content.ts` |
+| 介面文案、FAQ（§5.2、§7；§7.1 的免責自 #83 起由 FAQ 承擔） | `app/features/tools/random-picker/content.ts` |
