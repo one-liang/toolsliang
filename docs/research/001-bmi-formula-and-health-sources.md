@@ -181,12 +181,20 @@ T08 若調整語氣，仍必須保留同一個主張與範圍，不得弱化或�
 | `older-adults` | 長者、肌肉量高或身體組成特殊的人，結果僅供參考。 | For older adults or people with atypical body composition, treat the result as reference only. |
 | `professional-advice` | 需要健康判斷或體重管理計畫時，請諮詢醫事人員。 | Consult a health professional for any health decision or weight management plan. |
 
+> **2026-10-15 修訂（#82）**：依使用者決定，工作區只留輸入與結果，不再列出這六則。
+> `not-a-diagnosis`、`adults-only`、`pregnancy` 合併成「開始前先知道」的一句話；
+> `body-composition`、`older-adults`、`professional-advice` 由常見問題「BMI 可以看出體脂肪或健康狀況嗎？」回答。
+> 主張與範圍不變，只改了位置；`tests/bmi-content.test.ts` 逐則確認它們仍在頁面上。
+
 ### 6.2 來源標示
 
 - 結果區塊旁必須顯示：公式、完整分級表、來源名稱、來源更新日期（2025-09-11）與可點擊連結。
 - 來源版本識別碼 `hpa-adult-2025-09-11` 對應「成人健康體位標準」的更新日期；
   來源頁面更新時，必須重新查核、更新識別碼與 `reviewedAt`，並同步本文件與測試。工具 slug `bmi-calculator` 不隨之改變。
 - 中英文頁面都必須列出來源；英文頁不得只寫「Taiwan health authority」而不指名。
+
+> **2026-10-15 修訂（#82）**：結果區只寫明「依國民健康署成人健康體位標準判定」；公式與完整分級表在工作區下方，
+> 來源名稱、更新日期與連結移到頁面下方的「資料來源與審閱」，每個來源附一句白話說明。
 
 ### 6.3 禁止用語
 
