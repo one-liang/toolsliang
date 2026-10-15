@@ -61,6 +61,21 @@ function scrollTop(page: Page) {
   return page.evaluate(() => window.scrollY)
 }
 
+/** The scroll position once it has stopped moving for a few frames. */
+async function settledScrollTop(page: Page) {
+  return page.evaluate(() => new Promise<number>((resolve) => {
+    let last = window.scrollY
+    let still = 0
+    const check = () => {
+      still = window.scrollY === last ? still + 1 : 0
+      last = window.scrollY
+      if (still >= 5) resolve(last)
+      else requestAnimationFrame(check)
+    }
+    requestAnimationFrame(check)
+  }))
+}
+
 /** Whether the element at the centre of the target is the target itself, not something docked over it. */
 async function expectUncovered(target: Locator, message: string) {
   const uncovered = await target.evaluate((element) => {
@@ -73,14 +88,16 @@ async function expectUncovered(target: Locator, message: string) {
 
 /**
  * Presses a control the way a visitor would without scrolling first: it has to
- * be fully on screen and uncovered already, and pressing it must not move the
- * page either (a focus that lands inside a scroll padding would).
+ * be fully on screen and uncovered already, the press lands where it is drawn
+ * (a locator click would scroll it into view first), and pressing it must not
+ * move the page either.
  */
 async function pressInPlace(page: Page, target: Locator, scrollBefore: number) {
   await expect(target, '不捲動就要看得到').toBeInViewport({ ratio: 1 })
   await expectUncovered(target, '不能被其他介面蓋住')
-  await target.click()
-  expect(await scrollTop(page), '按下後畫面不得移動').toBe(scrollBefore)
+  const box = (await target.boundingBox())!
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+  expect(await settledScrollTop(page), '按下後畫面不得移動').toBe(scrollBefore)
 }
 
 async function expectResultInView(page: Page) {
@@ -112,40 +129,45 @@ test('工具開啟即可操作，作法與界線集中在下方常見問題', as
   await expect(page.getByRole('heading', { name: '這個工具怎麼處理你的內容' })).toBeVisible()
 })
 
-for (const viewport of SINGLE_SCREEN_VIEWPORTS) {
-  for (const presentation of ['名單', '輪盤'] as const) {
-    test(`${viewport.name}以${presentation}呈現：貼上 20 筆後不捲動就能抽選、再抽一次與重設`, async ({ page }) => {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      await gotoTool(page)
-      await page.getByLabel('候選名單').fill(TWENTY.join('\n'))
-      await expect(page.locator('.picker-summary')).toContainText('可抽選項目 20 筆')
-      // Focusing the field may lift it clear of the docked stage; from here on nothing may move.
-      const scrollBefore = await scrollTop(page)
+test.describe('一個畫面完成抽選（#83）', () => {
+  // A waiting application update would open its notice over the corner these tests measure.
+  test.use({ serviceWorkers: 'block' })
 
-      if (presentation === '輪盤') {
-        await pressInPlace(page, page.getByRole('radio', { name: '輪盤' }), scrollBefore)
-        await expect(page.locator('.picker-wheel'), '輪盤也在畫面內').toBeInViewport({ ratio: 1 })
-      }
+  for (const viewport of SINGLE_SCREEN_VIEWPORTS) {
+    for (const presentation of ['名單', '輪盤'] as const) {
+      test(`${viewport.name}以${presentation}呈現：貼上 20 筆後不捲動就能抽選、再抽一次與重設`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await gotoTool(page)
+        await page.getByLabel('候選名單').fill(TWENTY.join('\n'))
+        await expect(page.locator('.picker-summary')).toContainText('可抽選項目 20 筆')
+        // Focusing the field may lift it clear of the docked stage; from here on nothing may move.
+        const scrollBefore = await settledScrollTop(page)
 
-      await pressInPlace(page, page.getByRole('button', { name: '開始抽選' }), scrollBefore)
-      const drawn = page.locator('.picker-result__item')
-      await expect(drawn).toHaveCount(1)
-      expect(TWENTY).toContain(await drawn.innerText())
-      await expectResultInView(page)
+        if (presentation === '輪盤') {
+          await pressInPlace(page, page.getByRole('radio', { name: '輪盤' }), scrollBefore)
+          await expect(page.locator('.picker-wheel'), '輪盤也在畫面內').toBeInViewport({ ratio: 1 })
+        }
 
-      await pressInPlace(page, page.getByRole('button', { name: '再抽一次' }), scrollBefore)
-      await expect(page.locator('.picker-result')).toHaveAttribute('aria-busy', 'false')
-      await expect(drawn).toHaveCount(1)
-      await expectResultInView(page)
+        await pressInPlace(page, page.getByRole('button', { name: '開始抽選' }), scrollBefore)
+        const drawn = page.locator('.picker-result__item')
+        await expect(drawn).toHaveCount(1)
+        expect(TWENTY).toContain(await drawn.innerText())
+        await expectResultInView(page)
 
-      await pressInPlace(page, page.getByRole('button', { name: '重設' }), scrollBefore)
-      await expect(page.getByLabel('候選名單')).toHaveValue('')
-      await expect(page.locator('.picker-result')).toContainText('準備好名單後按')
-      await expectResultInView(page)
-      expect(await scrollTop(page)).toBe(scrollBefore)
-    })
+        await pressInPlace(page, page.getByRole('button', { name: '再抽一次' }), scrollBefore)
+        await expect(page.locator('.picker-result')).toHaveAttribute('aria-busy', 'false')
+        await expect(drawn).toHaveCount(1)
+        await expectResultInView(page)
+
+        await pressInPlace(page, page.getByRole('button', { name: '重設' }), scrollBefore)
+        await expect(page.getByLabel('候選名單')).toHaveValue('')
+        await expect(page.locator('.picker-result')).toContainText('準備好名單後按')
+        await expectResultInView(page)
+        expect(await scrollTop(page)).toBe(scrollBefore)
+      })
+    }
   }
-}
+})
 
 test('抽選結果由 live region 宣告，多名抽選不重複中選', async ({ page }) => {
   await gotoTool(page)

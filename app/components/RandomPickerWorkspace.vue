@@ -260,7 +260,8 @@ function keepFocusClearOfStage(event: FocusEvent) {
   if (!dock || !(field instanceof HTMLElement) || getComputedStyle(dock).position !== 'sticky') return
 
   const overlap = field.getBoundingClientRect().bottom - dock.getBoundingClientRect().top + DOCK_CLEARANCE_PX
-  if (overlap > 0) window.scrollBy({ top: overlap })
+  // Instant, like the browser's own scroll to a focused field, so the page is already still when typing starts.
+  if (overlap > 0) window.scrollBy({ top: overlap, behavior: 'instant' })
 }
 
 function prefersReducedMotion() {
