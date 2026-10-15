@@ -283,13 +283,16 @@ test('2026 年的年檢視與人事行政總處公告的辦公日曆表逐日一
 })
 
 test('年檢視在手機一欄、平板兩欄、桌面三欄，且不出現橫向捲動', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 375, height: 900 })
+  await gotoTool(page)
+  await showMonth(page, 2026, 1)
+  await showYearView(page)
+
+  // The columns follow the card's width, so one page is resized rather than
+  // reloaded: navigating away mid-load aborts chunks and logs them as errors.
   for (const [width, columns] of [[375, 1], [768, 2], [1440, 3]] as const) {
     await page.setViewportSize({ width, height: 900 })
-    await gotoTool(page)
-    await showMonth(page, 2026, 1)
-    await showYearView(page)
-
-    expect(await monthColumns(page), `${width}px 的欄數`).toBe(columns)
+    await expect.poll(() => monthColumns(page), `${width}px 的欄數`).toBe(columns)
     const overflow = await page.locator('html').evaluate(element => element.scrollWidth - element.clientWidth)
     expect(overflow, `${testInfo.project.name} ${width}px 不得有橫向跑版`).toBeLessThanOrEqual(1)
   }
