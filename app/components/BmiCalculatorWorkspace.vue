@@ -126,7 +126,7 @@ function reset() {
   <Card class="tool-workspace bmi-workspace" :aria-busy="false">
     <fieldset class="bmi-units">
       <legend>{{ text.unitLegend }}</legend>
-      <label v-for="option in (['metric', 'imperial'] as const)" :key="option" class="bmi-units__option">
+      <label v-for="option in (['metric', 'imperial'] as const)" :key="option" class="choice-option bmi-units__option">
         <input
           type="radio"
           name="bmi-unit-system"
