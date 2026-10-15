@@ -75,7 +75,7 @@ function findControl(slug: string, action: MoveAction) {
     <ul v-if="tools.length" class="saved-tool-list">
       <li v-for="(tool, index) in tools" :key="tool.slug" class="saved-tool" :data-saved-slug="tool.slug">
         <NuxtLink class="saved-tool__link" :to="`/${locale}/tools/${tool.slug}/`">
-          <span class="saved-tool__icon"><ToolIcon :name="tool.icon" :size="20" /></span>
+          <span :class="['saved-tool__icon', `category-fill--${tool.category}`]"><ToolIcon :name="tool.icon" :size="20" /></span>
           <span class="saved-tool__body">
             <span class="saved-tool__topline">
               <span class="saved-tool__name">{{ copy(tool.name, locale) }}</span>

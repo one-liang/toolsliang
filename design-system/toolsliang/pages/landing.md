@@ -1,12 +1,10 @@
 # Landing Page overrides
 
-- 使用獨立 Landing layout，不顯示 App Shell 側邊欄、手機 App 底部導覽或工具工作區。
-- 區段順序固定為首屏、本機處理承諾、熱門工具、工具分類、常見問題；每個區段以 `.landing-section` 的 `section-heading`（eyebrow + `h2` + 說明）開頭。
-- 首屏使用 `display-lg` 標題、`tool-search--large` 大型搜尋，並在搜尋框下方以可見文字說明搜尋只在本機執行。
-- 分類網格巢狀於「工具分類」區段之下，分類標題降為 `h3`，維持連續的 heading hierarchy。
-- 熱門工具為編輯挑選，不依個人使用紀錄或聚合排行排序；文案必須說明這一點。
-- 常見問題以 `dl` 呈現且全部可見；只有可見的問答才可進入 `FAQPage` structured data。
-- 本機搜尋不得宣告 `SearchAction` 或任何 `potentialAction`，避免對外承諾不存在的伺服器端搜尋；搜尋行為改以搜尋框下方的可見說明與 `FAQPage` 內的可見問答描述。
-- 內容、熱門清單與 structured data 由 `app/features/landing/content.ts` 提供，不在頁面內硬寫文案。
-- 工具項目直接連到 locale-prefixed 工具頁；不在首頁展開操作面板。
+- 使用獨立 Landing layout（`app/layouts/landing.vue` 與 `app/assets/css/landing.css`），不顯示 App Shell 側邊欄、手機 App 底部導覽或工具工作區。
+- 區段順序：首屏、工具一覽（五個分類區塊）、常見問題、收尾區塊。不使用 eyebrow，標題直接說話。
+- 首屏：左 7 欄為兩行 H1（第二行黃色標記）、一行副標、64px 本機搜尋與「瀏覽全部工具」黑色膠囊；右 5 欄為三張傾斜的範例卡片（支票國字大寫、2026 年 2 月連假、BMI），數值都由各工具的 domain 模組計算（`app/features/landing/demos.ts`）。首屏在桌面填滿第一個畫面。
+- 工具一覽以分類平塗色區塊呈現，每塊一個實際輸出的示範（去背對照、簽名表單、裝置時鐘、BMI 分級、輪盤），下方列出該分類全部工具；每個已發布工具只出現一次，一句話介紹由 `landingToolTaglines` 提供。
+- 隱私邊界、費用與手機支援只在常見問題各回答一次，首頁上半部不重複。常見問題用 `details`，只有可見的問答才進入 `FAQPage` structured data；最後一題自動列出全部已發布工具。
+- 本機搜尋不得宣告 `SearchAction` 或任何 `potentialAction`。
+- 動畫由 `useLandingMotion` 以 GSAP 延遲載入，在 `gsap.matchMedia` 的 no-preference 條件內建立、每段只播放一次；範例卡片在腳本逾時或失敗時以 CSS 備援顯示。
 - 首頁必須在 `/zh-tw/` 與 `/en/` 預先產生，確保 canonical、hreflang、OG 與 structured data 在 server HTML 內可驗證。

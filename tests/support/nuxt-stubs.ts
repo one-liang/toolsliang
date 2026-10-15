@@ -3,7 +3,14 @@ import {
   computed, inject, nextTick, onBeforeUnmount, onMounted, onUnmounted, provide,
   reactive, readonly, ref, shallowRef, toRef, useId, watch, watchEffect,
 } from 'vue'
+import LandingCategoryBlockComponent from '@/components/LandingCategoryBlock.vue'
+import LandingDemoBmiComponent from '@/components/LandingDemoBmi.vue'
+import LandingDemoClockComponent from '@/components/LandingDemoClock.vue'
+import LandingDemoCutoutComponent from '@/components/LandingDemoCutout.vue'
+import LandingDemoSignatureComponent from '@/components/LandingDemoSignature.vue'
+import LandingDemoWheelComponent from '@/components/LandingDemoWheel.vue'
 import LandingFaqComponent from '@/components/LandingFaq.vue'
+import LandingHeroDeckComponent from '@/components/LandingHeroDeck.vue'
 import SavedStorageNoticeComponent from '@/components/SavedStorageNotice.vue'
 import SavedToolListComponent from '@/components/SavedToolList.vue'
 import ToolCardComponent from '@/components/ToolCard.vue'
@@ -62,6 +69,8 @@ export function installNuxtStubs() {
   vi.stubGlobal('useAppLocale', useAppLocale)
   vi.stubGlobal('useCalendarMonth', useCalendarMonth)
   vi.stubGlobal('useCustomCalendar', useCustomCalendar)
+  // Motion is a browser enhancement over finished markup; page tests read the markup.
+  vi.stubGlobal('useLandingMotion', () => {})
   vi.stubGlobal('useLocalAssets', useLocalAssets)
   vi.stubGlobal('useOfflineAsset', useOfflineAsset)
   vi.stubGlobal('useSavedTools', useSavedTools)
@@ -116,9 +125,14 @@ export function landingGlobals() {
   return {
     components: {
       Button: ButtonComponent,
+      LandingCategoryBlock: LandingCategoryBlockComponent,
+      LandingDemoBmi: LandingDemoBmiComponent,
+      LandingDemoClock: LandingDemoClockComponent,
+      LandingDemoCutout: LandingDemoCutoutComponent,
+      LandingDemoSignature: LandingDemoSignatureComponent,
+      LandingDemoWheel: LandingDemoWheelComponent,
       LandingFaq: LandingFaqComponent,
-      ToolCard: ToolCardComponent,
-      ToolCategoryGrid: ToolCategoryGridComponent,
+      LandingHeroDeck: LandingHeroDeckComponent,
       ToolIcon: ToolIconComponent,
       ToolSearch: ToolSearchComponent,
       ToolStatusBadge: ToolStatusBadgeComponent,

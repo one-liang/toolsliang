@@ -40,7 +40,7 @@ usePageSeo({
       <span>{{ copy(category.name, locale) }}</span>
     </nav>
 
-    <header class="tool-heading" :class="{ 'tool-heading--with-icon': tool.pagePresentation.showHeadingIcon }">
+    <header :class="['tool-heading', 'tool-heading--filled', `category-fill--${tool.category}`, { 'tool-heading--with-icon': tool.pagePresentation.showHeadingIcon }]">
       <span v-if="tool.pagePresentation.showHeadingIcon" class="tool-heading__icon"><ToolIcon :name="tool.icon" :size="26" /></span>
       <div class="tool-heading__copy">
         <div class="tool-heading__title-row">
@@ -101,7 +101,6 @@ usePageSeo({
 
     <section class="tool-contract tool-contract--sources" :aria-labelledby="`tool-sources-${tool.slug}`">
       <div class="tool-section-heading">
-        <p class="eyebrow">{{ locale === 'en' ? 'References' : '參考依據' }}</p>
         <h2 :id="`tool-sources-${tool.slug}`">{{ locale === 'en' ? 'Sources and review' : '資料來源與審閱' }}</h2>
       </div>
       <div class="tool-contract__sources">

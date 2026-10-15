@@ -256,13 +256,27 @@ test('已快取的 12 MP 去背符合桌機時間預算，且進度即時出現'
   })
   await page.getByLabel('選擇人像圖片', { exact: true }).setInputFiles({ name: 'private-portrait-canary.png', mimeType: 'image/jpeg', buffer: Buffer.from(bytes) })
 
-  const started = Date.now()
-  await page.getByRole('button', { name: '開始去背' }).click()
-  await page.locator('[role="progressbar"]').first().waitFor()
-  const progressVisible = Date.now() - started
+  // Timed inside the page, as the compressor's budget is: wrapping Playwright's
+  // click and polling also counts the automation round trip, which on WebKit CI
+  // alone approaches the 250 ms the visitor is promised.
+  await expect(page.getByRole('button', { name: '開始去背' })).toBeEnabled()
+  await page.evaluate(() => {
+    const metrics = { start: performance.now(), progressAt: 0 }
+    const observer = new MutationObserver(() => {
+      if (!metrics.progressAt && document.querySelector('.image-background-remover [role=progressbar]')) metrics.progressAt = performance.now()
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    Object.assign(window, { removalMetrics: metrics, stopMetrics: () => observer.disconnect() })
+    ;(document.querySelector('.image-background-remover button[type=submit]') as HTMLButtonElement).click()
+  })
   await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 120_000 })
-  const elapsed = Date.now() - started
+  const { progressVisible, elapsed } = await page.evaluate(() => {
+    Reflect.get(window, 'stopMetrics')()
+    const metrics = Reflect.get(window, 'removalMetrics')
+    return { progressVisible: metrics.progressAt - metrics.start, elapsed: performance.now() - metrics.start }
+  })
 
+  expect(progressVisible).toBeGreaterThan(0)
   expect(progressVisible).toBeLessThanOrEqual(250)
   expect(elapsed).toBeLessThan(30_000)
   await expect(page.locator('[data-image-result]')).toContainText('4000 × 3000')

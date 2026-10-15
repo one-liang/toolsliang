@@ -1,0 +1,1031 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T17:27:16.854Z",
+  "title": "Design System: toolsliang",
+  "extensions": {
+    "colorMeta": {
+      "ink-950": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "#0b0b0b",
+        "oklch": "oklch(15.0% 0.000 0.0)",
+        "tonalRamp": [
+          "oklch(15% 0.000 0.0)",
+          "oklch(26% 0.000 0.0)",
+          "oklch(38% 0.000 0.0)",
+          "oklch(50% 0.000 0.0)",
+          "oklch(62% 0.000 0.0)",
+          "oklch(74% 0.000 0.0)",
+          "oklch(85% 0.000 0.0)",
+          "oklch(95% 0.000 0.0)"
+        ]
+      },
+      "ink-800": {
+        "role": "neutral",
+        "displayName": "Landing Soft Ink",
+        "canonical": "#3b3a36",
+        "oklch": "oklch(34.8% 0.007 95.3)",
+        "tonalRamp": [
+          "oklch(15% 0.006 95.3)",
+          "oklch(26% 0.006 95.3)",
+          "oklch(38% 0.007 95.3)",
+          "oklch(50% 0.006 95.3)",
+          "oklch(62% 0.005 95.3)",
+          "oklch(74% 0.005 95.3)",
+          "oklch(85% 0.004 95.3)",
+          "oklch(95% 0.003 95.3)"
+        ]
+      },
+      "ink-700": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "#4a4844",
+        "oklch": "oklch(40.2% 0.007 84.6)",
+        "tonalRamp": [
+          "oklch(15% 0.006 84.6)",
+          "oklch(26% 0.006 84.6)",
+          "oklch(38% 0.007 84.6)",
+          "oklch(50% 0.007 84.6)",
+          "oklch(62% 0.006 84.6)",
+          "oklch(74% 0.005 84.6)",
+          "oklch(85% 0.004 84.6)",
+          "oklch(95% 0.004 84.6)"
+        ]
+      },
+      "ink-200": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#d6d4cd",
+        "oklch": "oklch(87.0% 0.010 93.6)",
+        "tonalRamp": [
+          "oklch(15% 0.004 93.6)",
+          "oklch(26% 0.005 93.6)",
+          "oklch(38% 0.006 93.6)",
+          "oklch(50% 0.007 93.6)",
+          "oklch(62% 0.008 93.6)",
+          "oklch(74% 0.009 93.6)",
+          "oklch(85% 0.010 93.6)",
+          "oklch(95% 0.009 93.6)"
+        ]
+      },
+      "paper-0": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 0.0)",
+        "tonalRamp": [
+          "oklch(15% 0.000 0.0)",
+          "oklch(26% 0.000 0.0)",
+          "oklch(38% 0.000 0.0)",
+          "oklch(50% 0.000 0.0)",
+          "oklch(62% 0.000 0.0)",
+          "oklch(74% 0.000 0.0)",
+          "oklch(85% 0.000 0.0)",
+          "oklch(95% 0.000 0.0)"
+        ]
+      },
+      "paper-50": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#f4f3ef",
+        "oklch": "oklch(96.4% 0.005 95.1)",
+        "tonalRamp": [
+          "oklch(15% 0.002 95.1)",
+          "oklch(26% 0.002 95.1)",
+          "oklch(38% 0.003 95.1)",
+          "oklch(50% 0.003 95.1)",
+          "oklch(62% 0.004 95.1)",
+          "oklch(74% 0.004 95.1)",
+          "oklch(85% 0.005 95.1)",
+          "oklch(95% 0.005 95.1)"
+        ]
+      },
+      "checker": {
+        "role": "neutral",
+        "displayName": "Checker",
+        "canonical": "#e6e4de",
+        "oklch": "oklch(91.9% 0.008 91.5)",
+        "tonalRamp": [
+          "oklch(15% 0.003 91.5)",
+          "oklch(26% 0.004 91.5)",
+          "oklch(38% 0.005 91.5)",
+          "oklch(50% 0.005 91.5)",
+          "oklch(62% 0.006 91.5)",
+          "oklch(74% 0.007 91.5)",
+          "oklch(85% 0.008 91.5)",
+          "oklch(95% 0.008 91.5)"
+        ]
+      },
+      "night-950": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "#0f0f0e",
+        "oklch": "oklch(16.8% 0.002 106.6)",
+        "tonalRamp": [
+          "oklch(15% 0.002 106.6)",
+          "oklch(26% 0.002 106.6)",
+          "oklch(38% 0.002 106.6)",
+          "oklch(50% 0.001 106.6)",
+          "oklch(62% 0.001 106.6)",
+          "oklch(74% 0.001 106.6)",
+          "oklch(85% 0.001 106.6)",
+          "oklch(95% 0.001 106.6)"
+        ]
+      },
+      "night-900": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "canonical": "#161615",
+        "oklch": "oklch(20.0% 0.000 0.0)",
+        "tonalRamp": [
+          "oklch(15% 0.000 0.0)",
+          "oklch(26% 0.000 0.0)",
+          "oklch(38% 0.000 0.0)",
+          "oklch(50% 0.000 0.0)",
+          "oklch(62% 0.000 0.0)",
+          "oklch(74% 0.000 0.0)",
+          "oklch(85% 0.000 0.0)",
+          "oklch(95% 0.000 0.0)"
+        ]
+      },
+      "night-800": {
+        "role": "neutral",
+        "displayName": "Night Subtle",
+        "canonical": "#1f1f1d",
+        "oklch": "oklch(23.9% 0.004 106.7)",
+        "tonalRamp": [
+          "oklch(15% 0.003 106.7)",
+          "oklch(26% 0.004 106.7)",
+          "oklch(38% 0.003 106.7)",
+          "oklch(50% 0.003 106.7)",
+          "oklch(62% 0.003 106.7)",
+          "oklch(74% 0.002 106.7)",
+          "oklch(85% 0.002 106.7)",
+          "oklch(95% 0.002 106.7)"
+        ]
+      },
+      "night-700": {
+        "role": "neutral",
+        "displayName": "Night Hairline",
+        "canonical": "#3a3936",
+        "oklch": "oklch(34.5% 0.005 91.5)",
+        "tonalRamp": [
+          "oklch(15% 0.004 91.5)",
+          "oklch(26% 0.005 91.5)",
+          "oklch(38% 0.005 91.5)",
+          "oklch(50% 0.005 91.5)",
+          "oklch(62% 0.004 91.5)",
+          "oklch(74% 0.004 91.5)",
+          "oklch(85% 0.003 91.5)",
+          "oklch(95% 0.003 91.5)"
+        ]
+      },
+      "chalk-50": {
+        "role": "neutral",
+        "displayName": "Chalk",
+        "canonical": "#f4f2ec",
+        "oklch": "oklch(96.1% 0.008 91.5)",
+        "tonalRamp": [
+          "oklch(15% 0.003 91.5)",
+          "oklch(26% 0.003 91.5)",
+          "oklch(38% 0.004 91.5)",
+          "oklch(50% 0.005 91.5)",
+          "oklch(62% 0.006 91.5)",
+          "oklch(74% 0.007 91.5)",
+          "oklch(85% 0.007 91.5)",
+          "oklch(95% 0.008 91.5)"
+        ]
+      },
+      "chalk-300": {
+        "role": "neutral",
+        "displayName": "Muted Chalk",
+        "canonical": "#c9c6bd",
+        "oklch": "oklch(82.6% 0.013 91.5)",
+        "tonalRamp": [
+          "oklch(15% 0.006 91.5)",
+          "oklch(26% 0.007 91.5)",
+          "oklch(38% 0.008 91.5)",
+          "oklch(50% 0.009 91.5)",
+          "oklch(62% 0.011 91.5)",
+          "oklch(74% 0.012 91.5)",
+          "oklch(85% 0.013 91.5)",
+          "oklch(95% 0.011 91.5)"
+        ]
+      },
+      "yellow-400": {
+        "role": "primary",
+        "displayName": "Sun Yellow",
+        "canonical": "#ffd23f",
+        "oklch": "oklch(87.9% 0.162 90.9)",
+        "tonalRamp": [
+          "oklch(15% 0.063 90.9)",
+          "oklch(26% 0.078 90.9)",
+          "oklch(38% 0.094 90.9)",
+          "oklch(50% 0.111 90.9)",
+          "oklch(62% 0.127 90.9)",
+          "oklch(74% 0.143 90.9)",
+          "oklch(85% 0.158 90.9)",
+          "oklch(95% 0.152 90.9)"
+        ]
+      },
+      "yellow-500": {
+        "role": "primary",
+        "displayName": "Pressed Yellow",
+        "canonical": "#ffc61a",
+        "oklch": "oklch(85.4% 0.171 86.9)",
+        "tonalRamp": [
+          "oklch(15% 0.071 86.9)",
+          "oklch(26% 0.086 86.9)",
+          "oklch(38% 0.103 86.9)",
+          "oklch(50% 0.120 86.9)",
+          "oklch(62% 0.137 86.9)",
+          "oklch(74% 0.154 86.9)",
+          "oklch(85% 0.170 86.9)",
+          "oklch(95% 0.157 86.9)"
+        ]
+      },
+      "yellow-50": {
+        "role": "primary",
+        "displayName": "Result Cream",
+        "canonical": "#fff6d1",
+        "oklch": "oklch(97.1% 0.049 95.9)",
+        "tonalRamp": [
+          "oklch(15% 0.015 95.9)",
+          "oklch(26% 0.020 95.9)",
+          "oklch(38% 0.025 95.9)",
+          "oklch(50% 0.030 95.9)",
+          "oklch(62% 0.035 95.9)",
+          "oklch(74% 0.040 95.9)",
+          "oklch(85% 0.044 95.9)",
+          "oklch(95% 0.048 95.9)"
+        ]
+      },
+      "coral-400": {
+        "role": "secondary",
+        "displayName": "Coral",
+        "canonical": "#ff7f5c",
+        "oklch": "oklch(73.7% 0.164 36.3)",
+        "tonalRamp": [
+          "oklch(15% 0.084 36.3)",
+          "oklch(26% 0.099 36.3)",
+          "oklch(38% 0.115 36.3)",
+          "oklch(50% 0.132 36.3)",
+          "oklch(62% 0.148 36.3)",
+          "oklch(74% 0.164 36.3)",
+          "oklch(85% 0.149 36.3)",
+          "oklch(95% 0.135 36.3)"
+        ]
+      },
+      "sky-400": {
+        "role": "secondary",
+        "displayName": "Sky Blue",
+        "canonical": "#86bbff",
+        "oklch": "oklch(78.2% 0.113 255.1)",
+        "tonalRamp": [
+          "oklch(15% 0.053 255.1)",
+          "oklch(26% 0.064 255.1)",
+          "oklch(38% 0.075 255.1)",
+          "oklch(50% 0.086 255.1)",
+          "oklch(62% 0.097 255.1)",
+          "oklch(74% 0.109 255.1)",
+          "oklch(85% 0.106 255.1)",
+          "oklch(95% 0.097 255.1)"
+        ]
+      },
+      "mint-400": {
+        "role": "secondary",
+        "displayName": "Mint",
+        "canonical": "#63dca8",
+        "oklch": "oklch(81.1% 0.133 162.7)",
+        "tonalRamp": [
+          "oklch(15% 0.060 162.7)",
+          "oklch(26% 0.072 162.7)",
+          "oklch(38% 0.085 162.7)",
+          "oklch(50% 0.099 162.7)",
+          "oklch(62% 0.112 162.7)",
+          "oklch(74% 0.125 162.7)",
+          "oklch(85% 0.129 162.7)",
+          "oklch(95% 0.118 162.7)"
+        ]
+      },
+      "pink-400": {
+        "role": "secondary",
+        "displayName": "Lilac Pink",
+        "canonical": "#ff9ed8",
+        "oklch": "oklch(81.5% 0.135 343.8)",
+        "tonalRamp": [
+          "oklch(15% 0.060 343.8)",
+          "oklch(26% 0.072 343.8)",
+          "oklch(38% 0.086 343.8)",
+          "oklch(50% 0.099 343.8)",
+          "oklch(62% 0.113 343.8)",
+          "oklch(74% 0.126 343.8)",
+          "oklch(85% 0.131 343.8)",
+          "oklch(95% 0.119 343.8)"
+        ]
+      },
+      "coral-700": {
+        "role": "tertiary",
+        "displayName": "Holiday Red",
+        "canonical": "#b8321a",
+        "oklch": "oklch(52.1% 0.175 32.4)",
+        "tonalRamp": [
+          "oklch(15% 0.121 32.4)",
+          "oklch(26% 0.137 32.4)",
+          "oklch(38% 0.154 32.4)",
+          "oklch(50% 0.171 32.4)",
+          "oklch(62% 0.160 32.4)",
+          "oklch(74% 0.143 32.4)",
+          "oklch(85% 0.127 32.4)",
+          "oklch(95% 0.112 32.4)"
+        ]
+      },
+      "coral-50": {
+        "role": "tertiary",
+        "displayName": "Holiday Tint",
+        "canonical": "#ffe6dd",
+        "oklch": "oklch(94.3% 0.030 40.9)",
+        "tonalRamp": [
+          "oklch(15% 0.010 40.9)",
+          "oklch(26% 0.013 40.9)",
+          "oklch(38% 0.016 40.9)",
+          "oklch(50% 0.019 40.9)",
+          "oklch(62% 0.022 40.9)",
+          "oklch(74% 0.025 40.9)",
+          "oklch(85% 0.028 40.9)",
+          "oklch(95% 0.030 40.9)"
+        ]
+      },
+      "green-700": {
+        "role": "tertiary",
+        "displayName": "Success Green",
+        "canonical": "#197659",
+        "oklch": "oklch(50.6% 0.096 166.8)",
+        "tonalRamp": [
+          "oklch(15% 0.067 166.8)",
+          "oklch(26% 0.076 166.8)",
+          "oklch(38% 0.086 166.8)",
+          "oklch(50% 0.095 166.8)",
+          "oklch(62% 0.087 166.8)",
+          "oklch(74% 0.077 166.8)",
+          "oklch(85% 0.068 166.8)",
+          "oklch(95% 0.060 166.8)"
+        ]
+      },
+      "green-50": {
+        "role": "tertiary",
+        "displayName": "Success Tint",
+        "canonical": "#e3f7ec",
+        "oklch": "oklch(95.8% 0.026 161.9)",
+        "tonalRamp": [
+          "oklch(15% 0.008 161.9)",
+          "oklch(26% 0.011 161.9)",
+          "oklch(38% 0.013 161.9)",
+          "oklch(50% 0.016 161.9)",
+          "oklch(62% 0.018 161.9)",
+          "oklch(74% 0.021 161.9)",
+          "oklch(85% 0.023 161.9)",
+          "oklch(95% 0.025 161.9)"
+        ]
+      },
+      "amber-700": {
+        "role": "tertiary",
+        "displayName": "Warning Amber",
+        "canonical": "#98471f",
+        "oklch": "oklch(49.5% 0.121 44.4)",
+        "tonalRamp": [
+          "oklch(15% 0.086 44.4)",
+          "oklch(26% 0.097 44.4)",
+          "oklch(38% 0.109 44.4)",
+          "oklch(50% 0.120 44.4)",
+          "oklch(62% 0.108 44.4)",
+          "oklch(74% 0.096 44.4)",
+          "oklch(85% 0.085 44.4)",
+          "oklch(95% 0.075 44.4)"
+        ]
+      },
+      "amber-50": {
+        "role": "tertiary",
+        "displayName": "Warning Tint",
+        "canonical": "#fff1df",
+        "oklch": "oklch(96.4% 0.028 74.3)",
+        "tonalRamp": [
+          "oklch(15% 0.009 74.3)",
+          "oklch(26% 0.012 74.3)",
+          "oklch(38% 0.014 74.3)",
+          "oklch(50% 0.017 74.3)",
+          "oklch(62% 0.020 74.3)",
+          "oklch(74% 0.023 74.3)",
+          "oklch(85% 0.025 74.3)",
+          "oklch(95% 0.028 74.3)"
+        ]
+      },
+      "red-700": {
+        "role": "tertiary",
+        "displayName": "Destructive Red",
+        "canonical": "#b4232e",
+        "oklch": "oklch(50.3% 0.180 23.2)",
+        "tonalRamp": [
+          "oklch(15% 0.127 23.2)",
+          "oklch(26% 0.143 23.2)",
+          "oklch(38% 0.161 23.2)",
+          "oklch(50% 0.179 23.2)",
+          "oklch(62% 0.162 23.2)",
+          "oklch(74% 0.144 23.2)",
+          "oklch(85% 0.128 23.2)",
+          "oklch(95% 0.113 23.2)"
+        ]
+      },
+      "red-50": {
+        "role": "tertiary",
+        "displayName": "Destructive Tint",
+        "canonical": "#ffeced",
+        "oklch": "oklch(95.8% 0.021 13.9)",
+        "tonalRamp": [
+          "oklch(15% 0.007 13.9)",
+          "oklch(26% 0.009 13.9)",
+          "oklch(38% 0.011 13.9)",
+          "oklch(50% 0.013 13.9)",
+          "oklch(62% 0.015 13.9)",
+          "oklch(74% 0.017 13.9)",
+          "oklch(85% 0.019 13.9)",
+          "oklch(95% 0.021 13.9)"
+        ]
+      },
+      "dark-hover": {
+        "role": "primary",
+        "displayName": "Deep Yellow (dark hover)",
+        "canonical": "#3d3412",
+        "oklch": "oklch(32.7% 0.052 94.5)",
+        "tonalRamp": [
+          "oklch(15% 0.044 94.5)",
+          "oklch(26% 0.049 94.5)",
+          "oklch(38% 0.050 94.5)",
+          "oklch(50% 0.044 94.5)",
+          "oklch(62% 0.039 94.5)",
+          "oklch(74% 0.034 94.5)",
+          "oklch(85% 0.029 94.5)",
+          "oklch(95% 0.025 94.5)"
+        ]
+      },
+      "dark-result": {
+        "role": "primary",
+        "displayName": "Night Result",
+        "canonical": "#2a2610",
+        "oklch": "oklch(26.7% 0.037 99.2)",
+        "tonalRamp": [
+          "oklch(15% 0.033 99.2)",
+          "oklch(26% 0.036 99.2)",
+          "oklch(38% 0.033 99.2)",
+          "oklch(50% 0.029 99.2)",
+          "oklch(62% 0.026 99.2)",
+          "oklch(74% 0.022 99.2)",
+          "oklch(85% 0.019 99.2)",
+          "oklch(95% 0.016 99.2)"
+        ]
+      },
+      "dark-holiday": {
+        "role": "tertiary",
+        "displayName": "Holiday Red (dark)",
+        "canonical": "#ff9b7e",
+        "oklch": "oklch(78.6% 0.127 37.0)",
+        "tonalRamp": [
+          "oklch(15% 0.060 37.0)",
+          "oklch(26% 0.071 37.0)",
+          "oklch(38% 0.084 37.0)",
+          "oklch(50% 0.097 37.0)",
+          "oklch(62% 0.110 37.0)",
+          "oklch(74% 0.122 37.0)",
+          "oklch(85% 0.120 37.0)",
+          "oklch(95% 0.110 37.0)"
+        ]
+      },
+      "dark-holiday-surface": {
+        "role": "tertiary",
+        "displayName": "Holiday Tint (dark)",
+        "canonical": "#3a221b",
+        "oklch": "oklch(28.1% 0.039 37.0)",
+        "tonalRamp": [
+          "oklch(15% 0.035 37.0)",
+          "oklch(26% 0.039 37.0)",
+          "oklch(38% 0.036 37.0)",
+          "oklch(50% 0.032 37.0)",
+          "oklch(62% 0.028 37.0)",
+          "oklch(74% 0.024 37.0)",
+          "oklch(85% 0.021 37.0)",
+          "oklch(95% 0.017 37.0)"
+        ]
+      },
+      "dark-success": {
+        "role": "tertiary",
+        "displayName": "Success Green (dark)",
+        "canonical": "#7bddb7",
+        "oklch": "oklch(82.7% 0.108 166.6)",
+        "tonalRamp": [
+          "oklch(15% 0.047 166.6)",
+          "oklch(26% 0.057 166.6)",
+          "oklch(38% 0.068 166.6)",
+          "oklch(50% 0.079 166.6)",
+          "oklch(62% 0.090 166.6)",
+          "oklch(74% 0.101 166.6)",
+          "oklch(85% 0.106 166.6)",
+          "oklch(95% 0.097 166.6)"
+        ]
+      },
+      "dark-success-surface": {
+        "role": "tertiary",
+        "displayName": "Success Tint (dark)",
+        "canonical": "#17372e",
+        "oklch": "oklch(30.9% 0.042 172.8)",
+        "tonalRamp": [
+          "oklch(15% 0.036 172.8)",
+          "oklch(26% 0.040 172.8)",
+          "oklch(38% 0.039 172.8)",
+          "oklch(50% 0.035 172.8)",
+          "oklch(62% 0.031 172.8)",
+          "oklch(74% 0.027 172.8)",
+          "oklch(85% 0.023 172.8)",
+          "oklch(95% 0.019 172.8)"
+        ]
+      },
+      "dark-warning": {
+        "role": "tertiary",
+        "displayName": "Warning Amber (dark)",
+        "canonical": "#ffb38b",
+        "oklch": "oklch(83.0% 0.104 48.6)",
+        "tonalRamp": [
+          "oklch(15% 0.045 48.6)",
+          "oklch(26% 0.055 48.6)",
+          "oklch(38% 0.065 48.6)",
+          "oklch(50% 0.075 48.6)",
+          "oklch(62% 0.086 48.6)",
+          "oklch(74% 0.096 48.6)",
+          "oklch(85% 0.102 48.6)",
+          "oklch(95% 0.093 48.6)"
+        ]
+      },
+      "dark-warning-surface": {
+        "role": "tertiary",
+        "displayName": "Warning Tint (dark)",
+        "canonical": "#3c281f",
+        "oklch": "oklch(29.8% 0.034 45.2)",
+        "tonalRamp": [
+          "oklch(15% 0.030 45.2)",
+          "oklch(26% 0.033 45.2)",
+          "oklch(38% 0.032 45.2)",
+          "oklch(50% 0.028 45.2)",
+          "oklch(62% 0.025 45.2)",
+          "oklch(74% 0.022 45.2)",
+          "oklch(85% 0.018 45.2)",
+          "oklch(95% 0.016 45.2)"
+        ]
+      },
+      "dark-destructive": {
+        "role": "tertiary",
+        "displayName": "Destructive Red (dark)",
+        "canonical": "#ff9aa5",
+        "oklch": "oklch(79.3% 0.121 13.2)",
+        "tonalRamp": [
+          "oklch(15% 0.056 13.2)",
+          "oklch(26% 0.067 13.2)",
+          "oklch(38% 0.080 13.2)",
+          "oklch(50% 0.092 13.2)",
+          "oklch(62% 0.104 13.2)",
+          "oklch(74% 0.116 13.2)",
+          "oklch(85% 0.115 13.2)",
+          "oklch(95% 0.105 13.2)"
+        ]
+      },
+      "dark-destructive-surface": {
+        "role": "tertiary",
+        "displayName": "Destructive Tint (dark)",
+        "canonical": "#3a1e23",
+        "oklch": "oklch(27.5% 0.044 8.9)",
+        "tonalRamp": [
+          "oklch(15% 0.040 8.9)",
+          "oklch(26% 0.044 8.9)",
+          "oklch(38% 0.040 8.9)",
+          "oklch(50% 0.036 8.9)",
+          "oklch(62% 0.031 8.9)",
+          "oklch(74% 0.027 8.9)",
+          "oklch(85% 0.023 8.9)",
+          "oklch(95% 0.019 8.9)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing hero H1; the closing band uses the same scale."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Landing section titles, max 16ch."
+      },
+      "headline-page": {
+        "displayName": "Headline Page",
+        "purpose": "App Shell page H1 (directory, storage, design system)."
+      },
+      "title-tool": {
+        "displayName": "Title Tool",
+        "purpose": "H1 inside the filled tool heading."
+      },
+      "title-block": {
+        "displayName": "Title Block",
+        "purpose": "Landing category block titles."
+      },
+      "title-section": {
+        "displayName": "Title Section",
+        "purpose": "Tool-page section headings."
+      },
+      "body-lead": {
+        "displayName": "Body Lead",
+        "purpose": "Landing intro and category pitch copy, max 30em."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default running text."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Card descriptions and help text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels and legends."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Button labels."
+      },
+      "badge": {
+        "displayName": "Badge",
+        "purpose": "Status pills (NEW / PRO / HOT / Saved)."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Readings that are the point (BMI, holiday counts, clock): widened wdth, tabular figures."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The provisional brand name beside the yellow mark."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Data cells and code only."
+      }
+    },
+    "shadows": [],
+    "elevationNote": "No shadows by rule (--card-shadow: none). Depth is 2px ink rules, flat fills, overlap with rotation, and ink inversion. Two editor selection overlays carry a thin outline ring (0 0 0 1px white; 0 0 0 2px surface) so a selection stays visible on images; these are identification outlines, not elevation.",
+    "themes": {
+      "light": {
+        "background": "paper-0",
+        "surface": "paper-0",
+        "surface-subtle": "paper-50",
+        "surface-hover": "yellow-400",
+        "foreground": "ink-950",
+        "muted-foreground": "ink-700",
+        "border": "ink-950",
+        "border-subtle": "ink-200",
+        "focus-ring": "ink-950",
+        "result-surface": "yellow-50",
+        "holiday": "coral-700 on coral-50",
+        "success": "green-700 on green-50",
+        "warning": "amber-700 on amber-50",
+        "destructive": "red-700 on red-50",
+        "button-primary": "ink-950 bg / paper-0 fg"
+      },
+      "dark": {
+        "background": "night-950",
+        "surface": "night-900",
+        "surface-subtle": "night-800",
+        "surface-hover": "dark-hover",
+        "foreground": "chalk-50",
+        "muted-foreground": "chalk-300",
+        "border": "chalk-50",
+        "border-subtle": "night-700",
+        "focus-ring": "yellow-400",
+        "result-surface": "dark-result",
+        "holiday": "dark-holiday on dark-holiday-surface",
+        "success": "dark-success on dark-success-surface",
+        "warning": "dark-warning on dark-warning-surface",
+        "destructive": "dark-destructive on dark-destructive-surface",
+        "button-primary": "chalk-50 bg / ink-950 fg"
+      },
+      "invariant": "Category fills (pink-400, sky-400, coral-400, mint-400, yellow-400) and --fill-ink (ink-950) are identical in both themes."
+    },
+    "categoryFills": [
+      {
+        "id": "image-commerce",
+        "token": "--fill-image-commerce",
+        "color": "pink-400"
+      },
+      {
+        "id": "document",
+        "token": "--fill-document",
+        "color": "sky-400"
+      },
+      {
+        "id": "time-calendar",
+        "token": "--fill-time-calendar",
+        "color": "coral-400"
+      },
+      {
+        "id": "calculation",
+        "token": "--fill-calculation",
+        "color": "mint-400"
+      },
+      {
+        "id": "random-selection",
+        "token": "--fill-random-selection",
+        "color": "yellow-400"
+      }
+    ],
+    "borders": [
+      {
+        "name": "rule",
+        "value": "2px solid var(--color-border)",
+        "purpose": "Structural line on every container, control and fill."
+      },
+      {
+        "name": "rule-inner-fill",
+        "value": "1.5px solid var(--fill-ink)",
+        "purpose": "Badge outlines, dividers between tool rows inside a category block, mini-calendar cells."
+      },
+      {
+        "name": "hairline",
+        "value": "1px solid var(--color-border-subtle)",
+        "purpose": "Sections and table cells inside one ruled container."
+      },
+      {
+        "name": "dashed",
+        "value": "2px dashed",
+        "purpose": "Drop zones, empty states, make-up workdays, user-changed days, placement guides."
+      },
+      {
+        "name": "focus-ring",
+        "value": "3px solid var(--color-focus-ring); outline-offset: 2px",
+        "purpose": "Every focusable element; ink in light mode, yellow in dark mode (the landing layout uses its own ink at 3px offset)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-instant",
+        "value": "80ms",
+        "purpose": "Button :active response."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Hover background, border and colour changes."
+      },
+      {
+        "name": "duration-normal",
+        "value": "220ms",
+        "purpose": "Sidebar collapse width, drawer entrance."
+      },
+      {
+        "name": "duration-slow",
+        "value": "360ms",
+        "purpose": "Reserved slow state change."
+      },
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(.2, 0, 0, 1)",
+        "purpose": "Default easing for state transitions."
+      },
+      {
+        "name": "ease-enter",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Arrivals: drawer rise, slip straightening, arrow slides (landing --nb-ease)."
+      },
+      {
+        "name": "landing-fast",
+        "value": "160ms ease",
+        "purpose": "Landing hover colour swaps (--nb-fast)."
+      },
+      {
+        "name": "deal",
+        "value": "GSAP fromTo y 96 -> 0 with extra tilt -> resting tilt, 1.1s expo.out, stagger .14s",
+        "purpose": "Hero slips deal in once on load; cheque wording wipes in (clip-path, .9s power3.inOut), holiday days pop (back.out(2.2)), BMI counts up (1.2s expo.out)."
+      },
+      {
+        "name": "demo-on-enter",
+        "value": "ScrollTrigger start \"top 85%\", once",
+        "purpose": "Each category demo plays once: cut-out reveal 1.2s, signature DrawSVG 1.8s, BMI marker 1.4s expo.out, wheel 3s power4.out."
+      },
+      {
+        "name": "settle-fallback",
+        "value": "CSS animation 1ms after 3.2s",
+        "purpose": "If the script stalls, every slip and demo settles to its finished state."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "gsap.matchMedia(\"(prefers-reduced-motion: no-preference)\"); CSS reduce collapses animation and transition to .01ms",
+        "purpose": "Reduced motion shows every end state; GSAP is never downloaded."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "0px"
+      },
+      {
+        "name": "phone-lg",
+        "value": "480px"
+      },
+      {
+        "name": "tablet",
+        "value": "768px"
+      },
+      {
+        "name": "desktop",
+        "value": "1024px"
+      },
+      {
+        "name": "desktop-lg",
+        "value": "1280px"
+      }
+    ],
+    "layout": {
+      "landingMax": "1320px",
+      "landingGutter": "clamp(16px, 4vw, 48px)",
+      "landingHeader": "72px (64px below 768px)",
+      "sidebar": "256px / 80px collapsed",
+      "topbar": "64px sticky",
+      "pageMax": "1160px",
+      "toolPageMax": "980px",
+      "minTarget": "44px"
+    },
+    "fonts": {
+      "latin": "Archivo Variable, self-hosted via @fontsource-variable/archivo/wdth.css (wght + wdth axes)",
+      "chinese": "Platform system faces: PingFang TC, Noto Sans TC, Microsoft JhengHei (no CJK webfont, user decision 2026-10-15)",
+      "mono": "SFMono-Regular, Consolas, Liberation Mono"
+    },
+    "icons": "Lucide outline icons (tool icons stroke 1.8, UI icons default 2, landing arrows 2.5); landing demos are hand-drawn SVG.",
+    "formalSpec": "design-system/toolsliang/MASTER.md (Traditional Chinese, ADR-0020); page overrides in design-system/toolsliang/pages/"
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink pill for the main action on a surface; flips to yellow with ink text on hover, never lifts.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">複製結果</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: var(--rule, 2px) solid transparent; border-radius: var(--radius-full, 999px); font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); font-size: .9rem; font-weight: 800; line-height: 1; cursor: pointer; transition: background-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)), border-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)), color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)); border-color: var(--button-primary-bg, #0b0b0b); background: var(--button-primary-bg, #0b0b0b); color: var(--button-primary-fg, #fff); } .ds-btn-primary:hover { border-color: var(--color-border, #0b0b0b); background: var(--button-primary-hover-bg, #ffd23f); color: var(--button-primary-hover-fg, #0b0b0b); } .ds-btn-primary:active { transition-duration: var(--duration-instant, 80ms); background: var(--button-primary-active-bg, #3b3a36); color: var(--button-primary-fg, #fff); } .ds-btn-primary:focus-visible { outline: 3px solid var(--color-focus-ring, #0b0b0b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Surface pill with a 2px ink rule for secondary actions such as Save or Clear; hover fills yellow.",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\" aria-pressed=\"false\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/></svg>加入常用</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: var(--rule, 2px) solid transparent; border-radius: var(--radius-full, 999px); font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); font-size: .9rem; font-weight: 800; line-height: 1; cursor: pointer; transition: background-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)), border-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)), color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)); border-color: var(--color-border-strong, #0b0b0b); background: var(--color-surface, #fff); color: var(--color-foreground, #0b0b0b); } .ds-btn-outline:hover { border-color: var(--color-primary-strong, #0b0b0b); background: var(--color-surface-hover, #ffd23f); color: var(--color-foreground, #0b0b0b); } .ds-btn-outline:focus-visible { outline: 3px solid var(--color-focus-ring, #0b0b0b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Hero Button",
+      "kind": "button",
+      "refersTo": "button-hero",
+      "description": "Landing CTA: 56px ink pill with a trailing arrow that slides 5px on hover; presses 2px on click.",
+      "html": "<a class=\"ds-btn-hero\" href=\"#\">瀏覽全部工具<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></a>",
+      "css": ".ds-btn-hero { display: inline-flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 26px; border: var(--rule, 2px) solid var(--color-foreground, #0b0b0b); border-radius: 999px; background: var(--color-foreground, #0b0b0b); color: var(--color-background, #fff); font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); font-size: 1.0625rem; font-weight: 800; text-decoration: none; transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease; } .ds-btn-hero svg { transition: translate 260ms var(--ease-enter, cubic-bezier(.16,1,.3,1)); } .ds-btn-hero:hover { background: var(--fill-random-selection, #ffd23f); color: var(--fill-ink, #0b0b0b); } .ds-btn-hero:hover svg { translate: 5px 0; } .ds-btn-hero:active { translate: 0 2px; } .ds-btn-hero:focus-visible { outline: 3px solid var(--color-foreground, #0b0b0b); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "44px field with a 2px ink rule and 12px radius; focus adds a 3px ring at 2px offset.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field__label\">輸入金額（新臺幣）</span><input class=\"ds-input\" placeholder=\"例如：12,850.50\"><span class=\"ds-field__help\">可用千分位逗號，小數點後最多 2 位。</span></label>",
+      "css": ".ds-field { display: grid; gap: 8px; max-width: 320px; font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); color: var(--color-foreground, #0b0b0b); } .ds-field__label { font-size: .86rem; font-weight: 700; } .ds-field__help { color: var(--color-muted-foreground, #4a4844); font-size: .78rem; } .ds-input { width: 100%; min-height: 44px; padding: 10px 13px; border: var(--rule, 2px) solid var(--input-border, #0b0b0b); border-radius: var(--radius-sm, 12px); background: var(--input-bg, #fff); color: var(--color-foreground, #0b0b0b); font: inherit; outline: none; transition: border-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)); } .ds-input::placeholder { color: var(--color-muted-foreground, #4a4844); opacity: .8; } .ds-input:focus-visible { border-color: var(--input-focus-border, #0b0b0b); outline: 3px solid var(--color-focus-ring, #0b0b0b); outline-offset: 2px; } .ds-input[aria-invalid=\"true\"] { border-color: var(--color-destructive, #b4232e); }"
+    },
+    {
+      "name": "Option Pills",
+      "kind": "chip",
+      "refersTo": "option-pill",
+      "description": "Radio choices as 44px pills; the checked one turns yellow with an ink rule and bold text.",
+      "html": "<fieldset class=\"ds-options\"><legend>用途</legend><label class=\"ds-option\"><input type=\"radio\" name=\"ds-purpose\" checked>一般會計</label><label class=\"ds-option\"><input type=\"radio\" name=\"ds-purpose\">支票填寫參考</label><label class=\"ds-option\"><input type=\"radio\" name=\"ds-purpose\">國庫付款憑單</label></fieldset>",
+      "css": ".ds-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; border: 0; font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); color: var(--color-foreground, #0b0b0b); } .ds-options legend { width: 100%; margin-bottom: 8px; padding: 0; font-size: .86rem; font-weight: 700; } .ds-option { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 8px 16px; border: var(--rule, 2px) solid var(--input-border, #0b0b0b); border-radius: 999px; background: var(--color-surface, #fff); font-size: .86rem; cursor: pointer; } .ds-option input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-primary-strong, #0b0b0b); } .ds-option:hover { background: var(--color-surface-hover, #ffd23f); } .ds-option:has(input:checked) { border-color: var(--color-primary-strong, #0b0b0b); background: var(--color-surface-hover, #ffd23f); color: var(--color-primary-strong, #0b0b0b); font-weight: 700; } .ds-option:has(input:focus-visible) { outline: 3px solid var(--color-focus-ring, #0b0b0b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Badges",
+      "kind": "chip",
+      "refersTo": "badge-new",
+      "description": "Small pills with a 1.5px ink outline: NEW mint, PRO yellow, HOT coral, Saved surface. Labels only, never gates.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge--new\">NEW</span><span class=\"ds-badge ds-badge--pro\">PRO</span><span class=\"ds-badge ds-badge--hot\">熱門</span><span class=\"ds-badge ds-badge--saved\">常用</span></div>",
+      "css": ".ds-badges { display: flex; flex-wrap: wrap; gap: 6px; } .ds-badge { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 9px; border: 1.5px solid var(--fill-ink, #0b0b0b); border-radius: 999px; font-family: var(--font-en, \"Archivo Variable\", system-ui, sans-serif); font-size: .6875rem; font-weight: 750; line-height: 1.2; letter-spacing: .035em; white-space: nowrap; color: var(--fill-ink, #0b0b0b); } .ds-badge--new { background: var(--fill-calculation, #63dca8); } .ds-badge--pro { background: var(--fill-random-selection, #ffd23f); } .ds-badge--hot { background: var(--fill-time-calendar, #ff7f5c); } .ds-badge--saved { border-color: var(--color-border, #0b0b0b); background: var(--color-surface, #fff); color: var(--color-foreground, #0b0b0b); }"
+    },
+    {
+      "name": "Tool Card",
+      "kind": "card",
+      "refersTo": "tool-card",
+      "description": "Directory row: 2px-ruled 20px card, 40px icon tile in the category fill, name, description, arrow; the whole card fills yellow on hover.",
+      "html": "<div class=\"ds-tool-card\"><a class=\"ds-tool-card__link\" href=\"#\"><span class=\"ds-tool-card__icon\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\"/><line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\"/><path d=\"M16 10h.01\"/><path d=\"M12 10h.01\"/><path d=\"M8 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M8 14h.01\"/><path d=\"M12 18h.01\"/><path d=\"M8 18h.01\"/></svg></span><span class=\"ds-tool-card__body\"><span class=\"ds-tool-card__name\">BMI 計算</span><span class=\"ds-tool-card__desc\">依身高與體重估算成人 BMI。</span></span><span class=\"ds-tool-card__arrow\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></a></div>",
+      "css": ".ds-tool-card { max-width: 480px; overflow: clip; border: var(--rule, 2px) solid var(--card-border, #0b0b0b); border-radius: var(--radius-lg, 20px); background: var(--card-bg, #fff); color: var(--color-foreground, #0b0b0b); font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); } .ds-tool-card:focus-within { border-color: var(--color-primary-strong, #0b0b0b); } .ds-tool-card__link { min-height: 96px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 16px; color: inherit; text-decoration: none; border-radius: inherit; transition: background-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(.2,0,0,1)); } .ds-tool-card__link:hover { background: var(--color-surface-hover, #ffd23f); } .ds-tool-card__link:focus-visible { outline: 3px solid var(--color-focus-ring, #0b0b0b); outline-offset: -3px; } .ds-tool-card__icon { width: 40px; height: 40px; display: grid; place-items: center; border: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); border-radius: var(--radius-sm, 12px); background: var(--fill-calculation, #63dca8); color: var(--fill-ink, #0b0b0b); } .ds-tool-card__name { display: block; font-weight: 800; line-height: 1.35; } .ds-tool-card__desc { display: block; margin-top: 6px; color: var(--color-muted-foreground, #4a4844); font-size: .83rem; line-height: 1.5; } .ds-tool-card__arrow { align-self: center; color: var(--color-muted-foreground, #4a4844); } .ds-tool-card__link:hover .ds-tool-card__arrow { color: var(--color-primary-strong, #0b0b0b); }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "sidebar-link",
+      "description": "White sidebar with a 2px right rule; links are 44px, hover yellow, and the current item inverts to an ink block.",
+      "html": "<nav class=\"ds-sidebar\" aria-label=\"工具導覽\"><a class=\"ds-sidebar__link ds-sidebar__link--active\" href=\"#\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"/></svg>全部工具</a><a class=\"ds-sidebar__link\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 20.20 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/></svg>常用工具</a><p class=\"ds-sidebar__group\"><span class=\"ds-sidebar__swatch\"></span>計算工具</p><a class=\"ds-sidebar__link ds-sidebar__link--tool\" href=\"#\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\"/><line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\"/><path d=\"M16 10h.01\"/><path d=\"M12 10h.01\"/><path d=\"M8 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M8 14h.01\"/><path d=\"M12 18h.01\"/><path d=\"M8 18h.01\"/></svg>BMI 計算</a></nav>",
+      "css": ".ds-sidebar { width: 256px; display: grid; gap: 8px; padding: 14px 12px 24px; border-right: var(--rule, 2px) solid var(--color-border, #0b0b0b); background: var(--color-surface, #fff); font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); } .ds-sidebar__link { display: grid; grid-template-columns: 22px 1fr; align-items: center; gap: 10px; min-height: 44px; padding: 8px 10px; border-radius: var(--radius-sm, 12px); color: var(--color-muted-foreground, #4a4844); font-size: .875rem; font-weight: 700; text-decoration: none; } .ds-sidebar__link--tool { grid-template-columns: 20px 1fr; gap: 8px; padding: 7px 9px; font-size: .81rem; font-weight: 400; } .ds-sidebar__link:hover { background: var(--color-surface-hover, #ffd23f); color: var(--color-foreground, #0b0b0b); } .ds-sidebar__link--active, .ds-sidebar__link--active:hover { background: var(--sidebar-active-bg, #0b0b0b); color: var(--sidebar-active-fg, #fff); } .ds-sidebar__link:focus-visible { outline: 3px solid var(--color-focus-ring, #0b0b0b); outline-offset: 2px; } .ds-sidebar__group { display: flex; align-items: center; gap: 8px; min-height: 36px; margin: 14px 0 0; padding: 7px 10px; color: var(--color-foreground, #0b0b0b); font-size: .82rem; font-weight: 800; } .ds-sidebar__swatch { width: 12px; height: 12px; border: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); border-radius: 4px; background: var(--fill-calculation, #63dca8); }"
+    },
+    {
+      "name": "Category Block",
+      "kind": "custom",
+      "refersTo": "category-block",
+      "description": "Landing bento block: a 28px category fill with a 2px ink rule, a demo straight on the fill, and ruled tool rows that invert to ink on hover.",
+      "html": "<article class=\"ds-block\"><h3 class=\"ds-block__title\">計算工具</h3><p class=\"ds-block__pitch\">輸入身高體重，馬上知道 BMI。</p><div class=\"ds-block__bar\" aria-hidden=\"true\"><span class=\"ds-block__band ds-block__band--under\"></span><span class=\"ds-block__band ds-block__band--healthy\"></span><span class=\"ds-block__band ds-block__band--over\"></span><span class=\"ds-block__band ds-block__band--obese\"></span></div><ul class=\"ds-block__tools\"><li><a class=\"ds-block__tool\" href=\"#\"><span class=\"ds-block__name\">BMI 計算</span><span class=\"ds-block__tagline\">依身高體重估算成人 BMI，對照國健署分級</span><span class=\"ds-block__go\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></a></li></ul></article>",
+      "css": ".ds-block { max-width: 420px; display: flex; flex-direction: column; gap: 22px; padding: clamp(20px, 2.4vw, 32px); border: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); border-radius: var(--radius-xl, 28px); background: var(--fill-calculation, #63dca8); color: var(--fill-ink, #0b0b0b); font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); } .ds-block__title { margin: 0; font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.3rem); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; } .ds-block__pitch { margin: -14px 0 0; font-size: 1.0625rem; font-weight: 600; line-height: 1.5; word-break: keep-all; } .ds-block__bar { display: flex; height: 26px; overflow: hidden; border: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); border-radius: 999px; } .ds-block__band { flex: 1; } .ds-block__band + .ds-block__band { border-left: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); } .ds-block__band--under { background: var(--fill-document, #86bbff); } .ds-block__band--healthy { background: #fff; } .ds-block__band--over { background: var(--fill-random-selection, #ffd23f); } .ds-block__band--obese { background: var(--fill-time-calendar, #ff7f5c); } .ds-block__tools { margin: 0; padding: 0; border-top: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); list-style: none; } .ds-block__tool { min-height: 68px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; margin-inline: -12px; padding: 14px 12px; border-radius: 14px; color: inherit; text-decoration: none; transition: background-color 160ms ease, color 160ms ease; } .ds-block__name, .ds-block__tagline { grid-column: 1; transition: translate 260ms var(--ease-enter, cubic-bezier(.16,1,.3,1)); } .ds-block__name { font-size: 1.125rem; font-weight: 800; line-height: 1.3; } .ds-block__tagline { margin-top: 2px; font-size: .97rem; font-weight: 500; line-height: 1.45; } .ds-block__go { grid-column: 2; grid-row: 1 / span 2; width: 38px; height: 38px; display: grid; place-items: center; border: var(--rule, 2px) solid currentColor; border-radius: 999px; opacity: 0; translate: -8px 0; transition: opacity 160ms ease, translate 260ms var(--ease-enter, cubic-bezier(.16,1,.3,1)); } .ds-block__tool:hover { background: var(--fill-ink, #0b0b0b); color: var(--fill-calculation, #63dca8); } .ds-block__tool:hover :is(.ds-block__name, .ds-block__tagline) { translate: 6px 0; } .ds-block__tool:hover .ds-block__go, .ds-block__tool:focus-visible .ds-block__go { opacity: 1; translate: 0; } .ds-block__tool:focus-visible { outline: 3px solid var(--fill-ink, #0b0b0b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Output Slip",
+      "kind": "custom",
+      "refersTo": "output-slip",
+      "description": "Hero deck card showing one real tool output on its category fill, tilted at rest; straightens on hover while its arrow badge inverts and turns -45deg.",
+      "html": "<article class=\"ds-slip\"><div class=\"ds-slip__head\"><a class=\"ds-slip__link\" href=\"#\">BMI 計算</a><span class=\"ds-slip__go\" aria-hidden=\"true\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></div><p class=\"ds-slip__reading\"><span class=\"ds-slip__input\">170 cm · 65 kg</span><span><strong class=\"ds-slip__number\">22.5</strong><span class=\"ds-slip__caption\">健康體重</span></span></p></article>",
+      "css": ".ds-slip { --r: -2.5deg; position: relative; max-width: 360px; padding: 20px 22px 22px; border: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); border-radius: var(--radius-lg, 20px); background: var(--fill-calculation, #63dca8); color: var(--fill-ink, #0b0b0b); font-family: var(--font-zh, \"Archivo Variable\", \"PingFang TC\", \"Noto Sans TC\", \"Microsoft JhengHei\", sans-serif); rotate: var(--r); transition: rotate 320ms var(--ease-enter, cubic-bezier(.16,1,.3,1)); } .ds-slip:hover, .ds-slip:focus-within { rotate: 0deg; } .ds-slip__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; } .ds-slip__link { color: inherit; font-size: 1rem; font-weight: 800; text-decoration: none; } .ds-slip__link::after { content: \"\"; position: absolute; inset: 0; border-radius: inherit; } .ds-slip__link:focus-visible { outline: none; } .ds-slip:has(.ds-slip__link:focus-visible) { outline: 3px solid var(--fill-ink, #0b0b0b); outline-offset: 3px; } .ds-slip__go { width: 34px; height: 34px; display: grid; place-items: center; border: var(--rule, 2px) solid var(--fill-ink, #0b0b0b); border-radius: 999px; transition: background-color 160ms ease, color 160ms ease, rotate 260ms var(--ease-enter, cubic-bezier(.16,1,.3,1)); } .ds-slip:hover .ds-slip__go, .ds-slip:focus-within .ds-slip__go { background: var(--fill-ink, #0b0b0b); color: var(--fill-calculation, #63dca8); rotate: -45deg; } .ds-slip__reading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; margin: 0; } .ds-slip__input { font-size: .95rem; font-weight: 700; font-variant-numeric: tabular-nums; } .ds-slip__number { font-size: clamp(2.6rem, 1.9rem + 2vw, 3.4rem); font-weight: 800; font-stretch: 116%; line-height: .9; letter-spacing: -.02em; font-variant-numeric: tabular-nums; } .ds-slip__caption { margin-left: 10px; font-size: 1.05rem; font-weight: 800; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ink-Ruled Catalogue",
+    "overview": "toolsliang is drawn on white paper with a near-black pen. Every container is closed by a 2px ink rule, every category owns one flat sticker colour, and nothing floats: there are no shadows, no gradients and no blur. The world is neo-brutalist in material and calm in hierarchy: big heavy headings, one message per block, and few words. The landing page shows each category's real output (a cheque wording, a holiday run, a BMI reading, a cut-out portrait, a signed form, a wheel result) instead of describing it. Tool pages keep the same materials and become a focused, ruled workspace.\n\nDensity is medium. The landing page breathes at display scale. The App Shell (sidebar, directory, tool pages) is denser: 44px controls, 8–16px gaps, and one ruled card per tool with its sub-sections separated by hairlines rather than nested frames. Dark mode inverts only the ground, the surfaces and the rules. The category fills and the ink set on them stay the same in both themes.\n\nMotion is an enhancement that only replays how a finished state was reached. Every demo renders its end state in HTML. GSAP loads lazily on the landing page only and plays each sequence once inside `gsap.matchMedia('(prefers-reduced-motion: no-preference)')`.",
+    "keyCharacteristics": [
+      "White ground, ink text, and a 2px ink rule on every container. A 1px hairline separates sections inside a ruled container.",
+      "Five flat category fills that never invert, always with ink on them.",
+      "Sun yellow is the single highlight colour: hover, selected, text selection, the hero mark.",
+      "Pills for pressable controls, with a radius ladder of 12 / 16 / 20 / 28px for containers.",
+      "Heavy 800-weight headings with tight tracking. Archivo Variable leads every font stack, and Chinese falls through to each platform's system face.",
+      "Zero shadows. Depth comes from rules, fills, overlap and ink inversion."
+    ],
+    "rules": [
+      {
+        "name": "The Fills Don't Invert Rule",
+        "body": "Category fills and the ink on them are identical in light and dark mode. Only ground, surface, text and rules invert. Text on a fill is always `ink-950` (7:1 or better on every fill).",
+        "section": "colors"
+      },
+      {
+        "name": "The One Highlight Rule",
+        "body": "Yellow is the only interaction colour. Hover, selected and highlighted states use it, and the four other fills never signal interaction state. Components reference semantic tokens (`--color-*`, `--fill-*`, `--button-*`), never primitives or raw hex.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meaning Twice Rule",
+        "body": "Colour never carries meaning alone. A holiday cell also has its text mark and accessible name. Errors and warnings pair the colour with an icon, a 2px border and words.",
+        "section": "colors"
+      },
+      {
+        "name": "The Heavy Heading Rule",
+        "body": "Every h1–h3 is 800 weight with -0.02em to -0.035em tracking. `main.css` re-asserts this after Tailwind preflight resets heading weight.",
+        "section": "typography"
+      },
+      {
+        "name": "The Punctuation Break Rule",
+        "body": "Chinese headings and lead copy use `word-break: keep-all` with `overflow-wrap: anywhere`, so lines break at punctuation and never inside a phrase. Headlines also use `text-wrap: balance`.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Eyebrow Rule",
+        "body": "No small label sits above a heading. A heading stands on its own, and supporting copy goes below it.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Shadow Rule",
+        "body": "No `box-shadow` is used for elevation, ever. If something needs to stand out, give it a rule, a fill, or invert it to ink.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ruled-Once Rule",
+        "body": "A tool gets one ruled card. Notes, caveats, legends, sources and model panels inside it are sections under a 1px `border-subtle` hairline, with no border, radius or background of their own. Tables keep a hairline frame because they are data, not cards.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Pill Press Rule",
+        "body": "Pressable controls are pills. Text inputs and selects are 12px, and the search field is the one input drawn as a pill. Container radius grows with container size: 12, then 16, then 20, then 28px.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do close every surface with the 2px `--rule` in `--color-border`, and separate sections inside it with a 1px `--color-border-subtle` hairline.",
+      "Do set ink (`--fill-ink`) on every category fill, and keep fills unchanged in dark mode.",
+      "Do use yellow (`--color-surface-hover`) as the hover and selected fill on pointer devices only (`@media (hover: hover) and (pointer: fine)`). In dark mode it resolves to Deep Yellow.",
+      "Do mark the current location by inverting to ink (`--sidebar-active-bg` / `-fg`).",
+      "Do make buttons, search fields, option toggles and badges full pills, and keep text inputs at 12px.",
+      "Do keep a visible 3px focus outline at a 2–3px offset on everything focusable.",
+      "Do keep every interactive target at least 44×44px.",
+      "Do render every demo or animated value in its finished state in HTML, and animate only inside `gsap.matchMedia('(prefers-reduced-motion: no-preference)')`, once.",
+      "Do show a category's real output in place of describing it on the landing page."
+    ],
+    "donts": [
+      "Don't add `box-shadow`, drop shadows, glows, glass blur, or decorative gradients. The only gradient in the system is the functional transparency checkerboard.",
+      "Don't nest a 2px-ruled card inside another ruled card. Use a hairline section instead.",
+      "Don't use any of the four non-yellow fills to signal hover, selection or focus.",
+      "Don't put a small eyebrow or kicker above a heading.",
+      "Don't let colour carry meaning alone. Pair it with text, an icon or a border.",
+      "Don't paint the light-mode sidebar as a full black panel. Only the current item is inverted.",
+      "Don't scale, float, parallax, scroll-jack or pointer-follow. Landing demos play once and stop.",
+      "Don't load a CJK webfont or any third-party font CDN.",
+      "Don't use emoji or Unicode symbols as icons. Use Lucide outline icons or the landing's own SVG drawings."
+    ]
+  }
+}

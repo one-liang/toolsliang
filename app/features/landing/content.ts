@@ -1,11 +1,12 @@
 import {
   copy,
-  getTool,
+  getCategory,
   localeUrl,
-  resolvePublishedTools,
+  publishedTools,
   siteOrigin,
   type LocaleCode,
   type LocalizedCopy,
+  type PublishedToolDefinition,
 } from '@/features/tools/catalog'
 
 /** A short heading plus the sentence that backs it, both fully localized. */
@@ -15,141 +16,226 @@ interface LocalizedSection {
 }
 
 /**
- * Editorial highlight for the landing page. It is a curated shortlist, never a
- * personalised or aggregated ranking, so it stays a plain slug list that the
- * registry validates instead of a computed popularity score.
+ * The order the landing page walks the categories in. It is a page decision,
+ * not the catalog's: the image tools open the page because they carry the most
+ * tools, and the single-tool categories close it as the small blocks.
  */
-const featuredToolSlugs = ['ntd-uppercase']
+export const landingCategoryOrder = [
+  'image-commerce',
+  'document',
+  'time-calendar',
+  'calculation',
+  'random-selection',
+] as const
+
+export type LandingCategoryId = typeof landingCategoryOrder[number]
 
 const landingCopy = {
-  heroEyebrow: { 'zh-tw': '台灣的本機工具站', en: 'Local-first tools from Taiwan' },
-  heroTitle: {
-    'zh-tw': '事情在這裡處理完，內容不用交出去。',
-    en: 'Get the job done without handing your content over.',
-  },
+  heroTitleLead: { 'zh-tw': '免費線上工具，', en: 'Free online tools.' },
+  heroTitleTail: { 'zh-tw': '一頁辦好一件事', en: 'One page, one job done.' },
   heroIntro: {
-    'zh-tw': 'toolsliang 把電商上架、辦公文件與日常計算需要的小工具放在同一個地方。檔案、文字與數值都在你的瀏覽器裡處理，不會上傳。',
-    en: 'toolsliang gathers the small utilities you need for online storefronts, office documents, and everyday numbers. Files, text, and values are processed in your browser and never uploaded.',
-  },
-  heroSearchNote: {
-    'zh-tw': '搜尋只在這個瀏覽器內比對工具名稱與關鍵字，查詢文字不會送出。',
-    en: 'Search matches tool names and keywords inside this browser only; your query is never sent anywhere.',
+    'zh-tw': '金額轉國字大寫、PDF 簽名、人像去背、查台灣行事曆：找到工具，馬上開始。',
+    en: 'Cheque wording, PDF signatures, portrait cutouts, Taiwan’s holiday calendar: find the tool and start.',
   },
   heroBrowseAll: { 'zh-tw': '瀏覽全部工具', en: 'Browse all tools' },
-  privacyEyebrow: { 'zh-tw': '本機處理', en: 'Local processing' },
-  privacyTitle: { 'zh-tw': '內容只留在這台裝置', en: 'Your content stays on this device' },
-  privacyBody: {
-    'zh-tw': 'toolsliang 沒有把工具內容送到伺服器的路徑。檔案、文字、數值與處理結果都在瀏覽器內完成，離開頁面後也不會留在平台上。',
-    en: 'toolsliang has no path that sends tool content to a server. Files, text, values, and results are handled in the browser, and nothing is kept on the platform after you leave.',
+  heroDeckLabel: { 'zh-tw': '工具實際產出的範例', en: 'Examples of what the tools produce' },
+  catalogTitle: { 'zh-tw': '{count} 個工具，{categories} 種日常', en: '{count} tools for {categories} everyday jobs' },
+  faqTitle: { 'zh-tw': '常見問題', en: 'Questions' },
+  closeTitle: { 'zh-tw': '今天要辦哪件事？', en: 'What needs doing today?' },
+  closeAction: { 'zh-tw': '看全部工具', en: 'See every tool' },
+  seoTitle: {
+    'zh-tw': '免費線上工具｜國字大寫、PDF 簽名、人像去背、台灣行事曆',
+    en: 'Free online tools: cheque wording, PDF signature, background remover',
   },
-  featuredEyebrow: { 'zh-tw': '熱門工具', en: 'Popular tools' },
-  featuredTitle: { 'zh-tw': '先從這幾個工具開始', en: 'Start with these tools' },
-  featuredIntro: {
-    'zh-tw': '這是編輯挑選的常用入口，不依個人使用紀錄排序。',
-    en: 'An editorial selection of common entry points, not ranked by your personal activity.',
-  },
-  catalogEyebrow: { 'zh-tw': '工具分類', en: 'Tool categories' },
-  catalogTitle: { 'zh-tw': '依照任務找工具', en: 'Find a tool by task' },
-  catalogIntro: {
-    'zh-tw': '每個工具都有自己的頁面與專注工作區；在這裡先看它負責哪一件事。',
-    en: 'Every tool has its own page and focused workspace; here you can see what each one handles.',
-  },
-  faqEyebrow: { 'zh-tw': '常見問題', en: 'Common questions' },
-  faqTitle: { 'zh-tw': '使用前想先知道的事', en: 'What people ask before starting' },
-  faqIntro: {
-    'zh-tw': '以下說明適用於目前所有已發布的工具。',
-    en: 'These answers apply to every published tool today.',
-  },
-  seoTitle: { 'zh-tw': '在瀏覽器完成的實用工具', en: 'Private browser tools' },
   seoDescription: {
-    'zh-tw': 'toolsliang 集合電商、辦公與日常需要的本機工具。檔案、文字與數值都在瀏覽器內處理，不上傳到伺服器或第三方。',
-    en: 'toolsliang gathers local-first utilities for commerce, office, and everyday tasks. Files, text, and values are processed in your browser, never uploaded to a server or third party.',
+    'zh-tw': 'toolsliang 提供免費線上工具：新臺幣國字大寫、PDF 手寫簽名、人像去背、圖片壓縮、台灣行事曆與 BMI 計算。不用註冊，檔案不上傳，打開就能用。',
+    en: 'Free online tools from toolsliang: NTD cheque wording, PDF handwritten signatures, portrait background removal, image compression, Taiwan’s holiday calendar and BMI. No sign-up, no uploads.',
   },
   organizationDescription: {
-    'zh-tw': 'toolsliang 是台灣優先的萬用工具網站，工具內容留在使用者裝置。',
-    en: 'toolsliang is a Taiwan-first utility site that keeps tool content on the visitor’s device.',
+    'zh-tw': 'toolsliang 是台灣優先的免費線上工具網站，工具內容留在使用者裝置。',
+    en: 'toolsliang is a Taiwan-first site of free online tools that keeps tool content on the visitor’s device.',
   },
 } satisfies Record<string, LocalizedCopy>
 
 export type LandingCopyKey = keyof typeof landingCopy
 export const landingCopyKeys = Object.keys(landingCopy) as LandingCopyKey[]
 
-const landingPrivacyPoints: LocalizedSection[] = [
+/** One line per category that says what the block is for, in the visitor's words. */
+const landingCategoryPitches: Record<LandingCategoryId, LocalizedCopy> = {
+  'image-commerce': {
+    'zh-tw': '商品圖、人像去背、壓縮，一次處理完。',
+    en: 'Product shots, portrait cutouts and compression in one pass.',
+  },
+  'document': {
+    'zh-tw': '支票金額寫成國字，PDF 直接簽名。',
+    en: 'Write cheque amounts in words and sign PDFs.',
+  },
+  'time-calendar': {
+    'zh-tw': '放假、補班、農曆與節氣，一眼看清。',
+    en: 'Holidays, make-up workdays and lunar dates at a glance.',
+  },
+  'calculation': {
+    'zh-tw': '輸入身高體重，馬上知道 BMI。',
+    en: 'Enter height and weight, get your BMI.',
+  },
+  'random-selection': {
+    'zh-tw': '貼上名單，等機率抽出一位。',
+    en: 'Paste a list and draw one name, every entry equally likely.',
+  },
+}
+
+/**
+ * Landing-only one-liners. The catalog descriptions each restate where the
+ * work happens, which is right on a tool page and repetitive eleven times in a
+ * row; the landing page says that once and lets each line name the job.
+ */
+const landingToolTaglines: Record<string, LocalizedCopy> = {
+  'product-image-workbench': {
+    'zh-tw': '去背、合規尺寸、框版 Logo 一次跑完',
+    en: 'Cutout, compliant sizing and frames in one run',
+  },
+  'image-background-remover': {
+    'zh-tw': '把人像從背景分離，輸出透明 PNG',
+    en: 'Lift a person off the background as a transparent PNG',
+  },
+  'image-compressor': {
+    'zh-tw': '調整品質、尺寸與格式，比較後再下載',
+    en: 'Tune quality, size and format, compare, then download',
+  },
+  'brand-promo-image': {
+    'zh-tw': '幫商品圖加上背景、框版與 Logo',
+    en: 'Add backgrounds, frames and Logos to product shots',
+  },
+  'ntd-uppercase': {
+    'zh-tw': '金額轉國字大寫，支票、會計、國庫用途都有',
+    en: 'Amounts in Chinese numerals for cheques, books and treasury forms',
+  },
+  'pdf-signature': {
+    'zh-tw': '手寫、打字或匯入簽名，放到 PDF 任一頁',
+    en: 'Draw, type or import a signature onto any PDF page',
+  },
+  'taiwan-calendar': {
+    'zh-tw': '國定假日、補班日、農曆與節氣',
+    en: 'Public holidays, make-up workdays, lunar dates and solar terms',
+  },
+  'custom-calendar': {
+    'zh-tw': '在台灣行事曆加上自己的休假與排班',
+    en: 'Add your own days off and shifts to the Taiwan calendar',
+  },
+  'device-time': {
+    'zh-tw': '這台裝置的時間、時區與 UTC 時差',
+    en: 'Your device’s time, time zone and UTC offset',
+  },
+  'bmi-calculator': {
+    'zh-tw': '依身高體重算成人 BMI，對照國健署分級',
+    en: 'Adult BMI against Taiwan’s official categories',
+  },
+  'random-picker': {
+    'zh-tw': '從名單等機率抽出，也能用輪盤',
+    en: 'Equal-chance draws from a list, with an optional wheel',
+  },
+}
+
+/**
+ * The FAQ is where the page states its boundaries, each once: price and sign-up,
+ * the privacy boundary, and phones. Nothing above it repeats them.
+ */
+const landingFaq: LocalizedSection[] = [
   {
-    heading: { 'zh-tw': '檔案不上傳', en: 'Files are not uploaded' },
+    heading: { 'zh-tw': 'toolsliang 的工具要付費嗎？', en: 'Do the tools cost anything?' },
     body: {
-      'zh-tw': '你選擇的檔案與圖片只在瀏覽器記憶體中處理，不會傳到 toolsliang 或第三方服務。',
-      en: 'The files and images you choose are handled in browser memory, never sent to toolsliang or a third-party service.',
+      'zh-tw': '不用。所有工具都免費，不需要註冊或登入就能使用。',
+      en: 'No. Every tool is free and works without signing up or logging in.',
     },
   },
   {
-    heading: { 'zh-tw': '搜尋留在本機', en: 'Search stays local' },
+    heading: { 'zh-tw': '檔案會被上傳到伺服器嗎？', en: 'Are my files uploaded to a server?' },
     body: {
-      'zh-tw': '首頁搜尋比對的是隨頁面一起載入的工具資料，查詢文字不會送到搜尋或分析服務。',
-      en: 'The home page searches tool data that loads with the page; your query never reaches a search or analytics service.',
+      'zh-tw': '不會。檔案、文字與數值都在你的瀏覽器裡處理，toolsliang 沒有接收這些內容的伺服器。',
+      en: 'No. Files, text and numbers are processed in your browser, and toolsliang has no server that receives them.',
     },
   },
   {
-    heading: { 'zh-tw': '匿名就能使用', en: 'Anonymous by default' },
+    heading: { 'zh-tw': '手機可以用嗎？', en: 'Do the tools work on a phone?' },
     body: {
-      'zh-tw': '所有工具不需要註冊或登入；登入只用來同步語言、主題與常用工具等偏好。',
-      en: 'Every tool works without an account; signing in only syncs preferences such as language, theme, and saved tools.',
+      'zh-tw': '可以。每個工具頁都能在手機、平板與電腦的瀏覽器開啟；人像去背第一次使用時會先下載模型，需要等一下。',
+      en: 'Yes. Every tool page opens in phone, tablet and desktop browsers. The portrait background remover downloads its model the first time you use it, which takes a moment.',
     },
   },
 ]
 
-const landingFaq: LocalizedSection[] = [
-  {
-    heading: { 'zh-tw': 'toolsliang 是什麼？', en: 'What is toolsliang?' },
-    body: {
-      'zh-tw': 'toolsliang 是台灣優先的萬用工具網站，提供電商上架、辦公文件、日常計算與本機抽選等工具，每個工具都有自己的頁面。',
-      en: 'toolsliang is a Taiwan-first utility site with tools for online storefronts, office documents, everyday calculations, and local random selection. Each tool has its own page.',
-    },
-  },
-  {
-    heading: { 'zh-tw': '我的檔案、文字與數值會被上傳嗎？', en: 'Are my files, text, and values uploaded?' },
-    body: {
-      'zh-tw': '不會。工具內容與處理結果都在你的瀏覽器完成，toolsliang 沒有接收這些內容的伺服器路徑。',
-      en: 'No. Tool content and results are handled in your browser, and toolsliang has no server path that receives them.',
-    },
-  },
-  {
-    heading: { 'zh-tw': '搜尋工具時會把查詢文字送出去嗎？', en: 'Does searching send my query anywhere?' },
-    body: {
-      'zh-tw': '不會。搜尋比對的是隨頁面載入的工具資料，查詢文字與點選紀錄都不會送到搜尋或分析服務。',
-      en: 'No. Search matches tool data loaded with the page; neither your query nor what you click is sent to a search or analytics service.',
-    },
-  },
-  {
-    heading: { 'zh-tw': '需要註冊或登入才能使用工具嗎？', en: 'Do I need an account to use the tools?' },
-    body: {
-      'zh-tw': '不需要。所有工具都可以匿名使用；登入只用來跨裝置同步語言、主題與常用工具等偏好，不會同步工具內容。',
-      en: 'No. Every tool works anonymously. Signing in only syncs preferences such as language, theme, and saved tools across devices — never tool content.',
-    },
-  },
-]
+/** The last question lists the tools themselves, so it can never drift from the catalog. */
+const toolListQuestion: LocalizedCopy = { 'zh-tw': 'toolsliang 有哪些工具？', en: 'Which tools does toolsliang offer?' }
+
+export interface LandingToolEntry {
+  slug: string
+  name: string
+  tagline: string
+}
+
+export interface LandingCategory {
+  id: LandingCategoryId
+  name: string
+  pitch: string
+  tools: LandingToolEntry[]
+}
 
 const landingContentIssues = validateLandingContent()
 if (landingContentIssues.length) {
   throw new Error(`Invalid landing content:\n${landingContentIssues.join('\n')}`)
 }
 
-export function getFeaturedTools() {
-  return resolvePublishedTools(featuredToolSlugs)
-}
-
 export function getLandingCopy(locale: LocaleCode): Record<LandingCopyKey, string> {
+  const counts = landingCounts()
   return Object.fromEntries(
-    landingCopyKeys.map(key => [key, copy(landingCopy[key], locale)]),
+    landingCopyKeys.map(key => [key, fill(copy(landingCopy[key], locale), counts)]),
   ) as Record<LandingCopyKey, string>
 }
 
-export function getLandingPrivacyPoints(locale: LocaleCode) {
-  return localizeSections(landingPrivacyPoints, locale)
+export function getLandingCategories(locale: LocaleCode): LandingCategory[] {
+  return landingCategoryOrder
+    .map(id => ({ id, tools: landingTools(id) }))
+    .filter(category => category.tools.length)
+    .map(({ id, tools }) => ({
+      id,
+      name: copy(getCategory(id)!.name, locale),
+      pitch: copy(landingCategoryPitches[id], locale),
+      tools: tools.map(tool => ({
+        slug: tool.slug,
+        name: copy(tool.name, locale),
+        tagline: copy(landingToolTaglines[tool.slug]!, locale),
+      })),
+    }))
 }
 
 export function getLandingFaq(locale: LocaleCode) {
-  return localizeSections(landingFaq, locale)
+  const names = getLandingCategories(locale).flatMap(category => category.tools.map(tool => tool.name))
+  const listed = locale === 'en'
+    ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+    : `${names.slice(0, -1).join('、')}與${names.at(-1)}`
+
+  return [
+    ...localizeSections(landingFaq, locale),
+    {
+      heading: copy(toolListQuestion, locale),
+      body: locale === 'en'
+        ? `There are ${names.length} tools today: ${listed}. Each one has its own page.`
+        : `目前有 ${names.length} 個工具：${listed}。每個工具都有自己的頁面。`,
+    },
+  ]
+}
+
+function landingTools(categoryId: LandingCategoryId): PublishedToolDefinition[] {
+  return publishedTools.filter(tool => tool.category === categoryId)
+}
+
+function landingCounts() {
+  const categories = landingCategoryOrder.filter(id => landingTools(id).length)
+  return { count: String(publishedTools.length), categories: String(categories.length) }
+}
+
+function fill(template: string, values: Record<string, string>) {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match)
 }
 
 function localizeSections(sections: LocalizedSection[], locale: LocaleCode) {
@@ -205,25 +291,27 @@ export function buildLandingStructuredData(locale: LocaleCode): Record<string, u
 
 export function validateLandingContent() {
   const issues: string[] = []
-  const hasLocalizedCopy = (value: LocalizedCopy) => Boolean(value['zh-tw']?.trim() && value.en?.trim())
+  const hasLocalizedCopy = (value: LocalizedCopy | undefined) => Boolean(value?.['zh-tw']?.trim() && value.en?.trim())
 
   for (const key of landingCopyKeys) {
     if (!hasLocalizedCopy(landingCopy[key])) issues.push(`[copy:${key}] requires both locales`)
   }
 
-  const seen = new Set<string>()
-  for (const slug of featuredToolSlugs) {
-    if (seen.has(slug)) issues.push(`[featured:${slug}] duplicate highlight`)
-    seen.add(slug)
-    if (!getTool(slug)) issues.push(`[featured:${slug}] highlight must reference a published tool`)
+  for (const id of landingCategoryOrder) {
+    if (!getCategory(id)) issues.push(`[category:${id}] is not a catalog category`)
+    if (!hasLocalizedCopy(landingCategoryPitches[id])) issues.push(`[category:${id}] requires a pitch in both locales`)
   }
-  if (!featuredToolSlugs.length) issues.push('[featured] requires at least one published highlight')
 
-  for (const [label, sections] of [['privacy', landingPrivacyPoints], ['faq', landingFaq]] as const) {
-    for (const [index, section] of sections.entries()) {
-      if (!hasLocalizedCopy(section.heading) || !hasLocalizedCopy(section.body)) {
-        issues.push(`[${label}:${index}] requires both locales`)
-      }
+  for (const tool of publishedTools) {
+    if (!landingCategoryOrder.includes(tool.category as LandingCategoryId)) {
+      issues.push(`[tool:${tool.slug}] category ${tool.category} has no place on the landing page`)
+    }
+    if (!hasLocalizedCopy(landingToolTaglines[tool.slug])) issues.push(`[tool:${tool.slug}] requires a tagline in both locales`)
+  }
+
+  for (const [index, section] of landingFaq.entries()) {
+    if (!hasLocalizedCopy(section.heading) || !hasLocalizedCopy(section.body)) {
+      issues.push(`[faq:${index}] requires both locales`)
     }
   }
 

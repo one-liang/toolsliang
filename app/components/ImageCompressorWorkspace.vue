@@ -86,7 +86,7 @@ function choose(event: Event) {
 }
 async function compress() {
   if (!source.value || busy.value || !capabilities.value?.supported) return
-  clearResult(); error.value = ''; running.value = true; stage.value = ''
+  clearResult(); error.value = ''; running.value = true; stage.value = 'reading'
   const current = ++generation
   const outcome = await engine.run({ file: source.value, format: format.value, quality: Number(quality.value) / 100, maxWidth: Number(maxWidth.value), maxHeight: Number(maxHeight.value) }, { onProgress: progress => { stage.value = progress.stage } })
   if (current !== generation || !mounted) return

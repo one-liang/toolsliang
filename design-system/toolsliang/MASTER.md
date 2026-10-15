@@ -1,203 +1,164 @@
 # toolsliang Design System
 
-> 狀態：正式基線。建立頁面前先讀本文件，再讀 `design-system/toolsliang/pages/<page>.md`；頁面文件只可覆寫有明確理由的部分。
+> 狀態：正式基線（2.0，ADR-0020）。建立頁面前先讀本文件，再讀 `design-system/toolsliang/pages/<page>.md`；頁面文件只可覆寫有明確理由的部分。
 
 ## 方向
 
-toolsliang 採「平靜、快速、可信任的工具桌」：淺色優先、低噪音、清楚邊界，以 `#FF8C42` 暖橘為品牌主色並搭配不干擾任務的動態。工具內容必須留在使用者裝置。介面不使用吉祥物、遊戲化、指標追蹤光暈、裝飾性卡片陰影或亮色模式黑色側邊欄。
+toolsliang 採「無陰影的新粗獷工具站」：白紙、墨色 2px 邊界、五色分類平塗，以 Apple 產品頁式的清楚層級讓人一眼看懂工具在做什麼。首頁用每個工具的實際輸出取代說明文字；工具頁維持專注的工作區。介面不使用陰影、漸層、玻璃模糊、吉祥物、遊戲化或指標追蹤效果。工具內容必須留在使用者裝置。
 
 ## 色彩
 
-採 Primitive → Semantic → Component 三層架構；頁面與元件只使用 semantic 或 component token，不直接引用 primitive 或任意色碼。
+採 Primitive → Semantic → Component 三層架構；頁面與元件只使用 semantic 或 component token，不直接引用 primitive 或任意色碼。程式來源為 `app/assets/css/main.css`。
 
 ### Primitive tokens
 
 | Token | Value | 用途 |
 |---|---:|---|
-| `neutral-0` | `#FFFFFF` | 純白基準 |
-| `neutral-50` | `#FCFAF8` | 最淺暖色表面 |
-| `neutral-100` | `#F6F3F0` | 亮色頁面底色 |
-| `neutral-200` | `#E7E0DA` | 亮色邊框 |
-| `neutral-600` | `#6B635E` | 亮色次級文字 |
-| `neutral-900` | `#2D2825` | 亮色主文字 |
-| `neutral-950` | `#171412` | 暗色背景 |
-| `orange-50` | `#FFF8F3` | 暖橘 hover 表面 |
-| `orange-100` | `#FFEADB` | 選取與柔和重點 |
-| `orange-200` | `#FFD1B3` | 品牌淺色階 |
-| `orange-400` | `#FF8C42` | 品牌主色；按鈕需搭配深色文字 |
-| `orange-500` | `#F1782B` | 亮色按鈕 hover |
-| `orange-700` | `#A53E00` | focus 與 active |
-| `orange-800` | `#8D3200` | 亮色可讀互動文字與 icon |
-| `orange-950` | `#2B1608` | 主色表面上的文字 |
-| `green-50` / `green-700` | `#E8F6EF` / `#197659` | 成功與本機處理 |
-| `amber-50` / `amber-700` | `#FFF5E8` / `#98471F` | 熱門與提醒 |
-| `red-50` / `red-700` | `#FFF0F0` / `#B4232E` | 錯誤與破壞性操作 |
+| `ink-950` | `#0B0B0B` | 墨色：文字、邊界、主要按鈕 |
+| `ink-800` / `ink-700` | `#3B3A36` / `#4A4844` | 次要文字 |
+| `ink-200` | `#D6D4CD` | 容器內的細線 |
+| `paper-0` / `paper-50` | `#FFFFFF` / `#F4F3EF` | 頁面與次要表面 |
+| `night-950` / `night-900` / `night-800` / `night-700` | `#0F0F0E` / `#161615` / `#1F1F1D` / `#3A3936` | 暗色背景、表面與細線 |
+| `chalk-50` / `chalk-300` | `#F4F2EC` / `#C9C6BD` | 暗色文字與邊界 |
+| `yellow-400` / `yellow-500` / `yellow-50` | `#FFD23F` / `#FFC61A` / `#FFF6D1` | 強調、hover、結果區 |
+| `coral-400` / `coral-700` / `coral-50` | `#FF7F5C` / `#B8321A` / `#FFE6DD` | 時間分類、放假日文字與底色 |
+| `sky-400` | `#86BBFF` | 文件分類 |
+| `mint-400` | `#63DCA8` | 計算分類、NEW 標籤 |
+| `pink-400` | `#FF9ED8` | 圖片與商務分類 |
+| `green-700` / `amber-700` / `red-700` | `#197659` / `#98471F` / `#B4232E` | 成功、提醒、錯誤文字 |
 
 ### Semantic tokens
 
 | Token | Light | Dark |
 |---|---|---|
-| `background` | `#F6F3F0` | `#171412` |
-| `foreground` | `#2D2825` | `#FCFAF8` |
-| `surface` | `#FFFFFF` | `#211D1A` |
-| `surface-subtle` | `#FCFAF8` | `#2A2420` |
-| `surface-hover` | `#FFF8F3` | `#3B261C` |
-| `muted-foreground` | `#6B635E` | `#CFC5BE` |
-| `border` | `#E7E0DA` | `#4C423C` |
-| `primary` | `#FF8C42` | `#FF8C42` |
-| `primary-hover` | `#F1782B` | `#FF9F62` |
-| `primary-strong` | `#8D3200` | `#FFAF79` |
-| `primary-foreground` | `#2B1608` | `#241308` |
-| `focus-ring` | `#A53E00` | `#FF8C42` |
-| `success` | `green-700` | `#7BDDB7` |
-| `success-surface` | `green-50` | `#17372E` |
-| `warning` | `amber-700` | `#FFB38B` |
-| `warning-surface` | `amber-50` | `#3C281F` |
-| `destructive` | `red-700` | `#FF9AA5` |
-| `destructive-surface` | `red-50` | `#3A1E23` |
+| `background` / `surface` | `paper-0` | `night-950` / `night-900` |
+| `surface-subtle` | `paper-50` | `night-800` |
+| `surface-hover` | `yellow-400` | `#3D3412`（暗色維持淺色文字） |
+| `foreground` | `ink-950` | `chalk-50` |
+| `muted-foreground` | `ink-700` | `chalk-300` |
+| `border` / `border-strong` | `ink-950` | `chalk-50` |
+| `border-subtle` | `ink-200` | `night-700` |
+| `primary` | `yellow-400` | `yellow-400` |
+| `primary-strong` | `ink-950` | `chalk-50` |
+| `focus-ring` | `ink-950` | `yellow-400`（首頁版面暗色使用 `chalk-50`，黑色收尾區塊內使用 `yellow-400`） |
+| `result-surface` | `yellow-50` | `#2A2610` |
+| `holiday` / `holiday-surface` | `coral-700` / `coral-50` | `#FF9B7E` / `#3A221B` |
+| `success` / `warning` / `destructive` | `green-700` / `amber-700` / `red-700` | `#7BDDB7` / `#FFB38B` / `#FF9AA5` |
 
-任何文字／背景組合必須驗證對比，不可只因 token 名稱合理就假設合格。狀態不得只靠顏色，需搭配文字、icon 或邊框。
+### 分類平塗色
 
-`#FF8C42` 在白底上不作小型文字或細線 icon；亮色主題使用 `primary-strong #8D3200`，暗色主題使用 `primary-strong #FFAF79`。品牌主色作按鈕背景時搭配 `primary-foreground`，對比分別為 7.44:1 與 7.75:1。
+| Token | 分類 | 值 |
+|---|---|---:|
+| `fill-image-commerce` | 圖片與商務素材 | `pink-400` |
+| `fill-document` | 文件與金額 | `sky-400` |
+| `fill-time-calendar` | 時間與行事曆 | `coral-400` |
+| `fill-calculation` | 計算工具 | `mint-400` |
+| `fill-random-selection` | 本機抽選 | `yellow-400` |
+
+平塗色在亮暗主題都不變，上面的文字、icon 與邊界一律用 `fill-ink`（`ink-950`），對比都在 7:1 以上。元件只知道分類 id 時，加上 `category-fill--<id>` class 取得 `--tool-fill`。
+
+任何文字／背景組合必須驗證對比；狀態不得只靠顏色，需搭配文字、icon 或邊框。
 
 ### Component tokens
 
-| Token | Alias | 規則 |
+| Token | 值 | 規則 |
 |---|---|---|
-| `button-primary-bg` | `primary` | 品牌主色背景 |
-| `button-primary-fg` | `primary-foreground` | 不使用白字，確保 AA |
-| `button-primary-hover-bg` | `primary-hover` | hover 不加入陰影或位移 |
-| `button-destructive-bg` / `button-destructive-fg` | `destructive` / `neutral-0`（暗色 `neutral-950`） | 破壞性操作；暗色的 destructive 是淺色，文字改為深色以維持至少 4.5:1 |
-| `button-contrast-bg` / `button-contrast-fg` | `orange-800` / `neutral-0` | 需淺色圖文的主要操作；背景加深以維持至少 4.5:1 |
-| `button-contrast-hover-bg` / `button-contrast-active-bg` | `orange-700` / `orange-950` | hover 與 active 保持淺色圖文及 AA 對比 |
-| `card-bg` / `card-border` | `surface` / `border` | 平面卡片與清楚邊界 |
-| `card-shadow` | `none` | default 與 hover 都為 none |
-| `input-bg` / `input-border` | `surface` / `border-strong` | 輸入欄位語意 |
-| `image-preview-max-height` | `400px` | 圖片壓縮比較預覽的高度上限，保持比例、不裁切 |
-| `sidebar-active-bg` | `surface-hover` | 目前導覽項目背景 |
-| `sidebar-active-fg` | `primary-strong` | 目前導覽項目文字與 icon |
+| `button-primary-bg` / `-fg` | 亮色 `ink-950` / 白；暗色 `chalk-50` / `ink-950` | 黑色膠囊 |
+| `button-primary-hover-bg` / `-fg` | `yellow-400` / `ink-950` | hover 轉黃底墨字，不加陰影或位移 |
+| `button-contrast-*` | 與 primary 同色系 | 複製結果等主要操作 |
+| `card-bg` / `card-border` / `card-shadow` | `surface` / `border` / `none` | 2px 邊界的平面卡片 |
+| `input-border` / `input-focus-border` | `border-strong` / `primary-strong` | 2px 邊界 |
+| `sidebar-active-bg` / `-fg` | 亮色 `ink-950` / 白；暗色反轉 | 目前所在項目反白 |
+| `image-preview-max-height` | `400px` | 圖片預覽高度上限 |
 
 ## Typography
 
-不從第三方字型 CDN 載入字型，避免隱私、效能與離線風險。正式字型堆疊：
+不從第三方字型 CDN 載入字型。正式字型堆疊（ADR-0020）：
 
-- 繁體中文：`"PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif`
-- 英文：本機打包 `"Roboto Variable"`，fallback 為 `Roboto, ui-sans-serif, system-ui, sans-serif`
-- 等寬：`"SFMono-Regular", Consolas, "Liberation Mono", monospace`
+- 繁體中文：各平台系統字型 `"PingFang TC", "Noto Sans TC", "Microsoft JhengHei"`；使用者選擇不自架中文字型。
+- 英文與數字：自架 `"Archivo Variable"`（`@fontsource-variable/archivo/wdth.css`，含 `wght` 與 `wdth` 軸），中英文頁面的字型堆疊都以它開頭，讓數字與英文一致。
+- 等寬：`"SFMono-Regular", Consolas, "Liberation Mono", monospace`，只用於程式碼與資料。
 
-| Token | Size / line-height | Weight | 用途 |
-|---|---|---:|---|
-| `display-lg` | `clamp(2.5rem, 6vw, 5rem) / 0.98` | 750 | Landing hero |
-| `display-sm` | `clamp(2rem, 4vw, 3.5rem) / 1.02` | 750 | 工具目錄標題 |
-| `heading-xl` | `2rem / 1.15` | 700 | 工具頁標題 |
-| `heading-lg` | `1.5rem / 1.25` | 700 | 區段標題 |
-| `heading-md` | `1.125rem / 1.35` | 650 | 卡片／分類標題 |
-| `body-lg` | `1.125rem / 1.65` | 400 | Landing 說明 |
-| `body-md` | `1rem / 1.6` | 400 | 一般內文 |
-| `body-sm` | `0.875rem / 1.55` | 400 | 工具簡介 |
-| `label` | `0.75rem / 1.3` | 700 | label、eyebrow |
-| `caption` | `0.6875rem / 1.4` | 650 | badge、輔助資訊 |
+| 用途 | Size / line-height | Weight |
+|---|---|---:|
+| 首頁 H1 | `clamp(2.6rem, 1.15rem + 5.1vw, 5.6rem) / 1.1` | 800 |
+| 頁面 H1 | `clamp(2.2rem, 5vw, 3.6rem) / 1.08` | 800 |
+| 工具頁 H1 | `clamp(1.9rem, 4vw, 2.8rem) / 1.12` | 800 |
+| 區段 H2 | `clamp(2.1rem, 1.3rem + 3vw, 3.9rem) / 1.08`（首頁）、`1.2–1.55rem`（工具頁） | 800 |
+| 內文 | `1rem / 1.6`，首頁 `1.0625–1.3rem` | 400–600 |
+| 標籤與說明 | `0.75–0.9rem` | 700–800 |
 
-英文可使用較緊字距；中文內文不使用負字距。最小可讀文字原則為 12px，互動資訊不得小於 12px。
+標題一律 800 字重（Tailwind preflight 會把 heading 重設為 inherit，`main.css` 明確設回）。字距不低於 `-0.04em`；中文段落以 `word-break: keep-all` 在標點處斷行，不在詞中間斷開。不使用 eyebrow（標題上方的小標）。
 
 ## Spacing、radius、border、shadow、z-index
 
-### Spacing
-
-採 4px 基線：`space-0=0`、`space-1=4`、`space-2=8`、`space-3=12`、`space-4=16`、`space-5=20`、`space-6=24`、`space-8=32`、`space-10=40`、`space-12=48`、`space-16=64`、`space-20=80`。
-
-### Radius
-
-`radius-sm=8px`、`radius-md=12px`、`radius-lg=16px`、`radius-xl=22px`、`radius-full=999px`。工具卡以 12px、主要容器以 16–22px；不要把每個元素都做成膠囊。
-
-### Border
-
-一般邊框 `1px solid border`；選取或焦點可使用 primary。工具卡與 hover 以邊框和背景區分，不用陰影。分隔線不可低於 3:1 的非文字對比要求。
-
-### Shadow
-
-`shadow-none=none`、`shadow-overlay=0 24px 64px rgb(0 0 0 / 24%)`。工具卡、分類卡、側邊欄、header 與 hover 一律 `shadow-none`；只有 dialog、popover、dropdown 等會離開文件流的 overlay 可使用 `shadow-overlay`。
-
-### Z-index
-
-`z-base=0`、`z-sticky=20`、`z-dropdown=40`、`z-overlay=60`、`z-toast=80`、`z-skip-link=100`。不可在頁面內任意新增更大的數值。
+- Spacing：以 4px 為基線（`0 / 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 64 / 80`），元件內距允許 2px 半階（6、10、14、18、22）；目前沒有 spacing token，數值寫在元件規則內。
+- Radius：`radius-sm=12px`、`radius-md=16px`、`radius-lg=20px`、`radius-xl=28px`、`radius-full=999px`。按鈕、搜尋框與選項為膠囊；分類區塊與工具頁標頭用 28px。
+- Border：`--rule: 2px` 的墨色邊界是主要結構；容器內再分隔時改用 `border-subtle` 細線，避免框中框都用全重邊界。不使用寬於 1px 的彩色側邊條紋。
+- Shadow：無。任何元件、overlay 與 hover 都不使用陰影；品牌宣傳圖選取框與 PDF 簽名選取框外的白色描邊，是在任意圖片上辨識選取的輪廓，不是深度。
+- Z-index：`0 / 20 / 40 / 60 / 80 / 100`；分類 drawer 用 61 疊在自己的遮罩（60）之上，元件內部可用 1–5 排列子元素。不在頁面內任意新增更大的數值。
 
 ## Responsive breakpoints
 
 | 名稱 | 最小寬度 | 行為 |
 |---|---:|---|
 | `phone` | `0` | 單欄、底部常駐導覽、44px 以上觸控區 |
-| `phone-lg` | `480px` | 增加內容 gutter |
-| `tablet` | `768px` | 雙欄分類網格、底部導覽；不得假設 hover |
-| `desktop` | `1024px` | 顯示可收合左側欄，隱藏手機底部導覽 |
-| `desktop-lg` | `1280px` | 工具目錄最多 3 欄，內容寬度上限 1440px |
-| `wide` | `1536px` | 只增加留白，不無限制拉長文字行寬 |
+| `phone-lg` | `480px` | 顯示首頁頁首的「全部工具」連結 |
+| `tablet` | `768px` | 雙欄分類網格與首頁分類區塊 |
+| `desktop` | `1024px` | 可收合左側欄（256px／80px）；首頁 7:5 首屏與 12 欄分類區塊 |
+| `desktop-lg` | `1280px` | 增加工作區左右留白；首頁 1320px、工具頁 980px 的寬度上限在所有寬度都生效 |
 
 ## Motion
 
-- `duration-instant=80ms`：pressed feedback。
-- `duration-fast=150ms`：hover、focus、badge。
-- `duration-normal=220ms`：側欄與 accordion。
-- `duration-slow=360ms`：單次頁面／區塊進場。
-- `ease-standard=cubic-bezier(0.2, 0, 0, 1)`。
-- `ease-enter=cubic-bezier(0.16, 1, 0.3, 1)`。
-- `ease-exit=cubic-bezier(0.4, 0, 1, 1)`。
-
-頁面只允許一組主要進場序列；不做持續漂浮、彈跳、scroll-jacking、pointer-follow 或會移動版面的 hover。`prefers-reduced-motion: reduce` 時取消進場與平滑捲動，transition duration 降到接近 0，且不可隱藏內容等待動畫完成。
+- `duration-instant=80ms`、`duration-fast=150ms`、`duration-normal=220ms`、`duration-slow=360ms`；`ease-standard=cubic-bezier(0.2, 0, 0, 1)`、`ease-enter=cubic-bezier(0.16, 1, 0.3, 1)`。
+- 介面互動只用短轉場；hover 改背景與邊框，不加陰影、不縮放。允許的位移只有箭頭類細節：CTA 箭頭右移 5px、工具列文字右移 6px、按鈕按下時下沉 2px、範例卡片 hover 時轉正。
+- 首頁的示範動畫（發牌、簽名筆跡、去背掃過、BMI 指針、輪盤）以 GSAP 延遲載入，每段只播放一次，並在 `gsap.matchMedia('(prefers-reduced-motion: no-preference)')` 內建立；減少動態或腳本失敗時直接呈現完成狀態，內容永遠不等動畫。
+- 不做持續漂浮、scroll-jacking、視差、pointer-follow。
 
 ## Icon
 
-- 正式介面使用 Lucide 的 Vue outline icon；同一層級固定 1.75px–2px stroke。
-- 16px 用於文字內，20px 用於工具列，24px 用於導覽，32px 只用於分類或空狀態。
-- icon-only button 視覺可小於 44px，但 hit target 至少 44×44px，且必須有可理解的 accessible name。
-- 不使用 emoji 當結構 icon，不混用 filled 與 outline，不自行猜測第三方品牌 logo。
-- 工具項目左側使用最貼近任務的 icon；狀態標籤固定在右側，不以 icon 取代文字狀態。
+- 介面使用 Lucide outline icon：工具 icon 1.8px、一般介面 icon 2px、首頁箭頭與輪盤等 2.5px；首頁示範圖為自繪 SVG。
+- 工具 icon 放在分類平塗色的小方塊上（墨色框線與 icon）。
+- 不使用 emoji 或 Unicode 符號代替 icon；首頁不重複使用 icon 列。
+- icon-only button 的 hit target 至少 44×44px，並有 accessible name。
 
 ## Component states
 
 | 狀態 | 規則 |
 |---|---|
-| Default | 使用 surface、foreground 與 border，邊界清楚。 |
-| Hover | 僅 pointer 裝置套用 surface-hover／primary border；不加陰影、不位移。 |
-| Focus | 使用 3px focus-ring，offset 2px；不得以 `outline: none` 移除。 |
-| Active | 加深背景或縮短 transition；不可造成 layout shift。 |
-| Disabled | 原生 `disabled`／`aria-disabled`，opacity 55%，游標與事件均停用。 |
-| Loading | 保留原尺寸，顯示 spinner 或 skeleton；`aria-busy=true`，文字說明不可只靠動畫。 |
-| Error | destructive 文字＋icon＋邊框，表單訊息以 `aria-describedby` 關聯並可被宣告。 |
-| Success | success 文字＋check icon＋可理解文案；不可只有綠色。 |
+| Default | `surface`、`foreground`、2px `border` |
+| Hover | 僅 pointer 裝置；一般元件為黃色背景（暗色為深黃）與墨色邊框；頁首控制項（全部工具、尋找工具、主題、語言）反白為墨色；不加陰影 |
+| Focus | 3px `focus-ring`，offset 2–3px；不得移除 |
+| Active／目前項目 | 墨色反白 |
+| Selected 選項 | 黃色背景、墨色邊框與粗體文字 |
+| Disabled | 原生 `disabled`／`aria-disabled`，opacity 55% |
+| Loading | `aria-busy=true` 加文字說明 |
+| Error／Success | 語意色文字＋icon＋邊框 |
 
 ### 工具狀態標籤
 
-- `NEW`：success 色系，表示近期推出；需由產品規格定義何時移除。
-- `PRO`：primary 實色；目前只保留視覺語意，不得據此限制匿名使用。
-- `熱門`／`HOT`：warning 色系，表示非個人化的編輯精選或聚合排行。
-- `常用`／`SAVED`：neutral 色系，表示使用者主動收藏。
+膠囊、1.5px 墨色框：`NEW` 薄荷底、`PRO` 黃底、`熱門` 珊瑚底、`常用` 白底。`PRO` 只保留視覺語意，不得據此限制匿名使用。
 
 ## WCAG 2.2 AA
 
-- 一般文字對比至少 4.5:1；大字至少 3:1；UI 邊界、focus 與 icon 至少 3:1。
-- 所有功能可用鍵盤完成；視覺順序與 DOM／focus 順序一致，沒有 keyboard trap。
-- 提供 skip link、語意 landmark、單一頁面 `h1` 與連續 heading hierarchy。
-- 互動目標至少 24×24 CSS px（WCAG 2.2），產品基線提高為 44×44px；相鄰目標保留間距。
-- sticky header／底部導覽不可遮住聚焦項目；使用 `scroll-padding` 與內容 inset。
-- 不只用顏色表達狀態；錯誤、成功與 loading 必須有文字或可存取名稱。
-- 支援 200% 縮放、320 CSS px reflow、文字間距覆寫、`prefers-reduced-motion`。
-- 觸控與鍵盤都能操作，不依賴 hover、拖曳或路徑手勢完成主要任務。
-- 變更語言時更新 `html[lang]`；中英文頁面維持 canonical 與 hreflang。
+- 一般文字 4.5:1、大字 3:1、UI 邊界與 focus 3:1。
+- 全部功能可用鍵盤完成；視覺順序與 focus 順序一致。
+- skip link、語意 landmark、單一 `h1`、連續 heading hierarchy。
+- 互動目標以 44×44px 為產品基線；sticky 區塊不得遮住 focus。
+- 支援 200% 縮放、320px reflow、文字間距覆寫、`prefers-reduced-motion`。
 
 ## 禁止事項
 
-- 不使用 Variant A、Variant C、prototype switcher 或 `?variant=`。
-- 不把 prototype component／CSS 直接複製到 production。
-- 首頁不顯示 App Shell 側邊欄或工具工作區。
-- 亮色模式不使用黑色側邊欄。
-- 工具卡及其 hover 不使用陰影、位移或縮放。
-- 不上傳工具內容，不把搜尋字串送到分析或第三方。
-- 不因 `PRO` 標籤自行加入付費鎖定。
+- 任何陰影、漸層文字、玻璃模糊、寬於 1px 的彩色側邊條紋。
+- 標題上方的 eyebrow 小標；首頁重複說明本機處理。
+- 首頁顯示 App Shell 側邊欄或工具工作區。
+- 亮色模式整片黑色側邊欄（只有目前項目反白）。
+- 上傳工具內容，或把搜尋字串送到分析與第三方。
+- 因 `PRO` 標籤自行加入付費鎖定。
 
 ## Definition of done
 
 - light／dark、375px／768px／1024px／1440px 均有驗證。
-- typecheck、lint、單元／元件測試、無障礙 smoke test 與 production build 通過。
-- Design System Page 展示 tokens、components、responsive 與所有狀態。
-- 瀏覽器 console 無錯誤；本機工具互動期間沒有外部內容 request。
+- lint、typecheck、單元與 e2e 測試、production build 通過。
+- Design System Page 展示 tokens、分類平塗色、元件與所有狀態。
+- 瀏覽器 console 無錯誤；工具互動期間沒有外部內容 request。

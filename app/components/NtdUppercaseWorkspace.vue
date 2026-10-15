@@ -189,7 +189,6 @@ function clear() {
 
   <section class="tool-reference" aria-labelledby="ntd-purpose-examples">
     <div class="tool-section-heading">
-      <p class="eyebrow">{{ text.examplesEyebrow }}</p>
       <h2 id="ntd-purpose-examples">{{ text.examplesTitle }}</h2>
       <p>{{ text.examplesIntro }}</p>
     </div>
@@ -215,7 +214,6 @@ function clear() {
 
   <section class="tool-reference" aria-labelledby="ntd-digit-reference">
     <div class="tool-section-heading">
-      <p class="eyebrow">{{ text.digitReferenceEyebrow }}</p>
       <h2 id="ntd-digit-reference">{{ text.digitReferenceTitle }}</h2>
       <p>{{ text.digitReferenceIntro }}</p>
     </div>

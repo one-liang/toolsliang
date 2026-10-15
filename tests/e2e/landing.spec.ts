@@ -61,11 +61,11 @@ test('首頁以鍵盤搜尋即可進入已發布工具，且查詢不離開裝�
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
 
-test('首頁的分類網格連到每個已發布工具，且沒有未發布入口', async ({ page }) => {
+test('首頁的分類區塊連到每個已發布工具，且沒有未發布入口', async ({ page }) => {
   await gotoHydrated(page, LANDING_ROUTE)
 
-  await expect(page.locator('.landing-catalog .tool-card__link[href="/zh-tw/tools/ntd-uppercase/"]')).toBeVisible()
-  await expect(page.locator('.landing-featured .tool-card__link')).not.toHaveCount(0)
+  await expect(page.locator('.landing-catalog .nb-tool[href="/zh-tw/tools/ntd-uppercase/"]')).toBeVisible()
+  await expect(page.locator('.nb-deck a')).not.toHaveCount(0)
 
   const html = await page.content()
   expect(unpublishedToolSlugs.length, '註冊表需要有未發布工具才能驗證邊界').toBeGreaterThan(0)
@@ -135,11 +135,11 @@ test('首頁可只用鍵盤依視覺順序走訪每個區段，且 focus 清楚�
 
   await page.getByRole('searchbox', { name: '搜尋全部工具' }).focus()
 
-  // Tab order must reach the hero action, the featured highlight and the category grid in visual order.
+  // Tab order must reach the hero action, the example slips and the category blocks in visual order.
   const expectedOrder = [
     page.getByRole('link', { name: '瀏覽全部工具' }),
-    page.locator('.landing-featured .tool-card__link').first(),
-    page.locator('.landing-catalog .tool-card__link').first(),
+    page.locator('.nb-deck a').first(),
+    page.locator('.landing-catalog .nb-tool').first(),
   ]
 
   for (const target of expectedOrder) {
@@ -154,6 +154,8 @@ test('首頁可只用鍵盤依視覺順序走訪每個區段，且 focus 清楚�
 })
 
 test('首頁在 light 與 dark 皆通過 WCAG 2.2 AA 自動檢查', async ({ page }) => {
+  // Contrast is checked on the settled page; the entry deal fades the example slips in.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await gotoHydrated(page, LANDING_ROUTE)
 
   for (const mode of ['light', 'dark'] as const) {
@@ -172,4 +174,16 @@ test('首頁在 light 與 dark 皆通過 WCAG 2.2 AA 自動檢查', async ({ pag
 
     expect(results.violations, `${mode} 模式首頁無障礙違規：\n${results.violations.map(item => `${item.id}: ${item.help}`).join('\n')}`).toEqual([])
   }
+})
+
+test('首頁範例卡片發牌後完整顯示，減少動態時直接顯示', async ({ page }) => {
+  await gotoHydrated(page, LANDING_ROUTE)
+  await expect(page.locator('.nb-deck')).toHaveClass(/is-dealt/, { timeout: 5000 })
+  const settled = await page.locator('.nb-slip').evaluateAll(slips => slips.map(slip => getComputedStyle(slip).opacity))
+  expect(settled, '發牌結束後每張卡片都不透明').toEqual(['1', '1', '1'])
+
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await gotoHydrated(page, LANDING_ROUTE)
+  const immediate = await page.locator('.nb-slip').evaluateAll(slips => slips.map(slip => getComputedStyle(slip).opacity))
+  expect(immediate, '減少動態時卡片不等待動畫').toEqual(['1', '1', '1'])
 })

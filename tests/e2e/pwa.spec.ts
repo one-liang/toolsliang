@@ -66,8 +66,8 @@ test.describe('可安裝的應用外殼', () => {
       display: 'standalone',
       start_url: '/zh-tw/',
       scope: '/',
-      theme_color: '#f6f3f0',
-      background_color: '#f6f3f0',
+      theme_color: '#ffffff',
+      background_color: '#ffffff',
     })
     // Chromium's installability baseline: a 192px icon plus a maskable icon.
     expect(manifest.icons.some((icon: { sizes: string }) => icon.sizes === '192x192')).toBe(true)
