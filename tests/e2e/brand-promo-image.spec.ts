@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { gotoHydrated } from './support/hydration'
+import { settleTransitions } from './support/motion'
 import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
 
 guardToolContentBoundary([
@@ -142,6 +143,8 @@ test('組合、鍵盤調整、圖層順序、復原重做與 PNG 像素輸出', 
     return performance.now() - start
   })
   expect(latency).toBeLessThan(100)
+  // The pointer still rests where the download link was, now the 產生 PNG button, mid hover transition.
+  await settleTransitions(page)
   expect((await new AxeBuilder({ page }).include('.brand-promo').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
   if (info.project.name === 'chromium') {
     await page.evaluate(() => window.scrollTo(0, 0))
@@ -200,6 +203,7 @@ for (const locale of ['zh-tw', 'en']) {
     }
     for (const theme of ['light', 'dark']) {
       if (theme === 'dark') await page.getByRole('button', { name: locale === 'en' ? 'Toggle color theme' : '切換色彩模式' }).click()
+      await settleTransitions(page)
       expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
       if (info.project.name === 'chromium') await page.screenshot({ path: `artifacts/brand-promo-${locale}-${theme}.png`, fullPage: true })
     }
@@ -208,11 +212,12 @@ for (const locale of ['zh-tw', 'en']) {
   /*
    * #91's first screen: without scrolling, the visitor sees where to add a
    * layer, where the result appears and the action that makes it. On a phone
-   * the floating bottom navigation covers the end of the viewport.
+   * the floating bottom navigation covers the end of the viewport. One load per
+   * viewport, each in its own test, so no navigation cuts off a route prefetch.
    */
-  test(`${locale} 1366×768 與 375×812 不捲動就看得到加入圖層、預覽與產生 PNG`, async ({ page }) => {
-    const make = locale === 'en' ? 'Make PNG' : '產生 PNG'
-    for (const viewport of [{ width: 1366, height: 768 }, { width: 375, height: 812 }]) {
+  for (const viewport of [{ width: 1366, height: 768 }, { width: 375, height: 812 }]) {
+    test(`${locale} ${viewport.width}×${viewport.height} 不捲動就看得到加入圖層、預覽與產生 PNG`, async ({ page }) => {
+      const make = locale === 'en' ? 'Make PNG' : '產生 PNG'
       await page.setViewportSize(viewport)
       await gotoHydrated(page, `/${locale}/tools/brand-promo-image/`)
       await expect(page.locator('[data-promo-add]').first()).toBeEnabled()
@@ -223,11 +228,11 @@ for (const locale of ['zh-tw', 'en']) {
       })
       for (const target of [page.locator('[data-promo-add]').last(), page.locator('[data-promo-stage]'), page.getByRole('button', { name: make, exact: true })]) {
         const box = (await target.boundingBox())!
-        expect(box.y, `${viewport.width}px`).toBeGreaterThanOrEqual(0)
-        expect(box.y + box.height, `${viewport.width}px`).toBeLessThanOrEqual(fold)
+        expect(box.y).toBeGreaterThanOrEqual(0)
+        expect(box.y + box.height).toBeLessThanOrEqual(fold)
       }
-    }
-  })
+    })
+  }
 }
 
 test('HEIC、大圖與輸出失敗可復原，圖層仍在', async ({ page }) => {

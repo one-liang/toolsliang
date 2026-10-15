@@ -367,6 +367,8 @@ test('品牌宣傳圖以前保存的框版、Logo 與背景仍可辨識並逐筆
     { id: 'promo-background', kind: 'background', name: `${ASSET_NAME}-background.png` },
   ])
 
+  // Settled first, so the reload never cuts off a route prefetch still in flight.
+  await page.waitForLoadState('networkidle')
   await page.reload({ waitUntil: 'domcontentloaded' })
   await waitForHydration(page)
 
