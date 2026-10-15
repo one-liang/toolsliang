@@ -1028,16 +1028,32 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover .field-error { display: flex; align-items: flex-start; gap: 8px; }
 .image-compressor .field-error svg,
 .image-background-remover .field-error svg { flex-shrink: 0; }
-.image-compressor__comparison figure,
 .image-background-remover__comparison figure { min-width: 0; margin: 0; }
-.image-compressor__comparison figcaption,
 .image-background-remover__comparison figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
 .image-compressor__download,
 .image-background-remover__download { margin-top: 16px; }
 .image-compressor__settings { padding: 0; margin: 24px 0 0; border: 0; min-width: 0; }
 .image-compressor__settings legend { margin-bottom: 16px; font-weight: 700; }
-.image-compressor__comparison { margin-top: 24px; }
-.image-compressor__comparison img { width: 100%; height: auto; max-height: var(--image-preview-max-height); object-fit: contain; border: var(--rule) solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+/* Original and output sit side by side as thumbnail cards at every width, so the comparison never needs scrolling. */
+.image-compressor__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.image-compressor__card { display: grid; align-content: start; gap: 12px; min-width: 0; margin: 0; padding: 12px; border: var(--rule) solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-surface); }
+.image-compressor__thumb { display: flex; align-items: center; justify-content: center; height: 136px; overflow: hidden; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+/* Sized to the picture rather than filling the frame, so the checkerboard marks only real transparency. */
+.image-compressor__thumb img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.image-compressor__thumb-empty { display: grid; justify-items: center; gap: 4px; margin: 0; padding: 8px; color: var(--color-muted-foreground); font-size: .8rem; text-align: center; }
+.image-compressor__card figcaption { display: grid; justify-items: start; gap: 8px; font-size: .875rem; overflow-wrap: anywhere; }
+.image-compressor__card-title { font-weight: 800; }
+.image-compressor__card dl { display: grid; gap: 4px; justify-self: stretch; margin: 0; }
+.image-compressor__card dl div { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; }
+.image-compressor__card dt { color: var(--color-muted-foreground); }
+.image-compressor__card dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.image-compressor__change { padding: 2px 10px; border: 1.5px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-primary); color: var(--color-primary-foreground); font-weight: 800; }
+.image-compressor__change--larger { background: var(--color-warning-surface); color: var(--color-warning); border-color: var(--color-warning); }
+@media (min-width: 768px) {
+  .image-compressor__cards { gap: 20px; }
+  .image-compressor__card { padding: 16px; }
+  .image-compressor__thumb { height: 200px; }
+}
 
 /* Portrait background remover: only what the shared image workspace rules do not cover. */
 .image-background-remover__scope { margin: 0 0 16px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
