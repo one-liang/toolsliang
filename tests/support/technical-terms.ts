@@ -35,8 +35,6 @@ export const rewrittenElsewhere: Array<{ issue: string, slug: string, terms?: st
   // included), which the workbench borrows for its cutout step.
   { issue: '#86', slug: 'image-background-remover', terms: ['model runtime', 'file internals', 'library or model name'] },
   { issue: '#86', slug: 'product-image-workbench', terms: ['model runtime'] },
-  // The two explanation blocks inside the random picker workspace.
-  { issue: '#83', slug: 'random-picker', selectors: ['.picker-caveats', '.picker-method'] },
   // The two explanation blocks inside the Taiwan calendar workspace.
   { issue: '#88', slug: 'taiwan-calendar', selectors: ['.calendar-caveats', '.calendar-sources'] },
 ]

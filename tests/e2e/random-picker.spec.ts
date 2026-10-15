@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { guardToolContentBoundary } from './support/tool-content-boundary'
 
 const TOOL_ROUTE = '/zh-tw/tools/random-picker/'
@@ -8,6 +8,8 @@ const SECOND = '抽選測試乙-9c41'
 const THIRD = '抽選測試丙-9c41'
 const CANDIDATES = [FIRST, SECOND, THIRD].join('\n')
 const ADDED = '抽選測試丁-9c41'
+/** The list size #83 is accepted against: long enough to fill the field on a phone. */
+const TWENTY = Array.from({ length: 20 }, (_, index) => `抽選名單${String(index + 1).padStart(2, '0')}-9c41`)
 const TOUCH_TARGET_TOLERANCE_PX = 0.001
 const NETWORK_BOUNDARY_POLICY = { allowedOrigins: ['http://127.0.0.1:4173'] }
 /**
@@ -20,7 +22,13 @@ const TOOL_CONTENT = [
   { label: '輸入', value: SECOND },
   { label: '輸入', value: THIRD },
   { label: '輸入', value: ADDED },
+  ...TWENTY.map(value => ({ label: '輸入', value })),
 ]
+/** The two windows #83 names: a common laptop and a common phone. */
+const SINGLE_SCREEN_VIEWPORTS = [
+  { name: '桌面 1366×768', width: 1366, height: 768 },
+  { name: '手機 375×812', width: 375, height: 812 },
+] as const
 
 guardToolContentBoundary(TOOL_CONTENT, NETWORK_BOUNDARY_POLICY)
 
@@ -49,27 +57,95 @@ async function fillCandidates(page: Page, candidates = CANDIDATES) {
   await page.getByLabel('候選名單').fill(candidates)
 }
 
-test('工具開啟即說明等機率作法、界線與來源', async ({ page }) => {
+function scrollTop(page: Page) {
+  return page.evaluate(() => window.scrollY)
+}
+
+/** Whether the element at the centre of the target is the target itself, not something docked over it. */
+async function expectUncovered(target: Locator, message: string) {
+  const uncovered = await target.evaluate((element) => {
+    const box = element.getBoundingClientRect()
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+    return Boolean(hit && (element === hit || element.contains(hit)))
+  })
+  expect(uncovered, message).toBe(true)
+}
+
+/**
+ * Presses a control the way a visitor would without scrolling first: it has to
+ * be fully on screen and uncovered already, and pressing it must not move the
+ * page either (a focus that lands inside a scroll padding would).
+ */
+async function pressInPlace(page: Page, target: Locator, scrollBefore: number) {
+  await expect(target, '不捲動就要看得到').toBeInViewport({ ratio: 1 })
+  await expectUncovered(target, '不能被其他介面蓋住')
+  await target.click()
+  expect(await scrollTop(page), '按下後畫面不得移動').toBe(scrollBefore)
+}
+
+async function expectResultInView(page: Page) {
+  const result = page.locator('.picker-result')
+  await expect(result, '結果要在畫面內').toBeInViewport({ ratio: 1 })
+  await expectUncovered(result, '結果不能被蓋住')
+}
+
+test('工具開啟即可操作，作法與界線集中在下方常見問題', async ({ page }) => {
   const response = await gotoTool(page)
   expect(response?.ok(), `${TOOL_ROUTE} 應成功載入`).toBe(true)
 
+  await expect(page).toHaveTitle(/抽籤與輪盤/)
+  await expect(page.getByRole('heading', { level: 1, name: '抽籤與輪盤' })).toBeVisible()
+  await expect(page.locator('body'), '#83：名稱不再使用「本機」').not.toContainText('本機抽選')
   await expect(page.getByRole('radio', { name: '保留重複（各佔一個機會）' })).toBeChecked()
   await expect(page.getByRole('radio', { name: '名單' })).toBeChecked()
   await expect(page.locator('.picker-result')).toContainText('準備好名單後按')
 
-  const caveats = page.locator('.picker-caveats')
-  await expect(caveats, '無法稽核必須在結果附近，而不是只在頁尾').toContainText('無法向別人證明結果沒有被重抽')
-  await expect(caveats).toContainText('不會送出、不會保存')
-  await expect(page.locator('.picker-source')).toContainText('random-picker-2026-09-05')
-  await expect(page.locator('.picker-source').getByRole('link', { name: /Web Cryptography API/ })).toBeVisible()
-
-  await expect(page.locator('.picker-method')).toContainText('Fisher–Yates')
-  await expect(page.locator('.picker-method')).toContainText('拒絕取樣')
+  // #83: the workspace keeps only what a draw needs; the boundaries are answered below it.
+  await expect(page.locator('.picker-caveats, .picker-method, .picker-source')).toHaveCount(0)
+  const faq = page.locator('.tool-contract--faq')
   await expect(page.getByRole('heading', { name: '關於這個工具的常見問題' })).toBeVisible()
+  await expect(faq, '無法稽核仍寫在工具頁上').toContainText('無法向別人證明')
+  await expect(faq).toContainText('動畫開始前就已經抽好')
+  await expect(faq).toContainText('不會送到 toolsliang 或第三方服務')
   // #82: specifications and algorithms are not content sources.
   await expect(page.getByRole('heading', { name: '資料來源與審閱' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '這個工具怎麼處理你的內容' })).toBeVisible()
 })
+
+for (const viewport of SINGLE_SCREEN_VIEWPORTS) {
+  for (const presentation of ['名單', '輪盤'] as const) {
+    test(`${viewport.name}以${presentation}呈現：貼上 20 筆後不捲動就能抽選、再抽一次與重設`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await gotoTool(page)
+      await page.getByLabel('候選名單').fill(TWENTY.join('\n'))
+      await expect(page.locator('.picker-summary')).toContainText('可抽選項目 20 筆')
+      // Focusing the field may lift it clear of the docked stage; from here on nothing may move.
+      const scrollBefore = await scrollTop(page)
+
+      if (presentation === '輪盤') {
+        await pressInPlace(page, page.getByRole('radio', { name: '輪盤' }), scrollBefore)
+        await expect(page.locator('.picker-wheel'), '輪盤也在畫面內').toBeInViewport({ ratio: 1 })
+      }
+
+      await pressInPlace(page, page.getByRole('button', { name: '開始抽選' }), scrollBefore)
+      const drawn = page.locator('.picker-result__item')
+      await expect(drawn).toHaveCount(1)
+      expect(TWENTY).toContain(await drawn.innerText())
+      await expectResultInView(page)
+
+      await pressInPlace(page, page.getByRole('button', { name: '再抽一次' }), scrollBefore)
+      await expect(page.locator('.picker-result')).toHaveAttribute('aria-busy', 'false')
+      await expect(drawn).toHaveCount(1)
+      await expectResultInView(page)
+
+      await pressInPlace(page, page.getByRole('button', { name: '重設' }), scrollBefore)
+      await expect(page.getByLabel('候選名單')).toHaveValue('')
+      await expect(page.locator('.picker-result')).toContainText('準備好名單後按')
+      await expectResultInView(page)
+      expect(await scrollTop(page)).toBe(scrollBefore)
+    })
+  }
+}
 
 test('抽選結果由 live region 宣告，多名抽選不重複中選', async ({ page }) => {
   await gotoTool(page)
@@ -103,11 +179,13 @@ test('逐項新增與空白行處理都看得見', async ({ page }) => {
 test('重複項目策略由使用者決定，並說明目前的機會分配', async ({ page }) => {
   await gotoTool(page)
   await page.getByLabel('候選名單').fill(`${FIRST}\n${FIRST}\n${SECOND}`)
-  await expect(page.locator('.picker-caveats')).toContainText('目前設定讓它們各佔一個機會')
+  const note = page.locator('.picker-duplicates-note')
+  await expect(note).toContainText('目前各佔一個機會')
+  await expect(page.getByRole('radio', { name: '保留重複（各佔一個機會）' }), '說明掛在設定上').toHaveAccessibleDescription(/目前各佔一個機會/)
 
   await page.getByRole('radio', { name: '合併重複（同名只算一次）' }).check()
   await expect(page.locator('.picker-summary')).toContainText('合併重複 1 筆')
-  await expect(page.locator('.picker-caveats')).not.toContainText('目前設定讓它們各佔一個機會')
+  await expect(note).toHaveCount(0)
 })
 
 test('輪盤可以跳過，跳過後仍是同一個已決定的結果', async ({ page }) => {
@@ -170,15 +248,27 @@ test('核心流程可用鍵盤完成，操作目標在手機上可觸控', async
   const candidates = page.getByLabel('候選名單')
   await candidates.focus()
   await candidates.fill(CANDIDATES)
-  const drawButton = page.getByRole('button', { name: '開始抽選' })
+  const drawButton = page.locator('.picker-draw')
   await drawButton.focus()
   await page.keyboard.press('Enter')
   await expect(page.locator('.picker-result__item')).toHaveText([FIRST])
+  await expect(drawButton, '抽完後焦點留在結果旁的按鈕').toBeFocused()
+  await expect(drawButton).toHaveText('再抽一次')
+
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.picker-result__item')).toHaveText([FIRST])
+  await expect(drawButton).toBeFocused()
+
+  // The stage reads in the order it is used: how to show it, then the buttons that act on the result.
+  const stageOrder = await page.locator('.picker-stage').evaluate(stage => [...stage.querySelectorAll('input, button, [tabindex="0"]')]
+    .map(element => element.getAttribute('value') ?? element.textContent?.trim()))
+  expect(stageOrder).toEqual(['list', 'wheel', '再抽一次', '重設'])
 
   await page.getByRole('button', { name: '重設' }).focus()
   await page.keyboard.press('Enter')
   await expect(candidates).toHaveValue('')
   await expect(page.locator('.picker-result')).toContainText('準備好名單後按')
+  await expect(page.getByRole('button', { name: '重設' }), '重設後焦點仍在結果區').toBeFocused()
 
   const dimensions = await page.locator('html').evaluate(element => ({
     clientWidth: element.clientWidth,
@@ -191,6 +281,7 @@ test('核心流程可用鍵盤完成，操作目標在手機上可觸控', async
     candidates,
     page.getByLabel('抽出幾名'),
     page.locator('.picker-option').first(),
+    page.locator('.picker-view__option').first(),
     page.getByRole('button', { name: '加入名單' }),
     drawButton,
     page.getByRole('button', { name: '重設' }),
@@ -201,24 +292,27 @@ test('核心流程可用鍵盤完成，操作目標在手機上可觸控', async
   }
 })
 
-test('輪盤與結果在 light 與 dark 模式皆通過 WCAG 2.2 AA 自動檢查', async ({ page }) => {
-  await alwaysDrawTheFirstEntry(page)
-  await gotoTool(page)
-  await fillCandidates(page)
-  await page.getByRole('radio', { name: '輪盤' }).check()
-  await page.getByRole('button', { name: '開始抽選' }).click()
-  await expect(page.locator('.picker-result__item')).toHaveText([FIRST])
+for (const viewport of [{ name: '桌面', width: 1280, height: 720 }, { name: '手機底部結果區', width: 375, height: 812 }]) {
+  test(`${viewport.name}的輪盤與結果在 light 與 dark 模式皆通過 WCAG 2.2 AA 自動檢查`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await alwaysDrawTheFirstEntry(page)
+    await gotoTool(page)
+    await fillCandidates(page)
+    await page.getByRole('radio', { name: '輪盤' }).check()
+    await page.getByRole('button', { name: '開始抽選' }).click()
+    await expect(page.locator('.picker-result__item')).toHaveText([FIRST])
 
-  for (const mode of ['light', 'dark'] as const) {
-    if (mode === 'dark') {
-      await page.getByRole('button', { name: '切換色彩模式' }).click()
-      await expect(page.locator('html')).toHaveClass(/dark/)
+    for (const mode of ['light', 'dark'] as const) {
+      if (mode === 'dark') {
+        await page.getByRole('button', { name: '切換色彩模式' }).click()
+        await expect(page.locator('html')).toHaveClass(/dark/)
+      }
+
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+        .analyze()
+
+      expect(results.violations, `${mode} 模式無障礙違規：\n${results.violations.map(item => `${item.id}: ${item.help}`).join('\n')}`).toEqual([])
     }
-
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-      .analyze()
-
-    expect(results.violations, `${mode} 模式無障礙違規：\n${results.violations.map(item => `${item.id}: ${item.help}`).join('\n')}`).toEqual([])
-  }
-})
+  })
+}

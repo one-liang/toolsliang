@@ -7,14 +7,14 @@ import {
   randomPickerListVectors,
   randomPickerRejectionVectors,
 } from '@/features/tools/random-picker/domain/reference'
-import { randomPickerCaveatKeys, randomPickerContentReview, randomPickerReferenceVersion } from '@/features/tools/random-picker/domain/sources'
+import { randomPickerCaveatKeys, randomPickerReferenceVersion } from '@/features/tools/random-picker/domain/sources'
 import {
   parseCaveatKeys,
   parseDuplicatePolicies,
   parseErrorCodes,
   parseLimits,
   parseListVectors,
-  parsePublishedSourceUrls,
+  parseSources,
   randomPickerDecisionRecord,
 } from './support/random-picker-decision-record'
 
@@ -42,13 +42,15 @@ describe('random picker decision record', () => {
     expect(parseCaveatKeys()).toEqual([...randomPickerCaveatKeys])
   })
 
-  it('publishes exactly the sources the document marks as shown on the page', () => {
-    expect(randomPickerContentReview.sources.map(source => source.url)).toEqual(parsePublishedSourceUrls())
+  it('shows none of the documented sources on the page (#82, #83)', () => {
+    // They explain how the draw is built; the page answers in plain words instead.
+    const sources = parseSources()
+    expect(sources).toHaveLength(3)
+    expect(sources.filter(source => source.shownOnPage)).toEqual([])
   })
 
   it('names the rule version the document fixed', () => {
     expect(randomPickerDecisionRecord).toContain(randomPickerReferenceVersion)
-    expect(randomPickerContentReview.reviewedAt).toBe(randomPickerReferenceVersion.replace('random-picker-', ''))
   })
 
   it('parses every documented list vector exactly as the document records it', () => {
