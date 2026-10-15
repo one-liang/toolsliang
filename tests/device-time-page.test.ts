@@ -1,5 +1,6 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { HOUR_CYCLE_STORAGE_KEY } from '@/features/tools/device-time/domain/hour-cycle'
 import ToolPage from '@/pages/[locale]/tools/[slug].vue'
 import { savedToolsGlobals, setTestRoute } from './support/nuxt-stubs'
 
@@ -22,7 +23,7 @@ afterEach(() => {
 
 async function openTool(locale = 'zh-tw') {
   setTestRoute({ path: `/${locale}/tools/device-time/`, params: { locale, slug: 'device-time' } })
-  page = mount(ToolPage, { global: savedToolsGlobals() })
+  page = mount(ToolPage, { global: savedToolsGlobals(), attachTo: document.body })
   await flushPromises()
   await vi.waitFor(() => expect(page.find('[data-device-clock]').exists()).toBe(true))
   return page
@@ -118,4 +119,101 @@ describe('裝置時間公開工具頁', () => {
     expect(page.get('.tool-contract--faq').text()).toContain(locale === 'en' ? 'Why can device time be wrong?' : '為什麼裝置時間可能不準確？')
     expect(page.get('.tool-contract--faq').text()).toContain(locale === 'en' ? 'Seconds display is not saved' : '秒數顯示設定也不會保存')
   })
+
+  it('切換 12／24 小時制後只寫入介面偏好，重新開啟仍維持', async () => {
+    await openTool()
+    expect((page.get('[data-hour-cycle="h23"]').element as HTMLInputElement).checked).toBe(true)
+    expect(localStorage.length).toBe(0)
+    await page.get('[data-hour-cycle="h12"]').setValue()
+    expect(page.get('[data-device-clock] time').text()).toBe('上午12:00:00')
+    expect({ ...localStorage }).toEqual({ [HOUR_CYCLE_STORAGE_KEY]: 'h12' })
+    page.unmount()
+    await openTool('en')
+    expect((page.get('[data-hour-cycle="h12"]').element as HTMLInputElement).checked).toBe(true)
+    expect(page.get('[data-device-clock] time').text()).toBe('12:00:00 AM')
+  })
+
+  it('全螢幕以同一份設定標示裝置時間，Esc 離開後焦點回到按鈕', async () => {
+    await openTool()
+    await page.get('[data-hour-cycle="h12"]').setValue()
+    const trigger = page.get('[data-fullscreen-open]')
+    ;(trigger.element as HTMLElement).focus()
+    await trigger.trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+    const dialog = document.querySelector<HTMLElement>('[data-device-clock-fullscreen]')!
+    expect(dialog.getAttribute('role')).toBe('dialog')
+    expect(dialog.querySelector('time')!.textContent).toBe('上午12:00:00')
+    expect(dialog.textContent).toContain('裝置時間')
+    expect(dialog.textContent).toContain('未經網路校時')
+    expect(dialog.textContent).toContain('Asia/Taipei · UTC+08:00')
+    expect(document.activeElement).toBe(dialog.querySelector('[data-fullscreen-exit]'))
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(dialog.querySelector('time')!.textContent).toBe('上午12:00:01')
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(document.querySelector('[data-device-clock-fullscreen]')).toBeNull()
+    expect(document.activeElement).toBe(trigger.element)
+  })
+
+
+  it('瀏覽器支援時進入真正的全螢幕，由瀏覽器離開時一併關閉並還原焦點', async () => {
+    const browser = emulateFullscreenApi()
+    try {
+      await openTool('en')
+      const trigger = page.get('[data-fullscreen-open]')
+      await trigger.trigger('click')
+      await vi.advanceTimersByTimeAsync(0)
+      const dialog = document.querySelector('[data-device-clock-fullscreen]')
+      expect(browser.requestFullscreen).toHaveBeenCalledTimes(1)
+      expect(browser.requestFullscreen.mock.contexts[0]).toBe(dialog)
+      expect(document.fullscreenElement).toBe(dialog)
+      browser.leave()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(document.querySelector('[data-device-clock-fullscreen]')).toBeNull()
+      expect(document.activeElement).toBe(trigger.element)
+      expect(browser.exitFullscreen).not.toHaveBeenCalled()
+    }
+    finally { browser.restore() }
+  })
+
+  it('以按鈕離開真正的全螢幕時結束瀏覽器全螢幕', async () => {
+    const browser = emulateFullscreenApi()
+    try {
+      await openTool()
+      await page.get('[data-fullscreen-open]').trigger('click')
+      await vi.advanceTimersByTimeAsync(0)
+      ;(document.querySelector('[data-fullscreen-exit]') as HTMLElement).click()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(browser.exitFullscreen).toHaveBeenCalledTimes(1)
+      expect(document.fullscreenElement).toBeNull()
+      expect(document.querySelector('[data-device-clock-fullscreen]')).toBeNull()
+      expect(document.activeElement).toBe(page.get('[data-fullscreen-open]').element)
+    }
+    finally { browser.restore() }
+  })
 })
+
+/** happy-dom has no Fullscreen API; this stands in for a browser that grants it. */
+function emulateFullscreenApi() {
+  let current: Element | null = null
+  const change = (element: Element | null) => {
+    current = element
+    document.dispatchEvent(new Event('fullscreenchange'))
+  }
+  const requestFullscreen = vi.fn(async () => change(document.querySelector('[data-device-clock-fullscreen]')))
+  const exitFullscreen = vi.fn(async () => change(null))
+  Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => true })
+  Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => current })
+  Object.defineProperty(document, 'exitFullscreen', { configurable: true, value: exitFullscreen })
+  Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', { configurable: true, value: requestFullscreen })
+  return {
+    requestFullscreen,
+    exitFullscreen,
+    /** The browser leaving full screen on its own, as it does when it takes Esc. */
+    leave: () => change(null),
+    restore() {
+      for (const key of ['fullscreenEnabled', 'fullscreenElement', 'exitFullscreen']) Reflect.deleteProperty(document, key)
+      Reflect.deleteProperty(HTMLElement.prototype, 'requestFullscreen')
+    },
+  }
+}

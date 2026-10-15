@@ -169,8 +169,8 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 
 #### 12.2 Device time
 
-- **User story and non-goals:** A user sees current date, time, timezone, UTC offset, and optional common formatting based on the device. It is not network-corrected national standard time, time synchronization, legal timestamping, or proof of time.
-- **Local boundary:** Time is read from browser APIs only. Timezone and display choice are not sent or persisted unless later added as an explicit interface preference.
+- **User story and non-goals:** A user sees current date, time, timezone, UTC offset, and optional common formatting based on the device, in 12- or 24-hour form, and can enlarge the same reading to fill the screen. It is not network-corrected national standard time, time synchronization, legal timestamping, or proof of time.
+- **Local boundary:** Time is read from browser APIs only. Readings and timezone are never sent or persisted. The 12/24-hour choice is an explicit interface preference: the default follows the page language and the device's own convention, and the choice is written to this device only after the user switches it, like the theme (ADR-0016). The seconds choice is not persisted.
 - **Module and interface:** A pure formatter accepts an injected instant, locale, timezone from `Intl`, and format option; a UI clock schedules aligned updates and corrects after visibility change rather than accumulating interval drift.
 - **Route and slug:** `/{locale}/tools/device-time/`; stable slug `device-time`.
 - **Bilingual content:** `裝置時間` / `Device Time`; copy explicitly says it follows the device clock and settings. Show timezone identifier and UTC offset beside the time.
