@@ -11,7 +11,7 @@ it('可恢復能力不足，原圖仍可選擇且不保存工具內容', async (
   const wrapper = mount(ImageCompressorWorkspace)
   mounted.push(wrapper)
   await flushPromises()
-  expect(wrapper.text()).toContain('此瀏覽器無法提供背景圖片處理')
+  expect(wrapper.text()).toContain('這個瀏覽器無法在背景處理圖片')
   expect(wrapper.find('input[type=file]').attributes('disabled')).toBeUndefined()
   expect(wrapper.find('button[type=submit]').attributes('disabled')).toBeDefined()
   expect(wrapper.text()).toContain('重新檢查')

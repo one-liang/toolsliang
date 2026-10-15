@@ -12,8 +12,11 @@ import type { PublishedToolDefinition } from '../catalog'
  * file that does not exist.
  *
  * Every sentence about what the tool is and is not comes from §10 of
- * `docs/research/009-pdf-local-editing-engine-and-safety-boundary.md`, including
- * the two that have to be visible before a visitor places anything.
+ * `docs/research/009-pdf-local-editing-engine-and-safety-boundary.md`. Since #82
+ * the workspace holds only the signing itself, so the two sentences a visitor
+ * has to read about what this is not live in the before-you-start answer below.
+ * The tool cites no outside content, and the libraries it ships are credited on
+ * the open-source licences page instead of under "sources".
  */
 export const pdfSignatureDefinition: PublishedToolDefinition = {
   slug: 'pdf-signature', category: 'document', icon: 'pen-line',
@@ -54,20 +57,8 @@ export const pdfSignatureDefinition: PublishedToolDefinition = {
       en: 'Keep the PDF on your device. Draw, type, or import a transparent signature in your browser, place it on any page, and download a new file. Password-protected files open too, with the password used only on your device. This is not a certificate-based digital signature.',
     },
     answer: {
-      'zh-tw': '選擇 PDF 後，工具在瀏覽器本機解析頁面並畫出預覽，你可以用滑鼠、觸控或鍵盤把手寫簽名放到任何一頁，再下載加上簽名的新檔。這個工具把你的手寫簽名放到 PDF 頁面上，它不是憑證式數位簽章，也不保證任何法律效力。工具不會驗證簽署人身分，也不會留下任何可供第三方查核的紀錄。未加密的檔案以增量更新寫出，沒有簽名的頁面維持原本的位元組。',
-      en: 'Choose a PDF and the tool parses its pages and draws previews locally in your browser; place your handwriting on any page with a pointer, touch, or the keyboard, then download the signed copy. This tool places your handwriting onto a PDF page. It is not a certificate-based digital signature, and it guarantees no legal effect. The tool does not check who signed, and it leaves no record a third party could audit. An unencrypted file is written as an incremental update, so the pages you did not sign keep their original bytes.',
+      'zh-tw': '選擇 PDF 後，頁面會出現在預覽裡，你可以用滑鼠、觸控或鍵盤把手寫簽名放到任何一頁，再下載加上簽名的新檔。這個工具把你的手寫簽名放到 PDF 頁面上，它不是憑證式數位簽章，也不保證任何法律效力。工具不會驗證簽署人身分，也不會留下任何可供第三方查核的紀錄。沒有簽名的頁面會保持原樣。',
+      en: 'Choose a PDF and its pages appear in a preview; place your handwriting on any page with a pointer, touch, or the keyboard, then download the signed copy. This tool places your handwriting onto a PDF page. It is not a certificate-based digital signature, and it guarantees no legal effect. The tool does not check who signed, and it leaves no record a third party could audit. Pages you did not sign stay exactly as they were.',
     },
-  },
-  contentReview: {
-    reviewedAt: '2026-09-11', sourceEffectiveAt: '2026-09-11',
-    sourceEdition: {
-      'zh-tw': 'toolsliang PDF 引擎決策紀錄 009 與 ISO 32000-1、pdf.js、@cantoo/pdf-lib 一手來源（2026-09-11 查閱）',
-      en: 'toolsliang PDF engine decision record 009, with the ISO 32000-1, pdf.js, and @cantoo/pdf-lib primary sources (accessed September 11, 2026)',
-    },
-    sources: [
-      { title: { 'zh-tw': 'ISO 32000-1 PDF 1.7 規格', en: 'ISO 32000-1, PDF 1.7' }, url: 'https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf' },
-      { title: { 'zh-tw': 'pdf.js 程式庫與 Apache-2.0 授權', en: 'pdf.js repository and Apache-2.0 licence' }, url: 'https://github.com/mozilla/pdf.js/blob/master/LICENSE' },
-      { title: { 'zh-tw': '@cantoo/pdf-lib 程式庫與 MIT 授權', en: '@cantoo/pdf-lib repository and MIT licence' }, url: 'https://github.com/cantoo-scribe/pdf-lib/blob/master/LICENSE.md' },
-    ],
   },
 }

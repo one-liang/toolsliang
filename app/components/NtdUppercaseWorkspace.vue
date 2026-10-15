@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
-  getNtdCaveats,
   getNtdCopy,
   getNtdPurposeSummary,
   ntdComparisonExamples,
@@ -12,7 +11,6 @@ import {
 } from '@/features/tools/ntd-uppercase/content'
 import { convertNtd } from '@/features/tools/ntd-uppercase/domain/convert'
 import { ntdDigits, ntdPurposes, ntdWords, type NtdPurpose } from '@/features/tools/ntd-uppercase/domain/reference'
-import { ntdReferenceVersion } from '@/features/tools/ntd-uppercase/domain/sources'
 
 const { locale } = useAppLocale()
 const text = computed(() => getNtdCopy(locale.value))
@@ -37,7 +35,6 @@ const pending = computed(() => touched.value && outcome.value.state === 'error' 
 const error = computed(() => outcome.value.state === 'error' && outcome.value.code !== 'empty'
   ? ntdErrorMessage(outcome.value.code, purpose.value, locale.value)
   : '')
-const caveats = computed(() => getNtdCaveats(locale.value, purpose.value))
 const summary = computed(() => getNtdPurposeSummary(purpose.value, locale.value))
 const purposeOptions = computed(() => ntdPurposes.map(option => ({
   id: option,
@@ -173,18 +170,6 @@ function clear() {
       </Button>
     </div>
     <p class="ntd-copy-status" :class="{ 'ntd-copy-status--failed': copyState === 'failed' }" role="status">{{ copyStatus }}</p>
-
-    <section class="ntd-caveats" :aria-label="text.caveatsTitle">
-      <h2 class="ntd-caveats__title">{{ text.caveatsTitle }}</h2>
-      <ul>
-        <li v-for="caveat in caveats" :key="caveat.key">{{ caveat.text }}</li>
-      </ul>
-      <p class="ntd-source">
-        {{ summary.sourceNote }}
-        {{ text.sourceLabel }}：<a :href="summary.source.url" target="_blank" rel="noopener noreferrer">{{ summary.source.title }}</a>
-        （{{ text.ruleVersionLabel }} {{ ntdReferenceVersion }}）
-      </p>
-    </section>
   </Card>
 
   <section class="tool-reference" aria-labelledby="ntd-purpose-examples">

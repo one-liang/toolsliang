@@ -74,12 +74,14 @@ test('工具開啟即說明三種用途、規則與來源', async ({ page }) => 
   await expect(rules).toContainText('9,999,999,999,999,999.99')
   await expect(rules).toContainText('保留「角」與「分」')
 
-  const caveats = page.locator('.ntd-caveats')
-  await expect(caveats, '免責必須在結果附近，而不是只在頁尾').toContainText('不是法律或會計審查')
-  await expect(caveats).toContainText('金額只在你的瀏覽器換算')
-  await expect(page.locator('.ntd-source')).toContainText('ntd-uppercase-2026-09-05')
-  await expect(page.locator('.ntd-source').getByRole('link', { name: /票據交換業務手冊/ }),
-    '一般會計沿用票據實務，必須指名來源').toBeVisible()
+  // #82: the workspace holds only input, rules and result; the caveats and sources sit below it.
+  await expect(page.locator('.ntd-caveats')).toHaveCount(0)
+  await expect(page.locator('.ntd-source')).toHaveCount(0)
+  await page.getByRole('heading', { name: '開始前先知道' }).click()
+  await expect(page.locator('.tool-contract__body')).toContainText('不是法律或會計審查')
+  const clearingHouse = page.locator('.tool-contract__source-list li').filter({ hasText: '票據交換業務手冊' })
+  await expect(clearingHouse.getByRole('link'), '一般會計沿用票據實務，必須指名來源').toBeVisible()
+  await expect(clearingHouse).toContainText('一般會計沒有法規限制可用的國字')
 
   const examples = page.getByRole('table', { name: '同一筆金額在三種用途的國字大寫' })
   await expect(examples.getByRole('row', { name: /壹佰零壹元整.*壹佰壹元整/ })).toBeVisible()
@@ -96,9 +98,9 @@ test('換用途會以同一筆金額改寫，國庫用途顯示四捨五入前�
   await page.getByRole('radio', { name: '國庫付款憑單' }).check()
   await expect(page.locator('.ntd-result__wording'), '國庫用途不寫中間的零').toHaveText(TREASURY_WORDING)
   await expect(amount, '換用途不得清空金額').toHaveValue(HAZARD_INPUT)
-  await expect(page.locator('.ntd-caveats')).toContainText('不書寫中間的「零」')
+  await expect(page.locator('.ntd-rules')).toContainText('中間的零不書寫')
   await expect(page.locator('.ntd-zero-note'), '多個交界都是零時要提醒再確認').toContainText('付款機關')
-  await expect(page.locator('.ntd-source').getByRole('link', { name: /國庫集中支付作業/ })).toBeVisible()
+  await expect(page.locator('.tool-contract__source-list').getByRole('link', { name: /國庫集中支付作業/ }).first()).toBeVisible()
 
   await amount.fill(ROUNDING_INPUT)
   const rounded = page.locator('.ntd-result__rounded')

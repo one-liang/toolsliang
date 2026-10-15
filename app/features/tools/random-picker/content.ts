@@ -198,22 +198,22 @@ export const randomPickerFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '這個工具怎麼做到每個人機會一樣？', en: 'How does every entry get the same chance?' },
     body: {
-      'zh-tw': '工具用瀏覽器的 crypto.getRandomValues 取得隨機值，再以拒絕取樣把它對應到名單位置：落在尾段不完整區間的隨機值會被丟棄重取，剩下的區間長度剛好是名單長度的整數倍，因此每個位置對應到的隨機值數量完全相同。位置一旦決定，項目文字完全不參與計算。',
-      en: 'The tool takes random words from the browser\'s crypto.getRandomValues and maps them onto list positions with rejection sampling: a word in the incomplete tail is discarded and redrawn, so the accepted window is a whole multiple of the list length and every position is backed by exactly the same number of words. The text of an entry never enters the arithmetic.',
+      'zh-tw': '工具用瀏覽器內建的安全隨機來源決定結果，而且只採用剛好能平均分給每個位置的隨機值：分不平均的那一小段會丟掉重抽，所以每個位置被抽中的機會完全相同。名字寫什麼、排在第幾行，都不會影響機會。',
+      en: 'The tool uses the secure random source built into your browser and only keeps random values that divide evenly across every position: the small leftover range that would not divide evenly is thrown away and drawn again, so every position has exactly the same chance. What an entry says and which line it is on never affect its chance.',
     },
   },
   {
-    heading: { 'zh-tw': '為什麼不能直接用隨機數除以名單長度取餘數？', en: 'Why not just take a random number modulo the list length?' },
+    heading: { 'zh-tw': '抽很多次以後，會不會比較常抽到前面幾個？', en: 'Over many draws, do the first entries come up more often?' },
     body: {
-      'zh-tw': '因為 2³² 通常不是名單長度的倍數。以 3 個項目為例，2³² 除以 3 餘 1，第一個位置會比另外兩個多分到一個隨機值，形成系統性偏差。差距很小，但它不會因為抽得夠多而消失，所以工具改用拒絕取樣。',
-      en: 'Because 2³² is usually not a multiple of the list length. With three entries, 2³² leaves a remainder of one, so the first position is backed by one extra word — a small but systematic bias that never averages out. Rejection sampling removes it.',
+      'zh-tw': '不會。如果把隨機數直接平均切給名單，切不完的餘數會讓前面幾個位置多一點點機會；差距很小，但不會因為抽得多就消失。工具會把這段分不平均的隨機值丟掉重抽，所以不管抽幾次，每個位置的機會都一樣。',
+      en: 'No. Splitting a random number across the list naively leaves a remainder that gives the first positions a tiny extra chance — small, but it never evens out however often you draw. The tool throws that uneven part away and draws again, so every position keeps the same chance however many times you draw.',
     },
   },
   {
     heading: { 'zh-tw': '抽多名時會不會有人被抽到兩次？', en: 'Can the same entry be drawn twice?' },
     body: {
-      'zh-tw': '不會。抽多名時使用 Fisher–Yates 部分洗牌，每抽出一個位置就把它移出候選範圍，下一次只在剩下的位置裡取。名單裡有兩筆文字相同的項目時，它們是兩個不同的位置，可能同時中選，這在「保留重複」設定下是預期行為。',
-      en: 'No. A Fisher–Yates partial shuffle removes each drawn position from the pool, so the next draw only sees what is left. Two lines with identical text are two different positions and can both be drawn; that is what the keep-repeats setting means.',
+      'zh-tw': '不會。每抽出一個就把它從候選名單拿掉，下一次只在剩下的項目裡抽。名單裡有兩筆文字相同的項目時，它們是兩個不同的位置，可能同時中選，這在「保留重複」設定下是預期行為。',
+      en: 'No. Each drawn entry is taken out of the pool, so the next draw only sees what is left. Two lines with identical text are two different positions and can both be drawn; that is what the keep-repeats setting means.',
     },
   },
   {
