@@ -53,7 +53,7 @@ toolsliang 採「無陰影的新粗獷工具站」：白紙、墨色 2px 邊界�
 | `fill-document` | 文件與金額 | `sky-400` |
 | `fill-time-calendar` | 時間與行事曆 | `coral-400` |
 | `fill-calculation` | 計算工具 | `mint-400` |
-| `fill-random-selection` | 本機抽選 | `yellow-400` |
+| `fill-random-selection` | 隨機抽選 | `yellow-400` |
 
 平塗色在亮暗主題都不變，上面的文字、icon 與邊界一律用 `fill-ink`（`ink-950`），對比都在 7:1 以上。元件只知道分類 id 時，加上 `category-fill--<id>` class 取得 `--tool-fill`。
 

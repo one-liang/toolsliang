@@ -26,7 +26,7 @@ const swatches = [
 ]
 const fills = [
   ['fill-image-commerce', '圖片與商務素材'], ['fill-document', '文件與金額'], ['fill-time-calendar', '時間與行事曆'],
-  ['fill-calculation', '計算工具'], ['fill-random-selection', '本機抽選'],
+  ['fill-calculation', '計算工具'], ['fill-random-selection', '隨機抽選'],
 ]
 const spacing = [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80]
 const breakpoints = [

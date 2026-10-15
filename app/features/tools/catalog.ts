@@ -158,8 +158,8 @@ export const toolCategories: ToolCategory[] = [
   },
   {
     id: 'random-selection', icon: 'dices',
-    name: { 'zh-tw': '本機抽選', en: 'Local random selection' },
-    description: { 'zh-tw': '在單一裝置上進行隨機抽取。', en: 'Run random selections on one device.' },
+    name: { 'zh-tw': '隨機抽選', en: 'Random selection' },
+    description: { 'zh-tw': '從名單隨機抽出，每個項目機會一樣。', en: 'Draw at random from a list, every entry equally likely.' },
   },
   {
     id: 'image-commerce', icon: 'shopping-bag',
@@ -277,7 +277,7 @@ const registeredTools: ToolDefinition[] = [
     slug: 'random-picker', category: 'random-selection', icon: 'dices',
     availability: { state: 'published', publishedAt: '2026-09-05' },
     status: { kind: 'new', startsAt: '2026-09-05', endsAt: '2026-10-05' },
-    name: { 'zh-tw': '本機抽選與抽籤輪盤', en: 'Local Random Draw & Wheel' },
+    name: { 'zh-tw': '抽籤與輪盤', en: 'Random Draw & Wheel' },
     description: {
       'zh-tw': '在這台裝置上等機率抽出一名或多名。',
       en: 'Draw one or several names with equal chances, on this device.',
@@ -308,10 +308,10 @@ const registeredTools: ToolDefinition[] = [
     },
     seo: {
       contentKey: 'random-picker',
-      title: { 'zh-tw': '本機抽選與抽籤輪盤', en: 'Local Random Draw & Wheel' },
+      title: { 'zh-tw': '抽籤與輪盤', en: 'Random Draw & Wheel' },
       description: {
-        'zh-tw': '在瀏覽器等機率抽出一名或多名，可用名單或輪盤呈現，名單與結果不離開裝置，也不會被保存。',
-        en: 'Draw one or several entries with equal chances in your browser, as a list or a wheel, with nothing leaving your device and nothing stored.',
+        'zh-tw': '貼上名單就能抽籤，每個名字機會一樣；可抽一名或多名，用名單或輪盤呈現。名單與結果不離開裝置，也不會被保存。',
+        en: 'Paste a list and draw names with equal chances, one or several, shown as a list or a wheel. Nothing leaves your device and nothing is stored.',
       },
       answer: {
         'zh-tw': '貼上名單，選好重複的名字怎麼算、要抽幾名，就能抽出不重複的中選名單。每個名字被抽到的機會一樣，由瀏覽器內建的安全隨機來源決定；輪盤只是呈現方式，不影響結果。抽選只在這台裝置進行，結果無法由第三方稽核。',
