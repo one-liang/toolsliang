@@ -227,6 +227,9 @@ test('輪盤可以跳過，跳過後仍是同一個已決定的結果', async ({
   await expect(page.locator('.picker-result')).toHaveAttribute('aria-busy', 'false')
   await expect(page.locator('.picker-result__item')).toHaveText([FIRST])
   await expect(page.getByRole('button', { name: '跳過動畫' })).toHaveCount(0)
+  // #106: skipping stops the wheel on the result instead of letting it keep turning.
+  expect(await page.locator('.picker-wheel__disc').evaluate(disc => disc.getAnimations().length), '跳過後輪盤不再轉動').toBe(0)
+  await expect(page.locator('.picker-wheel__won'), '停下來後中選的扇形突出').toBeVisible()
 })
 
 test('reduced motion 下不播動畫，結果立刻可讀', async ({ page }) => {
@@ -240,6 +243,7 @@ test('reduced motion 下不播動畫，結果立刻可讀', async ({ page }) => 
   await expect(page.locator('.picker-result__item')).toHaveText([FIRST])
   await expect(page.getByRole('button', { name: '跳過動畫' }), '沒有動畫就不需要跳過鍵').toHaveCount(0)
   await expect(page.locator('.picker-wheel'), '輪盤仍然看得到中選的扇形').toBeVisible()
+  await expect(page.locator('.picker-wheel__won'), '中選的扇形突出在指針下').toBeVisible()
 })
 
 test('抽出人數與呈現方式的限制都說明可以怎麼改，中英文各一次', async ({ page }) => {
