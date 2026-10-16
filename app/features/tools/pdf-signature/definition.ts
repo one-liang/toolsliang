@@ -45,7 +45,7 @@ export const pdfSignatureDefinition: PublishedToolDefinition = {
     'zh-tw': 'PDF、頁面預覽、簽名筆跡與輸出檔只在這台裝置處理，密碼不會被傳送或保存。',
     en: 'The PDF, its page previews, your signature strokes, and the exported file are handled on this device only, and a password is never sent or stored.',
   },
-  pagePresentation: { showHeadingIcon: false, showLocalProcessingStatement: true },
+  pagePresentation: { showHeadingIcon: false, showLocalProcessingStatement: true, workspace: 'wide' },
   seo: {
     contentKey: 'pdf-signature',
     title: {

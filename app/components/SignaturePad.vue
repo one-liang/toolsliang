@@ -1,44 +1,41 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-import { Eraser, PenLine, Type, Upload } from '@lucide/vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { Eraser } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import { exceedsImageLimits, imageInputLimits } from '@/features/images/limits'
 import {
   fitTypedSignatureSize,
-  opaqueBounds,
-  signatureFormKeys,
-  signatureHasTransparency,
   signatureIsEmpty,
   signaturePadAspect,
   signatureRasterSize,
   strokeContentBox,
   typedSignatureText,
-  validateSignatureImageFile,
-  type SignatureBox,
-  type SignatureForm,
   type SignatureStroke,
 } from '@/features/tools/pdf-signature/domain/signature'
 import { signatureInputErrors, type SignatureInputErrorCode } from '@/features/tools/pdf-signature/content'
+import { encodeSignature, type CreatedSignature } from '@/features/tools/pdf-signature/signature-image'
 import type { LocaleCode } from '@/features/tools/catalog'
 
 /**
- * Where a signature is made, in the three forms T24 allows: drawn, typed, or an
- * imported transparent image. All three leave here as the same thing — a PNG
- * with an alpha channel and its pixel size — so nothing downstream has to know
- * which one the visitor used, and no font is ever embedded in a document.
+ * Where a signature is drawn or typed. Both leave here as the same thing as an
+ * imported picture — a PNG with an alpha channel and its pixel size — so nothing
+ * downstream has to know which one the visitor used, and no font is ever
+ * embedded in a document. Importing needs no surface of its own: choosing the
+ * file is the whole step, so it happens in the workspace.
  *
  * Drawing needs a pointer, so the typed form is its keyboard equivalent rather
  * than a second-class alternative: it produces exactly the same output.
  */
-const { locale, maxPlacedWidthPt, disabled = false } = defineProps<{
+const { locale, maxPlacedWidthPt, form, disabled = false } = defineProps<{
   locale: LocaleCode
   /** The widest placement the open document allows, which sets the raster size. */
   maxPlacedWidthPt: number
+  form: 'drawn' | 'typed'
   disabled?: boolean
 }>()
 
 const emit = defineEmits<{
-  created: [signature: { name: string, form: SignatureForm, bytes: ArrayBuffer, width: number, height: number }]
+  created: [signature: CreatedSignature]
+  cancel: []
 }>()
 
 /** The pad's own pixels. Strokes are stored as shares of it, so this is only how it is drawn. */
@@ -58,7 +55,6 @@ const TYPED_RASTER_FILL = { width: 0.96, height: 0.82 }
 const TYPED_SIDE_AIR = 1.08
 const TYPED_LINE_HEIGHT = 1.5
 
-const form = ref<SignatureForm>('drawn')
 const strokes = shallowRef<SignatureStroke[]>([])
 /**
  * Points are pushed into the stroke being drawn, and a mutation inside a
@@ -68,31 +64,14 @@ const strokes = shallowRef<SignatureStroke[]>([])
  */
 const hasInk = ref(false)
 const typed = ref('')
-/**
- * The imported picture, with the crop measured once. The pixels themselves are
- * not kept: a large picture is tens of megabytes of RGBA, and the only thing
- * the rasteriser needs from them is the rectangle that is not transparent.
- */
-const imported = shallowRef<{ bitmap: ImageBitmap, width: number, height: number, bounds: SignatureBox }>()
-const importedName = ref('')
 const error = ref<SignatureInputErrorCode | ''>('')
 const pad = ref<HTMLCanvasElement>()
 const typedPreview = ref<HTMLCanvasElement>()
-const imageInput = ref<HTMLInputElement>()
 let drawing = false
 
-const formLabels: Record<SignatureForm, { 'zh-tw': string, en: string }> = {
-  drawn: { 'zh-tw': '手寫', en: 'Draw' },
-  typed: { 'zh-tw': '輸入文字', en: 'Type' },
-  image: { 'zh-tw': '匯入透明圖片', en: 'Import image' },
-}
-
+const en = computed(() => locale === 'en')
 const errorText = computed(() => error.value ? signatureInputErrors[error.value][locale] : '')
-const ready = computed(() => {
-  if (form.value === 'drawn') return hasInk.value
-  if (form.value === 'typed') return typedSignatureText(typed.value).length > 0
-  return Boolean(imported.value)
-})
+const ready = computed(() => form === 'drawn' ? hasInk.value : typedSignatureText(typed.value).length > 0)
 
 /** Resets the pad to its own pixel size, which also clears what was on it. */
 function resetPad() {
@@ -237,86 +216,31 @@ function typedFontSize(context: CanvasRenderingContext2D, text: string, box: { w
   })
 }
 
-/** A refused image puts the focus back where the visitor can choose another one. */
-function refuse(code: SignatureInputErrorCode) {
-  error.value = code
-  imageInput.value?.focus()
-}
-
-async function chooseImage(files: File[]) {
-  error.value = ''
-  if (!files.length) return
-  if (files.length !== 1) { refuse('multiple_files'); return }
-
-  const file = files[0]!
-  const code = await validateSignatureImageFile(file)
-  if (code) { refuse(code); return }
-  if (file.size > imageInputLimits.maxBytes) { refuse('signature_too_large'); return }
-
-  try {
-    const bitmap = await createImageBitmap(file)
-    if (exceedsImageLimits(bitmap.width, bitmap.height)) { bitmap.close(); refuse('signature_too_large'); return }
-
-    const canvas = document.createElement('canvas')
-    canvas.width = bitmap.width
-    canvas.height = bitmap.height
-    const context = canvas.getContext('2d', { willReadFrequently: true })
-    if (!context) { bitmap.close(); refuse('unsupported_format'); return }
-    context.drawImage(bitmap, 0, 0)
-    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
-    if (!signatureHasTransparency(pixels)) { bitmap.close(); refuse('signature_is_opaque'); return }
-
-    clearImported()
-    imported.value = {
-      bitmap,
-      width: bitmap.width,
-      height: bitmap.height,
-      bounds: opaqueBounds(pixels, bitmap.width, bitmap.height) ?? { x: 0, y: 0, width: bitmap.width, height: bitmap.height },
-    }
-    importedName.value = file.name
-  }
-  catch {
-    refuse('unsupported_format')
-  }
-}
-
-/** A picture that is no longer shown is a decoded bitmap nobody is holding for. */
-function clearImported() {
-  imported.value?.bitmap.close()
-  imported.value = undefined
-}
-
-/** A signature on a canvas of its own, with the name it will be saved under. */
-interface Rasterised {
-  canvas: HTMLCanvasElement
-  context: CanvasRenderingContext2D
-  name: string
-}
-
-/** The canvas every form draws onto, or nothing when this device has no 2D context. */
-function rasterCanvas(size: { width: number, height: number }, name: string): Rasterised | undefined {
+/** A canvas of the signature's own size, or nothing when this device has no 2D context. */
+function rasterCanvas(size: { width: number, height: number }) {
   const canvas = document.createElement('canvas')
   canvas.width = size.width
   canvas.height = size.height
   const context = canvas.getContext('2d', { willReadFrequently: true })
   if (!context) { error.value = 'unsupported_format'; return undefined }
 
-  return { canvas, context, name }
+  return { canvas, context }
 }
 
-function rasteriseDrawn(): Rasterised | undefined {
+function rasteriseDrawn() {
   const box = strokeContentBox(strokes.value, CONTENT_PADDING)
   if (!box) { error.value = 'signature_empty'; return undefined }
 
   /* The box is a share of the pad, and the pad is three times as wide as tall. */
   const size = signatureRasterSize({ aspect: (box.width * signaturePadAspect) / box.height, maxPlacedWidthPt })
-  const target = rasterCanvas(size, locale === 'en' ? 'Drawn signature' : '手寫簽名')
-  if (target) paintStrokes(target.context, size, box)
+  const target = rasterCanvas(size)
+  if (!target) return undefined
+  paintStrokes(target.context, size, box)
 
-  return target
+  return { canvas: target.canvas, name: en.value ? 'Drawn signature' : '手寫簽名' }
 }
 
-function rasteriseTyped(): Rasterised | undefined {
+function rasteriseTyped() {
   const text = typedSignatureText(typed.value)
   /* The name's own shape has to be measured before there is a canvas to draw it on. */
   const probe = document.createElement('canvas').getContext('2d')
@@ -326,127 +250,74 @@ function rasteriseTyped(): Rasterised | undefined {
   probe.font = typedFont(padSize)
   const aspect = Math.max(0.1, (probe.measureText(text).width * TYPED_SIDE_AIR) / (padSize * TYPED_LINE_HEIGHT))
   const size = signatureRasterSize({ aspect, maxPlacedWidthPt })
-  const target = rasterCanvas(size, text)
-  if (target) paintTypedText(target.context, text, size, TYPED_RASTER_FILL)
+  const target = rasterCanvas(size)
+  if (!target) return undefined
+  paintTypedText(target.context, text, size, TYPED_RASTER_FILL)
 
-  return target
+  return { canvas: target.canvas, name: text }
 }
 
-function rasteriseImported(): Rasterised | undefined {
-  const source = imported.value
-  if (!source) { error.value = 'signature_empty'; return undefined }
-
-  const crop = source.bounds
-  /* Never upscale an imported picture: its own pixels are the most it has. */
-  const width = Math.min(signatureRasterSize({ aspect: crop.width / crop.height, maxPlacedWidthPt }).width, crop.width)
-  const size = { width, height: Math.max(1, Math.round(width * (crop.height / crop.width))) }
-  const target = rasterCanvas(size, locale === 'en' ? 'Imported signature' : '匯入的簽名')
-  if (target) target.context.drawImage(source.bitmap, crop.x, crop.y, crop.width, crop.height, 0, 0, size.width, size.height)
-
-  return target
-}
-
-const rasterisers: Record<SignatureForm, () => Rasterised | undefined> = {
-  drawn: rasteriseDrawn,
-  typed: rasteriseTyped,
-  image: rasteriseImported,
-}
-
-/** Writes the signature out as the transparent PNG everything downstream expects. */
+/** Adds the signature as the transparent PNG everything downstream expects. */
 async function create() {
   if (disabled || !ready.value) { error.value = 'signature_empty'; return }
   error.value = ''
 
-  const target = rasterisers[form.value]()
+  const target = form === 'drawn' ? rasteriseDrawn() : rasteriseTyped()
   if (!target) return
 
-  const blob = await new Promise<Blob | null>(resolve => target.canvas.toBlob(resolve, 'image/png'))
-  if (!blob) { error.value = 'unsupported_format'; return }
-
-  emit('created', {
-    name: target.name,
-    form: form.value,
-    bytes: await blob.arrayBuffer(),
-    width: target.canvas.width,
-    height: target.canvas.height,
-  })
+  const signature = await encodeSignature(target.canvas, target.name, form)
+  if (!signature) { error.value = 'unsupported_format'; return }
+  emit('created', signature)
 }
 
 watch(typed, redrawTyped)
-onBeforeUnmount(clearImported)
-watch(form, (value) => {
-  error.value = ''
-  if (value === 'drawn') requestAnimationFrame(redrawPad)
-  if (value === 'typed') requestAnimationFrame(redrawTyped)
+onMounted(() => {
+  if (form === 'drawn') redrawPad()
+  else redrawTyped()
 })
 </script>
 
 <template>
-  <section class="signature-pad" :aria-label="locale === 'en' ? 'Make a signature' : '建立簽名'">
-    <fieldset class="signature-pad__forms">
-      <legend>{{ locale === 'en' ? 'Signature form' : '簽名方式' }}</legend>
-      <label v-for="key in signatureFormKeys" :key="key" class="choice-option signature-pad__form">
-        <input v-model="form" type="radio" name="signature-form" :value="key" :disabled="disabled">
-        <PenLine v-if="key === 'drawn'" :size="16" aria-hidden="true" />
-        <Type v-else-if="key === 'typed'" :size="16" aria-hidden="true" />
-        <Upload v-else :size="16" aria-hidden="true" />
-        {{ formLabels[key][locale] }}
-      </label>
-    </fieldset>
-
-    <div v-if="form === 'drawn'" class="signature-pad__panel">
+  <form class="signature-pad" novalidate @submit.prevent="create">
+    <div v-if="form === 'drawn'" class="signature-pad__surface" :class="{ 'signature-pad__surface--inked': hasInk }">
       <canvas
         ref="pad"
         class="signature-pad__canvas"
         :width="PAD_WIDTH"
         :height="PAD_HEIGHT"
         role="img"
-        :aria-label="locale === 'en' ? 'Signature pad. Draw with a pointer or finger; use the Type tab for a keyboard alternative.' : '簽名板。可用滑鼠或手指書寫；需要鍵盤操作時請改用「輸入文字」。'"
+        :aria-label="en ? 'Signature pad. Draw with a pointer or finger; choose Type for a keyboard alternative.' : '簽名板。可用滑鼠或手指書寫；需要鍵盤操作時請改用「文字」。'"
         @pointerdown="startStroke"
         @pointermove="extendStroke"
         @pointerup="endStroke"
         @pointercancel="endStroke"
         @pointerleave="endStroke"
       />
-      <p class="field-help">{{ locale === 'en' ? 'Draw inside the box. The signature is cropped to your strokes and kept transparent.' : '在框內書寫。簽名會裁切到筆跡範圍，並保留透明背景。' }}</p>
-      <div class="tool-workspace__actions">
-        <Button type="button" variant="outline" :disabled="disabled || !hasInk" @click="clearPad">
-          <Eraser :size="18" aria-hidden="true" />{{ locale === 'en' ? 'Clear pad' : '清除簽名板' }}
-        </Button>
-      </div>
+      <span class="signature-pad__hint" aria-hidden="true">{{ en ? 'Sign here' : '在這裡簽名' }}</span>
     </div>
 
-    <div v-else-if="form === 'typed'" class="signature-pad__panel field-group">
-      <label for="signature-typed">{{ locale === 'en' ? 'Name to write' : '要寫上的文字' }}</label>
-      <input id="signature-typed" v-model="typed" class="ui-input" type="text" maxlength="60" :disabled="disabled" autocomplete="off" aria-describedby="signature-typed-help">
-      <p id="signature-typed-help" class="field-help">{{ locale === 'en' ? 'Rendered with a font already on this device and placed as a transparent image; no font is added to the PDF.' : '使用這台裝置上的字型畫成透明圖片後放到頁面上，不會在 PDF 裡嵌入字型。' }}</p>
-      <canvas ref="typedPreview" class="signature-pad__canvas" :width="PAD_WIDTH" :height="PAD_HEIGHT" role="img" :aria-label="locale === 'en' ? 'Preview of the typed signature' : '輸入文字的簽名預覽'" />
-    </div>
-
-    <div v-else class="signature-pad__panel field-group">
-      <label for="signature-image">{{ locale === 'en' ? 'Transparent PNG or WebP' : '透明背景的 PNG 或 WebP' }}</label>
+    <div v-else class="signature-pad__typed field-group">
+      <label for="signature-typed">{{ en ? 'Name to write' : '要寫上的文字' }}</label>
       <input
-        id="signature-image"
-        ref="imageInput"
+        id="signature-typed"
+        v-model="typed"
         class="ui-input"
-        type="file"
-        accept="image/png,image/webp,.png,.webp"
+        type="text"
+        maxlength="60"
         :disabled="disabled"
-        aria-describedby="signature-image-help"
-        @change="chooseImage(Array.from(($event.target as HTMLInputElement).files ?? []))"
+        autocomplete="off"
       >
-      <p id="signature-image-help" class="field-help">{{ locale === 'en' ? 'The image is cropped to its visible pixels. A photo without transparency would cover the page, so JPEG is refused.' : '圖片會裁切到實際有內容的範圍。沒有透明背景的照片會遮住頁面，因此不接受 JPEG。' }}</p>
-      <p v-if="imported" class="field-help signature-pad__imported-note">
-        {{ locale === 'en' ? `Loaded ${importedName}: ${imported.width} × ${imported.height} pixels` : `已載入 ${importedName}：${imported.width} × ${imported.height} 像素` }}
-      </p>
+      <canvas ref="typedPreview" class="signature-pad__canvas signature-pad__canvas--preview" :width="PAD_WIDTH" :height="PAD_HEIGHT" role="img" :aria-label="en ? 'Preview of the typed signature' : '輸入文字的簽名預覽'" />
     </div>
 
     <p v-if="errorText" role="alert" class="field-error">{{ errorText }}</p>
 
-    <div class="tool-workspace__actions">
-      <Button type="button" :disabled="disabled || !ready" data-signature-use @click="create">
-        {{ locale === 'en' ? 'Use this signature' : '使用這個簽名' }}
+    <div class="signature-pad__actions">
+      <Button v-if="form === 'drawn'" type="button" variant="ghost" class="signature-pad__clear" :disabled="disabled || !hasInk" @click="clearPad">
+        <Eraser :size="18" aria-hidden="true" />{{ en ? 'Clear' : '清除' }}
       </Button>
+      <Button type="button" variant="outline" @click="emit('cancel')">{{ en ? 'Cancel' : '取消' }}</Button>
+      <Button type="submit" :disabled="disabled || !ready" data-signature-add>{{ en ? 'Add' : '加入' }}</Button>
     </div>
-  </section>
+  </form>
 </template>
