@@ -6,7 +6,22 @@ import { nameImageOutputs } from '@/features/images/archive'
 import { imageBatchLimits } from '@/features/images/batch'
 import { useWorkspaceDirty } from './useWorkspaceDirty'
 
-interface SessionAsset { file: File, url: string, width: number, height: number }
+export interface SessionAsset { file: File, url: string, width: number, height: number }
+
+export interface PromoEditorOptions {
+  /** What the pictures added in one visit may add up to. */
+  sessionLimit?: number
+  /**
+   * Where a new layer goes: on top, as an image editor does, or by its kind —
+   * background at the back, then the product, the frame and the Logo — for a
+   * layout that is built up once and reused.
+   */
+  order?: 'top' | 'kind'
+}
+
+/** The asset id a slot layer carries; its picture is handed in from outside the editor. */
+const slotAssetId = 'slot'
+const kindRank: Record<PromoLayerKind, number> = { background: 0, product: 1, frame: 2, logo: 3 }
 
 /**
  * One product layer standing for several product photos: the layout is made
@@ -25,7 +40,8 @@ function promoOutputNames(count: number) {
  * Nothing here is written to the device: the composition and its images go away
  * with the page.
  */
-export function usePromoEditor() {
+export function usePromoEditor(options: PromoEditorOptions = {}) {
+  const sessionLimit = options.sessionLimit ?? 100 * 1024 * 1024
   const history = createPromoHistory({ width: 1000, height: 1000, layers: [] })
   const scene = shallowRef(history.scene)
   const assets = shallowRef<Record<string, SessionAsset>>({})
@@ -53,13 +69,55 @@ export function usePromoEditor() {
     output.value = ''
     outputs.value = []
   }
+  /**
+   * A product layer whose picture is not the editor's: the workbench lays out
+   * the template once, and each of its photos is shown, and rendered, in it.
+   */
+  const slot = shallowRef<{ layerId: string, asset?: SessionAsset }>({ layerId: '' })
+  const slotLayer = computed(() => scene.value.layers.find(layer => layer.id === slot.value.layerId))
   /** The layer the batch belongs to, while it is still in the scene. */
   const batchLayer = computed(() => scene.value.layers.find(layer => layer.id === batch.value.layerId))
   const batchSize = computed(() => batchLayer.value ? batch.value.assetIds.length : 0)
   /** What a layer shows: a batch layer shows the photo picked in the batch, every other layer its own image. */
   function assetOf(layer: PromoLayer) {
+    if (layer.id === slot.value.layerId) return slot.value.asset
     const id = layer.id === batch.value.layerId && batchSize.value > 1 ? batch.value.assetIds[batchIndex.value] ?? layer.assetId : layer.assetId
     return assets.value[id]
+  }
+  /** Which picture a layer is drawing right now, as a stable key for anything cached per picture. */
+  function shownAssetId(layer: PromoLayer) {
+    if (layer.id === slot.value.layerId) return slot.value.asset ? `slot:${slot.value.asset.url}` : layer.assetId
+    return layer.id === batch.value.layerId && batchSize.value > 1 ? batch.value.assetIds[batchIndex.value] ?? layer.assetId : layer.assetId
+  }
+  function withLayer(layers: PromoLayer[], layer: PromoLayer) {
+    if (options.order !== 'kind') return [...layers, layer]
+    const index = layers.reduce((position, entry, at) => kindRank[entry.kind] <= kindRank[layer.kind] ? at + 1 : position, 0)
+    return [...layers.slice(0, index), layer, ...layers.slice(index)]
+  }
+  /** Gives the scene its slot layer, once; the picture shown in it is set with `showInSlot`. */
+  function ensureSlot() {
+    if (slotLayer.value || busy.value) return
+    const layer = createPromoLayer('product', slotAssetId)
+    slot.value = { ...slot.value, layerId: layer.id }
+    commit({ ...scene.value, layers: withLayer(scene.value.layers, layer) })
+  }
+  function showInSlot(asset: SessionAsset | undefined) {
+    slot.value = { ...slot.value, asset }
+  }
+  /**
+   * The template drawn with `file` in its slot layer, as one PNG. It leaves the
+   * editor's own state alone: whoever calls it owns the run and its result.
+   */
+  async function renderSlot(file: File, signal?: AbortSignal) {
+    const files: Record<string, File> = {}
+    for (const layer of scene.value.layers) {
+      const source = layer.id === slot.value.layerId ? file : assets.value[layer.assetId]?.file
+      if (source) files[layer.assetId] = source
+    }
+    return renderer.run({ scene: scene.value, files }, { signal })
+  }
+  function cancelRender() {
+    renderer.cancel()
   }
   /** The scene as it is drawn with one of the batch's photos in its layer. */
   function sceneFor(index: number): PromoScene {
@@ -146,7 +204,7 @@ export function usePromoEditor() {
     let added = 0
     for (const file of files.slice(0, Math.max(0, room))) {
       const bytes = Object.values(assets.value).reduce((total, asset) => total + asset.file.size, 0)
-      if (bytes + file.size > 100 * 1024 * 1024) { error.value = 'session_limit'; break }
+      if (bytes + file.size > sessionLimit) { error.value = 'session_limit'; break }
       const result = await readAsset(file, current)
       if (result === 'stale') return
       if (result.status === 'cancelled') { message.value = 'cancelled'; break }
@@ -180,7 +238,7 @@ export function usePromoEditor() {
     if (busy.value) return
     if (scene.value.layers.length >= 12) { error.value = 'layer_limit'; return }
     const bytes = Object.values(assets.value).reduce((total, asset) => total + asset.file.size, 0)
-    if (bytes + file.size > 100 * 1024 * 1024) { error.value = 'session_limit'; return }
+    if (bytes + file.size > sessionLimit) { error.value = 'session_limit'; return }
     busy.value = true; task.value = 'import'; error.value = ''; message.value = ''; stage.value = 'reading'
     const current = ++generation
     const result = await importer.run({ file, format: 'image/png', quality: 1, maxWidth: 800, maxHeight: 800 }, { onProgress: progress => { stage.value = progress.stage } })
@@ -193,7 +251,7 @@ export function usePromoEditor() {
       const url = URL.createObjectURL(result.output.blob)
       assets.value = { ...assets.value, [assetId]: { file, url, width: result.output.sourceWidth, height: result.output.sourceHeight } }
       const layer = createPromoLayer(kind, assetId)
-      commit({ ...scene.value, layers: [...scene.value.layers, layer] })
+      commit({ ...scene.value, layers: withLayer(scene.value.layers, layer) })
       selectedId.value = layer.id; message.value = 'imported'
     }
     catch { error.value = 'memory_limit' }
@@ -244,6 +302,9 @@ export function usePromoEditor() {
   })
   return {
     scene, assets, selectedId, selected, canUndo, canRedo, busy, preparing, supported, error, message, stage, task, output, commit, preview, revert, patchLayer, reorder, move, moveToEdge, remove, undo, redo, cancel, prepare, importFile, produce,
-    batch, batchIndex, batchLayer, batchSize, outputs, producing, assetOf, importBatch, showBatch, removeFromBatch,
+    batch, batchIndex, batchLayer, batchSize, outputs, producing, assetOf, shownAssetId, importBatch, showBatch, removeFromBatch,
+    slot, slotLayer, ensureSlot, showInSlot, renderSlot, cancelRender,
   }
 }
+
+export type PromoEditor = ReturnType<typeof usePromoEditor>
