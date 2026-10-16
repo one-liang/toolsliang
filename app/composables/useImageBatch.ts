@@ -56,6 +56,8 @@ export function useImageBatch<Result = unknown>(options: { release?: (result: Re
     })
   }
 
+  const waiting = (id: string) => items.value.find(item => item.id === id)?.status === 'pending'
+
   function release(item: ImageBatchItem<Result>) {
     URL.revokeObjectURL(item.url)
     if (item.result !== undefined) options.release?.(item.result)
@@ -72,15 +74,17 @@ export function useImageBatch<Result = unknown>(options: { release?: (result: Re
         file,
         status: 'pending',
         retryable: true,
+        // Measuring settles only a picture still waiting: once a tool has started on
+        // it, the tool's own engine reads the file and gives the more exact verdict.
         url: measureImage(
           file,
           (size) => {
             if (!mounted) return
-            patch(id, exceedsImageLimits(size.width, size.height)
+            patch(id, exceedsImageLimits(size.width, size.height) && waiting(id)
               ? { size, status: 'failed', error: 'too_large', retryable: false }
               : { size })
           },
-          () => { if (mounted) patch(id, { status: 'failed', error: 'corrupt_image', retryable: false }) },
+          () => { if (mounted && waiting(id)) patch(id, { status: 'failed', error: 'corrupt_image', retryable: false }) },
         ),
       }
     })

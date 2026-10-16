@@ -43,11 +43,13 @@ async function compress(input: CompressionInput) {
     if (!context) { send({ type: 'error', code: 'unsupported_browser' }); return }
     if (input.format === 'image/jpeg') { context.fillStyle = '#ffffff'; context.fillRect(0, 0, outWidth, outHeight) }
     context.drawImage(bitmap, 0, 0, outWidth, outHeight)
-    const previewScale = Math.min(1, 800 / bitmap.width, 800 / bitmap.height)
-    preview = new OffscreenCanvas(Math.max(1, Math.round(bitmap.width * previewScale)), Math.max(1, Math.round(bitmap.height * previewScale)))
+    // The preview is drawn from the output, so it shows what the file will look like (JPEG's white fill included)
+    // at a size the page can show without decoding the full picture on its own thread.
+    const previewScale = Math.min(1, 800 / outWidth, 800 / outHeight)
+    preview = new OffscreenCanvas(Math.max(1, Math.round(outWidth * previewScale)), Math.max(1, Math.round(outHeight * previewScale)))
     const previewContext = preview.getContext('2d')
     if (!previewContext) { send({ type: 'error', code: 'unsupported_browser' }); return }
-    previewContext.drawImage(bitmap, 0, 0, preview.width, preview.height)
+    previewContext.drawImage(canvas, 0, 0, preview.width, preview.height)
     const sourceWidth = bitmap.width, sourceHeight = bitmap.height
     bitmap.close(); bitmap = undefined
     progress('encoding')
