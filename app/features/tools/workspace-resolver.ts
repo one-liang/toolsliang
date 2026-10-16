@@ -1,4 +1,4 @@
-import archiveWorkerUrl from './product-image-workbench/archive.worker?worker&url'
+import archiveWorkerUrl from '../images/archive.worker?worker&url'
 import promoWorkerUrl from './brand-promo-image/promo.worker?worker&url'
 import backgroundRemovalWorkerUrl from './image-background-remover/background-removal.worker?worker&url'
 import compliantImageWorkerUrl from './compliant-product-image/compliant-image.worker?worker&url'

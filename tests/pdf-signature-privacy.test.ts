@@ -19,6 +19,7 @@ const runtimeModules = [
   'app/features/tools/pdf-signature/content.ts',
   'app/features/tools/pdf-signature/domain/workspace.ts',
   'app/features/tools/pdf-signature/domain/signature.ts',
+  'app/features/tools/pdf-signature/signature-image.ts',
   'app/composables/usePdfSignature.ts',
   'app/components/PdfSignatureWorkspace.vue',
   'app/components/SignaturePad.vue',

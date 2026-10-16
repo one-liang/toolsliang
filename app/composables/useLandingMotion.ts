@@ -130,12 +130,16 @@ function demoTimeline(gsap: Gsap, demo: HTMLElement | SVGElement) {
       return timeline
     }
     case 'wheel': {
-      const wheel = demo.querySelector('[data-wheel]')
+      const wheel = demo.querySelector<SVGElement>('[data-wheel]')
+      const won = demo.querySelector('[data-wheel-won]')
       const result = demo.querySelector('[data-wheel-result]')
       if (!wheel) return null
-      const resting = Number(wheel.getAttribute('transform')?.match(/rotate\(([-\d.]+)\)/)?.[1] ?? 0)
-      timeline.fromTo(wheel, { rotation: resting - 1440, svgOrigin: '0 0' }, { rotation: resting, svgOrigin: '0 0', duration: 3, ease: 'power4.out' })
-      if (result) timeline.fromTo(result, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: .35, ease: 'back.out(2)' }, '-=.35')
+      // The shared wheel turns through a CSS variable (#106), so the spin tweens that and ends on the rendered angle.
+      const resting = Number.parseFloat(wheel.style.getPropertyValue('--wheel-rotation')) || 0
+      timeline.fromTo(wheel, { '--wheel-rotation': `${resting - 1440}deg` }, { '--wheel-rotation': `${resting}deg`, duration: 3, ease: 'power4.out' })
+      // As on the tool, the drawn slice only stands out once the wheel has stopped.
+      if (won) timeline.fromTo(won, { '--wheel-won': 0 }, { '--wheel-won': 1, duration: .35, ease: 'back.out(2)' }, '-=.35')
+      if (result) timeline.fromTo(result, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: .35, ease: 'back.out(2)' }, '<')
       return timeline
     }
     default:

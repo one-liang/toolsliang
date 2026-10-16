@@ -3,7 +3,8 @@ import { productImageWorkbenchCanaries } from './support/product-image-workbench
 import { inspectNetworkRequest } from './e2e/support/privacy-boundary'
 import { productImageWorkbenchDefinition } from '@/features/tools/product-image-workbench/definition'
 import { planBrandScene, planLayoutInput } from '@/features/tools/product-image-workbench/pipeline'
-import { buildZipArchive, workbenchArchiveName, workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
+import { buildZipArchive } from '@/features/images/archive'
+import { workbenchArchiveName, workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
 import { admitWorkbenchFiles, createWorkbenchQueue, measureWorkbenchItem } from '@/features/tools/product-image-workbench/queue'
 import { completeWorkbenchStep, createWorkbenchSession, startWorkbenchStep } from '@/features/tools/product-image-workbench/session'
 

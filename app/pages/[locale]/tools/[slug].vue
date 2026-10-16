@@ -3,7 +3,7 @@ import { Star } from '@lucide/vue'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import { openSourceComponentsFor } from '@/features/shell/open-source-licences'
-import { copy, formatReviewDate, getCategory, getTool, isSupportedLocale } from '@/features/tools/catalog'
+import { copy, formatReviewDate, getCategory, getTool, getToolWorkspaceWidth, isSupportedLocale } from '@/features/tools/catalog'
 import { getToolFaq } from '@/features/tools/faq'
 import { buildToolStructuredData } from '@/features/tools/structured-data'
 import { getToolWorkspaceAssets, resolveToolWorkspace } from '@/features/tools/workspace-resolver'
@@ -20,6 +20,8 @@ const tool = computed(() => getTool(String(route.params.slug))!)
 const saved = computed(() => isSaved(tool.value.slug))
 const category = computed(() => getCategory(tool.value.category)!)
 const workspace = computed(() => resolveToolWorkspace(tool.value.routeComponentKey)!)
+// Only the workspace widens; everything else on the page keeps the reading column.
+const wideWorkspace = computed(() => getToolWorkspaceWidth(tool.value) === 'wide')
 const faq = computed(() => getToolFaq(tool.value.seo.contentKey, locale.value))
 const shipsOpenSource = computed(() => openSourceComponentsFor(tool.value.slug).length > 0)
 
@@ -35,7 +37,7 @@ usePageSeo({
 </script>
 
 <template>
-  <main id="main-content" class="workspace-page tool-page" tabindex="-1">
+  <main id="main-content" :class="['workspace-page', 'tool-page', { 'tool-page--wide': wideWorkspace }]" tabindex="-1">
     <nav class="breadcrumbs" :aria-label="locale === 'en' ? 'Breadcrumb' : '麵包屑導覽'">
       <NuxtLink :to="withLocale('/tools/')">{{ locale === 'en' ? 'All tools' : '全部工具' }}</NuxtLink>
       <span aria-hidden="true">/</span>
@@ -57,16 +59,17 @@ usePageSeo({
         :aria-pressed="saved"
         @click="toggleSaved(tool.slug)"
       >
-        <Star :size="18" aria-hidden="true" />
-        {{ saved
+        <Star :size="18" :fill="saved ? 'currentColor' : 'none'" aria-hidden="true" />
+        <!-- On a phone only the star shows; the words stay the button's name. -->
+        <span class="tool-heading__save-label">{{ saved
           ? (locale === 'en' ? 'Saved' : '已加入常用')
-          : (locale === 'en' ? 'Save' : '加入常用') }}
+          : (locale === 'en' ? 'Save' : '加入常用') }}</span>
       </Button>
     </header>
 
     <SavedStorageNotice v-if="!storageAvailable" :locale="locale" />
 
-    <ToolCapabilityGate :requirements="tool.capabilities" :locale="locale">
+    <ToolCapabilityGate class="tool-page__workspace" :requirements="tool.capabilities" :locale="locale">
       <component :is="workspace" />
     </ToolCapabilityGate>
 

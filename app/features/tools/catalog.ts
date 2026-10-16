@@ -29,6 +29,14 @@ export const toolIcons = [
 
 export type ToolIcon = typeof toolIcons[number]
 
+/**
+ * How far a tool page lets its workspace widen. A standard workspace shares the
+ * reading column with the rest of the page; a wide one is for a tool that needs
+ * its preview and its controls on one screen, and only the workspace widens.
+ */
+export const toolWorkspaceWidths = ['standard', 'wide'] as const
+export type ToolWorkspaceWidth = typeof toolWorkspaceWidths[number]
+
 export interface LocalizedCopy {
   'zh-tw': string
   en: string
@@ -114,6 +122,8 @@ export interface PublishedToolDefinition extends ToolDefinitionBase {
   pagePresentation: {
     showHeadingIcon: boolean
     showLocalProcessingStatement: boolean
+    /** Standard unless the tool opts in; read it through getToolWorkspaceWidth. */
+    workspace?: ToolWorkspaceWidth
   }
   seo: {
     contentKey: string
@@ -239,7 +249,7 @@ const registeredTools: ToolDefinition[] = [
     status: { kind: 'new', startsAt: '2026-09-03', endsAt: '2026-10-03' },
     name: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },
     description: {
-      'zh-tw': '依所選用途將新臺幣數字金額轉為國字大寫。',
+      'zh-tw': '依用途，把新臺幣金額轉成國字大寫。',
       en: 'Convert New Taiwan dollar amounts to formal Chinese wording for the purpose you pick.',
     },
     aliases: {
@@ -511,6 +521,11 @@ export function getTool(slug: string) {
   return publishedTools.find(tool => tool.slug === slug)
 }
 
+/** Every tool page keeps the standard workspace until its own definition asks for a wide one. */
+export function getToolWorkspaceWidth(tool: Pick<PublishedToolDefinition, 'pagePresentation'>): ToolWorkspaceWidth {
+  return tool.pagePresentation.workspace ?? 'standard'
+}
+
 export function toolsByCategory(categoryId: string) {
   return publishedTools.filter(tool => tool.category === categoryId)
 }
@@ -664,6 +679,10 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
     issues.push(...validateOfflineRegistration(prefix, published))
     if (!hasLocalizedCopy(published.acceptedInput)) issues.push(`${prefix} published tool requires accepted input copy`)
     if (!hasLocalizedCopy(published.localProcessingStatement)) issues.push(`${prefix} published tool requires local-processing copy`)
+    const workspaceWidth = published.pagePresentation?.workspace
+    if (workspaceWidth !== undefined && !(toolWorkspaceWidths as readonly string[]).includes(workspaceWidth)) {
+      issues.push(`${prefix} unknown workspace width: ${workspaceWidth}`)
+    }
     if (!published.seo?.contentKey?.trim() || !hasLocalizedCopy(published.seo.title) || !hasLocalizedCopy(published.seo.description) || !hasLocalizedCopy(published.seo.answer)) {
       issues.push(`${prefix} published tool requires complete SEO/AEO metadata`)
     }

@@ -15,7 +15,7 @@ import {
   workbenchStepErrors,
   workbenchStepLabels,
 } from '@/features/tools/product-image-workbench/content'
-import { workbenchQueueLimits } from '@/features/tools/product-image-workbench/queue'
+import { imageBatchLimits } from '@/features/images/batch'
 import { workbenchSteps } from '@/features/tools/product-image-workbench/session'
 
 describe('商品圖工作台的目錄註冊', () => {
@@ -94,15 +94,15 @@ describe('批次的說明文字', () => {
   })
 
   it('退回的檔案說明上限本身，並說明怎麼修正', () => {
-    const message = workbenchAdmissionMessage('too_many_items', workbenchQueueLimits, 'zh-tw')
+    const message = workbenchAdmissionMessage('too_many_items', imageBatchLimits, 'zh-tw')
 
-    expect(message).toContain(String(workbenchQueueLimits.maxItems))
+    expect(message).toContain(String(imageBatchLimits.maxItems))
     expect(message).toContain('移除幾張後可以再加')
-    expect(workbenchAdmissionMessage('batch_too_large', workbenchQueueLimits, 'en')).toContain('did not fit')
+    expect(workbenchAdmissionMessage('batch_too_large', imageBatchLimits, 'en')).toContain('did not fit')
   })
 
   it('上限說明與退回說明用同一組數字', () => {
-    expect(workbenchLimitsNotice(workbenchQueueLimits, 'zh-tw')).toContain('20 張')
+    expect(workbenchLimitsNotice(imageBatchLimits, 'zh-tw')).toContain('20 張')
     expect(workbenchLimitsNotice({ maxItems: 6, maxBytes: 64 * 1024 * 1024 }, 'zh-tw')).toContain('6 張')
   })
 

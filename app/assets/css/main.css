@@ -499,9 +499,33 @@ select.ui-input {
 .tool-heading--filled .tool-heading__icon { background: var(--paper-0); }
 .tool-contract, .tool-reference { margin-top: 20px; padding: clamp(20px, 4vw, 28px); border: var(--rule) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
 .tool-page { width: min(980px, 100%); padding-top: 24px; }
+/* A tool whose definition asks for a wide workspace lets only the workspace reach 1440px.
+   Everything else keeps the column a standard tool page reads in: 980px less the gutter,
+   which follows the inline padding .workspace-page has at each breakpoint. */
+.tool-page--wide { --tool-page-gutter: 20px; width: min(1440px, 100%); }
+.tool-page--wide > :not(.tool-page__workspace) { max-width: calc(980px - 2 * var(--tool-page-gutter)); margin-inline: auto; }
 .tool-page .breadcrumbs { margin-bottom: 16px; }
 .tool-page .tool-heading { margin-bottom: 20px; }
 .tool-page .tool-contract { margin-top: 16px; padding: clamp(16px, 3vw, 24px); }
+/* #91: on a phone the heading hands its height to the workspace below. The title and the
+   Save star share the first row, the description runs the full width under them, and the
+   star's words stay its accessible name. A filled star is the saved state you can see. */
+@media (max-width: 767.98px) {
+  .tool-page { padding-top: 16px; }
+  .tool-page .breadcrumbs { margin-bottom: 12px; }
+  .tool-page .tool-heading--filled {
+    grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title save" "desc desc";
+    align-items: center; gap: 6px 12px; margin-bottom: 16px; padding: 12px 12px 16px 20px;
+  }
+  .tool-page .tool-heading--filled.tool-heading--with-icon { grid-template-columns: 52px minmax(0, 1fr) auto; grid-template-areas: "icon title save" "desc desc desc"; }
+  .tool-page .tool-heading--filled .tool-heading__icon { grid-area: icon; }
+  .tool-page .tool-heading--filled .tool-heading__copy { display: contents; }
+  .tool-page .tool-heading--filled .tool-heading__title-row { grid-area: title; }
+  .tool-page .tool-heading--filled .tool-heading__copy p { grid-area: desc; margin: 0; }
+  .tool-page .tool-heading--filled h1 { font-size: clamp(1.5rem, 7.5vw, 1.75rem); }
+  .tool-page .tool-heading--filled .tool-heading__save { grid-area: save; align-self: start; width: 44px; padding: 0; }
+  .tool-page .tool-heading__save-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 .tool-contract__summary {
   display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px;
   list-style: none; cursor: pointer; font-weight: 700;
@@ -568,6 +592,16 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .result-panel__label { margin-bottom: 10px; color: var(--color-muted-foreground); font-size: .75rem; font-weight: 700; }
 .result-panel strong { font-size: clamp(1.15rem, 3vw, 1.6rem); line-height: 1.45; }
 .result-panel__amount { margin-top: 8px; color: var(--color-muted-foreground); font-family: var(--font-mono); font-size: .8rem; }
+/* #91: stacked under its fields on a phone, the panel is as tall as what it says, the way the
+   year converter's already is, and the calculators keep the form's 16px between sections,
+   so the buttons after the result stay on the first screen. */
+@media (max-width: 767.98px) {
+  .result-panel { min-height: 0; justify-content: flex-start; padding: 14px 18px 16px; }
+  .result-panel__label { margin-bottom: 8px; }
+  :is(.bmi-workspace, .ntd-workspace) .tool-workspace__grid { gap: 16px; }
+  :is(.bmi-workspace, .ntd-workspace) .tool-workspace__actions { margin-top: 16px; }
+  .tool-workspace :is(.bmi-units, .ntd-purposes) { margin-bottom: 16px; }
+}
 .tool-workspace__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .tool-workspace__copy { border-color: var(--button-contrast-bg); background: var(--button-contrast-bg); color: var(--button-contrast-fg); }
 .tool-workspace__copy:active:not(:disabled) { border-color: var(--button-contrast-active-bg); background: var(--button-contrast-active-bg); color: var(--button-contrast-fg); }
@@ -578,6 +612,12 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .bmi-units legend, .ntd-purposes legend, .picker-options legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
 .bmi-fields { display: grid; gap: 18px; align-content: start; }
 .bmi-fields__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+/* #91: on a phone height and weight share a row, so the reading and Reset are on the first
+   screen. Feet and inches are already a pair, so that measurement keeps the full width. */
+@media (max-width: 767.98px) {
+  .bmi-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; }
+  .bmi-fields > .field-group:has(.bmi-fields__pair) { grid-column: 1 / -1; }
+}
 .field-pending { margin: 7px 0 0; color: var(--color-muted-foreground); font-size: .8rem; font-weight: 700; }
 .bmi-result__value { font-family: var(--font-mono); }
 .bmi-result__category { margin-top: 8px; font-size: .95rem; font-weight: 700; }
@@ -640,19 +680,29 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .picker-view__option { gap: 8px; padding-inline: 10px 14px; }
 .picker-stage .picker-note { margin: 0; padding: 0; background: none; }
 .picker-stage__body { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px; min-height: 5.5rem; }
-.picker-wheel { flex: 0 0 auto; width: var(--picker-wheel-size); max-width: 100%; }
-/* A rotated square grows its own bounding box; clipping it here keeps the page from scrolling sideways mid-spin. */
-.picker-wheel__frame { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; }
-.picker-wheel__pointer {
-  position: absolute; z-index: 1; top: 0; left: 50%; width: 0; height: 0; translate: -50% 0;
-  border-inline: max(5px, calc(var(--picker-wheel-size) * .028)) solid transparent;
-  border-top: max(9px, calc(var(--picker-wheel-size) * .05)) solid var(--color-primary-strong);
-}
-.picker-wheel__disc { display: block; width: 100%; height: 100%; transition-property: transform; transition-timing-function: cubic-bezier(.16, .84, .36, 1); }
-.picker-wheel__slice { fill: var(--color-surface); stroke: var(--color-border-strong); stroke-width: 1; }
-.picker-wheel__slice--odd { fill: var(--color-surface-hover); }
-.picker-wheel__slice--won { stroke: var(--color-primary-strong); stroke-width: 3; }
-.picker-wheel__label { fill: var(--color-foreground); font-family: inherit; text-anchor: middle; dominant-baseline: middle; }
+/* The wheel (#106) is one component shared with the landing demo: category fills in a fixed order, ink
+   dividers, rim, hub and pointer, bold names. The fills do not invert, so neither does the ink drawn on them;
+   only the pointer's edge, which also meets the surface around the wheel, follows the theme. The disc turns
+   inside the SVG, so a spin never grows the page sideways. */
+.picker-wheel { --wheel-ink: var(--fill-ink); --wheel-pointer-edge: var(--fill-ink); display: block; height: auto; aspect-ratio: 1; }
+.picker-wheel__disc { transform: rotate(var(--wheel-rotation, 0deg)); transform-box: view-box; transform-origin: 0 0; transition-timing-function: cubic-bezier(.16, .84, .36, 1); }
+.picker-wheel__slice { stroke: var(--wheel-ink); stroke-width: var(--wheel-divider, 2.5px); stroke-linejoin: round; }
+.picker-wheel__slice--paper { fill: var(--paper-0); }
+.picker-wheel__slice--pink { fill: var(--pink-400); }
+.picker-wheel__slice--sky { fill: var(--sky-400); }
+.picker-wheel__slice--mint { fill: var(--mint-400); }
+.picker-wheel__slice--coral { fill: var(--coral-400); }
+.picker-wheel__rim { fill: none; stroke: var(--wheel-ink); stroke-width: 2.5px; }
+.picker-wheel__label { fill: var(--wheel-ink); font-family: inherit; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+/* The drawn slice stands out of the rim under the pointer with a heavier outline: place and weight mark it, not colour. */
+.picker-wheel__won { --wheel-won: 1; transform: translate(calc(var(--wheel-won-x) * var(--wheel-won) * 1px), calc(var(--wheel-won-y) * var(--wheel-won) * 1px)); }
+/* Twice the divider, so a narrow slice on a crowded wheel keeps its colour inside the outline. */
+.picker-wheel__won .picker-wheel__slice { stroke-width: calc(var(--wheel-divider, 2.5px) * (1 + var(--wheel-won))); }
+.picker-wheel__hub { fill: var(--wheel-ink); }
+.picker-wheel__hub-dot { fill: var(--yellow-400); }
+.picker-wheel__pointer { fill: var(--wheel-ink); stroke: var(--wheel-pointer-edge); stroke-width: 2px; stroke-linejoin: round; }
+.dark .picker-stage .picker-wheel { --wheel-pointer-edge: var(--chalk-50); }
+.picker-stage .picker-wheel { flex: 0 0 auto; width: var(--picker-wheel-size); max-width: 100%; }
 .picker-readout { flex: 1 1 8rem; display: grid; gap: 12px; min-width: 0; }
 .picker-progress { width: 100%; max-width: 240px; height: 10px; overflow: hidden; border: var(--rule) solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); }
 .picker-progress > span { display: block; height: 100%; background: var(--color-primary-strong); transition: width var(--duration-fast) linear; }
@@ -713,8 +763,19 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .calendar-today { min-height: 44px; margin-left: auto; }
 .calendar-year-help { margin-top: 10px; }
 .calendar-status { min-height: 22px; margin: 12px 0 0; color: var(--color-muted-foreground); font-size: .86rem; }
+/* #91: an idle status line keeps no room of its own; the month that replaces the loading
+   line arrives in the same frame, so the grid starts right under the year hint. */
+.calendar-status:empty { min-height: 0; margin: 0; }
 .calendar-refusal { display: inline-block; padding: 10px 14px; border: var(--rule) solid var(--color-warning); border-radius: var(--radius-sm); background: var(--color-warning-surface); color: var(--color-warning); font-weight: 700; }
 .calendar-body { display: grid; gap: 18px; margin-top: 14px; }
+/* #91: on a phone the first week of the month makes the first screen. The grid's caption
+   names the month just below, so the arrows give up the label between them (it still
+   announces the change) and share a row with Back to today; the arrow-key hint is read
+   out with the caption but not printed on a touch screen. */
+@media (max-width: 767.98px) {
+  .calendar-view { flex-basis: 100%; }
+  .calendar-month-label, .calendar-grid__hint { position: absolute; width: 1px; min-width: 0; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 
 .calendar-grid { width: 100%; border-spacing: 4px; border-collapse: separate; table-layout: fixed; }
 .calendar-grid caption { margin-bottom: 10px; color: var(--color-muted-foreground); font-size: .78rem; text-align: left; }
@@ -993,6 +1054,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .app-topbar__brand { display: none; }
   .workspace-page { padding: 52px 40px 88px; }
   .tool-page { padding-top: 32px; }
+  .tool-page--wide { --tool-page-gutter: 40px; }
   .calendar-body { grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); align-items: start; }
   .mobile-nav { display: none; }
   .pwa-update { inset: auto 24px 24px auto; margin-inline: 0; }
@@ -1002,6 +1064,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .state-matrix { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
   .workspace-page { padding-inline: 56px; }
+  .tool-page--wide { --tool-page-gutter: 56px; }
 }
 
 @media (max-width: 767px) {
@@ -1076,6 +1139,75 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover__coverage { font-weight: 600; }
 .image-background-remover__source { margin: 16px 0 0; }
 .image-background-remover__source img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); width: auto; height: auto; margin-inline: auto; object-fit: contain; border: var(--rule) solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+
+
+/* Image batches (#105): the picker, the thumbnail row and the downloads every image
+   tool shares. Dashed means "drop here"; the current picture sits on an ink mat; a
+   state is an icon, a border and words, never colour alone. */
+.image-batch-picker__zone { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; padding: 20px; border: var(--rule) dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle); transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+.image-batch-picker__icon { width: 48px; height: 48px; display: grid; place-items: center; border: var(--rule) solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-foreground); }
+.image-batch-picker__body { display: grid; justify-items: start; gap: 6px; min-width: 0; }
+.image-batch-picker__title { margin: 0; font-size: 1rem; font-weight: 800; line-height: 1.4; }
+.image-batch-picker__help { margin: 0; color: var(--color-muted-foreground); font-size: .83rem; line-height: 1.55; }
+.image-batch-picker__choose { margin-top: 8px; }
+/* Once there is a picture, the zone folds into one tray of controls that still takes a drop. */
+.image-batch-picker--compact .image-batch-picker__zone { display: block; padding: 6px; border-color: var(--color-border-subtle); border-radius: var(--radius-xl); background: transparent; }
+.image-batch-picker__bar, .image-batch-picker__confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.image-batch-picker__meter { margin: 0 0 0 auto; padding-inline: 10px 12px; color: var(--color-muted-foreground); font-size: .83rem; font-variant-numeric: tabular-nums; }
+.image-batch-picker__confirm p { flex: 1 1 15rem; margin: 0; padding-inline: 12px; font-size: .9rem; font-weight: 700; line-height: 1.5; }
+.image-batch-picker--compact .image-batch-picker__zone--confirming { border-style: solid; border-color: var(--color-destructive); background: var(--color-destructive-surface); }
+.image-batch-picker .image-batch-picker__zone[data-dragging] { border-style: solid; border-color: var(--color-border-strong); background: var(--color-surface-hover); }
+.image-batch-picker__zone[data-dragging] :is(.image-batch-picker__help, .image-batch-picker__meter) { color: var(--color-foreground); }
+.image-batch-picker__issues { display: grid; gap: 6px; }
+.image-batch-picker__issues--shown { margin-top: 10px; }
+.image-batch-picker__issues p, .image-batch-strip__error, .image-batch-download__error { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--color-destructive); font-size: .84rem; font-weight: 700; line-height: 1.55; }
+:is(.image-batch-picker__issues, .image-batch-strip__error, .image-batch-download__error) svg { flex: none; margin-top: 3px; }
+.image-batch-picker__names { overflow-wrap: anywhere; }
+
+.image-batch-strip { --batch-thumb: 64px; margin-top: 12px; }
+/* The padding keeps the focus ring inside the scroller, which would otherwise clip it. */
+.image-batch-strip__list { display: flex; gap: 8px; margin: 0; padding: 5px 5px 9px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 5px; scrollbar-width: thin; scrollbar-color: var(--color-border-subtle) transparent; }
+.image-batch-strip__item { position: relative; flex: none; width: var(--batch-thumb); height: var(--batch-thumb); padding: 3px; border: var(--rule) solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--color-surface); cursor: pointer; scroll-snap-align: start; transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+.image-batch-strip__item img { display: block; width: 100%; height: 100%; border-radius: calc(var(--radius-sm) - 5px); object-fit: cover; background: var(--color-surface-subtle); user-select: none; -webkit-user-drag: none; }
+.image-batch-strip__item:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
+.image-batch-strip__item[data-batch-status="failed"] { border-color: var(--color-destructive); }
+.image-batch-strip__item[aria-selected="true"] { border-color: var(--color-border-strong); background: var(--color-border-strong); }
+@media (hover: hover) and (pointer: fine) {
+  .image-batch-strip__item[aria-selected="false"]:hover { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
+}
+.image-batch-strip__badge { position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; display: grid; place-items: center; border: 1.5px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); color: var(--color-foreground); }
+.image-batch-strip__badge[data-status="running"] { border-color: var(--fill-ink); background: var(--color-primary); color: var(--color-primary-foreground); }
+.image-batch-strip__badge[data-status="done"] { border-color: var(--fill-ink); background: var(--fill-calculation); color: var(--fill-ink); }
+.image-batch-strip__badge[data-status="failed"] { border-color: var(--color-destructive); background: var(--color-destructive-surface); color: var(--color-destructive); }
+:is(.image-batch-strip__badge, .image-batch-strip__state)[data-status="running"] svg { animation: spin 1.2s linear infinite; }
+.image-batch-strip__current { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 4px; }
+.image-batch-strip__caption { flex: 1 1 14rem; min-width: 0; display: flex; align-items: center; gap: 4px 10px; margin: 0; font-size: .875rem; line-height: 1.5; }
+.image-batch-strip__position { flex: none; color: var(--color-muted-foreground); font-variant-numeric: tabular-nums; }
+.image-batch-strip__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+.image-batch-strip__state { flex: none; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.image-batch-strip__state[data-status="pending"] { color: var(--color-muted-foreground); }
+.image-batch-strip__state[data-status="done"] { color: var(--color-success); }
+.image-batch-strip__state[data-status="failed"] { color: var(--color-destructive); }
+.image-batch-strip__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.image-batch-strip__error { flex-basis: 100%; }
+@media (min-width: 768px) {
+  .image-batch-strip { --batch-thumb: 76px; }
+}
+
+.image-batch-download__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.image-batch-download__meta { flex: 1 1 12rem; min-width: 0; display: flex; gap: 4px 10px; margin: 0; color: var(--color-muted-foreground); font-size: .84rem; font-variant-numeric: tabular-nums; }
+.image-batch-download__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-foreground); font-weight: 700; }
+.image-batch-download__error--shown { margin-top: 10px; }
+.image-batch-download__each { margin-top: 12px; border-top: 1px solid var(--color-border-subtle); }
+.image-batch-download__each > summary { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; list-style: none; cursor: pointer; font-size: .9rem; font-weight: 700; }
+.image-batch-download__each > summary::-webkit-details-marker { display: none; }
+.image-batch-download__each > summary::after { content: ''; inline-size: 20px; block-size: 20px; flex: none; background: var(--select-chevron) center / 20px no-repeat; transition: transform var(--duration-fast) var(--ease-standard); }
+.image-batch-download__each[open] > summary::after { transform: rotate(180deg); }
+.image-batch-download__each > summary:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
+.image-batch-download__each ul { margin: 0; padding: 0; list-style: none; }
+.image-batch-download__each li { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid var(--color-border-subtle); font-size: .875rem; }
+.image-batch-download__each .image-batch-download__name { font-weight: 600; }
+.image-batch-download__size { flex: none; color: var(--color-muted-foreground); font-size: .84rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 
 /* Brand compositions: adding a layer, the preview and the PNG action stay on the first
@@ -1177,50 +1309,126 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .workbench__queue-text p { margin: 0; overflow-wrap: anywhere; }
 .workbench__queue-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* PDF handwritten signature: the pad, the page view and the placements on it. */
-.pdf-signature__picker { margin-top: 24px; padding: 24px; border: var(--rule) dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
-.pdf-signature__picker > svg { display: block; margin-bottom: 12px; color: var(--color-primary-strong); }
-.pdf-signature__picker input { height: auto; min-height: 44px; max-width: 100%; }
-
-.pdf-signature__password { margin-top: 24px; padding: 16px; border: var(--rule) solid var(--color-warning); border-radius: var(--radius-md); }
-.pdf-signature .field-error { display: flex; align-items: flex-start; gap: 8px; }
-.pdf-signature .field-error svg { flex-shrink: 0; margin-top: 2px; }
-.pdf-signature__status, .pdf-signature__summary { margin-top: 16px; }
-.pdf-signature__summary { font-weight: 600; }
-.pdf-signature__document { margin-top: 16px; }
-.pdf-signature__warning { margin: 16px 0 0; padding: 12px 16px; border: var(--rule) solid var(--color-warning); border-radius: var(--radius-sm); font-size: .875rem; }
-.pdf-signature__signatures, .pdf-signature__saved, .pdf-signature__page, .pdf-signature__placement-fields, .pdf-signature__export { margin-top: 24px; padding-top: 24px; border-top: var(--rule) solid var(--color-border); }
-.pdf-signature__signature-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
-.pdf-signature__signature-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-sm); }
-.pdf-signature__signature-list img { width: 120px; height: auto; background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; border-radius: var(--radius-sm); }
-.pdf-signature__signature-list span { flex: 1 1 10rem; min-width: 0; overflow-wrap: anywhere; font-size: .84rem; }
-.pdf-signature__save { margin-top: 16px; }
-.pdf-signature__page-select { margin-bottom: 16px; }
-/* The page is the placement surface, so the overlay is positioned against the image itself. */
-.pdf-signature__canvas { position: relative; width: fit-content; max-width: 100%; margin-inline: auto; border: var(--rule) solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: #ffffff; }
-.pdf-signature__canvas > img { display: block; width: auto; max-width: 100%; height: auto; max-height: calc(var(--image-preview-max-height) * 1.6); }
-.pdf-signature__canvas > img { -webkit-user-drag: none; user-select: none; }
-.pdf-signature__placement { position: absolute; padding: 0; border: 2px dashed var(--color-primary-strong); border-radius: 2px; background: transparent; cursor: move; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* PDF handwritten signature, on one screen: the page on a stage, the signatures and the download beside it. */
+.pdf-signature { container: pdf-signature / inline-size; }
+.pdf-signature__layout { display: grid; gap: 20px; }
+.pdf-signature__main, .pdf-signature__side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+/* Page navigation on the left, the two edits that act on the page on the right. */
+.pdf-signature__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.pdf-signature__pager, .pdf-signature__edit { display: flex; align-items: center; gap: 4px; }
+.pdf-signature__page-select { width: auto; min-width: 5.5rem; font-variant-numeric: tabular-nums; }
+.pdf-signature__edit .ui-button { padding-inline: 14px; }
+/* The stage: the drop target before there is a document, warm paper under the page once there is one. */
+.pdf-signature__stage {
+  position: relative; display: grid; place-items: center; align-content: center; gap: 16px; min-height: 220px; padding: 20px 16px;
+  border: var(--rule) dashed var(--color-muted-foreground); border-radius: var(--radius-md); background: var(--color-surface-subtle);
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.pdf-signature__stage--dragging { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
+.pdf-signature__stage--busy > * { opacity: .55; transition: opacity var(--duration-fast) var(--ease-standard); }
+/* Sized from the screen rather than the page, so the page scales into it and the controls below stay put. */
+.pdf-signature--open .pdf-signature__stage { container-type: size; height: clamp(240px, 46svh, 520px); min-height: 0; padding: 12px; border-style: solid; border-color: transparent; overflow: hidden; }
+.pdf-signature__picker { display: grid; justify-items: center; gap: 12px; max-width: 30rem; text-align: center; }
+.pdf-signature__picker > svg { color: var(--color-primary-strong); }
+.pdf-signature__picker .field-help { margin: 0; text-wrap: balance; }
+.pdf-signature__picker--quiet { gap: 0; }
+/* A file input is chosen through its label, which looks like the button it acts as. */
+.pdf-signature__file-label { cursor: pointer; }
+.pdf-signature__file:focus-visible + .pdf-signature__file-label { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
+.pdf-signature__file:disabled + .pdf-signature__file-label { opacity: .55; cursor: not-allowed; pointer-events: none; }
+.pdf-signature__password { display: grid; justify-items: start; gap: 12px; width: min(100%, 22rem); }
+.pdf-signature__password .field-group { width: 100%; }
+.pdf-signature__capability { max-width: 30rem; margin: 0; }
+/* The page scales to fit the stage both ways, and placements are positioned against the image itself. */
+.pdf-signature__canvas { position: relative; width: fit-content; border: var(--rule) solid var(--color-border); background: #ffffff; }
+.pdf-signature__canvas > img { display: block; width: auto; height: auto; max-width: calc(100cqw - 4px); max-height: calc(100cqh - 4px); user-select: none; -webkit-user-drag: none; }
+/* The page is paper in either theme, so what is drawn on it is drawn in ink. */
+.pdf-signature__placement { position: absolute; padding: 0; border: 2px dashed var(--ink-950); border-radius: 2px; background: transparent; cursor: move; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .pdf-signature__placement > img { display: block; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; }
 /* Corner handles: a small visible square inside a larger invisible hit area for fingers. */
-.pdf-signature__handle { position: absolute; width: 12px; height: 12px; border: 2px solid var(--color-primary-strong); border-radius: 2px; background: #ffffff; touch-action: none; }
+.pdf-signature__handle { position: absolute; width: 12px; height: 12px; border: 2px solid var(--ink-950); border-radius: 2px; background: #ffffff; touch-action: none; }
 .pdf-signature__handle::before { content: ""; position: absolute; inset: -10px; }
 .pdf-signature__handle--top-left { top: -7px; left: -7px; cursor: nwse-resize; }
 .pdf-signature__handle--top-right { top: -7px; right: -7px; cursor: nesw-resize; }
 .pdf-signature__handle--bottom-left { bottom: -7px; left: -7px; cursor: nesw-resize; }
 .pdf-signature__handle--bottom-right { bottom: -7px; right: -7px; cursor: nwse-resize; }
-.pdf-signature__placement-hint { margin: 0; }
-.pdf-signature__placement--selected { border-style: solid; box-shadow: 0 0 0 2px var(--color-surface); }
-.pdf-signature__placement:focus-visible { outline: 3px solid var(--color-primary-strong); outline-offset: 3px; }
-.pdf-signature__download { margin-top: 16px; }
-/* The signature pad: a writing line, wide and shallow, with no scroll of its own. */
-.signature-pad { margin-top: 24px; padding-top: 24px; border-top: var(--rule) solid var(--color-border); }
-.signature-pad__forms { padding: 0; margin: 0 0 16px; border: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.signature-pad__forms legend { margin-bottom: 12px; font-weight: 650; }
-.signature-pad__canvas { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; border: var(--rule) dashed var(--color-muted-foreground); border-radius: var(--radius-sm); background-color: var(--color-surface); touch-action: none; }
-.signature-pad__imported-note { overflow-wrap: anywhere; }
-.pdf-signature__history { margin-top: 16px; }
-.signature-pad__panel { display: grid; gap: 12px; }
+.pdf-signature__placement--selected { border-style: solid; box-shadow: 0 0 0 2px #ffffff; }
+.pdf-signature__placement:focus-visible { outline: 3px solid var(--ink-950); outline-offset: 3px; }
+/* The list: saved signatures first, each one a picture of itself that places it with one press. */
+.pdf-signature__tray { display: flex; flex-direction: column; gap: 12px; }
+.pdf-signature__heading { margin: 0; font-size: 1.05rem; line-height: 1.3; letter-spacing: -.02em; }
+.pdf-signature__hint { margin: -6px 0 0; color: var(--color-muted-foreground); font-size: .8rem; line-height: 1.5; }
+.pdf-signature__list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pdf-signature__item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 6px; }
+.pdf-signature__item[data-saved-signature] { grid-template-columns: minmax(0, 1fr) auto; }
+.pdf-signature__thumb { display: block; width: 100%; height: 64px; padding: 4px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); }
+/* Signatures are ink, so their picture always sits on paper, in either theme. */
+.pdf-signature__thumb > img { display: block; width: 100%; height: 100%; padding: 4px 10px; border-radius: 8px; background: #ffffff; object-fit: contain; }
+button.pdf-signature__thumb { cursor: pointer; transition: background-color var(--duration-fast) var(--ease-standard); }
+button.pdf-signature__thumb:active:not(:disabled) { background: var(--color-surface-hover); }
+button.pdf-signature__thumb:disabled { opacity: .55; cursor: not-allowed; }
+.pdf-signature__saved-mark { display: inline-flex; align-items: center; gap: 4px; padding-inline: 4px 8px; color: var(--color-muted-foreground); font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.pdf-signature__saved-mark > svg { color: var(--color-success); }
+.pdf-signature__save { padding-inline: 14px; }
+.pdf-signature__storage { margin: 0; color: var(--color-muted-foreground); font-size: .78rem; line-height: 1.5; }
+.pdf-signature__storage a { color: var(--color-primary-strong); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.pdf-signature__create { display: grid; gap: 8px; }
+.pdf-signature__list ~ .pdf-signature__create { padding-top: 12px; border-top: 1px solid var(--color-border-subtle); }
+.pdf-signature__create-title { margin: 0; font-size: .86rem; font-weight: 700; }
+.pdf-signature__create-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pdf-signature__create-actions .ui-button { gap: 6px; padding-inline: 8px; }
+/* The download and the two sentences that belong to it; the status and errors of the whole workspace read here. */
+.pdf-signature__footer { display: flex; flex-direction: column; }
+.pdf-signature__footer > * { margin: 0; }
+.pdf-signature__footer > :not(:empty) ~ :not(:empty) { margin-top: 10px; }
+.pdf-signature--open .pdf-signature__footer { padding-top: 14px; border-top: 1px solid var(--color-border-subtle); }
+.pdf-signature__note { color: var(--color-muted-foreground); font-size: .78rem; line-height: 1.5; }
+.pdf-signature__warning { padding: 10px 12px; border: var(--rule) solid var(--color-warning); border-radius: var(--radius-sm); font-size: .8rem; line-height: 1.5; }
+.pdf-signature .field-error { display: flex; align-items: flex-start; gap: 8px; }
+.pdf-signature .field-error svg { flex-shrink: 0; margin-top: 2px; }
+.pdf-signature__status { font-size: .84rem; line-height: 1.5; }
+.pdf-signature__export-summary { font-size: .84rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pdf-signature__primary { width: 100%; }
+.pdf-signature__close { align-self: center; }
+@media (hover: hover) and (pointer: fine) {
+  button.pdf-signature__thumb:hover:not(:disabled) { background: var(--color-surface-hover); }
+}
+/* Wide enough for the page and the list side by side: the workspace then fills the screen under the top bar. */
+@container pdf-signature (min-width: 700px) {
+  .pdf-signature__layout { grid-template-columns: minmax(0, 1fr) minmax(264px, 300px); gap: 24px; }
+  .pdf-signature__stage { min-height: 340px; }
+  .pdf-signature--open .pdf-signature__layout { height: max(500px, calc(100svh - 156px)); }
+  .pdf-signature--open .pdf-signature__main, .pdf-signature--open .pdf-signature__side { min-height: 0; }
+  .pdf-signature--open .pdf-signature__stage { flex: 1 1 0; height: auto; }
+  /* A long list scrolls on its own, so the download never leaves the screen; the inset keeps focus rings whole. */
+  .pdf-signature--open .pdf-signature__tray { flex: 1 1 0; min-height: 0; margin: -6px; padding: 6px; overflow-y: auto; }
+}
+/* On a phone the edits keep their names for screen readers and show only their icons. */
+@container pdf-signature (max-width: 459.98px) {
+  .pdf-signature__edit .ui-button { width: 44px; padding: 0; }
+  .pdf-signature__tool-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+/* Making a signature: a sheet over the workspace, with a wide pad on paper. */
+.signature-dialog__overlay { position: fixed; z-index: 60; inset: 0; background: color-mix(in srgb, var(--ink-950) 58%, transparent); }
+.signature-dialog {
+  position: fixed; z-index: 61; top: 50%; left: 50%; translate: -50% -50%; width: min(720px, calc(100vw - 32px)); max-height: calc(100svh - 32px); overflow-y: auto;
+  display: grid; gap: 16px; padding: clamp(16px, 3vw, 24px); border: var(--rule) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);
+  animation: signature-dialog-enter var(--duration-normal) var(--ease-enter);
+}
+.signature-dialog__title { margin: 0; font-size: 1.25rem; line-height: 1.25; letter-spacing: -.02em; }
+.signature-dialog__title:focus { outline: none; }
+@keyframes signature-dialog-enter { from { opacity: 0; translate: -50% calc(-50% + 12px); } }
+.signature-pad { display: grid; gap: 16px; }
+.signature-pad__surface { position: relative; }
+/* A signing line and a word to start on, both gone once there is ink. */
+.signature-pad__surface::after { content: ""; position: absolute; inset: auto 8% 26%; border-bottom: 1.5px solid var(--ink-200); pointer-events: none; }
+.signature-pad__hint { position: absolute; left: 8%; bottom: calc(26% + 10px); color: var(--ink-700); font-size: .9rem; font-weight: 700; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-standard); }
+.signature-pad__surface--inked .signature-pad__hint { opacity: 0; }
+.signature-pad__canvas { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; border: var(--rule) dashed var(--color-muted-foreground); border-radius: var(--radius-md); background-color: #ffffff; touch-action: none; }
+.signature-pad__canvas--preview { margin-top: 12px; border-style: solid; border-color: var(--color-border-subtle); }
+.signature-pad .field-error { margin: 0; }
+.signature-pad__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.signature-pad__clear { margin-right: auto; }
 
 /* One ruled card per tool: what used to be a panel inside it is a section under a hairline. */
 :is(.ntd-rules, .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources, .image-background-remover__model, .workbench__model, .workbench__check) {
