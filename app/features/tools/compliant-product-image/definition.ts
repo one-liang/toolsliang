@@ -3,9 +3,10 @@ import type { UnpublishedToolDefinition } from '../catalog'
 /**
  * The standalone page was withdrawn (ADR-0019), and the channel presets, rule
  * checks and sources behind the workbench's compliant branch went after it
- * (ADR-0022). Only the layout renderer in this folder is still in use, by the
- * workbench's layout step. The slug stays registered as unpublished so nothing
- * else can claim it and a device that saved it is cleaned against the registry.
+ * (ADR-0022). The workbench now lays out with the brand promo editor (#112),
+ * so the layout renderer that was left here went too. The slug stays
+ * registered as unpublished so nothing else can claim it and a device that
+ * saved it is cleaned against the registry.
  */
 export const compliantProductImageDefinition: UnpublishedToolDefinition = {
   slug: 'compliant-product-image', category: 'image-commerce', icon: 'shopping-bag',

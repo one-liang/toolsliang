@@ -17,6 +17,8 @@ export interface PromoEditorOptions {
    * layout that is built up once and reused.
    */
   order?: 'top' | 'kind'
+  /** Whether this editor reports unfinished work for itself; a page that embeds it reports for the whole page. */
+  trackDirty?: boolean
 }
 
 /** The asset id a slot layer carries; its picture is handed in from outside the editor. */
@@ -62,7 +64,7 @@ export function usePromoEditor(options: PromoEditorOptions = {}) {
   const producing = ref(-1)
   const importer = createImageCompressor(), renderer = createPromoRenderer()
   let generation = 0, mounted = true
-  useWorkspaceDirty('brand-promo-image', computed(() => scene.value.layers.length > 0 || busy.value))
+  if (options.trackDirty !== false) useWorkspaceDirty('brand-promo-image', computed(() => scene.value.layers.length > 0 || busy.value))
 
   function clearOutput() {
     if (output.value) URL.revokeObjectURL(output.value)
@@ -163,7 +165,11 @@ export function usePromoEditor(options: PromoEditorOptions = {}) {
   function moveToEdge(edge: 'front' | 'back') {
     if (selectedId.value) reorder(selectedId.value, edge === 'front' ? scene.value.layers.length - 1 : 0)
   }
-  function remove() { commit({ ...scene.value, layers: scene.value.layers.filter(layer => layer.id !== selectedId.value) }) }
+  /** The slot layer is where the photos go, so it stays: there is nothing to put them in without it. */
+  function remove() {
+    if (selectedId.value === slot.value.layerId) return
+    commit({ ...scene.value, layers: scene.value.layers.filter(layer => layer.id !== selectedId.value) })
+  }
   function undo() { if (!busy.value) { history.undo(); sync() } }
   function redo() { if (!busy.value) { history.redo(); sync() } }
   function cancel() {

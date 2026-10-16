@@ -131,7 +131,7 @@ function dragLayerEnd() { draggedLayerId.value = ''; dropTargetId.value = '' }
             <ArrowDown :size="18" aria-hidden="true" />{{ en ? 'Move down' : '下移一層' }}
           </Button>
           <Button v-if="selected.scaleY !== undefined" variant="outline" @click="patchLayer({ scaleY: undefined })">{{ en ? 'Restore proportions' : '還原原始比例' }}</Button>
-          <Button variant="outline" @click="remove">
+          <Button v-if="selected.id !== editor.slot.value.layerId" variant="outline" @click="remove">
             <Trash2 :size="18" aria-hidden="true" />{{ en ? 'Remove layer' : '移除圖層' }}
           </Button>
         </div>

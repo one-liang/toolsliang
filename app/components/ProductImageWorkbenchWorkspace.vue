@@ -1,635 +1,197 @@
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch, type Ref } from 'vue'
-import { CircleCheck, Download, RotateCcw, Trash2, TriangleAlert, X } from '@lucide/vue'
+import { computed, ref } from 'vue'
+import { Play, Redo2, Undo2, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { useBackgroundRemovalModel } from '@/composables/useBackgroundRemovalModel'
-import { useProductImageWorkbench } from '@/composables/useProductImageWorkbench'
+import ImageBatchDownload from '@/components/ImageBatchDownload.vue'
+import ImageBatchPicker from '@/components/ImageBatchPicker.vue'
+import ImageBatchStrip from '@/components/ImageBatchStrip.vue'
+import PromoCanvas from '@/components/PromoCanvas.vue'
+import PromoLayers from '@/components/PromoLayers.vue'
+import { useProductWorkbench, type WorkbenchJobs } from '@/composables/useProductWorkbench'
+import { usePromoShortcuts } from '@/composables/usePromoShortcuts'
 import { copy } from '@/features/tools/catalog'
-import { heicMessage } from '@/features/images/messages'
-import { formatAssetSize } from '@/features/pwa/offline-assets'
-import { portraitScopeNotice } from '@/features/tools/image-background-remover/content'
-import { planPlacement } from '@/features/tools/compliant-product-image/domain/placement'
-import { compliantImageSizeIssues } from '@/features/tools/compliant-product-image/content'
-import { describeSizeIssue, formatMimeTypes } from '@/features/tools/compliant-product-image/domain/render'
-import { planBrandScene, workbenchCanvasBounds } from '@/features/tools/product-image-workbench/pipeline'
-import { workbenchArchiveName, workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
-import { workbenchItemStatus } from '@/features/tools/product-image-workbench/queue'
-import { imageInputLimits } from '@/features/images/limits'
-import { promoPlacement } from '@/features/tools/brand-promo-image/scene'
-import { workbenchSteps, type WorkbenchStep } from '@/features/tools/product-image-workbench/session'
-import {
-  workbenchAdmissionMessage,
-  workbenchArchiveIssues,
-  workbenchBlockReasons,
-  workbenchErrorMessage,
-  workbenchItemLabel,
-  workbenchItemStatusLabels,
-  workbenchLimitsNotice,
-  workbenchLocalNotice,
-  workbenchQueueSummary,
-  workbenchStages,
-  workbenchStepErrors,
-  workbenchStepLabels,
-  workbenchStepStateLabels,
-  workbenchStepSummaries,
-} from '@/features/tools/product-image-workbench/content'
+import type { PromoLayerKind } from '@/features/tools/brand-promo-image/scene'
+import { modelPreparationIssues } from '@/features/tools/image-background-remover/content'
+import { workbenchArchiveName } from '@/features/tools/product-image-workbench/archive'
+import { workbenchErrors, workbenchJobHints, workbenchJobLabels, workbenchStages } from '@/features/tools/product-image-workbench/content'
 
-const { locale, withLocale } = useAppLocale()
+/**
+ * One screen for a batch of product photos: the photos under the canvas they
+ * are laid out on, and beside them the three jobs to run on every one — the
+ * cutout, the layout and the compression, each the tool it comes from — with
+ * one button that runs them all and the downloads once they are done.
+ */
+const { locale } = useAppLocale()
 const en = computed(() => locale.value === 'en')
-const workbench = useProductImageWorkbench()
+const workbench = useProductWorkbench()
 const {
-  archiveIssue, archiveSupported, archiveUrl, archiving, artifacts, availableFormats, brandSettings,
-  buildArchive, busy, cancelAll, cancelItem, canRetryItem, chooseBrandAsset, clearBrandAsset, compression,
-  current, failedStep, frame, frameSize, frameUrl, goTo, importFiles, importIssues, items,
-  layoutSupported, limits, logo, logoSize, logoUrl, notice, outputs, pipeline, prepare, preparing,
-  previewItem, previews, progress, removeItem, reset, retryItem, runStep,
-  runningStep, selectItem, selected, settings, sizes, skip, stages, stepStatus, usedBytes, withdrawn,
+  batch, items, selected, editor, jobs, format, offeredFormats, removerSupported, compressorCapabilities, removerCapabilities,
+  running, runningId, stage, waiting, message, issue, busy, anyJob, pending, done, downloads, cutouts, model,
+  start, cancel, retry, remove, clear, add,
 } = workbench
+const { canUndo, canRedo, undo, redo, importFile, supported: composeSupported, preparing: composeChecking, error: editorError } = editor
+const picker = ref<InstanceType<typeof ImageBatchPicker>>()
+const layerInput = ref<HTMLInputElement>()
+const layerKind = ref<PromoLayerKind>('background')
+/** Set by the layers panel while a typed number is out of range. */
+const invalid = ref(false)
+const shortcut = usePromoShortcuts(editor, busy)
+const jobKeys: (keyof WorkbenchJobs)[] = ['cutout', 'compose', 'compress']
+const layerKinds: PromoLayerKind[] = ['background', 'frame', 'logo']
+const layerLabels = computed(() => en.value ? { background: 'Background', frame: 'Frame', logo: 'Logo', product: 'Product' } : { background: '背景', frame: '框版', logo: 'Logo', product: '商品圖' })
+const several = computed(() => items.value.length > 1)
+const checking = computed(() => !removerCapabilities.value || !compressorCapabilities.value || composeChecking.value)
+const formatName = (value: string) => value.replace('image/', '').toUpperCase()
 
-const heading = ref<HTMLElement>()
-const queueHeading = ref<HTMLElement>()
-const importInput = ref<HTMLInputElement>()
-const {
-  cancel: cancelModel, download, downloading: modelDownloading, failure: modelFailure,
-  online, percent: modelPercent, ready: modelReady, totalBytes: modelBytes,
-} = useBackgroundRemovalModel()
-
-const currentStatus = computed(() => stepStatus(current.value))
-const blockedReason = computed(() => pipeline.value.blocked[current.value])
-const sizeIssue = computed(() => describeSizeIssue(workbenchCanvasBounds, Number(settings.value.width), Number(settings.value.height)))
-
-/** Every distinct reason an item stopped on this step: an aggregate that hides one is worse than none. */
-const stepErrors = computed(() => {
-  const codes = items.value.map(item => item.session.errors[current.value]).filter((code): code is string => Boolean(code))
-
-  return [...new Set(codes)].map(code => workbenchErrorMessage(current.value, code, locale.value))
-})
-
-const readyCount = computed(() => currentStatus.value.counts.ready)
-const canRunLayout = computed(() => !busy.value && layoutSupported.value && !sizeIssue.value && !invalidLayoutField.value && readyCount.value > 0)
-
-/**
- * The rail is numbered by the run, not by the module: a step this device does
- * not have stays listed with its reason, but takes no number —
- * otherwise its position in the list would disagree with the progress summary.
- */
-const stepList = computed(() => {
-  let position = 0
-
-  return workbenchSteps.map((step) => {
-    const state = stepStatus(step)
-
-    return {
-      step,
-      state: state.state,
-      counts: state.counts,
-      order: state.state === 'unavailable' ? undefined : ++position,
-      label: copy(workbenchStepLabels[step], locale.value),
-      stateLabel: copy(workbenchStepStateLabels[state.state], locale.value),
-      reachable: state.reachable,
-    }
-  })
-})
-
-const applicableSteps = computed(() => stepList.value.filter(item => item.order))
-const currentOrder = computed(() => stepList.value.find(item => item.step === current.value)?.order ?? 0)
-const progressText = computed(() => en.value
-  ? `Step ${currentOrder.value} of ${applicableSteps.value.length}`
-  : `第 ${currentOrder.value} 步，共 ${applicableSteps.value.length} 步`)
-const queueSummary = computed(() => workbenchQueueSummary(progress.value, locale.value))
-
-/** One row of the job queue: what it is, where it got to, and what can be done to it. */
-const rows = computed(() => items.value.map((item) => {
-  const state = workbenchItemStatus(item.session)
-  const failed = failedStep(item.session)
-  const output = outputs.value.find(entry => entry.id === item.id)
-  const artifact = output ? artifacts.value[item.id]?.[output.step] : undefined
-  const stage = stages.value[item.id]
-  const produced = artifacts.value[item.id] ?? {}
-  // The row shows the newest thing this item has, so progress is visible per row.
-  const latest = produced.compress ?? produced.brand ?? produced.layout ?? produced.cutout
-
-  return {
-    id: item.id,
-    ordinal: item.ordinal,
-    label: workbenchItemLabel(item.ordinal, locale.value),
-    state,
-    stateLabel: copy(workbenchItemStatusLabels[state], locale.value),
-    stageText: stage ? workbenchStages[stage]?.[locale.value] ?? '' : '',
-    error: failed && item.session.errors[failed] ? workbenchErrorMessage(failed, item.session.errors[failed]!, locale.value) : '',
-    canRetry: canRetryItem(item.session),
-    running: state === 'running',
-    // A batch is running and this one has not started: it can still be taken out,
-    // and once it has been, there is nothing left to offer to cancel.
-    queued: Boolean(runningStep.value) && state === 'pending' && !withdrawn.value.includes(item.id),
-    preview: latest?.url ?? previews.value[item.id],
-    alpha: latest?.format === 'image/png',
-    size: sizes.value[item.id],
-    bytes: item.bytes,
-    download: artifact && output ? { url: artifact.url, name: workbenchOutputName('promotional', output.ordinal, artifact.format), bytes: artifact.bytes, width: artifact.width, height: artifact.height } : undefined,
-  }
-}))
-
-const importMessages = computed(() => importIssues.value.map(issue => issue.kind === 'admission'
-  ? workbenchAdmissionMessage(issue.code as 'too_many_items' | 'batch_too_large', limits.value, locale.value)
-  : workbenchErrorMessage('import', issue.code, locale.value)))
-
-const stageText = computed(() => {
-  if (archiving.value) return workbenchStages.archiving?.[locale.value] ?? ''
-  const running = rows.value.find(row => row.stageText)
-
-  return running ? `${running.label}：${running.stageText}` : ''
-})
-
-const noticeText = computed(() => {
-  if (stageText.value) return stageText.value
-  const messages: Record<string, string> = en.value
-    ? {
-        'imported': 'Images added to the batch. Remove the background or go straight to layout.',
-        'skipped': 'Step skipped for the batch. Everything you completed earlier is unchanged.',
-        'cancelled': 'Cancelled. Items that finished keep their results and stay downloadable.',
-        'step-done': 'Step finished. Check the queue, then continue with the next step.',
-        'asset-added': 'Brand asset added to this session only.',
-        'removed': 'Item removed from the batch. Nothing was kept on this device.',
-        'archive-ready': 'The archive is packed on this device and ready to download.',
-        'reset': 'Workbench cleared. Nothing was kept on this device.',
-      }
-    : {
-        'imported': '已加入批次，可以整批去背，也可以直接進入版型。',
-        'skipped': '整批已略過這一步，先前完成的步驟未變更。',
-        'cancelled': '已取消。已完成的項目保留成果，仍可下載。',
-        'step-done': '這一步結束了，確認佇列狀態後可以進行下一步。',
-        'asset-added': '已加入品牌素材，只存在於這次作業。',
-        'removed': '已從批次移除該項目，裝置上沒有留下任何內容。',
-        'archive-ready': '封存檔已在這台裝置打包完成，可以下載。',
-        'reset': '已清空工作台，裝置上沒有留下任何內容。',
-      }
-  return messages[notice.value] ?? ''
-})
-
-const modelStatus = computed(() => {
-  if (modelReady.value) return en.value ? 'The model is on this device. The cutout works offline.' : '模型已在這台裝置，離線也能去背。'
-  if (modelDownloading.value) return en.value ? `Downloading the model… ${modelPercent.value}%` : `正在下載模型…… ${modelPercent.value}%`
-  if (!online.value) return en.value ? 'You are offline, so the model cannot be downloaded yet. You can skip the cutout.' : '目前離線，還無法下載模型；可以略過去背。'
-  if (modelFailure.value === 'digest-mismatch') return en.value ? 'The downloaded file did not match the published fingerprint and was discarded. Download it again.' : '下載到的檔案與公布的指紋不符，已捨棄不使用。請重新下載。'
-  if (modelFailure.value) return en.value ? 'The download did not finish. Nothing was kept, so you can try again.' : '下載未完成，已清除未完成的內容，可以重新下載。'
-  return en.value
-    ? `The cutout needs about ${formatAssetSize(modelBytes, 'en')} of model and runtime on this device. It is checked against a published fingerprint, can be cancelled, and is reused offline afterwards. Skipping the cutout needs no download.`
-    : `去背需要約 ${formatAssetSize(modelBytes, 'zh-tw')} 的模型與推論資源留在這台裝置。下載內容會比對公布的指紋，隨時可取消，之後離線也能重複使用。略過去背則不需要下載。`
-})
-
-/** The canvas the preview frame stands for, and where the previewed item lands on it. */
-const canvas = computed(() => ({ width: Number(settings.value.width) || 1, height: Number(settings.value.height) || 1 }))
-const previewSize = computed(() => previewItem.value ? sizes.value[previewItem.value.id] : undefined)
-const placement = computed(() => previewSize.value && !sizeIssue.value
-  ? planPlacement({
-      sourceWidth: previewSize.value.width,
-      sourceHeight: previewSize.value.height,
-      targetWidth: canvas.value.width,
-      targetHeight: canvas.value.height,
-      fit: settings.value.fit,
-      zoom: Number(settings.value.zoom),
-      offsetX: Number(settings.value.offsetX),
-      offsetY: Number(settings.value.offsetY),
-    })
-  : undefined)
-const previewArtifacts = computed(() => previewItem.value ? artifacts.value[previewItem.value.id] ?? {} : {})
-const layoutPreviewUrl = computed(() => previewArtifacts.value.cutout?.url ?? (previewItem.value ? previews.value[previewItem.value.id] : ''))
-const placementStyle = computed(() => {
-  const spot = placement.value
-  if (!spot) return undefined
-  return {
-    left: `${spot.x / canvas.value.width * 100}%`,
-    top: `${spot.y / canvas.value.height * 100}%`,
-    width: `${spot.width / canvas.value.width * 100}%`,
-    height: `${spot.height / canvas.value.height * 100}%`,
-  }
-})
-/** The finished file the output step previews for the selected item. */
-const previewOutput = computed(() => {
-  const entry = previewItem.value && outputs.value.find(output => output.id === previewItem.value!.id)
-
-  return entry ? previewArtifacts.value[entry.step] : undefined
-})
-
-/**
- * The brand preview is built from the scene the renderer is actually handed and
- * placed with the renderer's own geometry, so the two cannot drift: a Logo that
- * looks a quarter of a non-square canvas wide here is that wide in the file.
- */
-const brandPreview = computed(() => {
-  const product = previewArtifacts.value.layout
-  if (!product) return []
-  const { scene } = planBrandScene({
-    canvas: { width: product.width, height: product.height },
-    product: product.file,
-    frame: frame.value,
-    logo: logo.value,
-    ...brandSettings.value,
-  })
-  const sources: Record<string, { url: string, width: number, height: number } | undefined> = {
-    product: { url: product.url, width: product.width, height: product.height },
-    frame: frameSize.value && { url: frameUrl.value, ...frameSize.value },
-    logo: logoSize.value && { url: logoUrl.value, ...logoSize.value },
-  }
-
-  return scene.layers.flatMap((layer) => {
-    const source = sources[layer.assetId]
-    if (!source) return []
-    const spot = promoPlacement(layer, source.width, source.height, scene.width, scene.height)
-
-    return [{
-      id: layer.id,
-      url: source.url,
-      style: {
-        left: `${spot.x / scene.width * 100}%`,
-        top: `${spot.y / scene.height * 100}%`,
-        width: `${spot.width / scene.width * 100}%`,
-        height: `${spot.height / scene.height * 100}%`,
-        opacity: layer.opacity,
-      },
-    }]
-  })
-})
-
-const logoFields = computed(() => [
-  { key: 'logoScale' as const, label: en.value ? 'Logo scale (%)' : 'Logo 縮放（%）', min: 1, max: 400 },
-  { key: 'logoX' as const, label: en.value ? 'Logo horizontal position (%)' : 'Logo 水平位置（%）', min: -100, max: 100 },
-  { key: 'logoY' as const, label: en.value ? 'Logo vertical position (%)' : 'Logo 垂直位置（%）', min: -100, max: 100 },
-  { key: 'logoOpacity' as const, label: en.value ? 'Logo opacity (%)' : 'Logo 不透明度（%）', min: 0, max: 100 },
-])
-
-const compressionFields = computed(() => [
-  { key: 'quality' as const, label: en.value ? 'Quality (%)' : '品質（%）', min: 1, max: 100 },
-  { key: 'maxWidth' as const, label: en.value ? 'Largest width (px)' : '最大寬度（像素）', min: 1, max: imageInputLimits.maxSide },
-  { key: 'maxHeight' as const, label: en.value ? 'Largest height (px)' : '最大高度（像素）', min: 1, max: imageInputLimits.maxSide },
-])
-
-/**
- * A number field holds text while it is being typed, so the setting it feeds is
- * only replaced once the text is a number this step can actually use. A field
- * left mid-edit keeps its own invalid state instead of resetting under the
- * merchant, and nothing downstream ever sees a half-typed value.
- */
-const numericFields = [
-  { key: 'width' as const, min: 1, max: 8192, integer: true },
-  { key: 'height' as const, min: 1, max: 8192, integer: true },
-  { key: 'zoom' as const, min: 1, max: 400, integer: false },
-  { key: 'offsetX' as const, min: -100, max: 100, integer: false },
-  { key: 'offsetY' as const, min: -100, max: 100, integer: false },
-]
-const drafts = reactive<Record<string, string | number>>({})
-const invalidFields = reactive<Record<string, boolean>>({})
-// Scoped per step: a half-typed canvas width has no business blocking the Logo.
-const invalidLayoutField = computed(() => numericFields.some(field => invalidFields[field.key]))
-const invalidLogoField = computed(() => logoFields.value.some(field => invalidFields[field.key]))
-const invalidCompressionField = computed(() => compressionFields.value.some(field => invalidFields[field.key]))
-
-watch([settings, brandSettings, compression], () => {
-  for (const field of numericFields) if (!invalidFields[field.key]) drafts[field.key] = settings.value[field.key]
-  for (const field of logoFields.value) if (!invalidFields[field.key]) drafts[field.key] = brandSettings.value[field.key]
-  for (const field of compressionFields.value) if (!invalidFields[field.key]) drafts[field.key] = compression.value[field.key]
-}, { immediate: true, deep: true })
-
-/**
- * One editor for every numeric field: find the range it declared, judge the text
- * against it, and only then replace the setting it feeds. Three copies of this
- * would be three chances for one group of fields to validate differently from
- * the others.
- */
-function editNumber<Settings extends Record<string, unknown>, Key extends string & keyof Settings>(
-  fields: () => readonly { key: Key, min: number, max: number, integer?: boolean }[],
-  target: Ref<Settings>,
-) {
-  return (key: Key, raw: string | number) => {
-    const field = fields().find(item => item.key === key)!
-    drafts[key] = raw
-    const value = Number(raw)
-    invalidFields[key] = raw === '' || !Number.isFinite(value) || value < field.min || value > field.max || (field.integer === true && !Number.isInteger(value))
-    if (!invalidFields[key]) target.value = { ...target.value, [key]: value }
-  }
+/** Why a job cannot be ticked on this device, if it cannot. */
+function unavailable(job: keyof WorkbenchJobs) {
+  if (checking.value) return false
+  if (job === 'cutout') return !removerSupported.value
+  if (job === 'compose') return !composeSupported.value
+  return !compressorCapabilities.value?.supported
 }
-const setLayoutNumber = editNumber(() => numericFields, settings)
-const setLogoNumber = editNumber(() => logoFields.value, brandSettings)
-const setCompressionNumber = editNumber(() => compressionFields.value, compression)
 
-/** The step a merchant returns to: the nearest earlier step this run still has. */
-const previousStep = computed(() => {
-  const index = stepList.value.findIndex(item => item.step === current.value)
-
-  return stepList.value.slice(0, index).filter(item => item.reachable).at(-1)?.step
+/** What the photo on screen looks like without a layout: its result, its cutout, or the photo itself. */
+const plain = computed(() => {
+  const item = selected.value
+  if (!item) return undefined
+  if (item.status === 'done' && item.result) return { url: item.result.url, alpha: item.result.format !== 'image/jpeg' }
+  const cutout = jobs.cutout ? cutouts.value[item.id] : undefined
+  return cutout ? { url: cutout.url, alpha: true } : { url: item.url, alpha: false }
+})
+const runLabel = computed(() => {
+  if (issue.value) return en.value ? 'Try again' : '重試'
+  if (pending.value === items.value.length) return several.value ? (en.value ? `Process all ${pending.value}` : `全部處理（${pending.value} 張）`) : (en.value ? 'Process' : '開始處理')
+  return en.value ? `Process the other ${pending.value}` : `處理剩下的 ${pending.value} 張`
+})
+const status = computed(() => {
+  if (waiting.value) return en.value ? 'Getting ready. Background removal starts on its own when it is done.' : '準備中，完成後會自動開始去背。'
+  if (running.value) {
+    const step = stage.value ? workbenchStages[stage.value][locale.value] : ''
+    const position = items.value.findIndex(item => item.id === runningId.value) + 1
+    return en.value ? `Image ${position} of ${items.value.length}: ${step}` : `第 ${position}／${items.value.length} 張：${step}`
+  }
+  if (message.value === 'cancelled') return en.value ? 'Cancelled. Your originals are unchanged; you can carry on.' : '已取消。原圖未變更，可以繼續處理。'
+  if (message.value === 'done') return en.value ? `${done.value.length} of ${items.value.length} images done.` : `完成 ${done.value.length}／${items.value.length} 張。`
+  return ''
+})
+const errorText = computed(() => {
+  if (invalid.value) return copy(workbenchErrors.invalid_options!, locale.value)
+  if (issue.value) return modelPreparationIssues[issue.value][locale.value]
+  if (editorError.value) return copy(workbenchErrors[editorError.value] ?? workbenchErrors.failed!, locale.value)
+  const item = selected.value
+  if (several.value || item?.status !== 'failed' || !item.error) return ''
+  return copy(workbenchErrors[item.error] ?? workbenchErrors.failed!, locale.value)
 })
 
-function number(value: number) {
-  return new Intl.NumberFormat(en.value ? 'en' : 'zh-TW').format(value)
+function pickLayer(kind: PromoLayerKind) {
+  layerKind.value = kind
+  layerInput.value?.click()
 }
-function chooseFiles(event: Event, take: (files: File[]) => void) {
+function chooseLayer(event: Event) {
   const input = event.target as HTMLInputElement
-  const files = [...input.files ?? []]
-  if (files.length) take(files)
+  const file = input.files?.[0]
+  if (file) void importFile(file, layerKind.value)
   input.value = ''
 }
-async function downloadModel() {
-  if (await download() === 'insufficient_storage') importIssues.value = [{ kind: 'input', code: 'insufficient_storage' }]
-}
-/**
- * Moving to a step deliberately moves the reading position with it. A step that
- * finishes on its own does not: the progress summary announces it, and taking
- * focus away from what someone just did is a change of context they did not ask
- * for.
- */
-async function open(step: WorkbenchStep) {
-  goTo(step)
-  await nextTick()
-  if (current.value === step) heading.value?.focus()
-}
-
-async function skipStep(step: WorkbenchStep) {
-  skip(step)
-  await nextTick()
-  heading.value?.focus()
-}
-
-/**
- * Removing a row takes its buttons with it, so the reading position is put back
- * deliberately: on the row that moved into its place, or on the list itself when
- * the batch is now empty.
- */
-async function dropItem(id: string) {
-  const index = items.value.findIndex(item => item.id === id)
-  removeItem(id)
-  await nextTick()
-  const next = items.value[Math.min(index, items.value.length - 1)]
-  const target = next && document.querySelector<HTMLElement>(`[data-queue-item="${next.id}"] [data-queue-remove]`)
-  // The list itself goes away with its last row, so the panel heading takes over.
-  if (target) target.focus()
-  else (queueHeading.value ?? heading.value)?.focus()
+function removePhoto(id: string) {
+  remove(id)
+  if (!items.value.length) picker.value?.focus()
 }
 </script>
 
 <template>
-  <Card class="tool-workspace product-image-workbench" :aria-busy="busy">
-    <p class="field-help">{{ copy(workbenchLocalNotice, locale) }}</p>
+  <Card class="tool-workspace workbench product-image-workbench" :data-model-ready="String(model.ready.value)" :aria-busy="busy" @keydown="shortcut">
+    <p v-if="checking" role="status" class="capability-checking">{{ en ? 'Checking what this browser can do…' : '正在確認這個瀏覽器能做哪些事…' }}</p>
 
-    <p v-if="preparing" role="status">{{ en ? 'Checking what this browser can run locally…' : '正在檢查這個瀏覽器可在本機執行的步驟…' }}</p>
-    <div v-else-if="!layoutSupported" class="capability-warning">
-      <p>{{ workbenchStepErrors.layout.unsupported_browser![locale] }}</p>
-      <Button variant="outline" @click="prepare">{{ en ? 'Check again' : '重新檢查' }}</Button>
-    </div>
+    <ImageBatchPicker ref="picker" :count="batch.held.value.count" :bytes="batch.held.value.bytes" :limits="batch.limits.value" @add="add" @clear="clear" />
 
-    <nav class="workbench__steps" :aria-label="en ? 'Workbench steps' : '工作台步驟'">
-      <ol>
-        <li v-for="item in stepList" :key="item.step" :data-workbench-step="item.step" :data-workbench-state="item.state">
-          <Button
-            variant="outline"
-            :aria-current="item.step === current ? 'step' : undefined"
-            :disabled="!item.reachable || busy"
-            @click="open(item.step)"
-          >
-            <CircleCheck v-if="item.state === 'done'" :size="16" aria-hidden="true" />
-            <span>{{ item.order ? `${item.order}. ` : '' }}{{ item.label }}</span>
-            <span class="workbench__state">{{ item.stateLabel }}</span>
-          </Button>
-        </li>
-      </ol>
-      <p role="status" class="field-help">{{ progressText }} · {{ queueSummary }}</p>
-    </nav>
-
-    <section class="workbench__panel" :data-workbench-panel="current" :aria-labelledby="`workbench-${current}`">
-      <h2 :id="`workbench-${current}`" ref="heading" tabindex="-1">{{ copy(workbenchStepLabels[current], locale) }}</h2>
-      <p class="field-help">{{ copy(workbenchStepSummaries[current], locale) }}</p>
-      <p v-if="blockedReason" class="capability-warning">{{ copy(workbenchBlockReasons[blockedReason], locale) }}</p>
-
-      <template v-if="current === 'import'">
-        <div class="field-group">
-          <label for="workbench-file">{{ en ? 'Choose product images' : '選擇商品圖' }}</label>
-          <input
-            id="workbench-file"
-            ref="importInput"
-            class="ui-input"
-            type="file"
-            multiple
-            accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
-            :disabled="busy"
-            :aria-invalid="importMessages.length > 0"
-            aria-describedby="workbench-import-help workbench-import-issues"
-            @change="chooseFiles($event, files => importFiles(files))"
-          >
-          <p id="workbench-import-help" class="field-help">
-            JPEG · PNG · WebP · {{ workbenchLimitsNotice(limits, locale) }}
-            {{ en ? `Used so far: ${number(usedBytes)} bytes.` : `目前已使用 ${number(usedBytes)} bytes。` }}
-            {{ en ? 'Each image: up to 25 MiB and 24 MP.' : '單張最多 25 MiB、2,400 萬像素。' }} {{ copy(heicMessage, locale) }}
+    <div v-if="selected" class="workbench__layout">
+      <div class="workbench__stage">
+        <ImageBatchStrip
+          v-if="several"
+          class="workbench__strip"
+          :items="items"
+          :selected-id="selected.id"
+          :disabled="busy"
+          :messages="workbenchErrors"
+          @select="batch.select"
+          @remove="removePhoto"
+          @retry="retry"
+        />
+        <PromoCanvas v-if="jobs.compose" :editor="editor" :locked="busy" />
+        <figure v-else-if="plain" class="workbench__plain" data-workbench-preview>
+          <div class="workbench__view" :class="{ 'workbench__view--alpha': plain.alpha }">
+            <img :src="plain.url" :alt="en ? 'Preview of the image on screen' : '目前這張圖片的預覽'" decoding="async">
+          </div>
+        </figure>
+        <div v-if="jobs.compose" class="workbench__canvas-tools">
+          <Button size="icon" variant="outline" :disabled="busy || !canUndo" :aria-label="en ? 'Undo' : '復原'" :title="en ? 'Undo (Ctrl/⌘ Z)' : '復原（Ctrl／⌘ Z）'" aria-keyshortcuts="Control+z Meta+z" @click="undo"><Undo2 :size="18" aria-hidden="true" /></Button>
+          <Button size="icon" variant="outline" :disabled="busy || !canRedo" :aria-label="en ? 'Redo' : '重做'" :title="en ? 'Redo (Ctrl/⌘ Shift Z)' : '重做（Ctrl／⌘ Shift Z）'" aria-keyshortcuts="Control+Shift+z Meta+Shift+z" @click="redo"><Redo2 :size="18" aria-hidden="true" /></Button>
+          <p id="promo-stage-help" class="field-help workbench__help">
+            {{ en
+              ? 'The photo on screen sits in the product layer. Drag a layer to move it, a corner to resize it.'
+              : '目前這張商品圖放在商品圖層裡。拖曳圖層可移動，拖曳四角可縮放。' }}
           </p>
         </div>
-      </template>
+      </div>
 
-      <template v-else-if="current === 'cutout'">
-        <p class="workbench__scope">{{ copy(portraitScopeNotice, locale) }}</p>
-        <p class="field-help">
-          <NuxtLink :to="withLocale('/tools/image-background-remover/')">{{ en ? 'The portrait background remover, on its own page' : '單獨使用人像去背工具' }}</NuxtLink>
-        </p>
-        <div v-if="currentStatus.state !== 'unavailable'" class="workbench__model" data-workbench-model :data-model-ready="String(modelReady)">
-          <p role="status">{{ modelStatus }}</p>
-          <div v-if="modelDownloading" class="offline-asset__progress" role="progressbar" :aria-valuenow="modelPercent" aria-valuemin="0" aria-valuemax="100" :aria-label="en ? 'Model download progress' : '模型下載進度'">
-            <span :style="{ inlineSize: `${modelPercent}%` }" />
-          </div>
-          <div v-if="!modelReady" class="tool-workspace__actions">
-            <Button v-if="modelDownloading" variant="outline" @click="cancelModel"><X :size="16" aria-hidden="true" />{{ en ? 'Cancel download' : '取消下載' }}</Button>
-            <Button v-else :disabled="!online" @click="downloadModel"><Download :size="16" aria-hidden="true" />{{ modelFailure ? (en ? 'Try again' : '重新下載') : (en ? 'Download the model' : '下載模型') }}</Button>
-          </div>
-        </div>
-      </template>
-
-      <template v-else-if="current === 'layout'">
-        <div class="tool-workspace__grid">
-          <div v-for="dimension in (['width', 'height'] as const)" :key="dimension" class="field-group">
-            <label :for="`workbench-${dimension}`">{{ dimension === 'width' ? (en ? 'Width (px)' : '寬度（像素）') : (en ? 'Height (px)' : '高度（像素）') }}</label>
-            <Input :id="`workbench-${dimension}`" :model-value="drafts[dimension]" type="number" min="1" max="8192" step="1" :disabled="busy" :aria-invalid="Boolean(sizeIssue) || Boolean(invalidFields[dimension])" aria-describedby="workbench-size-issue workbench-error" @update:model-value="setLayoutNumber(dimension, $event)" />
-          </div>
-          <div class="field-group">
-            <label for="workbench-format">{{ en ? 'Output format' : '輸出格式' }}</label>
-            <select id="workbench-format" v-model="settings.format" class="ui-input" :disabled="busy">
-              <option v-for="format in availableFormats" :key="format" :value="formatMimeTypes[format]">{{ format.toUpperCase() }}</option>
+      <div class="workbench__panel">
+        <fieldset class="workbench__jobs" :disabled="busy">
+          <legend>{{ en ? 'For every photo' : '每張都要做的事' }}</legend>
+          <div v-for="job in jobKeys" :key="job" class="workbench__job" :data-workbench-job="job">
+            <label class="choice-option workbench__toggle">
+              <input v-model="jobs[job]" type="checkbox" :disabled="unavailable(job)" :aria-describedby="`workbench-${job}-hint`">
+              {{ workbenchJobLabels[job][locale] }}
+            </label>
+            <p :id="`workbench-${job}-hint`" class="field-help">
+              {{ unavailable(job) ? (en ? 'This browser cannot do this on your device.' : '這個瀏覽器無法在本機完成這一步。') : workbenchJobHints[job][locale] }}
+            </p>
+            <select v-if="job === 'compress' && jobs.compress" id="workbench-format" v-model="format" class="ui-input workbench__format" :aria-label="en ? 'Output format' : '輸出格式'">
+              <option value="auto">{{ en ? 'Automatic format' : '自動選格式' }}</option>
+              <option v-for="item in offeredFormats" :key="item" :value="item">{{ formatName(item) }}</option>
             </select>
-          </div>
-          <div class="field-group">
-            <label for="workbench-fit">{{ en ? 'Fit' : '填滿方式' }}</label>
-            <select id="workbench-fit" v-model="settings.fit" class="ui-input" :disabled="busy">
-              <option value="cover">{{ en ? 'Fill and crop' : '填滿裁切' }}</option>
-              <option value="contain">{{ en ? 'Contain whole image' : '完整放入' }}</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label for="workbench-zoom">{{ en ? 'Zoom (%)' : '縮放（%）' }}</label>
-            <Input id="workbench-zoom" :model-value="drafts.zoom" type="number" min="1" max="400" step="1" :disabled="busy" :aria-invalid="Boolean(invalidFields.zoom)" aria-describedby="workbench-number-help" @update:model-value="setLayoutNumber('zoom', $event)" />
-          </div>
-          <div class="field-group">
-            <label for="workbench-offset-x">{{ en ? 'Horizontal position (%)' : '水平位置（%）' }}</label>
-            <Input id="workbench-offset-x" :model-value="drafts.offsetX" type="number" min="-100" max="100" step="1" :disabled="busy" :aria-invalid="Boolean(invalidFields.offsetX)" aria-describedby="workbench-number-help" @update:model-value="setLayoutNumber('offsetX', $event)" />
-          </div>
-          <div class="field-group">
-            <label for="workbench-offset-y">{{ en ? 'Vertical position (%)' : '垂直位置（%）' }}</label>
-            <Input id="workbench-offset-y" :model-value="drafts.offsetY" type="number" min="-100" max="100" step="1" :disabled="busy" :aria-invalid="Boolean(invalidFields.offsetY)" aria-describedby="workbench-number-help" @update:model-value="setLayoutNumber('offsetY', $event)" />
-          </div>
-          <div class="field-group">
-            <label for="workbench-background">{{ en ? 'Background colour' : '背景色' }}</label>
-            <input id="workbench-background" v-model="settings.background" class="ui-input" type="color" :disabled="busy">
-          </div>
-        </div>
-        <p id="workbench-size-issue" class="field-error">{{ sizeIssue ? copy(compliantImageSizeIssues[sizeIssue], locale) : invalidLayoutField ? workbenchStepErrors.layout.invalid_options![locale] : '' }}</p>
-        <p id="workbench-number-help" class="field-help">{{ en ? 'These settings apply to every image in the batch. Zoom is 1–400% of the fitted size; position is −100–100% of the canvas, measured from the centre.' : '這些設定會套用到批次中的每一張。縮放為填入尺寸的 1–400%，位置為畫布的 −100–100%，從置中起算。' }}</p>
-
-        <figure v-if="layoutPreviewUrl" class="workbench__figure">
-          <div class="workbench__canvas" :style="{ aspectRatio: `${canvas.width} / ${canvas.height}`, background: settings.background, '--workbench-ratio': canvas.width / canvas.height }" role="img" :aria-label="en ? 'Layout preview on the output canvas' : '版型預覽，對應輸出畫布'">
-            <img v-if="placementStyle" :src="layoutPreviewUrl" :style="placementStyle" alt="">
-          </div>
-          <figcaption>
-            {{ previewItem ? workbenchItemLabel(previewItem.ordinal, locale) : '' }} · {{ canvas.width }} × {{ canvas.height }}
-          </figcaption>
-        </figure>
-      </template>
-
-      <template v-else-if="current === 'brand'">
-        <p class="field-help">
-          <NuxtLink :to="withLocale('/tools/brand-promo-image/')">{{ en ? 'The brand promo image tool, on its own page' : '單獨使用品牌宣傳圖工具' }}</NuxtLink>
-        </p>
-        <div class="tool-workspace__grid">
-          <div class="field-group">
-            <label for="workbench-frame">{{ en ? 'Frame image' : '框版圖片' }}</label>
-            <input id="workbench-frame" class="ui-input" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" :disabled="busy" @change="chooseFiles($event, files => chooseBrandAsset('frame', files[0]!))">
-            <p v-if="frame" class="field-help">{{ frame.name }} <Button variant="outline" :disabled="busy" @click="clearBrandAsset('frame')">{{ en ? 'Remove frame' : '移除框版' }}</Button></p>
-          </div>
-          <div class="field-group">
-            <label for="workbench-logo">{{ en ? 'Logo image' : 'Logo 圖片' }}</label>
-            <input id="workbench-logo" class="ui-input" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" :disabled="busy" @change="chooseFiles($event, files => chooseBrandAsset('logo', files[0]!))">
-            <p v-if="logo" class="field-help">{{ logo.name }} <Button variant="outline" :disabled="busy" @click="clearBrandAsset('logo')">{{ en ? 'Remove Logo' : '移除 Logo' }}</Button></p>
-          </div>
-        </div>
-        <fieldset v-if="logo" class="workbench__controls" :disabled="busy">
-          <legend>{{ en ? 'Logo placement' : 'Logo 位置' }}</legend>
-          <div class="tool-workspace__grid">
-            <div v-for="field in logoFields" :key="field.key" class="field-group">
-              <label :for="`workbench-${field.key}`">{{ field.label }}</label>
-              <Input :id="`workbench-${field.key}`" :model-value="drafts[field.key]" type="number" :min="field.min" :max="field.max" step="1" :aria-invalid="Boolean(invalidFields[field.key])" aria-describedby="workbench-error" @update:model-value="setLogoNumber(field.key, $event)" />
+            <div v-if="job === 'compose' && jobs.compose" class="workbench__layer-tools">
+              <Button
+                v-for="kind in layerKinds"
+                :key="kind"
+                variant="outline"
+                :data-workbench-add="kind"
+                :aria-label="(en ? 'Add ' : '加入') + layerLabels[kind]"
+                aria-describedby="promo-error"
+                @click="pickLayer(kind)"
+              >
+                {{ layerLabels[kind] }}
+              </Button>
             </div>
           </div>
-          <p class="field-help">{{ en ? 'The same frame, Logo, and placement are applied to every image in the batch. Position is measured from the centre as a share of the canvas. Version one has no text or price tags.' : '同一組框版、Logo 與位置會套用到批次中的每一張。位置從置中起算，以畫布百分比表示。第一版不含文字與價籤。' }}</p>
         </fieldset>
-        <div v-if="previewArtifacts.layout" class="workbench__figure">
-          <div class="workbench__canvas" :style="{ aspectRatio: `${previewArtifacts.layout.width} / ${previewArtifacts.layout.height}`, '--workbench-ratio': previewArtifacts.layout.width / previewArtifacts.layout.height }" role="img" :aria-label="en ? 'Brand composition preview' : '品牌素材組合預覽'">
-            <img v-for="layer in brandPreview" :key="layer.id" :src="layer.url" :style="layer.style" alt="">
+        <!-- One picker for the three layer buttons, outside the list so it is a single element. -->
+        <input ref="layerInput" class="brand-promo__file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" tabindex="-1" aria-hidden="true" data-workbench-layer-input @change="chooseLayer">
+
+        <div v-if="waiting" class="image-background-remover__preparing" data-model-preparing>
+          <p class="image-background-remover__preparing-label">
+            <span>{{ en ? 'Getting ready' : '準備中' }}</span>
+            <span aria-hidden="true">{{ model.percent.value }}%</span>
+          </p>
+          <div class="offline-asset__progress" role="progressbar" :aria-valuenow="model.percent.value" aria-valuemin="0" aria-valuemax="100" :aria-label="en ? 'Getting background removal ready' : '去背功能準備進度'">
+            <span :style="{ inlineSize: `${model.percent.value}%` }" />
           </div>
         </div>
-      </template>
 
-      <template v-else-if="current === 'compress'">
-        <p class="field-help">
-          <NuxtLink :to="withLocale('/tools/image-compressor/')">{{ en ? 'The image compressor, on its own page' : '單獨使用圖片壓縮工具' }}</NuxtLink>
-        </p>
-        <div class="tool-workspace__grid">
-          <div class="field-group">
-            <label for="workbench-compress-format">{{ en ? 'Output format' : '輸出格式' }}</label>
-            <select id="workbench-compress-format" v-model="compression.format" class="ui-input" :disabled="busy">
-              <option value="image/jpeg">JPEG</option>
-              <option value="image/webp">WEBP</option>
-              <option value="image/png">PNG</option>
-            </select>
-          </div>
-          <div v-for="field in compressionFields" :key="field.key" class="field-group">
-            <label :for="`workbench-${field.key}`">{{ field.label }}</label>
-            <Input :id="`workbench-${field.key}`" :model-value="drafts[field.key]" type="number" :min="field.min" :max="field.max" step="1" :disabled="busy" :aria-invalid="Boolean(invalidFields[field.key])" aria-describedby="workbench-compress-help" @update:model-value="setCompressionNumber(field.key, $event)" />
-          </div>
+        <div v-if="busy || pending || issue" class="workbench__actions">
+          <Button v-if="!busy" :disabled="!anyJob || invalid" data-workbench-run @click="start">
+            <Play :size="18" aria-hidden="true" />{{ runLabel }}
+          </Button>
+          <Button v-else variant="outline" @click="cancel"><X :size="18" aria-hidden="true" />{{ en ? 'Cancel' : '取消' }}</Button>
         </div>
-        <p id="workbench-compress-help" class="field-help">{{ en ? 'The same quality and size ceiling are applied to every image in the batch. PNG ignores quality. Re-encoding does not copy source metadata.' : '同一組品質與尺寸上限會套用到批次中的每一張；PNG 不使用品質設定。重新編碼不會複製來源中繼資料。' }}</p>
-      </template>
-
-      <template v-else>
-        <p v-if="outputs.length === 0" class="field-help">{{ en ? 'Finish the earlier steps to produce outputs.' : '完成前面的步驟後才會產生輸出。' }}</p>
-        <template v-else>
-          <div class="tool-workspace__actions">
-            <Button :disabled="busy || Boolean(archiveIssue) || !archiveSupported" @click="buildArchive">
-              {{ en ? `Pack ${outputs.length} outputs into one archive` : `打包 ${outputs.length} 個輸出成封存檔` }}
-            </Button>
-            <Button v-if="archiveUrl" as-child>
-              <a :href="archiveUrl" :download="workbenchArchiveName('promotional')" data-archive-download>
-                <Download :size="16" aria-hidden="true" />{{ en ? 'Download the archive' : '下載封存檔' }}
-              </a>
-            </Button>
-          </div>
-          <p v-if="archiveIssue" class="field-error">{{ copy(workbenchArchiveIssues[archiveIssue], locale) }}</p>
-          <p v-else-if="!archiveSupported" class="field-error">{{ workbenchStepErrors.output.unsupported_browser![locale] }}</p>
-          <p class="field-help">{{ en ? 'The archive is packed in this browser and never leaves the device. Re-encoded images do not copy source metadata. Keep your originals.' : '封存檔在這個瀏覽器內打包，不會離開裝置。重新編碼的圖片不複製來源中繼資料，請保留原始檔案。' }}</p>
-
-          <figure v-if="previewOutput" class="workbench__figure">
-            <img :src="previewOutput.url" :alt="en ? 'Final output preview' : '最終輸出預覽'">
-            <figcaption>{{ previewItem ? workbenchItemLabel(previewItem.ordinal, locale) : '' }} · {{ previewOutput.width }} × {{ previewOutput.height }} · {{ previewOutput.format }} · {{ number(previewOutput.bytes) }} bytes</figcaption>
-          </figure>
-        </template>
-      </template>
-
-      <!-- Files that were refused are reported wherever the merchant now is: the
-           batch moves on to the next step as soon as one image is ready, and a
-           reason that disappears with the panel is a reason nobody read. -->
-      <div id="workbench-import-issues" role="alert" class="field-error">
-        <p v-for="message in importMessages" :key="message"><TriangleAlert :size="16" aria-hidden="true" />{{ message }}</p>
+        <p role="status" class="workbench__status">{{ status }}</p>
+        <p id="promo-error" role="alert" class="field-error">{{ errorText }}</p>
+        <ImageBatchDownload :files="downloads" :archive-name="workbenchArchiveName" :disabled="busy" />
       </div>
 
-      <div id="workbench-error" role="alert" class="field-error">
-        <p v-for="message in stepErrors" :key="message"><TriangleAlert :size="16" aria-hidden="true" />{{ message }}</p>
-      </div>
-
-      <div class="tool-workspace__actions">
-        <Button v-if="current === 'cutout' && currentStatus.state !== 'unavailable'" :disabled="busy || !modelReady || readyCount === 0" @click="runStep('cutout')">
-          {{ en ? `Remove the background from ${readyCount} images` : `整批去背（${readyCount} 張）` }}
-        </Button>
-        <Button v-if="current === 'layout'" :disabled="!canRunLayout" @click="runStep('layout')">
-          {{ en ? `Produce ${readyCount} layouts` : `整批產生版型（${readyCount} 張）` }}
-        </Button>
-        <Button v-if="current === 'brand' && currentStatus.state !== 'unavailable'" :disabled="busy || (!frame && !logo) || invalidLogoField || readyCount === 0" @click="runStep('brand')">
-          {{ en ? `Compose ${readyCount} images` : `整批組合品牌素材（${readyCount} 張）` }}
-        </Button>
-        <Button v-if="current === 'compress' && currentStatus.state !== 'unavailable'" :disabled="busy || invalidCompressionField || readyCount === 0" @click="runStep('compress')">
-          {{ en ? `Compress ${readyCount} images` : `整批壓縮（${readyCount} 張）` }}
-        </Button>
-        <Button v-if="busy && (runningStep || archiving)" variant="outline" @click="cancelAll">{{ en ? 'Cancel everything' : '全部取消' }}</Button>
-        <Button v-if="(current === 'cutout' || current === 'brand' || current === 'compress') && currentStatus.state !== 'unavailable'" variant="outline" :disabled="busy" @click="skipStep(current)">
-          {{ en ? 'Skip this step for the batch' : '整批略過這一步' }}
-        </Button>
-        <Button v-if="previousStep" variant="outline" :disabled="busy" @click="open(previousStep)">{{ en ? 'Back a step' : '回到前一步' }}</Button>
-        <Button v-if="items.length" variant="outline" :disabled="busy" @click="reset">{{ en ? 'Clear the workbench' : '清空工作台' }}</Button>
-      </div>
-      <div v-if="runningStep" role="progressbar" :aria-label="en ? 'Local processing' : '本機處理'" class="field-help">{{ en ? 'Working locally. You can cancel; finished items keep their results.' : '正在本機處理，可隨時取消，已完成的項目會保留成果。' }}</div>
-      <p role="status" class="workbench__status">{{ noticeText }}</p>
-    </section>
-
-    <section v-if="items.length" class="workbench__queue" aria-labelledby="workbench-queue-heading">
-      <h2 id="workbench-queue-heading" ref="queueHeading" tabindex="-1">{{ en ? 'Batch queue' : '批次佇列' }}</h2>
-      <p class="field-help">{{ en ? 'Every image runs its own pipeline. A failure stays on its own row.' : '每張圖片各自走自己的流程，失敗只留在自己這一列。' }}</p>
-      <ul>
-        <li v-for="row in rows" :key="row.id" :data-queue-item="row.id" :data-queue-state="row.state" :data-queue-selected="String(row.id === selected)">
-          <img v-if="row.preview" :src="row.preview" alt="" class="workbench__thumb" :class="{ 'workbench__thumb--alpha': row.alpha }">
-          <div class="workbench__queue-text">
-            <p><strong>{{ row.label }}</strong> · <span data-queue-status>{{ row.stateLabel }}</span></p>
-            <p class="field-help">
-              {{ row.size ? `${row.size.width} × ${row.size.height} · ` : '' }}{{ number(row.bytes) }} bytes
-              <template v-if="row.download"> · {{ en ? 'Output' : '輸出' }} {{ row.download.width }} × {{ row.download.height }} · {{ number(row.download.bytes) }} bytes</template>
-              <template v-if="row.stageText"> · {{ row.stageText }}</template>
-            </p>
-            <p v-if="row.error" class="field-error">{{ row.error }}</p>
-          </div>
-          <div class="workbench__queue-actions">
-            <Button v-if="row.download" variant="outline" as-child>
-              <a :href="row.download.url" :download="row.download.name"><Download :size="16" aria-hidden="true" />{{ en ? `Download ${row.label}` : `下載${row.label}` }}</a>
-            </Button>
-            <Button v-if="row.running || row.queued" variant="outline" @click="cancelItem(row.id)"><X :size="16" aria-hidden="true" />{{ en ? `Cancel ${row.label}` : `取消${row.label}` }}</Button>
-            <Button v-if="row.canRetry" variant="outline" :disabled="busy" @click="retryItem(row.id)"><RotateCcw :size="16" aria-hidden="true" />{{ en ? `Retry ${row.label}` : `重試${row.label}` }}</Button>
-            <Button v-if="row.id !== selected" variant="outline" :disabled="busy" @click="selectItem(row.id)">{{ en ? `Preview ${row.label}` : `預覽${row.label}` }}</Button>
-            <Button variant="outline" :disabled="busy" data-queue-remove @click="dropItem(row.id)"><Trash2 :size="16" aria-hidden="true" />{{ en ? `Remove ${row.label}` : `移除${row.label}` }}</Button>
-          </div>
-        </li>
-      </ul>
-    </section>
+      <PromoLayers v-if="jobs.compose" v-model:invalid="invalid" class="workbench__layers" :editor="editor" :locked="busy" />
+    </div>
   </Card>
 </template>

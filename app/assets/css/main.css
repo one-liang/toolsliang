@@ -1150,7 +1150,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover__preparing-label > span:last-child { color: var(--color-muted-foreground); font-variant-numeric: tabular-nums; }
 .image-background-remover__coverage { margin: 0; font-weight: 600; }
 .image-background-remover__panel > .field-help { margin: 0; }
-.workbench__figure--alpha img, .workbench__thumb--alpha { background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 
 
 /* Image batches (#105): the picker, the thumbnail row and the downloads every image
@@ -1296,41 +1295,45 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .brand-promo--batch .brand-promo__preview { position: static; }
 }
 
-/* The workbench keeps the shared tool surface; only its step rail and stacked previews are new. */
-.workbench__steps ol { margin: 24px 0 8px; padding: 0; list-style: none; display: grid; gap: 8px; }
-.workbench__steps li > button { width: 100%; justify-content: flex-start; gap: 8px; white-space: normal; text-align: start; }
-.workbench__steps button[aria-current="step"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
-.workbench__state { margin-inline-start: auto; color: var(--color-muted-foreground); font-size: .8rem; }
-.workbench__steps li[data-workbench-state="unavailable"] > button, .workbench__steps li[data-workbench-state="locked"] > button { opacity: .7; }
-.workbench__panel { margin-top: 24px; padding-top: 24px; border-top: var(--rule) solid var(--color-border); }
-.workbench__panel h2 { margin: 0 0 8px; font-size: 1.125rem; }
-.workbench__panel h2:focus-visible { outline: 2px solid var(--color-primary-strong); outline-offset: 4px; }
-.workbench__scope { margin: 16px 0; padding: 12px 16px; border: var(--rule) solid var(--color-warning); border-radius: var(--radius-sm); font-size: .875rem; }
-.workbench__model { margin: 16px 0; padding: 16px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); display: grid; gap: 12px; }
-.workbench__controls { border: 0; padding: 0; margin: 24px 0; display: grid; gap: 16px; min-width: 0; }
-.workbench__controls legend { margin-bottom: 12px; font-weight: 650; }
-.workbench__figure { margin: 24px 0 0; }
-.workbench__figure img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); margin-inline: auto; object-fit: contain; }
-.workbench__figure figcaption { margin-top: 12px; font-size: .84rem; overflow-wrap: anywhere; }
-.workbench__canvas { position: relative; overflow: hidden; width: min(100%, calc(var(--image-preview-max-height) * var(--workbench-ratio, 1))); margin-inline: auto; border: var(--rule) solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
-.workbench__canvas img { position: absolute; display: block; max-width: none; max-height: none; }
-.workbench__panel a:not(.ui-button) { color: var(--color-primary-strong); text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; }
-.workbench__status { margin-top: 16px; }
-.product-image-workbench .field-error, .product-image-workbench .field-error p { display: grid; gap: 8px; }
-.product-image-workbench .field-error p { display: flex; align-items: flex-start; margin: 0; }
-.product-image-workbench .field-error svg { flex-shrink: 0; margin-top: 2px; }
-/* The job queue: one row per item, every action reachable without a pointer. */
-.workbench__queue { margin-top: 24px; padding-top: 24px; border-top: var(--rule) solid var(--color-border); }
-.workbench__queue h2 { margin: 0 0 8px; font-size: 1.125rem; }
-.workbench__queue h2:focus-visible { outline: 2px solid var(--color-primary-strong); outline-offset: 4px; }
-.workbench__queue ul { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
-.workbench__queue li { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 12px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-sm); }
-.workbench__queue li[data-queue-selected="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
-.workbench__queue li[data-queue-state="failed"] { border-color: var(--color-warning); }
-.workbench__thumb { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
-.workbench__queue-text { flex: 1 1 12rem; min-width: 0; display: grid; gap: 4px; }
-.workbench__queue-text p { margin: 0; overflow-wrap: anywhere; }
-.workbench__queue-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/*
+ * Product image workbench (#112): the photos under the canvas they are laid out on, and beside
+ * them the three jobs, one button and the downloads. The canvas and the layers panel are the
+ * brand promo image's own, so they keep its classes; only the frame around them is new.
+ */
+.workbench { --promo-stage-max: clamp(160px, calc(100svh - 620px), 360px); }
+/* The canvas is the brand promo image's own; here it sits in the stage column rather than in that tool's grid. */
+.workbench .brand-promo__preview { grid-area: auto; }
+.workbench__layout { display: grid; grid-template-areas: "stage" "panel" "layers"; gap: 16px; margin-top: 16px; }
+.workbench__stage { grid-area: stage; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.workbench__plain { margin: 0; }
+.workbench__view { position: relative; height: calc(var(--promo-stage-max) + 16px); border-radius: var(--radius-md); background: var(--color-surface-subtle); overflow: hidden; }
+.workbench__view img { position: absolute; inset: 8px; display: block; width: auto; height: auto; max-width: calc(100% - 16px); max-height: calc(100% - 16px); margin: auto; }
+.workbench__view--alpha img { background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.workbench__canvas-tools { display: flex; align-items: center; gap: 8px; }
+.workbench__help { flex: 1 1 12rem; margin: 0; }
+.workbench__strip { margin-top: 0; }
+.workbench__panel { grid-area: panel; display: grid; align-content: start; gap: 12px; min-width: 0; }
+.workbench__panel > [role]:empty { margin-block: -6px; }
+.workbench__jobs { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.workbench__jobs legend { margin-bottom: 8px; padding: 0; font-weight: 800; }
+/* A job is its toggle with one line beside it; what it needs once ticked goes underneath. */
+.workbench__job { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px 10px; }
+.workbench__job > :is(.workbench__format, .workbench__layer-tools) { grid-column: 1 / -1; }
+.workbench__toggle { font-weight: 700; }
+.workbench__format { width: 100%; }
+.workbench__job .field-help { margin: 0; line-height: 1.45; }
+.workbench__layer-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.workbench__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.workbench__actions .ui-button { flex: 1 1 10rem; }
+.workbench__status { margin: 0; color: var(--color-muted-foreground); font-size: .86rem; line-height: 1.5; }
+.workbench .field-error { display: flex; align-items: flex-start; gap: 8px; margin: 0; }
+.workbench__layers { grid-area: layers; }
+.workbench h2 { margin: 0 0 12px; font-size: 1.0625rem; }
+@media (min-width: 1024px) {
+  .workbench { --promo-stage-max: clamp(180px, calc(100svh - 570px), 560px); }
+  .workbench__layout { grid-template-columns: minmax(0, 1fr) clamp(280px, 26vw, 340px); grid-template-areas: "stage panel" "layers layers"; column-gap: 24px; }
+  .workbench__panel { padding-left: 24px; border-left: 1px solid var(--color-border-subtle); }
+}
 
 /* PDF handwritten signature, on one screen: the page on a stage, the signatures and the download beside it. */
 .pdf-signature { container: pdf-signature / inline-size; }
@@ -1454,7 +1457,7 @@ button.pdf-signature__thumb:disabled { opacity: .55; cursor: not-allowed; }
 .signature-pad__clear { margin-right: auto; }
 
 /* One ruled card per tool: what used to be a panel inside it is a section under a hairline. */
-:is(.ntd-rules, .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources, .image-background-remover__model, .workbench__model, .workbench__check) {
+:is(.ntd-rules, .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources) {
   padding: 16px 0 0; border: 0; border-top: 1px solid var(--color-border-subtle); border-radius: 0; background: none;
 }
 /* A table keeps a frame; it is data, not a card. */
