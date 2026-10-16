@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
-import { ArrowDown, ArrowUp, Download, GripVertical, Redo2, Trash2, Undo2 } from '@lucide/vue'
+import { ArrowDown, ArrowUp, Download, GripVertical, Images, Redo2, Trash2, Undo2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import ImageBatchDownload from '@/components/ImageBatchDownload.vue'
+import ImageBatchStrip from '@/components/ImageBatchStrip.vue'
+import type { ImageBatchItem } from '@/composables/useImageBatch'
 import { usePromoEditor } from '@/composables/usePromoEditor'
 import {
   movePromoLayer,
@@ -20,11 +23,15 @@ import { promoErrors } from '@/features/tools/brand-promo-image/content'
 
 const { locale } = useAppLocale()
 const en = computed(() => locale.value === 'en')
-const { scene, assets, selectedId, selected, canUndo, canRedo, busy, preparing, supported, error, message, stage, task, output, commit, preview, revert, patchLayer, reorder, move, moveToEdge, remove, undo, redo, cancel, prepare, importFile, produce } = usePromoEditor()
+const {
+  scene, assets, selectedId, selected, canUndo, canRedo, busy, preparing, supported, error, message, stage, task, output, commit, preview, revert, patchLayer, reorder, move, moveToEdge, remove, undo, redo, cancel, prepare, importFile, produce,
+  batch, batchIndex, batchLayer, batchSize, outputs, producing, assetOf, importBatch, showBatch, removeFromBatch,
+} = usePromoEditor()
 /** The add buttons follow the order a merchant builds a promo image in: the product first. */
 const addKinds: PromoLayerKind[] = ['product', 'background', 'frame', 'logo']
 const kind = ref<PromoLayerKind>('product')
 const fileInput = ref<HTMLInputElement>()
+const batchInput = ref<HTMLInputElement>()
 const stageEl = ref<HTMLElement>()
 const canvasEl = ref<HTMLElement>()
 const locked = computed(() => busy.value)
@@ -39,7 +46,30 @@ const invalid = computed(() => Object.values(invalidFields).some(Boolean))
 const errorText = computed(() => invalid.value ? promoErrors.invalid_options![locale.value] : error.value ? (promoErrors[error.value] ?? promoErrors.failed)![locale.value] : '')
 /** The layers panel reads like an image editor's: the front layer first. */
 const layersFrontToBack = computed(() => [...scene.value.layers].reverse())
-const ready = computed(() => Boolean(output.value) && !invalid.value)
+const several = computed(() => batchSize.value > 1)
+const ready = computed(() => (several.value ? outputs.value.length > 0 : Boolean(output.value)) && !invalid.value)
+/** The product layer more photos would join: the batch's own, the selected one, or the first. */
+const batchTarget = computed(() => batchLayer.value ?? (selected.value?.kind === 'product' ? selected.value : scene.value.layers.find(layer => layer.kind === 'product')))
+/** The batch's photos as thumbnails; each is done once the batch's PNGs are made. */
+const batchItems = computed<ImageBatchItem[]>(() => batch.value.assetIds.flatMap((assetId, index) => {
+  const asset = assets.value[assetId]
+  if (!asset) return []
+  const status = producing.value === index ? 'running' : outputs.value.length ? 'done' : 'pending'
+  return [{ id: assetId, file: asset.file, url: asset.url, status, retryable: false }]
+}))
+/** The asset a layer is drawing right now: a batch layer draws the photo picked in the batch. */
+function shownAssetId(layer: PromoLayer) {
+  return layer.id === batch.value.layerId && several.value ? batch.value.assetIds[batchIndex.value] ?? layer.assetId : layer.assetId
+}
+function pickBatch() {
+  batchInput.value?.click()
+}
+function chooseBatch(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  if (files.length) void importBatch(files)
+  input.value = ''
+}
 watch(selectedId, () => {
   for (const key of ['x', 'y', 'scale', 'opacity']) invalidFields[key] = false
 })
@@ -52,16 +82,17 @@ watch(ready, async (now) => {
   const focused = document.activeElement
   if (!now || (focused && focused !== document.body && focused.id !== 'promo-produce')) return
   await nextTick()
-  document.getElementById('promo-download')?.focus()
+  ;(document.getElementById('promo-download') ?? document.querySelector<HTMLElement>('.brand-promo [data-batch-download-all]'))?.focus()
 })
 const statusText = computed(() => {
   if (busy.value) {
     if (task.value === 'import') return en.value ? 'Reading the image…' : '正在讀取圖片…'
+    if (several.value && producing.value >= 0) return en.value ? `Making PNG ${producing.value + 1} of ${batchSize.value}…` : `正在產生第 ${producing.value + 1}／${batchSize.value} 張 PNG…`
     return stage.value === 'encoding' ? (en.value ? 'Making the PNG…' : '正在產生 PNG…') : (en.value ? 'Combining layers…' : '正在合成圖層…')
   }
   const messages: Record<string, string> = en.value
-    ? { imported: 'Layer added.', cancelled: 'Cancelled. Your layers are unchanged.', success: 'Your PNG is ready to download.' }
-    : { imported: '已加入圖層。', cancelled: '已取消，圖層維持原狀。', success: 'PNG 已準備好，可以下載。' }
+    ? { imported: 'Layer added.', batch_added: 'Product photos added. Each one gets this layout.', cancelled: 'Cancelled. Your layers are unchanged.', success: several.value ? 'Your PNGs are ready to download.' : 'Your PNG is ready to download.' }
+    : { imported: '已加入圖層。', batch_added: '已加入商品圖，每一張都會套用這個版面。', cancelled: '已取消，圖層維持原狀。', success: several.value ? 'PNG 都準備好了，可以下載。' : 'PNG 已準備好，可以下載。' }
   return messages[message.value] ?? ''
 })
 const transforms = computed(() => [
@@ -93,7 +124,7 @@ function resize(key: 'width' | 'height', raw: string | number) {
   commit({ ...scene.value, [key]: value })
 }
 function boxOf(layer: PromoLayer) {
-  const asset = assets.value[layer.assetId]
+  const asset = assetOf(layer)
   return asset ? promoPlacement(layer, asset.width, asset.height, scene.value.width, scene.value.height) : undefined
 }
 function percentBox(box: { x: number, y: number, width: number, height: number }) {
@@ -153,7 +184,7 @@ function alphaMap(assetId: string) {
   }
 }
 function opaqueAt(layer: PromoLayer, u: number, v: number) {
-  const map = alphaMap(layer.assetId)
+  const map = alphaMap(shownAssetId(layer))
   if (!map) return true
   const x = Math.min(map.width - 1, Math.floor(u * map.width)), y = Math.min(map.height - 1, Math.floor(v * map.height))
   return map.alpha[y * map.width + x]! > 24
@@ -196,7 +227,7 @@ function startGesture(event: PointerEvent) {
       ? current
       : pickPromoLayer(scene.value.layers, point, { boxOf, opaqueAt, selectedId: selectedId.value })
   }
-  const asset = layer && assets.value[layer.assetId]
+  const asset = layer && assetOf(layer)
   if (!layer || !asset) return
   event.preventDefault()
   stageEl.value.focus({ preventScroll: true })
@@ -293,7 +324,7 @@ function shortcut(event: KeyboardEvent) {
 </script>
 
 <template>
-  <Card class="tool-workspace brand-promo" :aria-busy="locked" @keydown="shortcut">
+  <Card class="tool-workspace brand-promo" :class="{ 'brand-promo--batch': several }" :aria-busy="locked" @keydown="shortcut">
     <p v-if="preparing" role="status" class="capability-checking">{{ en ? 'Checking that this browser can make the image…' : '正在確認這個瀏覽器能否製作圖片…' }}</p>
     <div v-else-if="!supported" class="capability-warning">
       <p>{{ promoErrors.unsupported_browser![locale] }}</p>
@@ -341,7 +372,7 @@ function shortcut(event: KeyboardEvent) {
           >
             <div ref="canvasEl" class="brand-promo__canvas">
               <template v-for="layer in scene.layers" :key="layer.id">
-                <img v-if="layer.visible && assets[layer.assetId]" :src="assets[layer.assetId]!.url" :data-asset-id="layer.assetId" :style="layerStyle(layer)" alt="" draggable="false">
+                <img v-if="layer.visible && assetOf(layer)" :src="assetOf(layer)!.url" :data-asset-id="shownAssetId(layer)" :style="layerStyle(layer)" alt="" draggable="false">
               </template>
             </div>
             <p v-if="!scene.layers.length" class="brand-promo__empty">{{ en ? 'Add a product image, then a background, frame, or Logo.' : '先加入商品圖，再疊上背景、框版或 Logo。' }}</p>
@@ -360,14 +391,15 @@ function shortcut(event: KeyboardEvent) {
           <Button variant="outline" size="icon" :disabled="locked || !canRedo" :aria-label="en ? 'Redo' : '重做'" :title="en ? 'Redo (Ctrl/⌘ Shift Z)' : '重做（Ctrl／⌘ Shift Z）'" aria-keyshortcuts="Control+Shift+z Meta+Shift+z" @click="redo">
             <Redo2 :size="18" aria-hidden="true" />
           </Button>
-          <Button v-if="ready" as-child class="brand-promo__primary">
+          <Button v-if="ready && !several" as-child class="brand-promo__primary">
             <a id="promo-download" :href="output" download="brand-promo.png"><Download :size="18" aria-hidden="true" />{{ en ? 'Download PNG' : '下載 PNG' }}</a>
           </Button>
-          <Button v-else id="promo-produce" class="brand-promo__primary" :disabled="locked || !supported || !scene.layers.length || invalid" aria-describedby="promo-error" @click="!invalid && produce()">
-            {{ en ? 'Make PNG' : '產生 PNG' }}
+          <Button v-else-if="!ready" id="promo-produce" class="brand-promo__primary" :disabled="locked || !supported || !scene.layers.length || invalid" aria-describedby="promo-error" @click="!invalid && produce()">
+            {{ several ? (en ? `Make ${batchSize} PNGs` : `產生 ${batchSize} 張 PNG`) : (en ? 'Make PNG' : '產生 PNG') }}
           </Button>
           <Button v-if="busy" variant="outline" @click="cancel">{{ en ? 'Cancel' : '取消' }}</Button>
         </div>
+        <ImageBatchDownload v-if="several && ready" class="brand-promo__downloads" :files="outputs" archive-name="brand-promo.zip" />
         <p id="promo-error" role="alert" class="field-error">{{ errorText }}</p>
         <p role="status" class="brand-promo__status">{{ statusText }}</p>
         <p v-show="scene.layers.length" id="promo-stage-help" class="field-help">
@@ -375,6 +407,28 @@ function shortcut(event: KeyboardEvent) {
             ? 'Drag a layer on the preview to move it, a corner to resize it, or an edge to stretch it. After clicking the preview, arrow keys nudge and Delete removes.'
             : '在預覽上拖曳圖層即可移動，拖曳四角縮放、四邊拉伸。點一下預覽後，方向鍵可微調、Delete 可移除。' }}
         </p>
+      </div>
+
+      <div v-if="batchTarget" class="brand-promo__batch" data-promo-batch>
+        <div class="brand-promo__batch-bar">
+          <Button variant="outline" :disabled="locked || !supported" aria-describedby="promo-batch-help promo-error" data-promo-batch-add @click="pickBatch">
+            <Images :size="18" aria-hidden="true" />{{ several ? (en ? 'Add more product photos' : '加入更多商品圖') : (en ? 'Use this layout for more photos' : '套用到多張商品圖') }}
+          </Button>
+          <p id="promo-batch-help" class="field-help">
+            {{ several
+              ? (en ? `${batchSize} product photos share this layout; making the PNGs makes one for each.` : `${batchSize} 張商品圖共用這個版面，產生時每張各一張 PNG。`)
+              : (en ? 'Add other product photos: each is placed in this product layer with the same position, size and layer order.' : '加入其他商品圖，每一張都放進這個商品圖層，位置、大小與圖層順序不變。') }}
+          </p>
+        </div>
+        <input ref="batchInput" class="brand-promo__file" type="file" multiple accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" tabindex="-1" aria-hidden="true" data-promo-batch-input @change="chooseBatch">
+        <ImageBatchStrip
+          v-if="several"
+          :items="batchItems"
+          :selected-id="batch.assetIds[batchIndex]"
+          :disabled="locked"
+          @select="id => showBatch(batch.assetIds.indexOf(id))"
+          @remove="id => removeFromBatch(batch.assetIds.indexOf(id))"
+        />
       </div>
 
       <div class="brand-promo__panel">
@@ -394,7 +448,7 @@ function shortcut(event: KeyboardEvent) {
             >
               <span class="brand-promo__grip" aria-hidden="true"><GripVertical :size="18" /></span>
               <Button variant="outline" :aria-pressed="selectedId === layer.id" :disabled="locked" @click="selectedId = layer.id">
-                <img v-if="assets[layer.assetId]" class="brand-promo__thumb" :src="assets[layer.assetId]!.url" alt="" draggable="false">
+                <img v-if="assetOf(layer)" class="brand-promo__thumb" :src="assetOf(layer)!.url" alt="" draggable="false">
                 <span>{{ labels[layer.kind] }}</span>
               </Button>
             </li>

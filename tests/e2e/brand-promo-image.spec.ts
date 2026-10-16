@@ -315,3 +315,67 @@ test('無效尺寸或位置不會被另一欄編輯清除，修正前禁止輸�
   await expect(page.getByRole('link', { name: '下載 PNG', exact: true })).toBeVisible()
   expect(await outputPixels(page)).toMatchObject({ width: 1000, height: 2000 })
 })
+
+test('同一版面套用到多張商品圖，一次產生並打包 ZIP（#110）', async ({ page }, info) => {
+  await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
+  await add(page, 'product', '#ff0000')
+  await add(page, 'logo', '#0000ff')
+  await page.getByLabel('縮放（%）', { exact: true }).fill('20')
+
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: '套用到多張商品圖', exact: true }).click()
+  await (await chooser).setFiles([await fixture(page, '#00ff00'), await fixture(page, '#ffff00')])
+  await expect(page.getByRole('status').filter({ hasText: '已加入商品圖' })).toBeVisible()
+  const photos = page.getByRole('listbox', { name: '這批圖片' }).getByRole('option')
+  await expect(photos).toHaveCount(3)
+  // Picking a photo previews it in the product layer; the layout stays as it was.
+  await photos.first().click()
+  await expect(page.getByLabel('縮放（%）', { exact: true })).toHaveValue('20')
+
+  await page.getByRole('button', { name: '產生 3 張 PNG', exact: true }).click()
+  await expect(page.getByRole('button', { name: '全部下載（ZIP）', exact: true })).toBeVisible()
+  const links = page.locator('.brand-promo [data-batch-download]')
+  await expect(links).toHaveCount(3)
+  const outputs = []
+  for (const link of await links.all()) {
+    const url = await link.getAttribute('href')
+    outputs.push(await page.evaluate(async (url) => {
+      const image = await createImageBitmap(await (await fetch(url!)).blob())
+      const canvas = new OffscreenCanvas(image.width, image.height)
+      const ctx = canvas.getContext('2d')!; ctx.drawImage(image, 0, 0)
+      const output = { width: image.width, height: image.height, corner: [...ctx.getImageData(0, 0, 1, 1).data], centre: [...ctx.getImageData(Math.floor(image.width / 2), Math.floor(image.height / 2), 1, 1).data] }
+      image.close(); return output
+    }, url))
+  }
+  // Each photo fills the product layer, and the Logo sits in the same place on every one.
+  expect(outputs).toEqual([
+    { width: 1000, height: 1000, corner: [255, 0, 0, 255], centre: [0, 0, 255, 255] },
+    { width: 1000, height: 1000, corner: [0, 255, 0, 255], centre: [0, 0, 255, 255] },
+    { width: 1000, height: 1000, corner: [255, 255, 0, 255], centre: [0, 0, 255, 255] },
+  ])
+
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: '全部下載（ZIP）', exact: true }).click()
+  const zip = await download
+  expect(zip.suggestedFilename()).toBe('brand-promo.zip')
+  const { readFile } = await import('node:fs/promises')
+  const bytes = (await readFile((await zip.path())!)).toString('latin1')
+  for (const name of ['brand-promo.png', 'brand-promo-2.png', 'brand-promo-3.png']) expect(bytes).toContain(name)
+  expect(bytes, 'ZIP 內不得沿用原始檔名').not.toContain('private-brand-canary')
+
+  // Any change to the layout makes every PNG stale at once.
+  await page.getByLabel('縮放（%）', { exact: true }).fill('30')
+  await expect(page.getByRole('button', { name: '產生 3 張 PNG', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '全部下載（ZIP）', exact: true })).toHaveCount(0)
+  await settleTransitions(page)
+  expect((await new AxeBuilder({ page }).include('.brand-promo').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
+  if (info.project.name === 'chromium') {
+    for (const viewport of [{ width: 1366, height: 768 }, { width: 375, height: 812 }]) {
+      await page.setViewportSize(viewport)
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      await settleTransitions(page)
+      await page.evaluate(() => window.scrollTo(0, 0))
+      await page.screenshot({ path: `artifacts/brand-promo-batch-${viewport.width}.png` })
+    }
+  }
+})
