@@ -50,6 +50,21 @@ const taiwanCalendarCopyEntries = {
     'zh-tw': '用方向鍵在日期之間移動，Enter 或空白鍵開啟當日詳情。',
     en: 'Move between days with the arrow keys; Enter or Space opens the day.',
   },
+  viewLabel: { 'zh-tw': '檢視', en: 'View' },
+  // Never plain "Year" in English: the year picker already answers to that name.
+  monthView: { 'zh-tw': '月', en: 'One month' },
+  yearView: { 'zh-tw': '年', en: 'Whole year' },
+  yearGridLabel: { 'zh-tw': '整年月曆', en: 'Year at a glance' },
+  yearGridHint: {
+    'zh-tw': '用方向鍵在日期之間移動，Enter 或空白鍵切回月檢視並開啟那一天。',
+    en: 'Move between days with the arrow keys; Enter or Space opens that day in the month view.',
+  },
+  offMark: { 'zh-tw': '休', en: 'Off' },
+  workMark: { 'zh-tw': '班', en: 'Work' },
+  workdayLegend: { 'zh-tw': '上班日', en: 'Workday' },
+  dayOffLegend: { 'zh-tw': '放假日', en: 'Day off' },
+  offMarkLegend: { 'zh-tw': '國定假日、補假或調整放假', en: 'National, substitute, or adjusted holiday' },
+  workMarkLegend: { 'zh-tw': '補班日（週六上班）', en: 'Makeup workday (a Saturday worked)' },
   agendaLabel: { 'zh-tw': '本月標示日期', en: 'Marked days this month' },
   agendaEmpty: {
     'zh-tw': '這個月沒有放假日、補班日或節氣。',
@@ -78,8 +93,12 @@ const taiwanCalendarCopyEntries = {
     en: 'Cross-check source: used to verify the lunar dates and solar term days independently, never as the authority here.',
   },
   revisedLabel: { 'zh-tw': '主管機關已發布修正版，本頁採用的是修正後的版本。', en: 'The authority reissued this year; this page uses the reissued edition.' },
-  caveatsTitle: { 'zh-tw': '看日期前要知道', en: 'Before you rely on these dates' },
-  sourcesTitle: { 'zh-tw': '這一年的資料來源', en: 'Where this year comes from' },
+  revisedTag: { 'zh-tw': '（修正版）', en: ' (reissued)' },
+  licencePrefix: { 'zh-tw': '依', en: 'Provided under the ' },
+  licenceSuffix: { 'zh-tw': '提供。', en: '.' },
+  editionDetailsLabel: { 'zh-tw': '資料日期與使用須知', en: 'Dataset dates and notes' },
+  caveatsTitle: { 'zh-tw': '使用須知', en: 'Before you rely on these dates' },
+  sourcesTitle: { 'zh-tw': '各資料集的版本與日期', en: 'Each dataset, its edition and dates' },
 } satisfies Record<string, LocalizedCopy>
 
 export type TaiwanCalendarCopyKey = keyof typeof taiwanCalendarCopyEntries
@@ -281,10 +300,11 @@ export function getTaiwanCalendarCopy(locale: LocaleCode): Record<TaiwanCalendar
 }
 
 /**
- * All six disclaimers, always. Section 10.1 of the decision record is explicit
- * that `edition-may-change` has to be permanently visible — it is the one risk
- * a visitor cannot discover for themselves — so only its emphasis is
- * conditional, and section 7.1 asks for that emphasis on a reissued year.
+ * All six disclaimers, on every year. They sit folded inside the dataset
+ * edition line under the calendar (sections 7.1 and 10.1 of the decision
+ * record), while the edition itself and a reissue stay on screen — the revision
+ * is the one risk a visitor cannot discover for themselves — so only the
+ * emphasis is conditional, and section 7.1 asks for it on a reissued year.
  */
 export function getTaiwanCalendarCaveats(locale: LocaleCode, year: { revised: boolean }) {
   return taiwanCalendarCaveatKeys.map(key => ({
@@ -308,6 +328,13 @@ export function taiwanCalendarViewErrorMessage(
 /** How a year reads in a year picker: Gregorian, and the ROC year beside it. */
 export function describeYearOption(year: number, locale: LocaleCode) {
   return locale === 'en' ? String(year) : `${year}（民國 ${year - rocEpochOffset} 年）`
+}
+
+/** A month's name on its own, for a year laid out twelve months at a time. */
+export function describeMonthName(month: number, locale: LocaleCode) {
+  return locale === 'en'
+    ? new Date(Date.UTC(2000, month - 1, 1)).toLocaleString('en', { month: 'long', timeZone: 'UTC' })
+    : `${month} 月`
 }
 
 /** The Gregorian date and its ROC year, which are one fact and always read together. */
@@ -337,6 +364,19 @@ export function describeDayMark(official: OfficialDay, locale: LocaleCode) {
   if (official.kind === 'workday' || official.kind === 'weekend') return ''
 
   return holidayNames(official, locale) || officialDayKindLabels[official.kind][locale]
+}
+
+/**
+ * The one flag a year-at-a-glance cell has room for, so a day off is told apart
+ * by text and not by colour alone. An ordinary weekend carries none — its column
+ * already says what it is — so the flag lands only on the days the office
+ * calendar names: a holiday, a substitute or adjusted day off, a makeup workday.
+ */
+export function describeDayFlag(official: OfficialDay, locale: LocaleCode) {
+  if (official.kind === 'makeup-workday') return taiwanCalendarCopy.workMark[locale]
+  if (official.kind === 'workday' || official.kind === 'weekend') return ''
+
+  return taiwanCalendarCopy.offMark[locale]
 }
 
 export function describeLunarDate(lunar: LunarDate, locale: LocaleCode) {

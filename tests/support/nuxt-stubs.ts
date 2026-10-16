@@ -21,7 +21,6 @@ import ToolStatusBadgeComponent from '@/components/ToolStatusBadge.vue'
 import { Button as ButtonComponent } from '@/components/ui/button'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useCalendarMonth } from '@/composables/useCalendarMonth'
-import { useCustomCalendar } from '@/composables/useCustomCalendar'
 import { useLocalAssets } from '@/composables/useLocalAssets'
 import { resetOfflineAssetDownloads, useOfflineAsset } from '@/composables/useOfflineAsset'
 import { useSavedTools } from '@/composables/useSavedTools'
@@ -68,7 +67,6 @@ export function installNuxtStubs() {
   vi.stubGlobal('usePageSeo', () => {})
   vi.stubGlobal('useAppLocale', useAppLocale)
   vi.stubGlobal('useCalendarMonth', useCalendarMonth)
-  vi.stubGlobal('useCustomCalendar', useCustomCalendar)
   // Motion is a browser enhancement over finished markup; page tests read the markup.
   vi.stubGlobal('useLandingMotion', () => {})
   vi.stubGlobal('useLocalAssets', useLocalAssets)

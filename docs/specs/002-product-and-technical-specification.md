@@ -169,8 +169,8 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 
 #### 12.2 Device time
 
-- **User story and non-goals:** A user sees current date, time, timezone, UTC offset, and optional common formatting based on the device. It is not network-corrected national standard time, time synchronization, legal timestamping, or proof of time.
-- **Local boundary:** Time is read from browser APIs only. Timezone and display choice are not sent or persisted unless later added as an explicit interface preference.
+- **User story and non-goals:** A user sees current date, time, timezone, UTC offset, and optional common formatting based on the device, in 12- or 24-hour form, and can enlarge the same reading to fill the screen. It is not network-corrected national standard time, time synchronization, legal timestamping, or proof of time.
+- **Local boundary:** Time is read from browser APIs only. Readings and timezone are never sent or persisted. The 12/24-hour choice is an explicit interface preference: the default follows the page language and the device's own convention, and the choice is written to this device only after the user switches it, like the theme (ADR-0016). The seconds choice is not persisted.
 - **Module and interface:** A pure formatter accepts an injected instant, locale, timezone from `Intl`, and format option; a UI clock schedules aligned updates and corrects after visibility change rather than accumulating interval drift.
 - **Route and slug:** `/{locale}/tools/device-time/`; stable slug `device-time`.
 - **Bilingual content:** `裝置時間` / `Device Time`; copy explicitly says it follows the device clock and settings. Show timezone identifier and UTC offset beside the time.
@@ -226,10 +226,11 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 
 #### 12.6 Custom calendar
 
+- **Status:** Withdrawn by ADR-0021. The workspace, entry editor, and document format were removed; the bullets below record the scope it shipped with. Calendars already saved on a device remain local assets that the storage manager can review and delete, with no dedicated export.
 - **User story and non-goals:** A user layers company holidays, school days, shifts, or other work/non-work overrides on the Taiwan calendar and saves them on the current device. It is not a shared team calendar, cloud calendar, legal labor-rule engine, notification service, or Supabase-synced asset.
 - **Local boundary:** Titles, notes, dates, recurrence, imports, and exports are local assets in IndexedDB. They never sync as cloud preferences or enter analytics.
 - **Module and interface:** A calendar-overlay domain validates local event/override records and applies them without mutating official source data. A local asset repository supports schema migration, list/read/write/delete, export/import, storage size, and explicit clear. Official and custom layers remain distinguishable.
-- **Route and slug:** `/{locale}/tools/custom-calendar/`; stable slug `custom-calendar`.
+- **Route and slug:** stable slug `custom-calendar`, reserved as unpublished. The `/{locale}/tools/custom-calendar/` page was withdrawn by ADR-0021 and now answers with a permanent redirect to the Taiwan calendar page in the same locale.
 - **Bilingual content:** `自訂行事曆` / `Custom Calendar`; explain “saved on this device only” and loss risks. Export/import copy states exactly what the local file contains.
 - **SEO/AEO/GEO:** Index only general capability/help, never user event routes. Answer how local saving works, what can be lost, and how official versus custom dates differ.
 - **Errors, cancellation, progress, capability:** Handle unavailable/quota-limited IndexedDB, invalid date/range, import schema/version, duplicate ids, and conflicts. Bulk import/export is cancellable with item progress and rollback on invalid transaction.

@@ -15,6 +15,6 @@ export const deviceTimeFaq: ToolFaqEntry[] = [
   },
   {
     heading: { 'zh-tw': '時間、時區與顯示設定會被保存或傳送嗎？', en: 'Are time readings, the time zone, or display settings saved or sent?' },
-    body: { 'zh-tw': '不會。讀值只在此頁面的記憶體中顯示，不傳送至平台或第三方。秒數顯示設定也不會保存。只有按下複製時，顯示中的時間資訊才會寫入裝置剪貼簿。', en: 'No. Readings stay in this page’s memory and are not sent to the platform or third parties. Seconds display is not saved. Only pressing Copy writes the displayed time information to your device clipboard.' },
+    body: { 'zh-tw': '讀值不會。它只在此頁面的記憶體中顯示，不傳送至平台或第三方。秒數顯示設定也不會保存。你切換 12／24 小時制後，這個介面偏好只記在此瀏覽器，不含任何時間讀值，也不會上傳。只有按下複製時，顯示中的時間資訊才會寫入裝置剪貼簿。', en: 'Readings are not. They stay in this page’s memory and are not sent to the platform or third parties. Seconds display is not saved. After you switch between 12-hour and 24-hour, that interface preference is kept only in this browser; it holds no time reading and is never uploaded. Only pressing Copy writes the displayed time information to your device clipboard.' },
   },
 ]

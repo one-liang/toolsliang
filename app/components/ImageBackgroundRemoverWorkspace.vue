@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { Download, Image, TriangleAlert, X } from '@lucide/vue'
+import { Download, Image, RotateCcw, TriangleAlert } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { validateImageInput } from '@/features/images/input'
-import { formatAssetSize } from '@/features/pwa/offline-assets'
+import { formatStoredSize } from '@/features/shell/local-assets/usage'
 import { createBackgroundRemover } from '@/features/tools/image-background-remover/engine'
-import { backgroundRemovalErrors, backgroundRemovalStages, portraitScopeNotice } from '@/features/tools/image-background-remover/content'
+import { backgroundRemovalErrors, backgroundRemovalStages, modelPreparationIssues, portraitScopeNotice } from '@/features/tools/image-background-remover/content'
 import { useBackgroundRemovalModel } from '@/composables/useBackgroundRemovalModel'
 import { copy } from '@/features/tools/catalog'
 import type { BackgroundRemovalOutput } from '@/features/tools/image-background-remover/types'
@@ -29,38 +29,33 @@ const validating = ref(false)
 const stage = ref('')
 const message = ref<'selected' | 'cancelled' | 'success' | ''>('')
 const error = ref('')
+/** The visitor asked to start while the model was still on its way; the run follows on its own. */
+const waiting = ref(false)
+/** Why the model is not on the device yet, shown only once the visitor has asked to start. */
+const issue = ref<keyof typeof modelPreparationIssues | ''>('')
 let generation = 0
 let mounted = true
 
 /**
- * The weights and the runtime are the same bytes the page's offline note
- * offers, so both surfaces share one download rather than racing for it.
+ * The weights and the runtime are versioned files this site serves; the photo
+ * never goes with them. They are shared with the page's offline note, so both
+ * read one answer instead of racing for the same bytes.
  */
 const {
-  cancel: cancelModel, download, downloading: modelDownloading, failure: modelFailure,
-  online, percent: modelPercent, ready: modelReady, totalBytes: modelBytes,
+  cancel: cancelModel, download: prepareModel, forget: forgetModel,
+  percent: modelPercent, ready: modelReady,
 } = useBackgroundRemovalModel()
-/** Being offline is the condition, not the phase it left behind: reconnecting must re-enable the download. */
-const modelBlocked = computed(() => !online.value)
 
-const busy = computed(() => running.value || validating.value || modelDownloading.value)
-useWorkspaceDirty('image-background-remover', computed(() => Boolean(source.value) || running.value))
-const errorText = computed(() => error.value ? (backgroundRemovalErrors[error.value] ?? backgroundRemovalErrors.failed)![locale.value] : '')
-
-const modelStatus = computed(() => {
-  const en = locale.value === 'en'
-  if (modelReady.value) return en ? 'The model is on this device. Background removal works offline.' : '模型已在這台裝置，離線也能去背。'
-  if (modelDownloading.value) return en ? `Downloading the model… ${modelPercent.value}%` : `正在下載模型…… ${modelPercent.value}%`
-  if (modelBlocked.value) return en ? 'You are offline, so the model cannot be downloaded yet.' : '目前離線，還無法下載模型。'
-  if (modelFailure.value === 'digest-mismatch') return en ? 'The downloaded file did not match the published fingerprint and was discarded. Download it again.' : '下載到的檔案與公布的指紋不符，已捨棄不使用。請重新下載。'
-  if (modelFailure.value) return en ? 'The download did not finish. Nothing was kept, so you can try again.' : '下載未完成，已清除未完成的內容，可以重新下載。'
-  return en
-    ? `First use downloads about ${formatAssetSize(modelBytes, 'en')} of model and runtime to this device. It is checked against a published fingerprint, can be cancelled at any time, and is reused offline afterwards.`
-    : `首次使用需下載約 ${formatAssetSize(modelBytes, 'zh-tw')} 的模型與推論資源到這台裝置。下載內容會比對公布的指紋，過程中隨時可以取消，之後離線也能重複使用。`
+const busy = computed(() => running.value || validating.value || waiting.value)
+useWorkspaceDirty('image-background-remover', computed(() => Boolean(source.value) || running.value || waiting.value))
+const errorText = computed(() => {
+  if (issue.value) return modelPreparationIssues[issue.value][locale.value]
+  return error.value ? (backgroundRemovalErrors[error.value] ?? backgroundRemovalErrors.failed)![locale.value] : ''
 })
 
 const status = computed(() => {
   const en = locale.value === 'en'
+  if (waiting.value) return en ? 'Getting ready. Background removal starts on its own when it is done.' : '準備中，完成後會自動開始去背。'
   if (stage.value && running.value) return backgroundRemovalStages[stage.value]?.[locale.value] ?? ''
   if (message.value === 'cancelled') return en ? 'Cancelled. Your original is unchanged; you can retry.' : '已取消。原圖未變更，可重新去背。'
   if (message.value === 'selected') return en ? 'Image selected. Remove the background to preview the result.' : '已選擇圖片。開始去背即可預覽結果。'
@@ -78,7 +73,7 @@ const coverageHint = computed(() => {
   return ''
 })
 
-function size(bytes: number) { return `${new Intl.NumberFormat(locale.value === 'en' ? 'en' : 'zh-TW').format(bytes)} bytes` }
+function size(bytes: number) { return formatStoredSize(bytes, locale.value) }
 
 function clearResult() {
   if (outputUrl.value) URL.revokeObjectURL(outputUrl.value)
@@ -95,18 +90,10 @@ async function prepare() {
   preparing.value = false
 }
 
-/** §12.8 requires an unsupported device to fail before the full model loads. */
-async function downloadModel() {
-  if (!capabilities.value?.supported) return
-  error.value = ''
-  const outcome = await download()
-  if (mounted && outcome === 'insufficient_storage') error.value = 'insufficient_storage'
-}
-
 async function selectFiles(files: File[]) {
-  if (running.value || validating.value) return
+  if (busy.value) return
   const current = ++generation
-  error.value = ''; message.value = ''
+  error.value = ''; issue.value = ''; message.value = ''
   if (!files.length) return
   if (files.length !== 1) { error.value = 'multiple_files'; return }
   const file = files[0]!
@@ -132,15 +119,44 @@ function choose(event: Event) {
   input.value = ''
 }
 
+/**
+ * Starting never asks the visitor to fetch anything first: if the model is
+ * still on its way, this waits for the same attempt the photo started and
+ * carries on into the run, and if it cannot arrive, it says why.
+ */
 async function removeBackground() {
-  if (!source.value || busy.value || !capabilities.value?.supported || !modelReady.value) return
-  clearResult(); error.value = ''; running.value = true; stage.value = 'reading'
+  const file = source.value
+  if (!file || busy.value || !capabilities.value?.supported) return
   const current = ++generation
-  const outcome = await engine.run({ file: source.value }, { onProgress: progress => { stage.value = progress.stage } })
+  clearResult(); error.value = ''; issue.value = ''
+  if (!modelReady.value) {
+    waiting.value = true
+    const outcome = await prepareModel()
+    if (current !== generation || !mounted) return
+    waiting.value = false
+    if (outcome !== 'ready') {
+      // Only this workspace cancels, and it moves on to a new generation when it does.
+      issue.value = outcome === 'cancelled' ? 'failed' : outcome
+      return
+    }
+  }
+  await run(file, current)
+}
+
+async function run(file: File, current: number) {
+  running.value = true; stage.value = 'reading'
+  const outcome = await engine.run({ file }, { onProgress: progress => { stage.value = progress.stage } })
   if (current !== generation || !mounted) return
   running.value = false
   if (outcome.status === 'cancelled') message.value = 'cancelled'
-  else if (outcome.status === 'error') error.value = outcome.error.code
+  else if (outcome.status === 'error') {
+    // The browser can clear stored files on its own. The worker then finds
+    // them missing or cut short, and the next try gets them ready again.
+    if (outcome.error.code === 'model_download_failed' || outcome.error.code === 'model_digest_mismatch') {
+      forgetModel(); issue.value = 'failed'
+    }
+    else error.value = outcome.error.code
+  }
   else {
     try {
       outputUrl.value = URL.createObjectURL(outcome.output.blob)
@@ -151,13 +167,23 @@ async function removeBackground() {
   }
 }
 
+/** Stopping while the model is on its way also stops the transfer, so cancelling never keeps spending the visitor's data. */
 function cancel() {
   ++generation; engine.cancel(); cancelModel()
-  running.value = false; validating.value = false
+  running.value = false; validating.value = false; waiting.value = false
   stage.value = ''; clearResult(); message.value = 'cancelled'
 }
 
-function reset() { cancel(); source.value = undefined; error.value = ''; message.value = ''; fileInput.value?.focus() }
+/**
+ * Clearing the photo is not a cancellation: a visitor who swaps one photo for
+ * another still wants the tool, so the model keeps arriving in the background.
+ */
+function reset() {
+  ++generation; engine.cancel()
+  running.value = false; validating.value = false; waiting.value = false; stage.value = ''
+  source.value = undefined; clearResult(); error.value = ''; issue.value = ''
+  fileInput.value?.focus()
+}
 
 function setSourcePreview(file: File | undefined) {
   if (sourceUrl.value) URL.revokeObjectURL(sourceUrl.value)
@@ -168,53 +194,39 @@ function setSourcePreview(file: File | undefined) {
 }
 
 watch(source, (file) => { clearResult(); setSourcePreview(file) })
+/**
+ * Choosing a photo is the first sign a visitor means to use the tool, so the
+ * model starts arriving then and overlaps with the time spent checking the
+ * photo. Opening the page alone fetches nothing: a visitor only looking around
+ * should not pay for megabytes they never use. §12.8 also keeps a device that
+ * cannot run the model from fetching it at all. How this background attempt
+ * ends is only reported if the visitor asks to start.
+ */
+watch([source, () => capabilities.value?.supported], ([file, supported]) => {
+  if (file && supported && !modelReady.value) void prepareModel()
+})
 onMounted(prepare)
 onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearResult(); setSourcePreview(undefined); source.value = undefined })
 </script>
 
 <template>
-  <Card class="tool-workspace image-background-remover">
+  <Card
+    class="tool-workspace image-background-remover"
+    :data-capabilities="capabilities ? (capabilities.supported ? 'supported' : 'unsupported') : 'checking'"
+    :data-model-ready="String(modelReady)"
+  >
     <p class="image-background-remover__scope">{{ copy(portraitScopeNotice, locale) }}</p>
 
-    <p v-if="preparing" role="status" class="field-help">{{ locale === 'en' ? 'Checking local model support…' : '正在檢查本機模型支援…' }}</p>
+    <p v-if="preparing" role="status" class="field-help">{{ locale === 'en' ? 'Checking whether this browser can remove backgrounds…' : '正在確認這個瀏覽器能不能去背…' }}</p>
     <div v-else-if="capabilities && !capabilities.supported" class="capability-warning">
       <p>{{ backgroundRemovalErrors.unsupported_browser![locale] }}</p>
       <Button variant="outline" @click="prepare">{{ locale === 'en' ? 'Check again' : '重新檢查' }}</Button>
     </div>
 
-    <section
-      class="image-background-remover__model"
-      data-model-preparation
-      :data-model-ready="String(modelReady)"
-      :aria-label="locale === 'en' ? 'Local model' : '本機模型'"
-    >
-      <p class="image-background-remover__model-status" role="status">{{ modelStatus }}</p>
-      <div
-        v-if="modelDownloading"
-        class="offline-asset__progress"
-        role="progressbar"
-        :aria-valuenow="modelPercent"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        :aria-label="locale === 'en' ? 'Model download progress' : '模型下載進度'"
-      >
-        <span :style="{ inlineSize: `${modelPercent}%` }" />
-      </div>
-      <div v-if="!modelReady" class="tool-workspace__actions">
-        <Button v-if="modelDownloading" type="button" variant="outline" @click="cancelModel">
-          <X :size="18" aria-hidden="true" />{{ locale === 'en' ? 'Cancel download' : '取消下載' }}
-        </Button>
-        <Button v-else type="button" :disabled="modelBlocked || preparing || capabilities?.supported === false" @click="downloadModel">
-          <Download :size="18" aria-hidden="true" />
-          {{ modelFailure ? (locale === 'en' ? 'Try again' : '重新下載') : (locale === 'en' ? 'Download the model' : '下載模型') }}
-        </Button>
-      </div>
-    </section>
-
     <div class="image-background-remover__picker field-group" @dragover.prevent @drop.prevent="selectFiles(Array.from($event.dataTransfer?.files ?? []))">
       <Image :size="24" aria-hidden="true" />
       <label for="remover-file">{{ locale === 'en' ? 'Choose portrait image' : '選擇人像圖片' }}</label>
-      <input id="remover-file" ref="fileInput" class="ui-input" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" :disabled="running" aria-describedby="remover-formats remover-error" :aria-invalid="Boolean(error)" @change="choose">
+      <input id="remover-file" ref="fileInput" class="ui-input" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" :disabled="running || waiting" aria-describedby="remover-formats remover-error" :aria-invalid="Boolean(error)" @change="choose">
       <p id="remover-formats" class="field-help">JPEG · PNG · WebP · {{ locale === 'en' ? 'One image, up to 25 MiB / 24 MP. You can also drop a file here.' : '單張最多 25 MiB／2,400 萬像素。也可將檔案拖曳至此。' }}</p>
       <p class="field-help">{{ backgroundRemovalErrors.unsupported_heic![locale] }}</p>
     </div>
@@ -222,11 +234,32 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
       <img :src="sourceUrl" :alt="locale === 'en' ? 'Preview of the chosen image' : '已選擇圖片的預覽'">
     </figure>
 
-    <form :aria-busy="running" @submit.prevent="removeBackground">
+    <form :aria-busy="running || waiting" @submit.prevent="removeBackground">
       <div class="tool-workspace__actions">
-        <Button type="submit" :disabled="!source || busy || !capabilities?.supported || !modelReady">{{ locale === 'en' ? 'Remove background' : '開始去背' }}</Button>
-        <Button v-if="running" type="button" variant="outline" @click="cancel">{{ locale === 'en' ? 'Cancel' : '取消' }}</Button>
+        <!-- After a preparation problem the same button retries, so focus stays where the visitor already is. -->
+        <Button type="submit" :disabled="!source || busy || !capabilities?.supported">
+          <template v-if="issue"><RotateCcw :size="18" aria-hidden="true" />{{ locale === 'en' ? 'Try again' : '重試' }}</template>
+          <template v-else>{{ locale === 'en' ? 'Remove background' : '開始去背' }}</template>
+        </Button>
+        <Button v-if="running || waiting" type="button" variant="outline" @click="cancel">{{ locale === 'en' ? 'Cancel' : '取消' }}</Button>
         <Button v-if="source && !busy" type="button" variant="outline" @click="reset">{{ locale === 'en' ? 'Clear image' : '清除圖片' }}</Button>
+      </div>
+      <div v-if="waiting" class="image-background-remover__preparing" data-model-preparing>
+        <p class="image-background-remover__preparing-label">
+          <span>{{ locale === 'en' ? 'Getting ready' : '準備中' }}</span>
+          <!-- The progress bar carries the value for assistive technology. -->
+          <span aria-hidden="true">{{ modelPercent }}%</span>
+        </p>
+        <div
+          class="offline-asset__progress"
+          role="progressbar"
+          :aria-valuenow="modelPercent"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-label="locale === 'en' ? 'Getting background removal ready' : '去背功能準備進度'"
+        >
+          <span :style="{ inlineSize: `${modelPercent}%` }" />
+        </div>
       </div>
     </form>
 

@@ -3,15 +3,14 @@
  * device. A local asset is tool content the visitor explicitly chose to keep —
  * a signature, a Logo, a frame, a background or a custom calendar — so every
  * rule here is about keeping that record readable on the device it was written
- * on, never about moving it anywhere else.
+ * on, never about moving it anywhere else. No tool writes a custom calendar any
+ * more (ADR-0021), and the brand promo image no longer saves backgrounds, frames
+ * or Logos, but `calendar`, `background`, `frame` and `logo` stay known kinds so
+ * what a device saved earlier still reads back and can be deleted from the
+ * asset manager.
  */
 export const localAssetKinds = ['calendar', 'background', 'frame', 'logo', 'signature'] as const
 
-/*
- * No tool writes `background`, `frame` or `logo` any more: the brand promo image
- * stopped saving assets. They stay known kinds so what a device saved there
- * earlier still reads back and can be deleted from the asset manager.
- */
 export type LocalAssetKind = typeof localAssetKinds[number]
 
 export const LOCAL_ASSET_DB_NAME = 'toolsliang-local-assets'

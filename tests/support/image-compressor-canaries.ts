@@ -8,9 +8,9 @@ export const imageCompressorCanaries: ToolContentCanary[] = [
   { label: '圖片檔名', value: 'private-image-canary.png' },
   { label: 'WebP 素材檔名', value: 'transparent.webp' },
   { label: '改名 HEIC 素材', value: 'renamed.jpg' },
-  { label: 'PNG 輸出檔名', value: 'compressed-image.png' },
-  { label: 'JPEG 輸出檔名', value: 'compressed-image.jpg' },
-  { label: 'WebP 輸出檔名', value: 'compressed-image.webp' },
+  // Download names are derived from the source name, so these cover every output extension.
+  { label: '圖片輸出檔名', value: 'private-image-canary-compressed' },
+  { label: 'WebP 素材輸出檔名', value: 'transparent-compressed' },
   { label: 'PNG 內容／輸出 Base64', value: 'iVBORw0KGgo' },
   { label: 'JPEG 內容／輸出 Base64', value: '/9j/' },
   { label: 'WebP 內容／輸出 Base64', value: 'UklGR' },

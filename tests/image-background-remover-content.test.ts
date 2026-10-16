@@ -4,6 +4,7 @@ import {
   backgroundRemovalErrors,
   backgroundRemovalStages,
   imageBackgroundRemoverFaq,
+  modelPreparationIssues,
   portraitScopeNotice,
 } from '@/features/tools/image-background-remover/content'
 import { heicMessage } from '@/features/tools/image-compressor/content'
@@ -43,9 +44,12 @@ describe('人像去背文案', () => {
     expect(tool.seo.answer['zh-tw']).toContain('人像')
   })
 
-  it('說明首次下載、本機推論與已知限制，不宣稱完美邊緣', () => {
+  it('說明第一次使用要等一下、本機處理與已知限制，不宣稱完美邊緣', () => {
     const zh = imageBackgroundRemoverFaq.map(entry => `${entry.heading['zh-tw']}${entry.body['zh-tw']}`).join('\n')
-    expect(zh).toContain('下載')
+    expect(zh).toContain('第一次使用')
+    expect(zh).toContain('用過一次後，離線也能使用')
+    expect(zh).toContain('自動接著去背')
+    expect(zh).toContain('MB')
     expect(zh).toContain('不會')
     expect(zh).toContain('半透明')
     expect(zh).toContain('瀏覽器')
@@ -59,6 +63,33 @@ describe('人像去背文案', () => {
     for (const entry of imageBackgroundRemoverFaq) {
       expect(hasLocalizedCopy(entry.heading)).toBe(true)
       expect(hasLocalizedCopy(entry.body)).toBe(true)
+    }
+  })
+
+  it('準備與離線的說明用白話：不要求使用者下載模型，也不出現技術名詞', () => {
+    const copies = [
+      tool.seo.description, tool.seo.answer,
+      ...Object.values(modelPreparationIssues),
+      ...imageBackgroundRemoverFaq.flatMap(entry => [entry.heading, entry.body]),
+      backgroundRemovalErrors.unsupported_browser!,
+    ]
+    for (const copy of copies) {
+      expect(hasLocalizedCopy(copy)).toBe(true)
+      for (const text of [copy['zh-tw'], copy.en]) {
+        expect(text).not.toMatch(/ONNX|WebAssembly|WASM|runtime|執行提供者|推論資源|SHA-256|指紋|fingerprint/i)
+        expect(text).not.toMatch(/下載模型|首次使用需下載|download the model|downloads the model/i)
+      }
+    }
+    expect(tool.seo.answer['zh-tw']).toContain('用過一次後，離線也能使用')
+    expect(tool.seo.description['zh-tw']).toContain('用過一次後離線也能使用')
+  })
+
+  it('每一種準備不完成的原因都告訴使用者按「重試」', () => {
+    for (const copy of Object.values(modelPreparationIssues)) {
+      expect(copy['zh-tw']).toContain('「重試」')
+      expect(copy.en).toContain('Try again')
+      expect(copy['zh-tw']).not.toContain('下載')
+      expect(copy.en.toLowerCase()).not.toContain('download')
     }
   })
 
