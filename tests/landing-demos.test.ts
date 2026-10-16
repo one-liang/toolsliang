@@ -4,11 +4,12 @@ import {
   getBmiDemo,
   getCalendarDemo,
   getNtdDemo,
+  getPickerDemo,
   pickerDemoNames,
   pickerDemoWinnerIndex,
-  wheelLabelPlacements,
 } from '@/features/landing/demos'
 import { supportedLocales } from '@/features/tools/catalog'
+import { wheelSliceCentre } from '@/features/tools/random-picker/domain/wheel'
 
 describe('landing demonstrations', () => {
   it('writes the cheque example with the NTD converter itself', () => {
@@ -49,14 +50,17 @@ describe('landing demonstrations', () => {
     }
   })
 
-  it('rests the wheel with the drawn name under the pointer and every name upright', () => {
-    const count = pickerDemoNames['zh-tw'].length
-    const { restingRotation, labels } = wheelLabelPlacements(count, pickerDemoWinnerIndex, 68)
-    const winner = labels[pickerDemoWinnerIndex]!
+  it('rests the picker wheel itself with the drawn name under the pointer and every name upright', () => {
+    for (const locale of supportedLocales) {
+      const names = pickerDemoNames[locale]
+      const demo = getPickerDemo(locale)
 
-    expect(((winner.start + winner.end) / 2 + restingRotation) % 360).toBe(270)
-    for (const label of labels) {
-      expect(Math.abs(label.restingTilt), '輪盤停下時名字不得倒置或直立').toBeLessThan(90)
+      expect(demo.winner).toBe(names[pickerDemoWinnerIndex])
+      expect((((wheelSliceCentre(demo.winnerIndex, names.length) + demo.rotation) % 360) + 360) % 360).toBeCloseTo(0, 6)
+      expect(demo.slices.map(slice => slice.label), '示範的名字不得被截短').toEqual(names)
+      for (const slice of demo.slices) {
+        expect(Math.abs(slice.labelTilt), '輪盤停下時名字不得倒置或直立').toBeLessThan(90)
+      }
     }
   })
 })

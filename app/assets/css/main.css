@@ -640,19 +640,29 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .picker-view__option { gap: 8px; padding-inline: 10px 14px; }
 .picker-stage .picker-note { margin: 0; padding: 0; background: none; }
 .picker-stage__body { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px; min-height: 5.5rem; }
-.picker-wheel { flex: 0 0 auto; width: var(--picker-wheel-size); max-width: 100%; }
-/* A rotated square grows its own bounding box; clipping it here keeps the page from scrolling sideways mid-spin. */
-.picker-wheel__frame { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; }
-.picker-wheel__pointer {
-  position: absolute; z-index: 1; top: 0; left: 50%; width: 0; height: 0; translate: -50% 0;
-  border-inline: max(5px, calc(var(--picker-wheel-size) * .028)) solid transparent;
-  border-top: max(9px, calc(var(--picker-wheel-size) * .05)) solid var(--color-primary-strong);
-}
-.picker-wheel__disc { display: block; width: 100%; height: 100%; transition-property: transform; transition-timing-function: cubic-bezier(.16, .84, .36, 1); }
-.picker-wheel__slice { fill: var(--color-surface); stroke: var(--color-border-strong); stroke-width: 1; }
-.picker-wheel__slice--odd { fill: var(--color-surface-hover); }
-.picker-wheel__slice--won { stroke: var(--color-primary-strong); stroke-width: 3; }
-.picker-wheel__label { fill: var(--color-foreground); font-family: inherit; text-anchor: middle; dominant-baseline: middle; }
+/* The wheel (#106) is one component shared with the landing demo: category fills in a fixed order, ink
+   dividers, rim, hub and pointer, bold names. The fills do not invert, so neither does the ink drawn on them;
+   only the pointer's edge, which also meets the surface around the wheel, follows the theme. The disc turns
+   inside the SVG, so a spin never grows the page sideways. */
+.picker-wheel { --wheel-ink: var(--fill-ink); --wheel-pointer-edge: var(--fill-ink); display: block; height: auto; aspect-ratio: 1; }
+.picker-wheel__disc { transform: rotate(var(--wheel-rotation, 0deg)); transform-box: view-box; transform-origin: 0 0; transition-timing-function: cubic-bezier(.16, .84, .36, 1); }
+.picker-wheel__slice { stroke: var(--wheel-ink); stroke-width: var(--wheel-divider, 2.5px); stroke-linejoin: round; }
+.picker-wheel__slice--paper { fill: var(--paper-0); }
+.picker-wheel__slice--pink { fill: var(--pink-400); }
+.picker-wheel__slice--sky { fill: var(--sky-400); }
+.picker-wheel__slice--mint { fill: var(--mint-400); }
+.picker-wheel__slice--coral { fill: var(--coral-400); }
+.picker-wheel__rim { fill: none; stroke: var(--wheel-ink); stroke-width: 2.5px; }
+.picker-wheel__label { fill: var(--wheel-ink); font-family: inherit; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+/* The drawn slice stands out of the rim under the pointer with a heavier outline: place and weight mark it, not colour. */
+.picker-wheel__won { --wheel-won: 1; transform: translate(calc(var(--wheel-won-x) * var(--wheel-won) * 1px), calc(var(--wheel-won-y) * var(--wheel-won) * 1px)); }
+/* Twice the divider, so a narrow slice on a crowded wheel keeps its colour inside the outline. */
+.picker-wheel__won .picker-wheel__slice { stroke-width: calc(var(--wheel-divider, 2.5px) * (1 + var(--wheel-won))); }
+.picker-wheel__hub { fill: var(--wheel-ink); }
+.picker-wheel__hub-dot { fill: var(--yellow-400); }
+.picker-wheel__pointer { fill: var(--wheel-ink); stroke: var(--wheel-pointer-edge); stroke-width: 2px; stroke-linejoin: round; }
+.dark .picker-stage .picker-wheel { --wheel-pointer-edge: var(--chalk-50); }
+.picker-stage .picker-wheel { flex: 0 0 auto; width: var(--picker-wheel-size); max-width: 100%; }
 .picker-readout { flex: 1 1 8rem; display: grid; gap: 12px; min-width: 0; }
 .picker-progress { width: 100%; max-width: 240px; height: 10px; overflow: hidden; border: var(--rule) solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); }
 .picker-progress > span { display: block; height: 100%; background: var(--color-primary-strong); transition: width var(--duration-fast) linear; }

@@ -3,6 +3,7 @@ import { Dices, Plus, RotateCcw, SkipForward } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import RandomPickerWheel from '@/components/RandomPickerWheel.vue'
 import {
   duplicatePolicyLabels,
   getRandomPickerCopy,
@@ -24,7 +25,7 @@ import {
   type DuplicatePolicy,
   type RandomPickerPresentation,
 } from '@/features/tools/random-picker/domain/reference'
-import { canPresentWheel, nextWheelRotation, wheelLabelStyle, wheelSlices, wheelViewBox } from '@/features/tools/random-picker/domain/wheel'
+import { canPresentWheel, nextWheelRotation, wheelSlices } from '@/features/tools/random-picker/domain/wheel'
 
 /**
  * The workspace never decides anything about fairness: it reads the plan, calls
@@ -111,9 +112,9 @@ const error = computed(() => {
 const countError = computed(() => outcome.value.state === 'error' && outcome.value.code.startsWith('draw-count'))
 const wheelReadable = computed(() => canPresentWheel(list.value.entries.length, drawCount.value))
 const showWheel = computed(() => presentation.value === 'wheel' && wheelReadable.value)
-const slices = computed(() => wheelSlices(list.value.entries))
+/** Laid out for where the wheel rests or is heading, so the names read the right way up once it stops. */
+const slices = computed(() => wheelSlices(list.value.entries, rotation.value))
 const wheelLabel = computed(() => `${text.value.wheelCaption}（${slices.value.length}）`)
-const wheelFontSize = computed(() => wheelLabelStyle(slices.value.length).fontSize)
 const wonIndex = computed(() => (spinning.value ? undefined : picks.value[0]?.index))
 const canDraw = computed(() => outcome.value.state === 'ready' && !spinning.value && !drawFailed.value)
 const listDescribedBy = computed(() => ['picker-list-help', pending.value ? 'picker-pending' : '', error.value && !countError.value ? 'picker-error' : '']
@@ -369,35 +370,15 @@ function prefersReducedMotion() {
           <p v-if="presentation === 'wheel' && !wheelReadable" class="picker-note picker-wheel-note">{{ text.wheelUnavailable }}</p>
 
           <div class="picker-stage__body">
-            <div v-if="showWheel" class="picker-wheel">
-              <!-- The frame clips the rotated square box of the disc; the circle inside never reaches its edge. -->
-              <div class="picker-wheel__frame">
-                <span class="picker-wheel__pointer" aria-hidden="true" />
-                <svg
-                  class="picker-wheel__disc"
-                  :viewBox="wheelViewBox"
-                  role="img"
-                  :aria-label="wheelLabel"
-                  :style="{ transform: `rotate(${rotation}deg)`, transitionDuration: spinning ? `${SPIN_DURATION_MS}ms` : '0ms' }"
-                >
-                  <g v-for="slice in slices" :key="slice.index">
-                    <path
-                      :d="slice.path"
-                      class="picker-wheel__slice"
-                      :class="{
-                        'picker-wheel__slice--odd': slice.index % 2 === 1,
-                        'picker-wheel__slice--won': slice.index === wonIndex,
-                      }"
-                    />
-                    <text
-                      class="picker-wheel__label"
-                      :font-size="wheelFontSize"
-                      :transform="slice.labelTransform"
-                    >{{ slice.label }}</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
+            <!-- The same wheel as the landing demo (#106). -->
+            <RandomPickerWheel
+              v-if="showWheel"
+              :slices="slices"
+              :rotation="rotation"
+              :label="wheelLabel"
+              :won-index="wonIndex"
+              :spin-duration-ms="spinning ? SPIN_DURATION_MS : 0"
+            />
 
             <div class="picker-readout">
               <div

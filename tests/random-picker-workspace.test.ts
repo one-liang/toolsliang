@@ -175,11 +175,13 @@ describe('random picker workspace', () => {
     expect(wrapper.get('.picker-result').attributes('aria-busy')).toBe('true')
     expect(drawnEntries(wrapper), '動畫還沒停就不得宣告結果').toHaveLength(0)
     expect(wrapper.get('.picker-progress').attributes('role')).toBe('progressbar')
+    expect(wrapper.find('.picker-wheel__won').exists(), '轉動中不能先標出中選的扇形').toBe(false)
 
     vi.advanceTimersByTime(5_000)
     await wrapper.vm.$nextTick()
     expect(wrapper.get('.picker-result').attributes('aria-busy')).toBe('false')
     expect(drawnEntries(wrapper)).toEqual(['Bob'])
+    expect(wrapper.get('.picker-wheel__won').text(), '停下來後中選的扇形突出').toBe('Bob')
     expect(wrapper.find('.picker-skip').exists(), '停下來以後不需要跳過鍵').toBe(false)
   })
 
@@ -191,9 +193,12 @@ describe('random picker workspace', () => {
     await wrapper.get('input[name="picker-presentation"][value="wheel"]').setValue()
     await draw(wrapper)
 
+    expect(wrapper.get('.picker-wheel__disc').attributes('style')).toContain('transition-property: transform')
+
     await wrapper.get('.picker-skip').trigger('click')
     expect(drawnEntries(wrapper), '跳過動畫不得重抽').toEqual(['Bob'])
     expect(wrapper.get('.picker-result').attributes('aria-busy')).toBe('false')
+    expect(wrapper.get('.picker-wheel__disc').attributes('style'), '跳過後輪盤立刻停在結果，不再繼續轉').toContain('transition-property: none')
   })
 
   it('shows the result immediately when the visitor asked for less motion', async () => {
@@ -206,6 +211,8 @@ describe('random picker workspace', () => {
     expect(drawnEntries(wrapper), 'reduced motion 下結果不得依賴動畫').toEqual(['Bob'])
     expect(wrapper.find('.picker-skip').exists()).toBe(false)
     expect(wrapper.get('.picker-wheel').exists(), '輪盤仍然看得到中選的扇形').toBe(true)
+    expect(wrapper.get('.picker-wheel__won').text()).toBe('Bob')
+    expect(wrapper.get('.picker-wheel__disc').attributes('style'), '沒有動畫就直接停在結果').toContain('transition-property: none')
   })
 
   it('keeps the whole candidate list readable beside the wheel', async () => {

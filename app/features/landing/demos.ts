@@ -3,6 +3,7 @@ import { copy } from '@/features/tools/catalog'
 import { evaluateBmi } from '@/features/tools/bmi-calculator/domain/calculate'
 import { bmiCategories } from '@/features/tools/bmi-calculator/domain/reference'
 import { convertNtd } from '@/features/tools/ntd-uppercase/domain/convert'
+import { wheelSlices, wheelStopRotation } from '@/features/tools/random-picker/domain/wheel'
 import { buildCalendarYear, getMonthGrid, type CalendarDay } from '@/features/tools/taiwan-calendar/domain/calendar'
 import type { CalendarYearDataset } from '@/features/tools/taiwan-calendar/domain/dataset'
 import type { OfficialDayKind } from '@/features/tools/taiwan-calendar/domain/reference'
@@ -163,33 +164,18 @@ export const pickerDemoNames: Record<LocaleCode, string[]> = {
 export const pickerDemoWinnerIndex = 3
 
 /**
- * Where each name sits on the demo wheel. The wheel rests turned so the winner
- * is under the pointer at the top; labels run along the rim and are turned over
- * in the lower half, judged in that resting frame, so every name reads upright
- * when the wheel stops.
+ * The draw demo is the picker's own wheel (#106), resting where the picker
+ * would stop it for the same result: the winner under the pointer and every
+ * name laid out to read the right way up at that angle.
  */
-export function wheelLabelPlacements(count: number, winnerIndex: number, labelRadius: number) {
-  const step = 360 / count
-  const restingRotation = 360 - (winnerIndex * step + step / 2)
+export function getPickerDemo(locale: LocaleCode) {
+  const names = pickerDemoNames[locale]
+  const rotation = wheelStopRotation(pickerDemoWinnerIndex, names.length, 0)
 
   return {
-    restingRotation,
-    labels: Array.from({ length: count }, (_, index) => {
-      const mid = -90 + index * step + step / 2
-      const resting = normalizeAngle(mid + restingRotation)
-      const lowerHalf = resting > 0 && resting < 180
-      return {
-        start: mid - step / 2,
-        end: mid + step / 2,
-        transform: `rotate(${mid}) translate(${labelRadius} 0) rotate(${lowerHalf ? -90 : 90})`,
-        /** The label's reading direction on screen at rest, in degrees from horizontal. */
-        restingTilt: normalizeAngle(resting + (lowerHalf ? -90 : 90)),
-      }
-    }),
+    slices: wheelSlices(names, rotation),
+    rotation,
+    winnerIndex: pickerDemoWinnerIndex,
+    winner: names[pickerDemoWinnerIndex]!,
   }
-}
-
-function normalizeAngle(angle: number) {
-  const turned = ((angle % 360) + 360) % 360
-  return turned > 180 ? turned - 360 : turned
 }
