@@ -693,7 +693,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .calendar-day[data-kind="makeup-workday"] { border-style: dashed; border-color: var(--color-border-strong); }
 .calendar-day--today { border-color: var(--color-success); outline: 2px solid var(--color-success); outline-offset: -5px; }
 .calendar-day.calendar-day--selected { border-color: var(--sidebar-active-bg); background: var(--sidebar-active-bg); color: var(--sidebar-active-fg); }
-.calendar-day.calendar-day--selected :is(.calendar-day__number, .calendar-day__lunar, .calendar-day__mark, .calendar-day__today, .calendar-day__custom) { color: inherit; }
+.calendar-day.calendar-day--selected :is(.calendar-day__number, .calendar-day__lunar, .calendar-day__mark, .calendar-day__today, .calendar-day__custom, .calendar-day__flag) { color: inherit; }
 
 .calendar-side { display: grid; gap: 16px; align-content: start; }
 .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources {
@@ -730,6 +730,53 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .calendar-sources a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
 .calendar-sources__edition { font-family: var(--font-mono); font-size: .8rem; }
 .calendar-sources__contract { margin: 12px 0 0; color: var(--color-muted-foreground); font-family: var(--font-mono); font-size: .78rem; }
+
+.calendar-view { margin: 0; padding: 0; border: 0; }
+.calendar-view legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
+
+/* Twelve months at once, the way the DGPA prints the office calendar. The
+   columns follow the room the card has, not the viewport: the sidebar and the
+   page width decide that, so a container query reads it directly. */
+.calendar-year-view { container-type: inline-size; margin-top: 14px; }
+.calendar-year-view__hint { margin: 0 0 14px; color: var(--color-muted-foreground); font-size: .78rem; }
+.calendar-months { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px 28px; align-items: start; }
+@container (min-width: 540px) { .calendar-months { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (min-width: 720px) { .calendar-months { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.calendar-mini { width: 100%; border-spacing: 2px; border-collapse: separate; table-layout: fixed; }
+.calendar-mini caption { margin-bottom: 6px; padding-left: 2px; font-size: .95rem; font-weight: 800; text-align: left; }
+.calendar-mini th { padding: 2px 0; color: var(--color-muted-foreground); font-size: .68rem; font-weight: 800; }
+.calendar-mini th abbr { text-decoration: none; }
+.calendar-mini td { padding: 0; vertical-align: top; }
+.calendar-day.calendar-day--compact { min-height: 50px; gap: 0; padding: 4px 1px 3px; border-radius: 8px; }
+.calendar-day--compact .calendar-day__number { font-size: .86rem; line-height: 1.25; }
+.calendar-day--compact .calendar-day__lunar { overflow: hidden; font-size: .6rem; line-height: 1.3; white-space: nowrap; }
+.calendar-day__flag { color: var(--color-holiday); font-size: .6rem; font-weight: 800; line-height: 1.3; }
+.calendar-day__flag[data-flag="work"] { color: var(--color-foreground); }
+/* The DGPA paints every day off alike, weekend or holiday; the weekday column
+   and the flag say which, so the tint only repeats it at a glance. */
+.calendar-day--compact[data-kind="weekend"]:not(.calendar-day--selected) { border-color: var(--color-border-subtle); background: var(--color-holiday-surface); }
+.calendar-legend li[data-legend="day-off"] .calendar-legend__swatch { border-color: var(--color-holiday); background: var(--color-holiday-surface); }
+.calendar-legend__flag { min-width: 16px; color: var(--color-holiday); font-size: .8rem; font-weight: 800; text-align: center; }
+.calendar-legend__flag[data-flag="work"] { color: var(--color-foreground); }
+
+/* Attribution is a condition of the Open Government Data Licence, so the
+   publisher, edition and licence stay on screen; only the dates, the
+   cross-check and the disclaimers fold away under the line. */
+.calendar-edition { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--color-border-subtle); color: var(--color-muted-foreground); font-size: .78rem; line-height: 1.7; }
+.calendar-edition__line { margin: 0; overflow-wrap: anywhere; }
+.calendar-edition a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
+.calendar-edition__revised { color: var(--color-foreground); font-weight: 800; }
+.calendar-edition__details > summary { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; list-style: none; color: var(--color-foreground); font-weight: 700; cursor: pointer; }
+.calendar-edition__details > summary::-webkit-details-marker { display: none; }
+.calendar-edition__details > summary::after {
+  content: ''; inline-size: 18px; block-size: 18px; flex: none;
+  background: var(--select-chevron) center / 18px no-repeat;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.calendar-edition__details[open] > summary::after { transform: rotate(180deg); }
+.calendar-edition__details[open] > summary { margin-bottom: 4px; }
+.calendar-edition__details .calendar-revised { margin-bottom: 12px; color: var(--color-foreground); }
+.calendar-edition__details :is(.calendar-caveats, .calendar-sources) { margin-top: 12px; }
 
 /* The custom calendar reuses the month grid of the Taiwan calendar: same table,
    same day cell, same reviewed marks. Only what belongs to this device's own
