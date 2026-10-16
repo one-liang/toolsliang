@@ -7,16 +7,16 @@ import {
   type NtdErrorCode,
   type NtdPurpose,
 } from './domain/reference'
-import { ntdCaveatKeys, ntdContentReview, type NtdCaveatKey } from './domain/sources'
 import type { ToolFaqEntry } from '../faq'
 import { hasLocalizedCopy, type LocaleCode, type LocalizedCopy } from '../catalog'
 
 /**
  * Everything the NTD uppercase workspace and page say out loud. It sits beside
  * the converter rather than inside the component because the document boundary
- * is reviewed as content: the caveats keep the wording published in
- * docs/research/002-ntd-uppercase-rules-and-sources.md §7.1, the questions keep
- * the ones approved in §8, and the error messages keep §5.5. Bounds and worked
+ * is reviewed as content: the questions keep the ones approved in
+ * docs/research/002-ntd-uppercase-rules-and-sources.md §8, and together with the
+ * purpose rules and the before-you-start answer they carry every caveat of
+ * §7.1; the error messages keep §5.5. Bounds and worked
  * examples are read from the reviewed rules and vectors, never retyped, so a
  * sentence cannot promise a limit the converter does not enforce.
  */
@@ -52,9 +52,6 @@ const ntdCopyEntries = {
   fractionLabel: { 'zh-tw': '一元以下', en: 'Below one yuan' },
   internalZeroLabel: { 'zh-tw': '中間的零', en: 'Internal 零' },
   endingLabel: { 'zh-tw': '結尾', en: 'Ending' },
-  caveatsTitle: { 'zh-tw': '抄寫前要知道', en: 'Before you copy this' },
-  sourceLabel: { 'zh-tw': '規則依據', en: 'Rule source' },
-  ruleVersionLabel: { 'zh-tw': '規則版本', en: 'Rule version' },
   treasuryZeroNote: {
     'zh-tw': '國庫署公開的例示只涵蓋單一單位交界；金額若在多個交界都是零，建議與付款機關再確認一次，核對時也請逐位讀，不要照口語讀。',
     en: 'The National Treasury Administration publishes an example for a single unit boundary only; when zeros fall on several boundaries, confirm the wording with the paying agency, and read it position by position rather than the way the number is said aloud.',
@@ -88,48 +85,6 @@ export type NtdCopyKey = keyof typeof ntdCopyEntries
 export const ntdCopyKeys = Object.keys(ntdCopyEntries) as NtdCopyKey[]
 export const ntdCopy: Record<NtdCopyKey, LocalizedCopy> = ntdCopyEntries
 
-/** Section 7.1: shown next to the result, complete, in both locales. */
-export const ntdCaveats: Record<NtdCaveatKey, LocalizedCopy> = {
-  'no-legal-effect': {
-    'zh-tw': '這裡的結果是文字對照參考，不是法律或會計審查，也不保證受款機構或金融機構一定接受。',
-    en: 'This result is a wording reference, not legal or accounting review, and does not guarantee that a bank or receiving institution will accept it.',
-  },
-  'purpose-differs': {
-    'zh-tw': '三種用途的寫法不同，抄寫前請先確認你要填的單據屬於哪一種。',
-    en: 'The three purposes produce different wording; confirm which document you are filling in before copying the result.',
-  },
-  'cheque-yuan-only': {
-    'zh-tw': '支票大寫金額寫到「元」為止，不計「角」「分」；金額有角分請先與收款人確認。',
-    en: 'Cheque amounts are written to 元 only and do not carry 角 or 分; confirm the amount with the payee if it has a fractional part.',
-  },
-  'treasury-rounds-to-yuan': {
-    'zh-tw': '國庫付款憑單金額至元為止、元以下四捨五入，換算後的金額可能與你輸入的不同。',
-    en: 'Treasury voucher amounts stop at 元 and round half-up, so the converted amount can differ from what you entered.',
-  },
-  'treasury-omits-zero': {
-    'zh-tw': '國庫付款憑單依國庫署規定不書寫中間的「零」，與一般會計寫法不同。',
-    en: 'Treasury payment vouchers omit the internal 零 as required by the National Treasury Administration, unlike general accounting wording.',
-  },
-  'written-amount-governs': {
-    'zh-tw': '票據上文字與號碼不符時，依票據法以文字為準，填寫後務必再核對一次大小寫金額。',
-    en: 'Under the Negotiable Instruments Act the written amount governs when it differs from the numerals, so re-check both fields after filling them in.',
-  },
-  'local-processing': {
-    'zh-tw': '金額只在你的瀏覽器換算，不會送出、不會保存。',
-    en: 'Amounts are converted in your browser only; nothing is sent or stored.',
-  },
-}
-
-/**
- * A caveat that only makes sense for one purpose appears with that purpose; the
- * rest are true of every wording and stay visible whichever purpose is picked.
- */
-const purposeCaveatKeys: Record<NtdPurpose, NtdCaveatKey[]> = {
-  accounting: [],
-  cheque: ['cheque-yuan-only'],
-  treasury: ['treasury-rounds-to-yuan', 'treasury-omits-zero'],
-}
-
 const ntdErrorCopy: Record<NtdErrorCode, LocalizedCopy> = {
   'empty': {
     'zh-tw': '請先輸入要換寫的新臺幣金額。',
@@ -162,35 +117,6 @@ const ntdErrorCopy: Record<NtdErrorCode, LocalizedCopy> = {
   'out-of-range': {
     'zh-tw': '超過這個用途的上限，最多可換寫到 {limit} 元。',
     en: 'The amount exceeds this purpose\'s limit of {limit} 元.',
-  },
-}
-
-/**
- * Which reviewed source governs each purpose. Section 4.1 records that no
- * regulation limits the numerals of general accounting, so its wording follows
- * cheque practice and cites the source that fixed that practice.
- */
-const purposeSources: Record<NtdPurpose, { url: string, note: LocalizedCopy }> = {
-  accounting: {
-    url: 'https://www.twnch.org.tw/manual.html',
-    note: {
-      'zh-tw': '一般會計沒有法規限制可用的國字，寫法沿用票據實務。',
-      en: 'No regulation limits the numerals used in general accounting, so this wording follows cheque practice.',
-    },
-  },
-  cheque: {
-    url: 'https://www.law.cbc.gov.tw/Law/ShowAll?LawID=LA06C001001&LawDataType=1',
-    note: {
-      'zh-tw': '支票寫法依中央銀行的支票使用須知。',
-      en: 'Cheque wording follows the Central Bank instructions for treasury account deposit cheques.',
-    },
-  },
-  treasury: {
-    url: 'https://www.nta.gov.tw/singlehtml/296?cntId=nta_102_296',
-    note: {
-      'zh-tw': '國庫付款憑單寫法依財政部國庫署的國庫集中支付作業說明。',
-      en: 'Treasury voucher wording follows the National Treasury Administration centralised payment guidance.',
-    },
   },
 }
 
@@ -310,17 +236,6 @@ export function getNtdCopy(locale: LocaleCode): Record<NtdCopyKey, string> {
   ) as Record<NtdCopyKey, string>
 }
 
-export function getNtdCaveats(locale: LocaleCode, purpose: NtdPurpose) {
-  const shown = new Set<NtdCaveatKey>([
-    ...ntdCaveatKeys.filter(key => !isPurposeCaveat(key)),
-    ...purposeCaveatKeys[purpose],
-  ])
-
-  return ntdCaveatKeys
-    .filter(key => shown.has(key))
-    .map(key => ({ key, text: ntdCaveats[key][locale] }))
-}
-
 /** The message a refused amount gets, with the bound of the purpose that refused it. */
 export function ntdErrorMessage(code: NtdErrorCode, purpose: NtdPurpose, locale: LocaleCode) {
   return ntdErrorCopy[code][locale].replace('{limit}', ntdPurposeLimit(purpose))
@@ -328,7 +243,6 @@ export function ntdErrorMessage(code: NtdErrorCode, purpose: NtdPurpose, locale:
 
 export function getNtdPurposeSummary(purpose: NtdPurpose, locale: LocaleCode) {
   const summary = ntdPurposeSummaries[purpose]
-  const source = purposeSource(purpose)
 
   return {
     label: ntdPurposeRules[purpose].label[locale],
@@ -336,25 +250,11 @@ export function getNtdPurposeSummary(purpose: NtdPurpose, locale: LocaleCode) {
     fraction: summary.fraction[locale],
     internalZero: summary.internalZero[locale],
     ending: summary.ending[locale],
-    sourceNote: purposeSources[purpose].note[locale],
-    source: { title: source.title[locale], url: source.url },
   }
-}
-
-/** The cited source is always one the review already published, never a new link. */
-function purposeSource(purpose: NtdPurpose) {
-  const source = ntdContentReview.sources.find(item => item.url === purposeSources[purpose].url)
-  if (!source) throw new Error(`The ${purpose} source is not in the reviewed source list`)
-
-  return source
 }
 
 function ntdPurposeLimit(purpose: NtdPurpose) {
   return groupNtdAmount(ntdPurposeRules[purpose].maxAmount)
-}
-
-function isPurposeCaveat(key: NtdCaveatKey) {
-  return ntdPurposes.some(purpose => purposeCaveatKeys[purpose].includes(key))
 }
 
 function wordingVector(input: string, purpose: NtdPurpose) {
@@ -371,13 +271,6 @@ export function validateNtdContent() {
     if (!hasLocalizedCopy(ntdCopy[key])) issues.push(`[copy:${key}] requires both locales`)
   }
 
-  for (const key of ntdCaveatKeys) {
-    if (!hasLocalizedCopy(ntdCaveats[key])) issues.push(`[caveat:${key}] requires both locales`)
-  }
-  for (const key of Object.keys(ntdCaveats)) {
-    if (!ntdCaveatKeys.includes(key as NtdCaveatKey)) issues.push(`[caveat:${key}] is not a reviewed caveat`)
-  }
-
   for (const [code, copy] of Object.entries(ntdErrorCopy)) {
     if (!hasLocalizedCopy(copy)) issues.push(`[error:${code}] requires both locales`)
   }
@@ -385,10 +278,6 @@ export function validateNtdContent() {
   for (const purpose of ntdPurposes) {
     for (const [field, copy] of Object.entries(ntdPurposeSummaries[purpose])) {
       if (!hasLocalizedCopy(copy)) issues.push(`[purpose:${purpose}:${field}] requires both locales`)
-    }
-    if (!hasLocalizedCopy(purposeSources[purpose].note)) issues.push(`[purpose:${purpose}:sourceNote] requires both locales`)
-    if (!ntdContentReview.sources.some(source => source.url === purposeSources[purpose].url)) {
-      issues.push(`[purpose:${purpose}] cites a source outside the reviewed list`)
     }
   }
 

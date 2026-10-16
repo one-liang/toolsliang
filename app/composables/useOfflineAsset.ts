@@ -14,14 +14,14 @@ interface SharedDownload {
   state: Ref<OfflineAssetState>
   controller: AbortController | null
   running: Promise<void> | null
-  inspected: boolean
+  inspection: Promise<void> | null
 }
 
 /**
- * One asset is one download, however many places on the page offer it. The tool
- * page explains the download beside its offline note and the workspace needs
- * the same answer before it can run, so both read this shared entry instead of
- * fetching the same megabytes twice.
+ * One asset is one download, however many places on the page need it. The tool
+ * page's offline note and the workspace that loads the asset ask the same
+ * question, so both read this shared entry instead of fetching the same
+ * megabytes twice.
  */
 const downloads = new Map<string, SharedDownload>()
 
@@ -29,7 +29,7 @@ function sharedDownload(asset: ToolOfflineAsset): SharedDownload {
   const key = offlineAssetKey(asset)
   const existing = downloads.get(key)
   if (existing) return existing
-  const created: SharedDownload = { state: ref(initialOfflineAssetState(asset)), controller: null, running: null, inspected: false }
+  const created: SharedDownload = { state: ref(initialOfflineAssetState(asset)), controller: null, running: null, inspection: null }
   downloads.set(key, created)
   return created
 }
@@ -64,11 +64,13 @@ export function useOfflineAsset(asset: ToolOfflineAsset) {
     shared.state.value = reduceOfflineAsset(shared.state.value, event)
   }
 
-  async function inspect() {
-    if (shared.inspected) return
-    shared.inspected = true
-    const cache = await openCache()
-    dispatch({ type: 'inspected', cached: Boolean(await cache?.match(asset.url)) })
+  /** Asked once per page: every caller waits on the same look into the cache. */
+  function inspect() {
+    shared.inspection ??= (async () => {
+      const cache = await openCache()
+      dispatch({ type: 'inspected', cached: Boolean(await cache?.match(asset.url)) })
+    })().catch(() => dispatch({ type: 'inspected', cached: false }))
+    return shared.inspection
   }
 
   async function run() {
@@ -112,12 +114,18 @@ export function useOfflineAsset(asset: ToolOfflineAsset) {
       if (!aborted) dispatch({ type: 'failed' })
     }
     finally {
-      shared.controller = null
-      shared.running = null
+      // A cancelled attempt can settle after a newer one started; it must not
+      // take the newer attempt's controller with it.
+      if (shared.controller === controller) {
+        shared.controller = null
+        shared.running = null
+      }
     }
   }
 
   async function download() {
+    // A device that already holds the version must never be told it is downloading it.
+    await inspect()
     if (shared.running) return shared.running
     const started = reduceOfflineAsset(shared.state.value, { type: 'requested', online: navigator.onLine })
     shared.state.value = started
@@ -134,13 +142,24 @@ export function useOfflineAsset(asset: ToolOfflineAsset) {
     shared.running = null
   }
 
-  if (getCurrentInstance()) onMounted(inspect)
+  /**
+   * The browser may clear stored files on its own. When a runtime finds the
+   * entry gone, the asset is no longer treated as present, so the next
+   * request fetches it again instead of failing the same way.
+   */
+  function forget() {
+    dispatch({ type: 'evicted' })
+  }
+
+  if (getCurrentInstance()) onMounted(() => { void inspect() })
   else void inspect()
 
   return {
     cachedKey: computed(() => shared.state.value.phase === 'cached' ? offlineAssetKey(asset) : null),
     cancel,
     download,
+    forget,
+    inspect,
     progress: computed(() => offlineAssetProgress(shared.state.value)),
     state: shared.state,
   }

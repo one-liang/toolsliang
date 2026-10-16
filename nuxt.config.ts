@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { buildServiceWorker } from './scripts/build-service-worker.mjs'
 import { offlineRoutes, storageRoutes } from './app/features/pwa/cache-policy'
 import { manifestPaths } from './app/features/pwa/manifest'
+import { openSourceLicenceRoutes } from './app/features/shell/open-source-licences'
 import { themeBootstrapScript } from './app/features/shell/theme'
 import { getPublicPageRoutes, getPublicToolRoutes, getWithdrawnToolRedirects } from './app/features/tools/catalog'
 
@@ -54,6 +55,7 @@ export default defineNuxtConfig({
         ...getPublicToolRoutes(),
         ...offlineRoutes(),
         ...storageRoutes(),
+        ...openSourceLicenceRoutes(),
         ...manifestPaths(),
         '/sitemap.xml',
         // A static host has no server to send the redirect, so the demo writes

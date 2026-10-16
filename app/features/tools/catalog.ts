@@ -5,10 +5,10 @@ import { imageCompressorDefinition } from './image-compressor/definition'
 import { productImageWorkbenchDefinition } from './product-image-workbench/definition'
 import { bmiContentReview } from './bmi-calculator/domain/sources'
 import { ntdContentReview } from './ntd-uppercase/domain/sources'
-import { randomPickerContentReview } from './random-picker/domain/sources'
 import { taiwanCalendarContentReview } from './taiwan-calendar/domain/sources'
 import { pdfSignatureDefinition } from './pdf-signature/definition'
 import { deviceTimeDefinition } from './device-time/definition'
+import { rocYearConverterDefinition } from './roc-year-converter/definition'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -52,6 +52,28 @@ export interface ToolOfflineAsset {
   /** Lowercase SHA-256 of the exact file. Bytes that do not match are never cached. */
   sha256: string
   label: LocalizedCopy
+}
+
+/**
+ * Where the content a tool answers with comes from: a health standard, a law,
+ * an official calendar. A browser feature, a library or a file format is how a
+ * tool works, not what it says, so it never belongs here.
+ */
+export interface ToolContentSource {
+  title: LocalizedCopy
+  /**
+   * One plain sentence on what this source settles for the tool. The
+   * plain-language test requires it for every source a tool page shows.
+   */
+  description?: LocalizedCopy
+  url: string
+}
+
+export interface ToolContentReview {
+  reviewedAt: string
+  sourceEdition: LocalizedCopy
+  sourceEffectiveAt: string
+  sources: ToolContentSource[]
 }
 
 export interface ToolStatusMetadata {
@@ -99,15 +121,12 @@ export interface PublishedToolDefinition extends ToolDefinitionBase {
     description: LocalizedCopy
     answer: LocalizedCopy
   }
-  contentReview: {
-    reviewedAt: string
-    sourceEdition: LocalizedCopy
-    sourceEffectiveAt: string
-    sources: Array<{
-      title: LocalizedCopy
-      url: string
-    }>
-  }
+  /**
+   * Only a tool whose answer rests on an outside source declares one. A tool
+   * without one tells the visitor how it handles their content instead, so
+   * the page never fills the space with technical specifications.
+   */
+  contentReview?: ToolContentReview
 }
 
 export interface UnpublishedToolDefinition extends ToolDefinitionBase {
@@ -162,6 +181,7 @@ export const toolCategories: ToolCategory[] = [
 
 const registeredTools: ToolDefinition[] = [
   deviceTimeDefinition,
+  rocYearConverterDefinition,
   imageCompressorDefinition,
   imageBackgroundRemoverDefinition,
   brandPromoImageDefinition,
@@ -207,8 +227,8 @@ const registeredTools: ToolDefinition[] = [
         en: 'Calculate adult BMI from height and weight in your browser, with Taiwan\'s official categories and no data leaving your device.',
       },
       answer: {
-        'zh-tw': 'BMI ＝ 體重（公斤）÷ 身高（公尺）÷ 身高（公尺），結果對照國民健康署成人健康體位標準。',
-        en: 'BMI = weight (kg) ÷ height (m) ÷ height (m), read against the Health Promotion Administration adult standard.',
+        'zh-tw': 'BMI ＝ 體重（公斤）÷ 身高（公尺）÷ 身高（公尺），結果對照國民健康署成人健康體位標準。它只是體位篩檢的參考，不是醫療診斷，也不適用未滿 18 歲或懷孕期間。',
+        en: 'BMI = weight (kg) ÷ height (m) ÷ height (m), read against the Health Promotion Administration adult standard. It is a screening reference, not a medical diagnosis, and it does not apply to people under 18 or during pregnancy.',
       },
     },
     contentReview: bmiContentReview,
@@ -254,8 +274,8 @@ const registeredTools: ToolDefinition[] = [
         en: 'Write New Taiwan dollar amounts in formal Chinese in your browser, using accounting, cheque-reference, or treasury-voucher rules, with nothing leaving your device.',
       },
       answer: {
-        'zh-tw': '先選一般會計、支票填寫參考或國庫付款憑單，再輸入金額，工具會依該用途的規則在本機寫出國字大寫，並附上可逐字核對的數字金額。',
-        en: 'Pick the accounting, cheque-reference, or treasury-voucher purpose, enter an amount, and the tool writes the formal Chinese wording locally, beside the numerals to check it against.',
+        'zh-tw': '先選一般會計、支票填寫參考或國庫付款憑單，再輸入金額，工具會依該用途的規則寫出國字大寫，並附上可逐字核對的數字金額。結果只是寫法參考，不是法律或會計審查；票據上的文字與數字不符時以文字為準，填寫後請再核對一次。',
+        en: 'Pick the accounting, cheque-reference, or treasury-voucher purpose, enter an amount, and the tool writes the formal Chinese wording, beside the numerals to check it against. The result is a wording reference, not legal or accounting review; when the words and numerals on a note disagree, the words govern, so check both after filling them in.',
       },
     },
     contentReview: ntdContentReview,
@@ -301,11 +321,10 @@ const registeredTools: ToolDefinition[] = [
         en: 'Draw one or several entries with equal chances in your browser, as a list or a wheel, with nothing leaving your device and nothing stored.',
       },
       answer: {
-        'zh-tw': '貼上名單後選擇重複項目策略與抽出人數，工具以瀏覽器的密碼學隨機來源搭配拒絕取樣與 Fisher–Yates 抽出不重複的中選名單；輪盤只是呈現方式，不影響結果，且結果無法由第三方稽核。',
-        en: 'Paste a list, pick how repeats are treated and how many to draw, and the tool uses the browser\'s cryptographic randomness with rejection sampling and a Fisher–Yates shuffle to draw without repeats; the wheel only presents that result, and no third party can audit it.',
+        'zh-tw': '貼上名單，選好重複的名字怎麼算、要抽幾名，就能抽出不重複的中選名單。每個名字被抽到的機會一樣，由瀏覽器內建的安全隨機來源決定；輪盤只是呈現方式，不影響結果。抽選只在這台裝置進行，結果無法由第三方稽核。',
+        en: 'Paste a list, choose how repeated names count and how many to draw, and you get a draw with no repeats. Every name has the same chance, decided by the secure random source built into your browser; the wheel only shows the result and does not change it. The draw happens on this device only, so no third party can audit it.',
       },
     },
-    contentReview: randomPickerContentReview,
   },
   {
     slug: 'taiwan-calendar', category: 'time-calendar', icon: 'calendar-days',
@@ -317,8 +336,8 @@ const registeredTools: ToolDefinition[] = [
       en: 'Look up Gregorian and ROC dates, lunar dates, solar terms, holidays, and makeup workdays.',
     },
     aliases: {
-      'zh-tw': ['國曆農曆對照', '放假日查詢', '民國年對照'],
-      en: ['Taiwan holidays', 'lunar calendar', 'ROC year converter'],
+      'zh-tw': ['國曆農曆對照', '放假日查詢'],
+      en: ['Taiwan holidays', 'lunar calendar'],
     },
     keywords: {
       'zh-tw': ['農曆', '節氣', '國定假日', '補班', '民國'],
@@ -348,8 +367,8 @@ const registeredTools: ToolDefinition[] = [
         en: 'Look up Taiwan\'s Gregorian and ROC dates, lunar dates, solar terms, national holidays, and makeup workdays in your browser, with the official dataset edition shown for every year, offline included.',
       },
       answer: {
-        'zh-tw': '放假日與補班日採用行政院人事行政總處公告的政府行政機關辦公日曆表，農曆與節氣採用中央氣象署的日曆資料表，兩者都在建置時烘焙成靜態資料並標出版本；主管機關尚未公告的年度會直說尚未公告，不以推算補足。',
-        en: 'Holidays and makeup workdays come from the government agency office calendar announced by the Directorate-General of Personnel Administration, and lunar dates and solar terms from the Central Weather Administration calendar tables; both are baked in at build time with their edition shown, and a year the authority has not announced says so instead of being estimated.',
+        'zh-tw': '放假日與補班日採用行政院人事行政總處公告的政府行政機關辦公日曆表，農曆與節氣採用中央氣象署的日曆資料表；兩份資料都已跟著網站一起提供，並標出採用的版本。主管機關尚未公告的年度會直說尚未公告，不自行推算。',
+        en: 'Holidays and makeup workdays come from the government agency office calendar announced by the Directorate-General of Personnel Administration, and lunar dates and solar terms from the Central Weather Administration calendar tables. Both ship with the site with their edition shown, and a year the authority has not announced says so instead of being estimated.',
       },
     },
     contentReview: taiwanCalendarContentReview,
@@ -648,14 +667,19 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
     if (!published.seo?.contentKey?.trim() || !hasLocalizedCopy(published.seo.title) || !hasLocalizedCopy(published.seo.description) || !hasLocalizedCopy(published.seo.answer)) {
       issues.push(`${prefix} published tool requires complete SEO/AEO metadata`)
     }
-    if (
-      !isIsoDate(published.contentReview?.reviewedAt)
-      || !isIsoDate(published.contentReview?.sourceEffectiveAt)
-      || !hasLocalizedCopy(published.contentReview?.sourceEdition)
-      || !published.contentReview?.sources?.length
-      || published.contentReview.sources.some(source => !hasLocalizedCopy(source.title) || !isHttpsUrl(source.url))
-    ) {
-      issues.push(`${prefix} published tool requires content/source review metadata`)
+    if (published.contentReview) {
+      if (
+        !isIsoDate(published.contentReview.reviewedAt)
+        || !isIsoDate(published.contentReview.sourceEffectiveAt)
+        || !hasLocalizedCopy(published.contentReview.sourceEdition)
+        || !published.contentReview.sources?.length
+        || published.contentReview.sources.some(source => !hasLocalizedCopy(source.title) || !isHttpsUrl(source.url))
+      ) {
+        issues.push(`${prefix} published tool requires content/source review metadata`)
+      }
+    }
+    else if (!published.pagePresentation?.showLocalProcessingStatement) {
+      issues.push(`${prefix} a tool without content sources must say how it handles the visitor's content`)
     }
   }
 

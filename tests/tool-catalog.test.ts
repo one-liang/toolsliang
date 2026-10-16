@@ -22,7 +22,6 @@ import {
 } from '@/features/tools/catalog'
 import { bmiContentReview } from '@/features/tools/bmi-calculator/domain/sources'
 import { ntdContentReview } from '@/features/tools/ntd-uppercase/domain/sources'
-import { randomPickerContentReview } from '@/features/tools/random-picker/domain/sources'
 
 describe('tool catalog', () => {
   it('accepts the registered catalog contract', () => {
@@ -45,13 +44,21 @@ describe('tool catalog', () => {
 
   it('rejects incomplete or insecure source review metadata', () => {
     const invalidTool = structuredClone(getTool('ntd-uppercase')!)
-    invalidTool.contentReview.sources[0]!.url = 'http://example.com/rules'
+    invalidTool.contentReview!.sources[0]!.url = 'http://example.com/rules'
 
     expect(validateToolRegistry([invalidTool])).toContain('[ntd-uppercase] published tool requires content/source review metadata')
   })
 
+  it('lets a tool without outside content skip the sources, as long as it says how it handles yours', () => {
+    const withoutSources = { ...getTool('ntd-uppercase')!, contentReview: undefined }
+    expect(validateToolRegistry([withoutSources])).toContain('[ntd-uppercase] a tool without content sources must say how it handles the visitor\'s content')
+
+    const handled = { ...withoutSources, pagePresentation: { showHeadingIcon: false, showLocalProcessingStatement: true } }
+    expect(validateToolRegistry([handled])).toEqual([])
+  })
+
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'pdf-signature'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'roc-year-converter', 'image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'pdf-signature'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
@@ -117,7 +124,7 @@ describe('tool catalog', () => {
     expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明身高體重留在裝置').toContain('此裝置')
   })
 
-  it('registers the random picker against its reviewed fairness sources', () => {
+  it('registers the random picker without technical sources, saying how it handles the list instead', () => {
     const tool = getTool('random-picker')!
 
     expect(tool).toMatchObject({
@@ -132,8 +139,9 @@ describe('tool catalog', () => {
       },
       seo: { contentKey: 'random-picker' },
     })
-    expect(tool.contentReview, '等機率的依據必須沿用 T12 鎖定的審閱結果').toBe(randomPickerContentReview)
+    expect(tool.contentReview, '規格與演算法不是內容來源（#82）').toBeUndefined()
     expect(tool.seo.answer['zh-tw'], '工具頁必須說明結果無法由第三方稽核').toContain('稽核')
+    expect(tool.seo.answer['zh-tw'], '工具頁必須說明每個名字機會一樣').toContain('機會一樣')
     expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明名單留在裝置').toContain('此裝置')
   })
 
@@ -194,6 +202,7 @@ describe('tool catalog', () => {
   it('generates public routes only for supported locales and published stable slugs', () => {
     expect(getPublicToolRoutes()).toEqual([
       '/zh-tw/tools/device-time/',
+      '/zh-tw/tools/roc-year-converter/',
       '/zh-tw/tools/image-compressor/',
       '/zh-tw/tools/image-background-remover/',
       '/zh-tw/tools/brand-promo-image/',
@@ -204,6 +213,7 @@ describe('tool catalog', () => {
       '/zh-tw/tools/taiwan-calendar/',
       '/zh-tw/tools/pdf-signature/',
       '/en/tools/device-time/',
+      '/en/tools/roc-year-converter/',
       '/en/tools/image-compressor/',
       '/en/tools/image-background-remover/',
       '/en/tools/brand-promo-image/',

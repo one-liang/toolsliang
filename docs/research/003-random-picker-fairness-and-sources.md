@@ -276,6 +276,10 @@ limit = 2^32 − (2^32 mod n)      // 最大的 n 的倍數
   必須重新查核、更新識別碼與 `reviewedAt`，並同步本文件與測試。工具 slug `random-picker` 不隨之改變。
 - 中英文頁面都必須列出來源；英文頁不得只寫「a browser API」而不指名。
 
+> **2026-10-15 修訂（#82）**：§8 的三個來源是技術規格與演算法，不是工具回答內容的來源，因此工具頁下方不再列出，
+> 改以「這個工具怎麼處理你的內容」說明名單的處理方式；「開始前先知道」與常見問題以白話說明等機率，不寫演算法名稱。
+> 工作區內的作法說明與來源連結由 #83 重新設計時處理。
+
 ### 7.3 禁止用語
 
 不得出現：公平抽獎、公證抽獎、線上抽獎、防作弊、保證公平、絕對公平，以及 online lottery、
@@ -289,7 +293,7 @@ certified fair、provably fair、tamper-proof、guaranteed fair 等對應說法�
 | 問題（中） | 問題（英） | 答案依據 |
 | --- | --- | --- |
 | 這個工具怎麼做到每個人機會一樣？ | How does every entry get the same chance? | §3.1、§3.2 |
-| 為什麼不能直接用隨機數除以名單長度取餘數？ | Why not just take a random number modulo the list length? | §3.2 模數偏差 |
+| 抽很多次以後，會不會比較常抽到前面幾個？ | Over many draws, do the first entries come up more often? | §3.2 模數偏差（#82 改寫為白話問題） |
 | 抽多名時會不會有人被抽到兩次？ | Can the same entry be drawn twice? | §3.3 Fisher–Yates |
 | 名單裡有重複的名字怎麼辦？ | What happens to duplicate names? | §4.3 |
 | 輪盤的動畫會影響抽選結果嗎？ | Does the wheel animation change the result? | §5.4、§6.3 第 8 條 |

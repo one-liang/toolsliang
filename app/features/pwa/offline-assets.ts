@@ -20,6 +20,7 @@ export type OfflineAssetEvent =
   | { type: 'completed' }
   | { type: 'failed', reason?: OfflineAssetFailureReason }
   | { type: 'cancelled' }
+  | { type: 'evicted' }
 
 /** A cache entry names one exact version, so an upgraded asset never looks prepared. */
 export function offlineAssetKey(asset: Pick<ToolOfflineAsset, 'id' | 'version'>): string {
@@ -67,6 +68,11 @@ export function reduceOfflineAsset(state: OfflineAssetState, event: OfflineAsset
     case 'cancelled':
       if (state.phase !== 'downloading') return state
       return { ...state, phase: 'idle', receivedBytes: 0 }
+
+    case 'evicted':
+      // Only a stored copy can go missing; a download in flight is still the newest answer.
+      if (state.phase !== 'cached') return state
+      return { ...state, phase: 'idle', receivedBytes: 0 }
   }
 }
 
@@ -96,22 +102,27 @@ export function resolveOfflineReadiness(
   return context.online ? 'needs-download' : 'blocked-offline'
 }
 
+/**
+ * A tool with first-use files gets them ready on its own when a visitor starts
+ * working, so none of these sentences asks for a download or names one: what a
+ * visitor needs to know is when it works offline, not how the files get there.
+ */
 const READINESS_COPY: Record<OfflineReadiness, Record<LocaleCode, string>> = {
   ready: {
     'zh-tw': '離線可用：首次載入後即可離線使用。',
     en: 'Works offline: available after the first load.',
   },
   prepared: {
-    'zh-tw': '已下載所需資源，可離線使用。',
-    en: 'The required resources are downloaded, so this tool works offline.',
+    'zh-tw': '離線可用：這台裝置已經準備好，離線也能使用。',
+    en: 'Works offline: this device is ready, so the tool keeps working offline.',
   },
   'needs-download': {
-    'zh-tw': '首次使用需下載所需資源，下載後即可離線使用。',
-    en: 'First use downloads the required resources; after that the tool works offline.',
+    'zh-tw': '用過一次後，離線也能使用。',
+    en: 'After you use it once, it works offline too.',
   },
   'blocked-offline': {
-    'zh-tw': '目前離線，需連線下載所需資源後才能使用。',
-    en: 'You are offline. Go back online to download the required resources first.',
+    'zh-tw': '目前離線。第一次使用需要連上網路，用過一次後，離線也能使用。',
+    en: 'You are offline. The first use needs an internet connection; after you use it once, it works offline too.',
   },
 }
 

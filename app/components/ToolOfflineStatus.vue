@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useOnline } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { describeOfflineReadiness, resolveOfflineReadiness } from '@/features/pwa/offline-assets'
 import type { LocaleCode, PublishedToolDefinition } from '@/features/tools/catalog'
 
@@ -10,30 +10,20 @@ const props = defineProps<{
 }>()
 
 const online = useOnline()
-const cachedAssetKeys = ref<Record<string, string>>({})
-const assets = computed(() => props.tool.offlineAssets ?? [])
+/**
+ * Only read here, never fetched: the workspace gets these files ready when a
+ * visitor starts working, and this note just reports whether they are on the
+ * device. Reading the shared entries keeps both answers in step.
+ */
+const assets = (props.tool.offlineAssets ?? []).map(asset => useOfflineAsset(asset))
 const readiness = computed(() => resolveOfflineReadiness(props.tool, {
-  cachedAssetKeys: Object.values(cachedAssetKeys.value),
+  cachedAssetKeys: assets.map(asset => asset.cachedKey.value).filter((key): key is string => Boolean(key)),
   online: online.value,
 }))
-
-function recordCached(assetId: string, key: string | null) {
-  cachedAssetKeys.value = Object.fromEntries(
-    Object.entries({ ...cachedAssetKeys.value, [assetId]: key })
-      .filter((entry): entry is [string, string] => Boolean(entry[1])),
-  )
-}
 </script>
 
 <template>
   <div class="tool-offline" :data-tool-offline="readiness">
     <p class="tool-offline__summary">{{ describeOfflineReadiness(readiness, locale) }}</p>
-    <OfflineAssetDownload
-      v-for="asset in assets"
-      :key="asset.id"
-      :asset="asset"
-      :locale="locale"
-      @update:cached="key => recordCached(asset.id, key)"
-    />
   </div>
 </template>
