@@ -1102,9 +1102,9 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-compressor__layout { display: grid; grid-template-areas: "stage" "panel" "strip"; gap: 16px; margin-top: 16px; }
 .image-compressor__stage { grid-area: stage; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
 .image-compressor__frame { display: grid; align-content: start; gap: 8px; min-width: 0; margin: 0; }
-.image-compressor__view { display: grid; place-items: center; height: clamp(150px, 25svh, 210px); padding: 8px; border-radius: var(--radius-md); background: var(--color-surface-subtle); overflow: hidden; }
-/* Sized to the picture rather than filling the frame, so the checkerboard marks only real transparency. */
-.image-compressor__view img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; }
+.image-compressor__view { display: flex; align-items: center; justify-content: center; height: clamp(130px, 21svh, 190px); padding: 8px; border-radius: var(--radius-md); background: var(--color-surface-subtle); overflow: hidden; }
+/* Sized to the picture rather than filling the frame, so the checkerboard marks only real transparency; a flex frame lets the percentages resolve, so a large picture shrinks to fit instead of overflowing. */
+.image-compressor__view img { display: block; flex: none; width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; }
 .image-compressor__view--alpha img { background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 .image-compressor__frame figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; color: var(--color-muted-foreground); font-size: .84rem; font-variant-numeric: tabular-nums; line-height: 1.5; }
 .image-compressor__frame figcaption strong { color: var(--color-foreground); font-weight: 800; }
@@ -1116,6 +1116,8 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-compressor__panel { grid-area: panel; display: grid; align-content: start; gap: 12px; min-width: 0; }
 /* Empty live regions stay in place for assistive technology but take no room in the column. */
 .image-compressor__panel > [role]:empty { margin-block: -6px; }
+/* A control group with nothing to offer right now takes no room either. */
+.image-compressor__panel > :empty:not([role]) { display: none; }
 .image-compressor__summary { padding: 14px 18px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-result-surface); }
 .image-compressor__summary p { margin: 0; }
 .image-compressor__total { font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem); font-weight: 800; font-variation-settings: "wdth" 112; letter-spacing: -0.02em; line-height: 1.15; }
