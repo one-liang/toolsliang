@@ -158,7 +158,8 @@ async function pump() {
   if (outcome.status === 'cancelled') batch.update(item.id, { status: 'pending' })
   else if (outcome.status === 'error') batch.update(item.id, { status: 'failed', error: outcome.error.code, retryable: !finalErrors.has(outcome.error.code) })
   else {
-    try { batch.update(item.id, { status: 'done', result: { output: outcome.output, url: URL.createObjectURL(outcome.output.blob) } }) }
+    // The output is shown from the worker's small preview: the full picture is only needed for the download.
+    try { batch.update(item.id, { status: 'done', result: { output: outcome.output, url: URL.createObjectURL(outcome.output.preview) } }) }
     catch { batch.update(item.id, { status: 'failed', error: 'memory_limit', retryable: true }) }
   }
 }

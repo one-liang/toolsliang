@@ -265,7 +265,7 @@ test('鍵盤取消與重試、清除及離頁釋放 Blob URL', async ({ page }, 
   const resume = page.getByRole('button', { name: 'Continue', exact: true })
   await resume.focus(); await page.keyboard.press('Enter')
   await expect(page.locator('[data-image-result]')).toBeVisible()
-  // The original's preview, the output's preview and its download link; the two output URLs point at one blob.
+  // The original's preview, the output's small preview and the output's download link.
   await expect.poll(activeUrls).toBe(3)
   const download = page.getByRole('link', { name: 'Download image' })
   await download.focus()
