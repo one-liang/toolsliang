@@ -4,8 +4,10 @@
  * a signature, a Logo, a frame, a background or a custom calendar — so every
  * rule here is about keeping that record readable on the device it was written
  * on, never about moving it anywhere else. No tool writes a custom calendar any
- * more (ADR-0021), but `calendar` stays a known kind so a calendar a device
- * saved earlier still reads back and can be deleted from the asset manager.
+ * more (ADR-0021), and the brand promo image no longer saves backgrounds, frames
+ * or Logos, but `calendar`, `background`, `frame` and `logo` stay known kinds so
+ * what a device saved earlier still reads back and can be deleted from the
+ * asset manager.
  */
 export const localAssetKinds = ['calendar', 'background', 'frame', 'logo', 'signature'] as const
 

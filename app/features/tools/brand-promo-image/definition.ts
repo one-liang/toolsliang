@@ -8,12 +8,12 @@ export const brandPromoImageDefinition: PublishedToolDefinition = {
   keywords: { 'zh-tw': ['框版', 'Logo', '背景', '圖層'], en: ['frame', 'Logo', 'background', 'layers'] },
   processingClass: 'worker', routeComponentKey: 'BrandPromoImageWorkspace', offlineMode: 'ready', capabilities: ['javascript', 'web-worker'],
   acceptedInput: { 'zh-tw': 'JPEG、PNG、WebP；每張最多 25 MiB、2,400 萬像素、單邊 8,192 像素；最多 12 個圖層。不支援 HEIC／HEIF。', en: 'JPEG, PNG, WebP; up to 25 MiB, 24 megapixels, 8,192 pixels per side per image; up to 12 layers. HEIC/HEIF is not supported.' },
-  localProcessingStatement: { 'zh-tw': '圖片、背景、框版、Logo、圖層與輸出只留在這台裝置，不會上傳；只有你主動保存的素材會留著下次再用。', en: 'Images, backgrounds, frames, Logos, layers, and output stay on this device and are never uploaded. Only assets you choose to save are kept for next time.' },
+  localProcessingStatement: { 'zh-tw': '圖片、背景、框版、Logo、圖層與輸出只留在這台裝置，不會上傳；關掉頁面後也不會保存。', en: 'Images, backgrounds, frames, Logos, layers, and output stay on this device and are never uploaded, and nothing is kept once you close the page.' },
   pagePresentation: { showHeadingIcon: false, showLocalProcessingStatement: true },
   seo: {
     contentKey: 'brand-promo-image',
     title: { 'zh-tw': '品牌宣傳圖：本機組合背景、框版與 Logo', en: 'Brand Promo Image: local backgrounds, frames, and Logos' },
-    description: { 'zh-tw': '圖片不離開裝置。匯入商品圖、背景、框版與 Logo，以鍵盤調整圖層並下載 PNG，主動保存的素材可在同一裝置重用。', en: 'Keep images on your device. Import products, backgrounds, frames, and Logos, adjust layers with the keyboard, and download PNG. Reuse explicitly saved assets on the same device.' },
-    answer: { 'zh-tw': '匯入圖片後選取圖層，以數字調整位置、縮放與順序，預覽後下載透明 PNG。第一版只提供背景、框版與 Logo 組合，不含文字或價籤，也不保證符合通路主圖規範。', en: 'Import images, select a layer, and adjust position, scale, and order with numeric controls. Preview and download a transparent PNG. Version one combines backgrounds, frames, and Logos without text or price tags and makes no marketplace main-image compliance claim.' },
+    description: { 'zh-tw': '圖片不離開裝置。加入商品圖、背景、框版與 Logo，拖曳或用數字調整圖層，再下載透明 PNG。', en: 'Keep images on your device. Add a product image, background, frame, and Logo, adjust layers by dragging or with numbers, and download a transparent PNG.' },
+    answer: { 'zh-tw': '加入圖片後，在預覽上拖曳圖層，或用數字調整位置、縮放與上下順序，再下載透明 PNG。第一版只提供背景、框版與 Logo 組合，不含文字或價籤，也不保證符合通路主圖規範。', en: 'Add images, then drag layers on the preview or use numbers to set position, scale, and order, and download a transparent PNG. Version one combines backgrounds, frames, and Logos without text or price tags and makes no marketplace main-image compliance claim.' },
   },
 }

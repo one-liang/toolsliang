@@ -1,5 +1,5 @@
 import { computed, onMounted } from 'vue'
-import { describeUpdatePrompt, resolveUpdatePrompt } from '@/features/pwa/update-policy'
+import { describeUpdatePrompt, hasWaitingVersion, resolveUpdatePrompt } from '@/features/pwa/update-policy'
 
 const SERVICE_WORKER_URL = '/sw.js'
 const APPLY_UPDATE_MESSAGE = { type: 'toolsliang:apply-update' }
@@ -49,14 +49,14 @@ export function usePwaUpdate() {
     try {
       const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: '/' })
       syncController()
-      if (registration.waiting) hasWaitingWorker.value = true
+      if (hasWaitingVersion(registration)) hasWaitingWorker.value = true
 
       registration.addEventListener('updatefound', () => {
         const installing = registration.installing
         if (!installing) return
         installing.addEventListener('statechange', () => {
           syncController()
-          if (installing.state !== 'installed' || !navigator.serviceWorker.controller) return
+          if (installing.state !== 'installed' || !navigator.serviceWorker.controller || !hasWaitingVersion(registration)) return
           hasWaitingWorker.value = true
           dismissed.value = false
         })

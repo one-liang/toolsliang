@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeUpdatePrompt, resolveUpdatePrompt, type UpdateSignals } from '@/features/pwa/update-policy'
+import { describeUpdatePrompt, hasWaitingVersion, resolveUpdatePrompt, type UpdateSignals } from '@/features/pwa/update-policy'
 
 function signals(patch: Partial<UpdateSignals> = {}): UpdateSignals {
   return {
@@ -9,6 +9,23 @@ function signals(patch: Partial<UpdateSignals> = {}): UpdateSignals {
     ...patch,
   }
 }
+
+describe('a waiting Service Worker', () => {
+  const worker = {}
+
+  it('is a new version only when an older one is active beside it', () => {
+    expect(hasWaitingVersion({ waiting: worker, active: {} })).toBe(true)
+  })
+
+  // Firefox: a page reloaded during the first install sees that worker in `waiting`, with nothing active yet.
+  it('is not an update on the very first install, before it activates', () => {
+    expect(hasWaitingVersion({ waiting: worker, active: null })).toBe(false)
+  })
+
+  it('is absent when nothing waits', () => {
+    expect(hasWaitingVersion({ waiting: null, active: {} })).toBe(false)
+  })
+})
 
 describe('PWA update prompt', () => {
   it('stays silent when no new version is waiting', () => {

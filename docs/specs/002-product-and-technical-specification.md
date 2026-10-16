@@ -285,15 +285,15 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 #### 12.10 Brand promo image
 
 - **User story and non-goals:** A商用創作者 combines a product image with a background, local frame, and local Logo for promotional output. Version one has no text, price tag, generative image, compliance claim, or cloud template library.
-- **Local boundary:** Source image, background, frame, Logo, layout, and output remain local. Saved frames and Logos are local assets and never synchronize through Supabase.
-- **Module and interface:** A scene document references local asset ids and normalized transforms for background, product, frame, and Logo. A renderer supports layer ordering, fit, position, scale, opacity where safe, undo/redo command history, export, and disposal. It shares image engines without merging its product purpose with compliant product images.
+- **Local boundary:** Source image, background, frame, Logo, layout, and output remain local and live only while the page is open; the tool saves nothing to the device (#84 removed saving frames and Logos). Frames, Logos, and backgrounds saved by earlier releases remain local assets that the storage manager can review and delete, and never synchronize through Supabase.
+- **Module and interface:** A scene document references session asset ids and normalized transforms for background, product, frame, and Logo. A renderer supports layer ordering, fit, position, scale, opacity where safe, undo/redo command history, export, and disposal. It shares image engines without merging its product purpose with compliant product images.
 - **Route and slug:** `/{locale}/tools/brand-promo-image/`; stable slug `brand-promo-image`.
-- **Bilingual content:** `品牌宣傳圖` / `Brand Promo Image`; state that the first version supports background, frame, and Logo only and that assets are saved on this device.
+- **Bilingual content:** `品牌宣傳圖` / `Brand Promo Image`; state that the first version supports background, frame, and Logo only and that nothing is kept once the page closes.
 - **SEO/AEO/GEO:** Explain the supported layer types and difference from a compliant product image. Do not optimize for or claim marketplace main-image approval.
-- **Errors, cancellation, progress, capability:** Validate layer type, decoded dimensions, local asset availability, quota, memory, and output size. Render/export is cancellable with layer/render/encode progress; missing local assets yield recoverable placeholders, not silent omission.
-- **Accessibility:** Every transform has numeric fields and nudge controls; drag is optional. Layer order, visibility, selection, and Logo placement are represented in an accessible list. Undo/redo has names and keyboard shortcuts.
+- **Errors, cancellation, progress, capability:** Validate layer type, decoded dimensions, session size, memory, and output size. Render/export is cancellable with layer/render/encode progress; a missing layer image yields a recoverable error, not silent omission.
+- **Accessibility:** Every transform has numeric fields, and arrow keys nudge the selected layer on the focused preview; drag is optional. Layer order, selection, and Logo placement are represented in an accessible list with move-up and move-down buttons. Undo/redo has names and keyboard shortcuts.
 - **Performance budget:** Editor response to control input ≤100 ms; preview update ≤200 ms; 12 MP export ≤10 s desktop and ≤25 s supported mobile.
-- **Tests and acceptance:** Scene serialization without pixels, layer ordering, transform math, undo/redo, local asset persistence, missing asset recovery, export golden fixtures, keyboard-only composition, and no-network tests pass.
+- **Tests and acceptance:** Scene serialization without pixels, layer ordering, transform math, undo/redo, missing asset recovery, export golden fixtures, keyboard-only composition, nothing written to device storage, and no-network tests pass.
 - **Dependencies and risks:** Canvas color fidelity, large assets, local quota, third-party trademark/Logo rights, and user confusion with compliant output require explicit copy.
 
 #### 12.11 Product image workbench
