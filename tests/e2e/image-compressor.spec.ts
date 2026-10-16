@@ -395,8 +395,17 @@ test.describe('第一個畫面就看得到預覽、大小變化與下載（#108�
     test(`${viewport.width}×${viewport.height}`, async ({ page }, testInfo) => {
       await page.setViewportSize(viewport)
       await gotoHydrated(page, '/zh-tw/tools/image-compressor/')
-      await files(page).setInputFiles('tests/fixtures/image-compressor/transparent.webp')
-      await expect(page.locator('[data-image-result]')).toBeVisible()
+      // A portrait photo much taller than its frame: it has to shrink to fit, not overflow.
+      const photo = await page.evaluate(async () => {
+        const canvas = new OffscreenCanvas(1344, 1920)
+        const ctx = canvas.getContext('2d')!
+        ctx.fillStyle = '#86bbff'; ctx.fillRect(0, 0, 1344, 1920)
+        ctx.fillStyle = '#0b0b0b'; ctx.fillRect(400, 600, 544, 900)
+        const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.95 })
+        return [...new Uint8Array(await blob.arrayBuffer())]
+      })
+      await files(page).setInputFiles({ name: 'private-image-canary.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(photo) })
+      await expect(page.locator('[data-image-result]')).toContainText('1344 × 1920')
       expect(await page.evaluate(() => scrollY)).toBe(0)
       // The lowest visible line: the viewport, or the top of the phone's floating bottom navigation.
       const fold = await page.evaluate(() => {
