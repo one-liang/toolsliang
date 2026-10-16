@@ -104,6 +104,13 @@ async function selectFile(wrapper: ReturnType<typeof mount>, file: File) {
   const input = wrapper.find('input[type=file]')
   Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
   await input.trigger('change')
+  // The shared picker checks each file before handing it over.
+  for (let round = 0; round < 4; round += 1) await flushPromises()
+}
+
+async function clearAll(wrapper: ReturnType<typeof mount>) {
+  await button(wrapper, '全部清除')!.trigger('click')
+  await button(wrapper, '確定清除')!.trigger('click')
   await flushPromises()
 }
 
@@ -141,7 +148,8 @@ it('只開啟頁面、還沒選照片時，不會取得模型，也沒有下載�
   expect(wrapper.text()).not.toContain('下載')
   expect(wrapper.text()).not.toContain('準備中')
   expect(wrapper.find('[role=progressbar]').exists()).toBe(false)
-  expect(submit(wrapper).text()).toBe('開始去背')
+  // Nothing to start before a photo is chosen.
+  expect(submit(wrapper).exists()).toBe(false)
 })
 
 it('選好照片就在背景開始準備；按開始時若還沒好，按鈕旁顯示準備中與進度，完成後自動接續去背', async () => {
@@ -204,8 +212,8 @@ it('離線時按開始會說明原因並提供重試；連上網路後按重試�
   expect(requests.some(isModelRequest)).toBe(false)
 
   await start(wrapper)
-  await vi.waitFor(() => expect(wrapper.find('[role=alert]').text()).toContain('目前沒有網路'))
-  expect(wrapper.find('[role=alert]').text()).toContain('用過一次後，離線也能使用')
+  await vi.waitFor(() => expect(wrapper.find('#remover-error').text()).toContain('目前沒有網路'))
+  expect(wrapper.find('#remover-error').text()).toContain('用過一次後，離線也能使用')
   expect(submit(wrapper).text()).toBe('重試')
   expect(submit(wrapper).attributes('disabled')).toBeUndefined()
   expect(wrapper.text()).not.toContain('下載')
@@ -213,8 +221,9 @@ it('離線時按開始會說明原因並提供重試；連上網路後按重試�
   setOnline(true)
   await start(wrapper)
   await vi.waitFor(() => expect(wrapper.find('[data-image-result]').exists()).toBe(true))
-  expect(wrapper.find('[role=alert]').text()).toBe('')
-  expect(submit(wrapper).text()).toBe('開始去背')
+  expect(wrapper.find('#remover-error').text()).toBe('')
+  // With every photo done there is nothing left to start.
+  expect(submit(wrapper).exists()).toBe(false)
 })
 
 it('準備失敗時說明原因並提供重試，重試會重新取得並接續去背', async () => {
@@ -224,10 +233,10 @@ it('準備失敗時說明原因並提供重試，重試會重新取得並接續�
   const wrapper = await mountWorkspace()
   await selectFile(wrapper, png())
   // The background attempt failed quietly; the visitor has not asked for anything yet.
-  expect(wrapper.find('[role=alert]').text()).toBe('')
+  expect(wrapper.find('#remover-error').text()).toBe('')
 
   await start(wrapper)
-  await vi.waitFor(() => expect(wrapper.find('[role=alert]').text()).toContain('去背功能沒有準備完成'))
+  await vi.waitFor(() => expect(wrapper.find('#remover-error').text()).toContain('去背功能沒有準備完成'))
   expect(submit(wrapper).text()).toBe('重試')
   expect(wrapper.find('[data-image-result]').exists()).toBe(false)
 
@@ -250,8 +259,8 @@ it('準備到一半斷線時，說明的是沒有網路，而不是籠統的失�
   await start(wrapper)
   expect(wrapper.find('[data-model-preparing]').exists()).toBe(true)
   dropConnection()
-  await vi.waitFor(() => expect(wrapper.find('[role=alert]').text()).toContain('目前沒有網路'))
-  expect(wrapper.find('[role=alert]').text()).not.toContain('去背功能沒有準備完成')
+  await vi.waitFor(() => expect(wrapper.find('#remover-error').text()).toContain('目前沒有網路'))
+  expect(wrapper.find('#remover-error').text()).not.toContain('去背功能沒有準備完成')
   expect(submit(wrapper).text()).toBe('重試')
 })
 
@@ -262,7 +271,7 @@ it('收到的檔案與公布的版本不符時捨棄不用，說明原因並提�
   const wrapper = await mountWorkspace()
   await selectFile(wrapper, png())
   await start(wrapper)
-  await vi.waitFor(() => expect(wrapper.find('[role=alert]').text()).toContain('收到的檔案不完整或已損壞'))
+  await vi.waitFor(() => expect(wrapper.find('#remover-error').text()).toContain('收到的檔案不完整或已損壞'))
   expect(submit(wrapper).text()).toBe('重試')
   expect(stored.size).toBe(0)
 })
@@ -283,7 +292,7 @@ it('等待準備時取消：停止取得檔案、不交付結果；再按開始�
   expect(wrapper.text()).toContain('已取消。原圖未變更')
   expect(wrapper.find('[data-model-preparing]').exists()).toBe(false)
   expect(wrapper.find('[data-image-result]').exists()).toBe(false)
-  expect(wrapper.find('[role=alert]').text()).toBe('')
+  expect(wrapper.find('#remover-error').text()).toBe('')
 
   await start(wrapper)
   expect(wrapper.find('[data-model-preparing]').exists()).toBe(true)
@@ -300,8 +309,7 @@ it('清除照片不會中斷背景準備：換一張照片仍沿用同一次準�
   const wrapper = await mountWorkspace()
   await selectFile(wrapper, png())
   await vi.waitFor(() => expect(held.signals).toHaveLength(1))
-  await button(wrapper, '清除圖片')!.trigger('click')
-  await flushPromises()
+  await clearAll(wrapper)
   expect(held.signals[0]!.aborted).toBe(false)
 
   await selectFile(wrapper, png())
@@ -323,7 +331,7 @@ it('儲存空間不足時不取得檔案，按開始時說明原因並提供重�
   const wrapper = await mountWorkspace()
   await selectFile(wrapper, png())
   await start(wrapper)
-  await vi.waitFor(() => expect(wrapper.find('[role=alert]').text()).toContain('儲存空間不足'))
+  await vi.waitFor(() => expect(wrapper.find('#remover-error').text()).toContain('儲存空間不足'))
   expect(submit(wrapper).text()).toBe('重試')
   expect(requests.some(isModelRequest)).toBe(false)
 })
@@ -341,7 +349,7 @@ it('瀏覽器自行清掉已存的檔案時，說明原因；重試會重新取�
   const wrapper = await mountWorkspace()
   await selectFile(wrapper, png())
   await start(wrapper)
-  await vi.waitFor(() => expect(wrapper.find('[role=alert]').text()).toContain('去背功能沒有準備完成'))
+  await vi.waitFor(() => expect(wrapper.find('#remover-error').text()).toContain('去背功能沒有準備完成'))
   expect(wrapper.attributes('data-model-ready')).toBe('false')
 
   await start(wrapper)
@@ -355,14 +363,13 @@ it('選好圖片後直接顯示預覽，而不是檔名與位元組數', async (
   stubWorker(capable)
   const wrapper = await mountWorkspace()
   await selectFile(wrapper, png())
-  const preview = wrapper.find('[data-image-source] img')
+  const preview = wrapper.find('[data-image-original] img')
   expect(preview.exists()).toBe(true)
   expect(preview.attributes('src')).toBe('blob:preview')
   expect(wrapper.text()).not.toContain('portrait.png')
   expect(wrapper.text()).not.toContain('bytes')
-  await button(wrapper, '清除圖片')!.trigger('click')
-  await flushPromises()
-  expect(wrapper.find('[data-image-source]').exists()).toBe(false)
+  await clearAll(wrapper)
+  expect(wrapper.find('[data-image-original]').exists()).toBe(false)
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
 })
 
@@ -374,7 +381,8 @@ it('先說明只處理人像，並在解碼前拒絕 HEIC／HEIF，也不因此�
   expect(wrapper.text()).toContain('人像')
   await selectFile(wrapper, new File([new Uint8Array([255, 216, 255])], 'selfie.heic', { type: '' }))
   expect(wrapper.text()).toContain('第一版不支援 iPhone HEIC／HEIF')
-  expect(submit(wrapper).attributes('disabled')).toBeDefined()
+  // A refused file never reaches the workspace, so there is nothing to start.
+  expect(submit(wrapper).exists()).toBe(false)
   expect(requests.some(isModelRequest)).toBe(false)
 })
 
