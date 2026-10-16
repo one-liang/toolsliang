@@ -41,8 +41,29 @@ async function portraitFile(page: Page) {
   return { name: 'private-portrait-canary.png', mimeType: 'image/png', buffer: Buffer.from(bytes) }
 }
 
+/** The picker's own file input: the visible control is its button, so files are handed to the input directly. */
+const files = (page: Page) => page.locator(`${WORKSPACE} [data-batch-input]`)
+/** The workspace's own message; the picker reports refused files in an alert of its own. */
+const errorOf = (page: Page) => page.locator('#remover-error')
+
 async function choosePortrait(page: Page) {
-  await page.getByLabel('選擇人像圖片', { exact: true }).setInputFiles(await portraitFile(page))
+  await files(page).setInputFiles(await portraitFile(page))
+}
+
+/** Clearing the batch asks once before it lets go of the results. */
+async function clearAll(page: Page) {
+  await page.getByRole('button', { name: '全部清除', exact: true }).click()
+  await page.getByRole('button', { name: '確定清除', exact: true }).click()
+  await expect(page.locator('[data-image-original]')).toHaveCount(0)
+}
+
+/** The lowest visible line: the viewport, or the top of the phone's floating bottom navigation. */
+async function foldOf(page: Page) {
+  return page.evaluate(() => {
+    const nav = document.querySelector('.mobile-nav')
+    const navTop = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect().top : innerHeight
+    return Math.min(innerHeight, navTop)
+  })
 }
 
 /** Choosing a photo is what starts the model on its way; this waits until it is on the device. */
@@ -131,7 +152,7 @@ test.describe('模型還沒到達時', () => {
     await expect(page.locator('[data-image-result]')).toContainText('512 × 512')
     await expect(page.locator('[data-image-original]')).toContainText('512 × 512')
 
-    const output = await page.getByRole('link', { name: '下載透明 PNG' }).getAttribute('href')
+    const output = await page.getByRole('link', { name: '下載圖片' }).getAttribute('href')
     const pixels = await page.evaluate(async (url) => {
       const blob = await fetch(url!).then(response => response.blob())
       const bitmap = await createImageBitmap(blob)
@@ -161,7 +182,7 @@ test.describe('模型還沒到達時', () => {
     expect(pixels.opaqueShare).toBeLessThan(0.8)
 
     const download = page.waitForEvent('download')
-    await page.getByRole('link', { name: '下載透明 PNG' }).click()
+    await page.getByRole('link', { name: '下載圖片' }).click()
     expect((await download).suggestedFilename()).toBe('background-removed.png')
 
     await settleTransitions(page)
@@ -176,7 +197,7 @@ test.describe('模型還沒到達時', () => {
     await gotoHydrated(page, PAGE)
     await choosePortrait(page)
     await page.getByRole('button', { name: '開始去背' }).click()
-    await expect(page.getByRole('alert')).toContainText('去背功能沒有準備完成')
+    await expect(errorOf(page)).toContainText('去背功能沒有準備完成')
     await expect(page.getByRole('button', { name: '重試' })).toBeEnabled()
     await expect(page.locator('[data-image-result]')).toHaveCount(0)
 
@@ -184,7 +205,7 @@ test.describe('模型還沒到達時', () => {
     const release = await holdModel(context)
     await page.getByRole('button', { name: '重試' }).click()
     await expect(page.locator('[data-model-preparing]')).toContainText('準備中')
-    await expect(page.getByRole('alert')).toHaveText('')
+    await expect(errorOf(page)).toHaveText('')
 
     await page.getByRole('button', { name: '取消', exact: true }).click()
     await expect(page.getByText('已取消。原圖未變更，可重新去背。')).toBeVisible()
@@ -211,14 +232,14 @@ test.describe('模型還沒到達時', () => {
     await choosePortrait(page)
     await turnedAway
     // A background start that fails says nothing until the visitor asks to start.
-    await expect(page.getByRole('alert')).toHaveText('')
+    await expect(errorOf(page)).toHaveText('')
 
     await context.setOffline(true)
     await page.evaluate(() => window.dispatchEvent(new Event('offline')))
     await expect(page.locator('[data-tool-offline]')).toHaveAttribute('data-tool-offline', 'blocked-offline')
     await page.getByRole('button', { name: '開始去背' }).click()
-    await expect(page.getByRole('alert')).toContainText('目前沒有網路')
-    await expect(page.getByRole('alert')).toContainText('用過一次後，離線也能使用')
+    await expect(errorOf(page)).toContainText('目前沒有網路')
+    await expect(errorOf(page)).toContainText('用過一次後，離線也能使用')
     await expect(page.getByRole('button', { name: '重試' })).toBeEnabled()
     await expect(page.locator('[data-image-result]')).toHaveCount(0)
 
@@ -228,7 +249,7 @@ test.describe('模型還沒到達時', () => {
     await page.evaluate(() => window.dispatchEvent(new Event('online')))
     await page.getByRole('button', { name: '重試' }).click()
     await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
-    await expect(page.getByRole('alert')).toHaveText('')
+    await expect(errorOf(page)).toHaveText('')
   })
 })
 
@@ -272,14 +293,15 @@ test('先說明只處理人像，並在載入模型前拒絕 HEIC／HEIF', async
   await expect(page.getByText('僅適用人像照片', { exact: false }).first()).toBeVisible()
   await waitForCapabilityCheck(page)
 
-  await page.getByLabel('選擇人像圖片', { exact: true }).setInputFiles({
+  await files(page).setInputFiles({
     name: 'renamed.jpg',
     mimeType: 'image/jpeg',
     buffer: Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 104, 101, 105, 99, 0, 0, 0, 0, 109, 105, 102, 49, 104, 101, 105, 99]),
   })
-  await expect(page.getByRole('alert')).toContainText('第一版不支援 iPhone HEIC／HEIF')
+  await expect(page.locator('[data-batch-issue="unsupported_heic"]')).toContainText('第一版不支援 iPhone HEIC／HEIF')
   await expect(page.locator(WORKSPACE)).toHaveAttribute('data-model-ready', 'false')
-  await expect(page.getByRole('button', { name: '開始去背' })).toBeDisabled()
+  // A refused file never reaches the workspace, so there is nothing to start.
+  await expect(page.getByRole('button', { name: '開始去背' })).toHaveCount(0)
   // A refused file is not a sign the visitor will use the tool.
   expect(requests).toEqual([])
 })
@@ -292,7 +314,7 @@ test('取消推論後不交付部分結果，重試仍可完成', async ({ page 
   await page.getByRole('button', { name: '取消', exact: true }).click()
   await expect(page.getByText('已取消。原圖未變更，可重新去背。')).toBeVisible()
   await expect(page.locator('[data-image-result]')).toHaveCount(0)
-  await expect(page.getByRole('link', { name: '下載透明 PNG' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '下載圖片' })).toHaveCount(0)
 
   await page.getByRole('button', { name: '開始去背' }).click()
   await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
@@ -304,18 +326,15 @@ test('鍵盤可完成去背與下載，且觸控目標夠大', async ({ page }) 
   await choosePortrait(page)
 
   const remove = page.getByRole('button', { name: '開始去背' })
+  const startBox = (await remove.boundingBox())!
   await remove.focus()
   await expect(remove).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
+  // There is no zoom: the whole picture is always on screen.
+  await expect(page.getByLabel('預覽放大倍率（100–400%）')).toHaveCount(0)
 
-  const zoom = page.getByLabel('預覽放大倍率（100–400%）')
-  await zoom.focus()
-  await page.keyboard.press('ArrowRight')
-  await expect(page.getByText('目前以 125% 檢視兩張預覽', { exact: false })).toBeVisible()
-
-  for (const target of [remove, page.getByRole('link', { name: '下載透明 PNG' })]) {
-    const box = (await target.boundingBox())!
+  for (const box of [startBox, (await page.getByRole('link', { name: '下載圖片' }).boundingBox())!]) {
     expect(box.width).toBeGreaterThanOrEqual(44)
     expect(box.height).toBeGreaterThanOrEqual(44)
   }
@@ -326,12 +345,12 @@ test('鍵盤可完成去背與下載，且觸控目標夠大', async ({ page }) 
 test('英文頁以英文說明範圍與限制', async ({ page }) => {
   await gotoHydrated(page, '/en/tools/image-background-remover/')
   await expect(page.getByText('For photos of people only', { exact: false }).first()).toBeVisible()
-  await page.getByLabel('Choose portrait image', { exact: true }).setInputFiles({
+  await files(page).setInputFiles({
     name: 'renamed.jpg',
     mimeType: 'image/jpeg',
     buffer: Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 104, 101, 105, 99, 0, 0, 0, 0, 109, 105, 102, 49, 104, 101, 105, 99]),
   })
-  await expect(page.getByRole('alert')).toContainText('HEIC/HEIF from iPhone is not supported')
+  await expect(page.locator('[data-batch-issue="unsupported_heic"]')).toContainText('HEIC/HEIF from iPhone is not supported')
 })
 
 test('用過一次後可離線重啟並重跑，圖片不進入快取或偏好', async ({ page, context }, testInfo) => {
@@ -357,7 +376,7 @@ test('用過一次後可離線重啟並重跑，圖片不進入快取或偏好',
   await choosePortrait(page)
   await page.getByRole('button', { name: '開始去背' }).click()
   await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
-  await expect(page.getByRole('alert')).toHaveText('')
+  await expect(errorOf(page)).toHaveText('')
 })
 
 test('模型與圖片的儲存邊界：只有公開資產進入快取', async ({ page }) => {
@@ -412,7 +431,8 @@ test('已快取的 12 MP 去背符合桌機時間預算，且進度即時出現'
     const blob = await new Promise<Blob>(resolve => canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.9))
     return [...new Uint8Array(await blob.arrayBuffer())]
   })
-  await page.getByLabel('選擇人像圖片', { exact: true }).setInputFiles({ name: 'private-portrait-canary.png', mimeType: 'image/jpeg', buffer: Buffer.from(bytes) })
+  await clearAll(page)
+  await files(page).setInputFiles({ name: 'private-portrait-canary.png', mimeType: 'image/jpeg', buffer: Buffer.from(bytes) })
 
   // Timed inside the page, as the compressor's budget is: wrapping Playwright's
   // click and polling also counts the automation round trip, which on WebKit CI
@@ -439,4 +459,49 @@ test('已快取的 12 MP 去背符合桌機時間預算，且進度即時出現'
   expect(elapsed).toBeLessThan(30_000)
   await expect(page.locator('[data-image-result]')).toContainText('4000 × 3000')
   await testInfo.attach('本機桌面效能量測', { body: JSON.stringify({ progressVisible, elapsed }), contentType: 'application/json' })
+})
+
+test('第一個畫面就看得到整張原圖、整張結果與下載；多張依序去背並打包 ZIP（#109）', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await gotoHydrated(page, PAGE)
+  await chooseAndWaitForModel(page)
+  await page.getByRole('button', { name: '開始去背' }).click()
+  await expect(page.locator('[data-image-result]')).toBeVisible({ timeout: 180_000 })
+
+  for (const viewport of [{ width: 1366, height: 768 }, { width: 375, height: 812 }]) {
+    await page.setViewportSize(viewport)
+    // The shell swaps its sidebar for the bottom navigation with a transition; measure the settled layout.
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await settleTransitions(page)
+    await page.evaluate(() => scrollTo(0, 0))
+    const fold = await foldOf(page)
+    for (const [label, target] of [
+      ['原圖', page.getByRole('img', { name: '原圖預覽' })],
+      ['去背結果', page.getByRole('img', { name: '去背結果預覽，透明處以格紋表示' })],
+      ['下載按鈕', page.getByRole('link', { name: '下載圖片' })],
+    ] as const) {
+      const box = (await target.boundingBox())!
+      expect(box.y + box.height, `${viewport.width}px：${label}不捲動就要完整看得到`).toBeLessThanOrEqual(fold)
+    }
+    // The whole picture fits its frame: nothing scrolls inside a preview.
+    for (const view of await page.locator('.image-background-remover__view').all()) {
+      expect(await view.evaluate(element => element.scrollHeight <= element.clientHeight && element.scrollWidth <= element.clientWidth)).toBe(true)
+    }
+    if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/image-background-remover-first-screen-${viewport.width}.png` })
+  }
+
+  // A second portrait waits for one more press, then both can be taken as one ZIP.
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await choosePortrait(page)
+  await page.getByRole('button', { name: '開始去背' }).click()
+  await expect(page.locator('[data-remover-summary]')).toContainText('2／2 張完成', { timeout: 180_000 })
+  await expect(page.getByRole('listbox', { name: '這批圖片' }).getByRole('option')).toHaveCount(2)
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: '全部下載（ZIP）', exact: true }).click()
+  const zip = await download
+  expect(zip.suggestedFilename()).toBe('background-removed.zip')
+  const { readFile } = await import('node:fs/promises')
+  const bytes = (await readFile((await zip.path())!)).toString('latin1')
+  for (const name of ['background-removed.png', 'background-removed-2.png']) expect(bytes).toContain(name)
+  expect(bytes, 'ZIP 內不得沿用原始檔名').not.toContain('private-portrait-canary')
 })

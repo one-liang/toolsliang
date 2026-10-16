@@ -71,10 +71,10 @@ export const imageBackgroundRemoverFaq: ToolFaqEntry[] = [
   },
   {
     heading: { 'zh-tw': '結果會有哪些限制？', en: 'What are the known limits?' },
-    body: { 'zh-tw': '髮絲、半透明區域（玻璃、薄紗、煙霧）與前後景亮度接近的邊緣都可能不準確；半透明區域的透明度是目前所有候選模型共同的弱點。同一張圖在不同瀏覽器的邊緣也可能略有差異。請務必先放大檢查再使用結果。', en: 'Individual hairs, semi-transparent areas such as glass, sheer fabric, or smoke, and edges where foreground and background have similar brightness can all be inaccurate; semi-transparency is a weakness shared by every model evaluated. Edges can also differ slightly between browsers. Zoom in and check the result before you use it.' },
+    body: { 'zh-tw': '髮絲、半透明區域（玻璃、薄紗、煙霧）與前後景亮度接近的邊緣都可能不準確；半透明區域的透明度是目前所有候選模型共同的弱點。同一張圖在不同瀏覽器的邊緣也可能略有差異。請務必先檢查邊緣再使用結果。', en: 'Individual hairs, semi-transparent areas such as glass, sheer fabric, or smoke, and edges where foreground and background have similar brightness can all be inaccurate; semi-transparency is a weakness shared by every model evaluated. Edges can also differ slightly between browsers. Check the edges before you use the result.' },
   },
   {
     heading: { 'zh-tw': '支援哪些格式與離線使用？', en: 'Which formats are supported, and does it work offline?' },
-    body: { 'zh-tw': '支援單張 JPEG、PNG 或 WebP，最多 25 MiB、2,400 萬像素、單邊 8,192 像素，輸出一律為透明 PNG。不支援 iPhone HEIC／HEIF。用過一次後，離線也能使用；你的照片不會被存起來給離線使用。', en: 'One JPEG, PNG, or WebP at a time, up to 25 MiB, 24 megapixels, and 8,192 pixels per side; the output is always a transparent PNG. HEIC/HEIF from iPhone is not supported. After you use it once, it works offline too, and your photos are never stored for offline use.' },
+    body: { 'zh-tw': '支援 JPEG、PNG 或 WebP，一次可以放一張或多張（最多 20 張、合計 200 MiB），每張最多 25 MiB、2,400 萬像素、單邊 8,192 像素；多張時會一張一張依序去背，可以逐張下載或打包成一個 ZIP。輸出一律為透明 PNG。不支援 iPhone HEIC／HEIF。用過一次後，離線也能使用；你的照片不會被存起來給離線使用。', en: 'JPEG, PNG, or WebP, one photo or several at a time (up to 20 and 200 MiB in all), each up to 25 MiB, 24 megapixels, and 8,192 pixels per side; a batch is cut out one photo after another and can be downloaded one by one or as one ZIP. The output is always a transparent PNG. HEIC/HEIF from iPhone is not supported. After you use it once, it works offline too, and your photos are never stored for offline use.' },
   },
 ]
