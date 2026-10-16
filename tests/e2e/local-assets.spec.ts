@@ -172,6 +172,50 @@ test('讀不到的資料仍可辨識與刪除，不影響其他資產', async ({
   await expect(rows(page)).toHaveCount(2)
 })
 
+test('自訂行事曆下架前留在裝置上的資料，仍可辨識並刪除且不報錯', async ({ page }) => {
+  await gotoHydrated(page, STORAGE_ROUTE)
+  await expect(page.locator('.local-assets__empty')).toBeVisible()
+
+  // The record exactly as the withdrawn tool wrote it: one document under its own id (ADR-0021).
+  await page.evaluate(async ([id, name, text]) => {
+    await new Promise<void>((resolve, reject) => {
+      const opening = indexedDB.open('toolsliang-local-assets')
+      opening.onerror = () => reject(opening.error)
+      opening.onsuccess = () => {
+        const transaction = opening.result.transaction('assets', 'readwrite')
+        transaction.objectStore('assets').put({
+          id,
+          version: 1,
+          kind: 'calendar',
+          name,
+          bytes: text!.length,
+          payload: { format: 'text', mediaType: 'application/json', text },
+          createdAt: '2026-09-07T02:00:00.000Z',
+          updatedAt: '2026-09-07T02:00:00.000Z',
+        })
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject(transaction.error)
+      }
+    })
+  }, ['custom-calendar', SECOND_ASSET_NAME, JSON.stringify({ format: 'toolsliang.custom-calendar', version: 1, entries: [{ title: CALENDAR_ENTRY }] })])
+
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await waitForHydration(page)
+
+  await expect(rows(page)).toHaveCount(1)
+  await expect(rows(page).first(), '標示工具已下架，使用者才知道為什麼找不到工具').toContainText('自訂行事曆（已下架）')
+  await expect(page.locator('.local-assets__kinds')).toContainText('自訂行事曆（已下架）')
+
+  await rows(page).first().locator('[data-asset-action="delete"]').click()
+  await page.locator('[data-asset-action="confirm-delete"]').click()
+  await expect(page.locator('.local-assets__status')).toContainText('已刪除')
+  await expect(page.locator('.local-assets__error')).toHaveCount(0)
+
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await waitForHydration(page)
+  await expect(page.locator('.local-assets__empty'), '刪除後重新載入不得復活').toBeVisible()
+})
+
 test('資產不進入網路請求、Service Worker 快取或偏好命名空間', async ({ page }) => {
   await gotoHydrated(page, STORAGE_ROUTE)
   await importBundle(page)

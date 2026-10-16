@@ -226,10 +226,11 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 
 #### 12.6 Custom calendar
 
+- **Status:** Withdrawn by ADR-0021. The workspace, entry editor, and document format were removed; the bullets below record the scope it shipped with. Calendars already saved on a device remain local assets that the storage manager can review and delete, with no dedicated export.
 - **User story and non-goals:** A user layers company holidays, school days, shifts, or other work/non-work overrides on the Taiwan calendar and saves them on the current device. It is not a shared team calendar, cloud calendar, legal labor-rule engine, notification service, or Supabase-synced asset.
 - **Local boundary:** Titles, notes, dates, recurrence, imports, and exports are local assets in IndexedDB. They never sync as cloud preferences or enter analytics.
 - **Module and interface:** A calendar-overlay domain validates local event/override records and applies them without mutating official source data. A local asset repository supports schema migration, list/read/write/delete, export/import, storage size, and explicit clear. Official and custom layers remain distinguishable.
-- **Route and slug:** `/{locale}/tools/custom-calendar/`; stable slug `custom-calendar`.
+- **Route and slug:** stable slug `custom-calendar`, reserved as unpublished. The `/{locale}/tools/custom-calendar/` page was withdrawn by ADR-0021 and now answers with a permanent redirect to the Taiwan calendar page in the same locale.
 - **Bilingual content:** `自訂行事曆` / `Custom Calendar`; explain “saved on this device only” and loss risks. Export/import copy states exactly what the local file contains.
 - **SEO/AEO/GEO:** Index only general capability/help, never user event routes. Answer how local saving works, what can be lost, and how official versus custom dates differ.
 - **Errors, cancellation, progress, capability:** Handle unavailable/quota-limited IndexedDB, invalid date/range, import schema/version, duplicate ids, and conflicts. Bulk import/export is cancellable with item progress and rollback on invalid transaction.

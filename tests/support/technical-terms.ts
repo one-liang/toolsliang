@@ -29,8 +29,6 @@ export const technicalTerms: Array<{ name: string, pattern: RegExp, locales?: Lo
  * `selectors` are workspace blocks that issue removes from the rendered page.
  */
 export const rewrittenElsewhere: Array<{ issue: string, slug: string, terms?: string[], selectors?: string[] }> = [
-  // The whole tool is being withdrawn.
-  { issue: '#89', slug: 'custom-calendar' },
   // The two explanation blocks inside the random picker workspace.
   { issue: '#83', slug: 'random-picker', selectors: ['.picker-caveats', '.picker-method'] },
 ]

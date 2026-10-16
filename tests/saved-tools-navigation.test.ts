@@ -152,6 +152,16 @@ describe('anonymous saved tools state', () => {
     expect(wrapper.vm.savedSlugs, '未上線工具不得留在常用清單').toEqual(['ntd-uppercase'])
   })
 
+  it('skips the withdrawn custom calendar a device saved before ADR-0021', async () => {
+    localStorage.setItem(SAVED_TOOLS_STORAGE_KEY, JSON.stringify({ version: 1, slugs: ['custom-calendar', 'ntd-uppercase'] }))
+
+    const wrapper = mount(SavedToolsHost)
+    await nextTick()
+
+    expect(wrapper.vm.savedSlugs, '下架的工具不得在常用清單留下壞掉的項目').toEqual(['ntd-uppercase'])
+    expect(wrapper.vm.savedTools.map(tool => tool.slug)).toEqual(['ntd-uppercase'])
+  })
+
   it('restores the list an earlier release saved under its own key', async () => {
     localStorage.setItem(LEGACY_SAVED_TOOLS_STORAGE_KEY, JSON.stringify(['ntd-uppercase']))
 

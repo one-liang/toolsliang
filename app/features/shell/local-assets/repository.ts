@@ -166,9 +166,9 @@ export function createLocalAssetRepository(
 
     /**
      * Writes the one asset a tool owns, under an id that tool chose itself. A
-     * tool keeping a single document — a custom calendar, say — has to find the
-     * same record again on the next visit, so it addresses it by name instead of
-     * searching for whatever it wrote last time. A record this build cannot read
+     * tool keeping a single document has to find the same record again on the
+     * next visit, so it addresses it by name instead of searching for whatever
+     * it wrote last time. A record this build cannot read
      * is never overwritten: data that might still be recoverable outranks the
      * convenience of writing over it.
      */

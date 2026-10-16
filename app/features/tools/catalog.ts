@@ -6,7 +6,6 @@ import { productImageWorkbenchDefinition } from './product-image-workbench/defin
 import { bmiContentReview } from './bmi-calculator/domain/sources'
 import { ntdContentReview } from './ntd-uppercase/domain/sources'
 import { taiwanCalendarContentReview } from './taiwan-calendar/domain/sources'
-import { customCalendarDefinition } from './custom-calendar/definition'
 import { pdfSignatureDefinition } from './pdf-signature/definition'
 import { deviceTimeDefinition } from './device-time/definition'
 import { rocYearConverterDefinition } from './roc-year-converter/definition'
@@ -134,6 +133,12 @@ export interface UnpublishedToolDefinition extends ToolDefinitionBase {
   availability: {
     state: 'unpublished'
     reason: LocalizedCopy
+    /**
+     * The published tool a withdrawn page now forwards to. A tool that was once
+     * public is still bookmarked and still in search results, so its URL keeps
+     * answering (ADR-0011) instead of turning into a 404.
+     */
+    redirectTo?: string
   }
 }
 
@@ -368,7 +373,23 @@ const registeredTools: ToolDefinition[] = [
     },
     contentReview: taiwanCalendarContentReview,
   },
-  customCalendarDefinition,
+  {
+    /*
+     * Withdrawn by docs/adr/0021-withdraw-custom-calendar.md. The slug stays
+     * reserved so nothing else can claim it, and its old page forwards to the
+     * Taiwan calendar. Calendars a device already saved remain in the local
+     * asset manager, where they can be reviewed and deleted.
+     */
+    slug: 'custom-calendar', category: 'time-calendar', icon: 'calendar-plus',
+    availability: {
+      state: 'unpublished',
+      reason: { 'zh-tw': '工具已下架。', en: 'This tool has been withdrawn.' },
+      redirectTo: 'taiwan-calendar',
+    },
+    name: { 'zh-tw': '自訂行事曆', en: 'Custom Calendar' },
+    description: { 'zh-tw': '在台灣行事曆上加註自己的放假、上班與備註。', en: 'Add your own days off, working days, and notes on the Taiwan calendar.' },
+    aliases: { 'zh-tw': [], en: [] }, keywords: { 'zh-tw': [], en: [] },
+  },
   pdfSignatureDefinition,
   compliantProductImageDefinition,
   {
@@ -549,6 +570,18 @@ export function getPublicPageRoutes() {
   ])
 }
 
+/**
+ * Every locale of a withdrawn tool page, paired with the published page it now
+ * forwards to. These are redirects, never pages: nothing here is prerendered as
+ * content, listed in the sitemap, or linked from the site.
+ */
+export function getWithdrawnToolRedirects(definitions: ToolDefinition[] = registeredTools) {
+  return supportedLocales.flatMap(locale => definitions.flatMap((tool) => {
+    if (isPublishedTool(tool) || !tool.availability.redirectTo) return []
+    return [{ from: `/${locale}/tools/${tool.slug}/`, to: `/${locale}/tools/${tool.availability.redirectTo}/` }]
+  }))
+}
+
 /** Turns a slug list — saved on a device, or curated for the landing page — into published tools. */
 export function resolvePublishedTools(slugs: string[]) {
   return slugs
@@ -583,6 +616,7 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
   const issues: string[] = []
   const slugs = new Set<string>()
   const registeredSlugs = new Set(definitions.map(definition => definition.slug))
+  const publishedSlugs = new Set(definitions.filter(isPublishedTool).map(definition => definition.slug))
   const formerSlugs = new Set<string>()
   const categoryIds = new Set(toolCategories.map(category => category.id))
   const iconKeys = new Set<string>(toolIcons)
@@ -615,7 +649,13 @@ export function validateToolRegistry(definitions: ToolDefinition[] = registeredT
       issues.push(`${prefix} HOT status requires a source`)
     }
 
-    if (!isPublishedTool(tool)) continue
+    if (!isPublishedTool(tool)) {
+      const target = tool.availability.redirectTo
+      if (target !== undefined && !publishedSlugs.has(target)) {
+        issues.push(`${prefix} a withdrawn tool must redirect to a published tool: ${target}`)
+      }
+      continue
+    }
 
     const published = tool as Partial<PublishedToolDefinition> & Pick<PublishedToolDefinition, 'availability'>
     if (!isIsoDate(published.availability.publishedAt)) issues.push(`${prefix} published tool requires publishedAt`)
