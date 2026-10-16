@@ -103,11 +103,15 @@ export function useCalendarMonth(options: CalendarMonthOptions) {
     refusal.value = load.refusal
   }
 
-  /** Reads the device clock once the component is on a device that has one. */
+  /**
+   * Reads the device clock once the component is on a device that has one. The
+   * page opens on today without taking focus: focusing the day would scroll the
+   * heading and the year picker out of view before the visitor has done anything.
+   */
   function readToday() {
     const now = new Date()
     today.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    showToday()
+    selectToday()
   }
 
   function showYear(next: number) {
@@ -120,14 +124,19 @@ export function useCalendarMonth(options: CalendarMonthOptions) {
     options.onNavigate?.()
   }
 
+  /** The visitor asked for today, so focus follows it into the grid. */
   function showToday() {
-    if (!today.value) return
+    if (selectToday()) requestFocus(today.value)
+  }
+
+  function selectToday() {
+    if (!today.value) return false
 
     const target = clampToPublishedYear(Number(today.value.slice(0, 4)))
-    if (String(target) !== today.value.slice(0, 4)) return
+    if (String(target) !== today.value.slice(0, 4)) return false
 
     selectDate(today.value, target)
-    requestFocus(today.value)
+    return true
   }
 
   function stepMonth(step: number) {

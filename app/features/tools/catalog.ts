@@ -249,7 +249,7 @@ const registeredTools: ToolDefinition[] = [
     status: { kind: 'new', startsAt: '2026-09-03', endsAt: '2026-10-03' },
     name: { 'zh-tw': '新臺幣國字大寫', en: 'NTD Uppercase' },
     description: {
-      'zh-tw': '依所選用途將新臺幣數字金額轉為國字大寫。',
+      'zh-tw': '依用途，把新臺幣金額轉成國字大寫。',
       en: 'Convert New Taiwan dollar amounts to formal Chinese wording for the purpose you pick.',
     },
     aliases: {

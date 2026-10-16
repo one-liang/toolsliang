@@ -91,9 +91,10 @@ for (const locale of ['zh-tw', 'en'] as const) {
     await page.keyboard.press('Space')
     await expect(toggle).toHaveAttribute('aria-pressed', 'false')
     await expect(clock.locator('time')).toHaveText(locale === 'en' ? '5:10 PM' : '下午5:10')
-    await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Tab' : 'Tab')
+    // #91: the copy button leads the row, so the keyboard walks back to it from the toggle.
+    await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Shift+Tab' : 'Shift+Tab')
     await expect(page.locator('[data-fullscreen-open]')).toBeFocused()
-    await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Tab' : 'Tab')
+    await page.keyboard.press(testInfo.project.name === 'webkit' ? 'Alt+Shift+Tab' : 'Shift+Tab')
     const copy = page.getByRole('button', { name: locale === 'en' ? 'Copy time information' : '複製時間資訊' })
     await expect(copy).toBeFocused()
     expect(await copy.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe('none')
