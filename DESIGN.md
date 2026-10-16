@@ -351,7 +351,7 @@ These are identity, not state. Each category id maps to one fill through `.categ
 - **Display** (800, `clamp(2.6rem, 1.15rem + 5.1vw, 5.6rem)`, 1.1): The landing hero H1. The closing-band title uses the same scale (`clamp(2.5rem, 1.2rem + 5vw, 5.6rem)`, 1.06).
 - **Headline** (800, `clamp(2.1rem, 1.3rem + 3vw, 3.9rem)`, 1.08): Landing section titles, max 16ch.
 - **Headline Page** (800, `clamp(2.2rem, 5vw, 3.6rem)`, 1.08): App Shell page H1 (directory, storage, design-system).
-- **Title Tool** (800, `clamp(1.9rem, 4vw, 2.8rem)`, 1.12): The H1 inside a tool's filled heading.
+- **Title Tool** (800, `clamp(1.9rem, 4vw, 2.8rem)`, 1.12): The H1 inside a tool's filled heading. Under 768px it is `clamp(1.5rem, 7.5vw, 1.75rem)`, so a seven-character Chinese name still fits beside the Save star at 320px.
 - **Title Block** (800, `clamp(1.6rem, 1.2rem + 1.2vw, 2.3rem)`, 1.1): Landing category block titles.
 - **Title Section** (800, `clamp(1.2rem, 3vw, 1.55rem)`, 1.25): Tool-page section headings. Directory category headings are 1.35rem.
 - **Body Lead** (500, `clamp(1.0625rem, 1rem + .35vw, 1.3rem)`, 1.6): Landing intro and pitch copy, max 30em.
@@ -435,8 +435,8 @@ Confident, flat pills that never lift.
 - **Border:** 2px `--color-border`.
 - **Tool card** (directory): a 96px-min row with a 40px icon tile in the category fill (2px ink rule, 12px radius), the name at 800, a .83rem description, badges top-right, and a trailing arrow. On hover the whole card fills yellow and the arrow turns ink.
 - **Tool workspace:** a ruled card with `clamp(16px, 3vw, 24px)` padding and a two-column grid at 768px (inputs left, result right).
-- **Result panel:** min 148px, 22px padding, 16px radius, 2px rule, on Result Cream. The answer is set at `clamp(1.15rem, 3vw, 1.6rem)`.
-- **Filled tool heading:** the tool page header is a block of its category fill (28px radius, 2px ink rule, ink text) holding the H1, the description and the Save pill. Its icon tile, when shown, sits on paper.
+- **Result panel:** min 148px, 22px padding, 16px radius, 2px rule, on Result Cream. The answer is set at `clamp(1.15rem, 3vw, 1.6rem)`. Under 768px, stacked below its fields, it is only as tall as its content (14px 18px 16px padding), so the buttons after it stay on the first screen.
+- **Filled tool heading:** the tool page header is a block of its category fill (28px radius, 2px ink rule, ink text) holding the H1, the description and the Save pill. Its icon tile, when shown, sits on paper. Under 768px it gives its height to the workspace: the H1 and a 44×44 star-only Save toggle share the first row (the words stay its accessible name, and the star fills once saved), and the description runs the full width below.
 - **Disclosure cards** ("Before you start", FAQ): ruled cards whose `<summary>` is a 44px row with a chevron that rotates 180° when open.
 
 ### Inputs / Fields

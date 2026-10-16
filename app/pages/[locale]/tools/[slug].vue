@@ -59,10 +59,11 @@ usePageSeo({
         :aria-pressed="saved"
         @click="toggleSaved(tool.slug)"
       >
-        <Star :size="18" aria-hidden="true" />
-        {{ saved
+        <Star :size="18" :fill="saved ? 'currentColor' : 'none'" aria-hidden="true" />
+        <!-- On a phone only the star shows; the words stay the button's name. -->
+        <span class="tool-heading__save-label">{{ saved
           ? (locale === 'en' ? 'Saved' : '已加入常用')
-          : (locale === 'en' ? 'Save' : '加入常用') }}
+          : (locale === 'en' ? 'Save' : '加入常用') }}</span>
       </Button>
     </header>
 

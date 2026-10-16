@@ -120,27 +120,6 @@ function clear() {
         <p id="ntd-help" class="field-help">{{ text.amountHint }}</p>
         <p v-if="pending" id="ntd-pending" class="field-pending">{{ pending }}</p>
         <p v-if="error" id="ntd-error" class="field-error" role="alert">{{ error }}</p>
-
-        <p class="ntd-rules__title">{{ text.purposeRulesTitle }}</p>
-        <dl class="ntd-rules">
-          <div>
-            <dt>{{ text.limitLabel }}</dt>
-            <dd>{{ summary.limit }} {{ ntdWords.yuan }}</dd>
-          </div>
-          <div>
-            <dt>{{ text.fractionLabel }}</dt>
-            <dd>{{ summary.fraction }}</dd>
-          </div>
-          <div>
-            <dt>{{ text.internalZeroLabel }}</dt>
-            <dd>{{ summary.internalZero }}</dd>
-          </div>
-          <div>
-            <dt>{{ text.endingLabel }}</dt>
-            <dd>{{ summary.ending }}</dd>
-          </div>
-        </dl>
-        <p v-if="purpose === 'treasury'" class="ntd-zero-note">{{ text.treasuryZeroNote }}</p>
       </div>
 
       <div class="result-panel ntd-result" aria-live="polite">
@@ -170,6 +149,28 @@ function clear() {
       </Button>
     </div>
     <p class="ntd-copy-status" :class="{ 'ntd-copy-status--failed': copyState === 'failed' }" role="status">{{ copyStatus }}</p>
+
+    <!-- #91: the rules explain the wording, so they follow it; the result and its buttons come first. -->
+    <p class="ntd-rules__title">{{ text.purposeRulesTitle }}</p>
+    <dl class="ntd-rules">
+      <div>
+        <dt>{{ text.limitLabel }}</dt>
+        <dd>{{ summary.limit }} {{ ntdWords.yuan }}</dd>
+      </div>
+      <div>
+        <dt>{{ text.fractionLabel }}</dt>
+        <dd>{{ summary.fraction }}</dd>
+      </div>
+      <div>
+        <dt>{{ text.internalZeroLabel }}</dt>
+        <dd>{{ summary.internalZero }}</dd>
+      </div>
+      <div>
+        <dt>{{ text.endingLabel }}</dt>
+        <dd>{{ summary.ending }}</dd>
+      </div>
+    </dl>
+    <p v-if="purpose === 'treasury'" class="ntd-zero-note">{{ text.treasuryZeroNote }}</p>
   </Card>
 
   <section class="tool-reference" aria-labelledby="ntd-purpose-examples">

@@ -111,10 +111,11 @@ onBeforeUnmount(() => {
       </div>
     </fieldset>
     <DialogRoot v-model:open="fullscreen">
+      <!-- #91: the primary action leads, as in the other tools, so it stays on a phone's first screen when the row wraps. -->
       <div class="tool-workspace__actions">
-        <Button variant="outline" data-seconds-toggle :aria-pressed="showSeconds" @click="showSeconds = !showSeconds">
-          {{ locale === 'en' ? 'Show seconds' : '顯示秒數' }}
-          <span aria-hidden="true">{{ showSeconds ? (locale === 'en' ? 'On' : '開') : (locale === 'en' ? 'Off' : '關') }}</span>
+        <Button data-copy-time class="tool-workspace__copy" :disabled="!reading?.ok" :aria-disabled="copyState === 'copying'" :aria-busy="copyState === 'copying'" @click="copyTime">
+          <Clipboard :size="18" aria-hidden="true" />
+          {{ locale === 'en' ? 'Copy time information' : '複製時間資訊' }}
         </Button>
         <DialogTrigger as-child>
           <Button variant="outline" data-fullscreen-open :disabled="!reading?.ok">
@@ -122,9 +123,9 @@ onBeforeUnmount(() => {
             {{ locale === 'en' ? 'Full screen' : '全螢幕顯示' }}
           </Button>
         </DialogTrigger>
-        <Button data-copy-time class="tool-workspace__copy" :disabled="!reading?.ok" :aria-disabled="copyState === 'copying'" :aria-busy="copyState === 'copying'" @click="copyTime">
-          <Clipboard :size="18" aria-hidden="true" />
-          {{ locale === 'en' ? 'Copy time information' : '複製時間資訊' }}
+        <Button variant="outline" data-seconds-toggle :aria-pressed="showSeconds" @click="showSeconds = !showSeconds">
+          {{ locale === 'en' ? 'Show seconds' : '顯示秒數' }}
+          <span aria-hidden="true">{{ showSeconds ? (locale === 'en' ? 'On' : '開') : (locale === 'en' ? 'Off' : '關') }}</span>
         </Button>
       </div>
       <DeviceTimeFullscreen
