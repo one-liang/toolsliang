@@ -8,6 +8,7 @@ import {
   resolveToolSlug,
   getUnavailableCapabilities,
   getTool,
+  getToolWorkspaceWidth,
   getVisibleStatus,
   isSupportedLocale,
   publishedToolCategories,
@@ -55,6 +56,21 @@ describe('tool catalog', () => {
 
     const handled = { ...withoutSources, pagePresentation: { showHeadingIcon: false, showLocalProcessingStatement: true } }
     expect(validateToolRegistry([handled])).toEqual([])
+  })
+
+  it('keeps a tool page on the standard workspace unless its definition asks for a wide one', () => {
+    const presentation = { showHeadingIcon: false, showLocalProcessingStatement: true }
+
+    expect(getToolWorkspaceWidth({ pagePresentation: presentation })).toBe('standard')
+    expect(getToolWorkspaceWidth({ pagePresentation: { ...presentation, workspace: 'standard' } })).toBe('standard')
+    expect(getToolWorkspaceWidth({ pagePresentation: { ...presentation, workspace: 'wide' } })).toBe('wide')
+  })
+
+  it('rejects a workspace width the tool page has no layout for', () => {
+    const invalidTool = structuredClone(getTool('ntd-uppercase')!)
+    Object.assign(invalidTool.pagePresentation, { workspace: 'full-bleed' })
+
+    expect(validateToolRegistry([invalidTool])).toContain('[ntd-uppercase] unknown workspace width: full-bleed')
   })
 
   it('exposes only published tools to public catalog consumers', () => {

@@ -499,6 +499,11 @@ select.ui-input {
 .tool-heading--filled .tool-heading__icon { background: var(--paper-0); }
 .tool-contract, .tool-reference { margin-top: 20px; padding: clamp(20px, 4vw, 28px); border: var(--rule) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
 .tool-page { width: min(980px, 100%); padding-top: 24px; }
+/* A tool whose definition asks for a wide workspace lets only the workspace reach 1440px.
+   Everything else keeps the column a standard tool page reads in: 980px less the gutter,
+   which follows the inline padding .workspace-page has at each breakpoint. */
+.tool-page--wide { --tool-page-gutter: 20px; width: min(1440px, 100%); }
+.tool-page--wide > :not(.tool-page__workspace) { max-width: calc(980px - 2 * var(--tool-page-gutter)); margin-inline: auto; }
 .tool-page .breadcrumbs { margin-bottom: 16px; }
 .tool-page .tool-heading { margin-bottom: 20px; }
 .tool-page .tool-contract { margin-top: 16px; padding: clamp(16px, 3vw, 24px); }
@@ -993,6 +998,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .app-topbar__brand { display: none; }
   .workspace-page { padding: 52px 40px 88px; }
   .tool-page { padding-top: 32px; }
+  .tool-page--wide { --tool-page-gutter: 40px; }
   .calendar-body { grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); align-items: start; }
   .mobile-nav { display: none; }
   .pwa-update { inset: auto 24px 24px auto; margin-inline: 0; }
@@ -1002,6 +1008,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .state-matrix { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
   .workspace-page { padding-inline: 56px; }
+  .tool-page--wide { --tool-page-gutter: 56px; }
 }
 
 @media (max-width: 767px) {
