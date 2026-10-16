@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RotateCcw } from '@lucide/vue'
+import BmiResult from '@/components/BmiResult.vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -159,17 +160,7 @@ function reset() {
         </div>
       </div>
 
-      <div class="result-panel bmi-result" aria-live="polite">
-        <span class="result-panel__label">{{ text.resultLabel }}</span>
-        <template v-if="result">
-          <strong class="bmi-result__value">{{ result.display }}</strong>
-          <span class="bmi-result__category">
-            {{ text.resultCategoryLabel }}：{{ result.category.name[locale] }}（{{ bmiCategoryRangeText(result.category) }}）
-          </span>
-          <span class="result-panel__amount">{{ text.resultSummary }}</span>
-        </template>
-        <span v-else class="bmi-result__pending">{{ text.resultEmpty }}</span>
-      </div>
+      <BmiResult :result="result" :locale="locale" aria-live="polite" />
     </div>
 
     <div class="tool-workspace__actions">

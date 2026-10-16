@@ -18,7 +18,7 @@ defineProps<{ category: LandingCategory, locale: LocaleCode }>()
     <ul class="nb-block__tools">
       <li v-for="tool in category.tools" :key="tool.slug">
         <NuxtLink class="nb-tool" :to="`/${locale}/tools/${tool.slug}/`">
-          <span class="nb-tool__name">{{ tool.name }}</span>
+          <span class="nb-tool__name">{{ tool.name }}<ToolStatusBadge v-if="tool.status" :status="tool.status" :locale="locale" /></span>
           <span class="nb-tool__tagline">{{ tool.tagline }}</span>
           <span class="nb-tool__go" aria-hidden="true"><ArrowRight :size="18" :stroke-width="2.5" /></span>
         </NuxtLink>

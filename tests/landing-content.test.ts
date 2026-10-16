@@ -7,7 +7,7 @@ import {
   landingCopyKeys,
   validateLandingContent,
 } from '@/features/landing/content'
-import { publishedTools, supportedLocales, unpublishedToolSlugs, type LocaleCode } from '@/features/tools/catalog'
+import { copy, getCategory, publishedTools, supportedLocales, unpublishedToolSlugs, type LocaleCode } from '@/features/tools/catalog'
 
 function structuredNode(locale: LocaleCode, type: string) {
   const graph = buildLandingStructuredData(locale)['@graph'] as Array<Record<string, unknown>>
@@ -28,6 +28,20 @@ describe('landing content registry', () => {
       for (const category of getLandingCategories(locale)) {
         expect(category.pitch.trim()).not.toBe('')
         for (const tool of category.tools) expect(tool.tagline.trim(), `${locale} ${tool.slug} 缺少一句話介紹`).not.toBe('')
+      }
+    }
+  })
+
+  it('names, files and badges each tool exactly as the tool directory does (#92)', () => {
+    for (const locale of supportedLocales) {
+      for (const category of getLandingCategories(locale)) {
+        expect(category.name).toBe(copy(getCategory(category.id)!.name, locale))
+        for (const entry of category.tools) {
+          const tool = publishedTools.find(item => item.slug === entry.slug)!
+          expect(entry.name, `${locale} ${entry.slug} 的名稱`).toBe(copy(tool.name, locale))
+          expect(tool.category, `${entry.slug} 的分類`).toBe(category.id)
+          expect(entry.status, `${entry.slug} 的狀態標籤`).toEqual(tool.status)
+        }
       }
     }
   })

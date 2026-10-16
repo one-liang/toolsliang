@@ -42,7 +42,7 @@
 .nb-wrap { width: min(var(--nb-max), 100%); margin-inline: auto; padding-inline: var(--nb-gutter); }
 
 /* Chinese copy breaks at punctuation, never inside a phrase; an over-long phrase still wraps. */
-.nb-hero__intro, .nb-block__pitch, .nb-tool__tagline, .nb-faq__question, .nb-faq__answer, .nb-section__title, .nb-close__title, .nb-bmi__standard { word-break: keep-all; overflow-wrap: anywhere; }
+.nb-hero__intro, .nb-block__pitch, .nb-tool__tagline, .nb-faq__question, .nb-faq__answer, .nb-section__title, .nb-close__title { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* Category fills */
 .nb-fill--image-commerce { --nb-fill: var(--nb-pink); }
@@ -234,6 +234,8 @@
 }
 .nb-tool__name, .nb-tool__tagline { transition: translate 260ms var(--nb-ease); }
 .nb-tool__name { grid-column: 1; font-size: 1.125rem; font-weight: 800; line-height: 1.3; }
+/* The catalog's own status badge, so a tool reads the same here as in the directory (#92). */
+.nb-tool__name .ui-badge { margin-inline-start: 8px; vertical-align: 3px; }
 .nb-tool__tagline { grid-column: 1; margin-top: 2px; font-size: .97rem; font-weight: 500; line-height: 1.45; text-wrap: pretty; }
 .nb-tool__go { grid-column: 2; grid-row: 1 / span 2; width: 38px; height: 38px; display: grid; place-items: center; border: var(--nb-rule) solid currentColor; border-radius: 999px; opacity: 0; translate: -8px 0; transition: opacity var(--nb-fast) ease, translate 260ms var(--nb-ease); }
 .nb-tool:focus-visible { outline-offset: 2px; }
@@ -244,24 +246,28 @@
   .nb-tool:hover .nb-tool__go { opacity: 1; translate: 0; }
 }
 
-/* Demo: portrait cutout and workbench steps */
-.nb-cutout { width: 100%; display: grid; gap: 18px; justify-items: center; }
-.nb-cutout__pair { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: clamp(8px, 1.5vw, 16px); }
-.nb-cutout__frame { margin: 0; display: grid; gap: 8px; justify-items: center; }
-.nb-cutout__art { width: 100%; max-width: 260px; height: auto; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 16px; }
-.nb-cutout__caption { color: var(--nb-on-fill); font-size: .92rem; font-weight: 800; }
-.nb-cutout__arrow { width: 24px; height: 24px; color: var(--nb-on-fill); }
-.nb-steps { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.nb-steps li { display: inline-flex; align-items: center; gap: 8px; }
-.nb-steps__chip { padding: 7px 14px; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 999px; background: var(--nb-demo); color: var(--nb-on-fill); font-size: .92rem; font-weight: 800; transition: background-color 220ms ease, color 220ms ease; }
-.nb-steps__chip.is-lit { background: var(--nb-on-fill); color: var(--nb-fill); }
-.nb-steps__arrow { width: 18px; height: 18px; color: var(--nb-on-fill); }
+/*
+ * Demos (#92). Each one is a piece of its tool's own screen, drawn with the tool's
+ * own components and classes, so a visitor who follows the link finds the same
+ * thing waiting. These rules only fit that piece into its block: the tool's
+ * surfaces follow the theme as they do on the tool page, and the fill around
+ * them stays put.
+ */
+.nb-snap { width: 100%; padding: clamp(14px, 1.6vw, 20px); color: var(--color-foreground); }
 
-/* Demo: a form with its amount written out, then signed */
-.nb-doc { width: 100%; height: 100%; display: grid; justify-items: center; }
-.nb-doc__page { width: min(100%, 440px); min-height: 100%; display: grid; grid-template-rows: auto auto 1fr auto; gap: 18px; padding: 20px 22px 18px; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 12px; background: var(--paper-0); color: var(--nb-on-fill); }
+/* Portrait background remover frames, then the workbench's jobs */
+.nb-cutout { display: grid; gap: 16px; }
+.nb-cutout__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.nb-cutout .image-background-remover__view { height: clamp(140px, 15vw, 220px); }
+.nb-cutout .choice-option { cursor: default; }
+
+/* The signature tool's stage, with the page and a placed signature */
+.nb-doc { height: 100%; display: grid; }
+.nb-doc__stage { display: grid; grid-template-rows: minmax(0, 1fr); justify-items: center; padding: 12px; border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+/* The page is paper in either theme, so what is drawn on it is drawn in ink, as in the tool. */
+.nb-doc__page { width: min(100%, 420px); display: grid; grid-template-rows: auto auto 1fr auto; gap: 18px; padding: 20px 22px 18px; border: var(--rule) solid var(--color-border); background: #ffffff; color: var(--fill-ink); }
 .nb-doc__top { display: flex; align-items: center; gap: 12px; }
-.nb-doc__tag { padding: 3px 10px; border-radius: 999px; background: var(--nb-on-fill); color: var(--paper-0); font-size: .75rem; font-weight: 800; letter-spacing: .06em; }
+.nb-doc__tag { padding: 3px 10px; border-radius: 999px; background: var(--fill-ink); color: #ffffff; font-size: .75rem; font-weight: 800; letter-spacing: .06em; }
 .nb-doc__lines { flex: 1; display: grid; gap: 6px; }
 .nb-doc__lines span { height: 7px; border-radius: 4px; background: var(--ink-200); }
 .nb-doc__lines span + span { width: 70%; }
@@ -269,45 +275,34 @@
 .nb-doc__body span { height: 7px; border-radius: 4px; background: #e6e4de; }
 .nb-doc__body span:nth-child(3n + 2) { width: 88%; }
 .nb-doc__body span:nth-child(3n) { width: 64%; }
-.nb-doc__amount { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 4px 14px; margin: 0; padding-block: 12px; border-block: 1.5px solid var(--nb-on-fill); }
+.nb-doc__amount { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 4px 14px; margin: 0; padding-block: 12px; border-block: 1.5px solid var(--fill-ink); }
 .nb-doc__amount dt { font-size: .85rem; font-weight: 800; }
 .nb-doc__amount dd { display: grid; gap: 2px; margin: 0; }
 .nb-doc__words { font-size: clamp(1.1rem, .95rem + .6vw, 1.35rem); font-weight: 800; line-height: 1.35; }
 .nb-doc__figure { font-size: .9rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.nb-doc__sign { display: grid; justify-items: end; }
-.nb-doc__signature { width: min(100%, 240px); height: auto; }
-.nb-doc__line { width: min(100%, 260px); padding-top: 4px; border-top: 2px solid var(--nb-on-fill); font-size: .78rem; font-weight: 700; }
+.nb-doc__sign { display: grid; justify-items: end; gap: 8px; }
+/* The tool positions a placement on the page; here it sits in the signature row and takes no drag. */
+.nb-doc .pdf-signature__placement { position: relative; display: block; width: min(100%, 230px); padding: 4px 8px; cursor: default; }
+.nb-doc__signature { display: block; width: 100%; height: auto; }
+.nb-doc__line { width: min(100%, 260px); padding-top: 4px; border-top: 2px solid var(--fill-ink); font-size: .78rem; font-weight: 700; }
 
-/* Demo: device clock */
-.nb-clock { width: 100%; text-align: center; color: var(--nb-on-fill); }
-.nb-clock__label { margin: 0 0 6px; font-size: .9rem; font-weight: 800; }
-.nb-clock__time { display: block; font-size: clamp(2.8rem, 1.7rem + 2.6vw, 4rem); font-weight: 800; font-stretch: 106%; line-height: 1.05; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.nb-clock__meta { margin: 10px 0 0; font-size: .95rem; font-weight: 600; line-height: 1.5; }
+/* Device time reading, a size down so the clock fits a third of the row */
+.nb-clock { --device-clock-font-size: clamp(2rem, 1.2rem + 1.6vw, 2.75rem); }
+.nb-snap.nb-clock .device-time__zone { margin-bottom: 0; }
 
-/* Demo: BMI scale */
-.nb-bmi { width: 100%; color: var(--nb-on-fill); }
-.nb-bmi__standard { margin: 0 0 60px; font-size: .95rem; font-weight: 800; line-height: 1.4; text-wrap: pretty; }
-.nb-bmi__bar { position: relative; height: 26px; display: flex; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 999px; overflow: hidden; }
-.nb-bmi__band { height: 100%; }
-.nb-bmi__band + .nb-bmi__band { border-left: var(--nb-rule) solid var(--nb-on-fill); }
-.nb-bmi__band--underweight { background: var(--nb-sky); }
-.nb-bmi__band--healthy-weight { background: var(--paper-0); }
-.nb-bmi__band--overweight { background: var(--nb-yellow); }
-.nb-bmi__band--obese { background: var(--nb-coral); }
-.nb-bmi__scale { position: relative; margin-top: 12px; }
-.nb-bmi__marker { position: absolute; top: -9px; bottom: -9px; left: calc(var(--pos) * 100%); width: 4px; translate: -50% 0; border-radius: 4px; background: var(--nb-on-fill); }
-.nb-bmi__pin { position: absolute; bottom: calc(100% + 12px); left: 50%; translate: -50% 0; padding: 3px 10px; border-radius: 999px; background: var(--nb-on-fill); color: var(--paper-0); font-size: .85rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.nb-bmi__marker::before { content: ""; position: absolute; top: -10px; left: 50%; width: 14px; height: 14px; translate: -50% 0; border-radius: 50%; background: var(--nb-on-fill); }
-.nb-bmi__legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 20px 0 0; padding: 0; list-style: none; font-size: .9rem; font-weight: 700; }
-.nb-bmi__legend li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; }
-.nb-bmi__range { grid-column: 2; font-weight: 600; font-variant-numeric: tabular-nums; }
-.nb-bmi__swatch { width: 14px; height: 14px; border: var(--nb-rule) solid var(--nb-on-fill); border-radius: 4px; }
-.nb-bmi__legend li.is-current { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+/* BMI: the measurements in the calculator's field names, then its result panel */
+.nb-bmi { width: 100%; display: grid; gap: 14px; color: var(--nb-on-fill); }
+.nb-bmi__input { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; }
+.nb-bmi__input dt { font-size: .86rem; font-weight: 700; }
+.nb-bmi__input dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+/* The panel is the tool's surface, so its text follows the theme rather than the fill around it. */
+.nb-bmi .result-panel { min-height: 0; color: var(--color-foreground); }
 
-/* Demo: wheel */
-.nb-wheel { width: 100%; display: grid; justify-items: center; gap: 12px; color: var(--nb-on-fill); }
-.nb-wheel__art { width: min(100%, 280px); height: auto; overflow: visible; }
-.nb-wheel__result { margin: 0; font-size: 1.1rem; font-weight: 800; }
+/* Random picker: the result stage's surface, title, wheel and drawn name */
+.nb-wheel { width: 100%; display: grid; justify-items: start; gap: 12px; padding: 16px 20px 20px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-result-surface); color: var(--color-foreground); }
+.nb-wheel__art { width: min(100%, 240px); justify-self: center; }
+.dark .nb-wheel .picker-wheel { --wheel-pointer-edge: var(--chalk-50); }
+.nb-wheel .picker-result__item { margin: 0; }
 
 /* FAQ */
 .nb-faq { display: grid; gap: clamp(24px, 4vw, 40px); }

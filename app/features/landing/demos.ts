@@ -1,7 +1,6 @@
 import type { LocaleCode, LocalizedCopy } from '@/features/tools/catalog'
 import { copy } from '@/features/tools/catalog'
-import { evaluateBmi } from '@/features/tools/bmi-calculator/domain/calculate'
-import { bmiCategories } from '@/features/tools/bmi-calculator/domain/reference'
+import { evaluateBmi, type BmiEvaluation } from '@/features/tools/bmi-calculator/domain/calculate'
 import { convertNtd } from '@/features/tools/ntd-uppercase/domain/convert'
 import { wheelSlices, wheelStopRotation } from '@/features/tools/random-picker/domain/wheel'
 import { buildCalendarYear, getMonthGrid, type CalendarDay } from '@/features/tools/taiwan-calendar/domain/calendar'
@@ -41,13 +40,9 @@ export function getNtdDemo(): NtdDemo {
 export interface BmiDemo {
   display: string
   categoryName: string
-  /** Where the reading falls on the four-band scale the demo draws, 0 to 1. */
-  position: number
-  bands: Array<{ id: string, name: string, from: number, to: number, current: boolean, range: string }>
+  /** The calculator's own result, which the demo shows in the calculator's own panel (#92). */
+  result: Extract<BmiEvaluation, { state: 'ready' }>
 }
-
-/** The scale the demo draws runs from 15 to 33, which covers all four bands with room either side. */
-const BMI_SCALE = { min: 15, max: 33 }
 
 export function getBmiDemo(locale: LocaleCode): BmiDemo {
   const evaluation = evaluateBmi({
@@ -59,25 +54,10 @@ export function getBmiDemo(locale: LocaleCode): BmiDemo {
   })
   if (evaluation.state !== 'ready') throw new Error('BMI demo input is rejected')
 
-  const span = BMI_SCALE.max - BMI_SCALE.min
-  const toUnit = (value: number) => Math.min(Math.max((value - BMI_SCALE.min) / span, 0), 1)
-
   return {
     display: evaluation.display,
     categoryName: copy(evaluation.category.name, locale),
-    position: toUnit(evaluation.bmi),
-    bands: bmiCategories.map(category => ({
-      id: category.id,
-      name: copy(category.name, locale),
-      from: toUnit(category.minInclusive ?? BMI_SCALE.min),
-      to: toUnit(category.maxExclusive ?? BMI_SCALE.max),
-      current: category.id === evaluation.category.id,
-      range: category.minInclusive === null
-        ? `< ${category.maxExclusive}`
-        : category.maxExclusive === null
-          ? `≥ ${category.minInclusive}`
-          : `${category.minInclusive}–${category.maxExclusive}`,
-    })),
+    result: evaluation,
   }
 }
 

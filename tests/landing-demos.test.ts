@@ -30,17 +30,13 @@ describe('landing demonstrations', () => {
     expect(describeCalendarBreak(calendar.breakHoliday, calendar.breakLength, 'en')).toBe('Lunar New Year: 9 days off in a row')
   })
 
-  it('places the BMI example on the official band it belongs to', () => {
+  it("shows the calculator's own result for the BMI example", () => {
     for (const locale of supportedLocales) {
       const bmi = getBmiDemo(locale)
-      const current = bmi.bands.find(band => band.current)!
 
       expect(bmi.display).toBe('22.5')
-      expect(current.id).toBe('healthy-weight')
-      expect(bmi.categoryName).toBe(current.name)
-      expect(bmi.position).toBeGreaterThanOrEqual(current.from)
-      expect(bmi.position).toBeLessThan(current.to)
-      expect(bmi.bands.map(band => band.range)).toEqual(['< 18.5', '18.5–24', '24–27', '≥ 27'])
+      expect(bmi.result.category.id).toBe('healthy-weight')
+      expect(bmi.categoryName).toBe(bmi.result.category.name[locale])
     }
   })
 
