@@ -179,13 +179,15 @@ test('12 MP 輸出與取消不影響既有圖層', async ({ page }) => {
   expect(await outputPixels(page)).toMatchObject({ width: 4000, height: 3000 })
   // A new size makes the finished file stale, so the button comes back.
   await page.getByLabel('寬度（像素）').fill('4001')
-  await page.getByRole('button', { name: '產生 PNG', exact: true }).click()
-  // The workspace reflows while the render runs. Waiting for the button to hold
-  // still spends the very window this assertion needs, and a forced click can
-  // land where the button no longer is, so the event is dispatched on it.
-  const cancel = page.getByRole('button', { name: '取消', exact: true })
-  await expect(cancel).toBeVisible()
-  await cancel.dispatchEvent('click')
+  await expect(page.getByRole('button', { name: '產生 PNG', exact: true })).toBeEnabled()
+  // A warm 12 MP render can finish between two Playwright steps, taking the
+  // cancel button with it. Starting it and cancelling one frame later, in the
+  // page itself, always lands while the render is still running.
+  await page.evaluate(async () => {
+    document.getElementById('promo-produce')!.click()
+    await new Promise(resolve => requestAnimationFrame(resolve))
+    ;[...document.querySelectorAll<HTMLButtonElement>('.brand-promo__actions button')].find(button => button.textContent?.trim() === '取消')!.click()
+  })
   await expect(page.getByRole('status').filter({ hasText: '已取消' })).toBeVisible()
   await expect(page.locator('.brand-promo__layers ol li')).toHaveCount(1)
   await expect(page.getByRole('link', { name: '下載 PNG', exact: true })).toHaveCount(0)
