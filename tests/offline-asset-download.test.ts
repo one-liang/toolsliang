@@ -85,4 +85,65 @@ describe('離線資產下載', () => {
     asset.cancel()
     expect(asset.state.value).toMatchObject({ phase: 'idle', receivedBytes: 0 })
   })
+
+  it('先確認裝置上有沒有這個版本：已經有的話，立刻要求也不會連線', async () => {
+    const cache = stubCache()
+    cache.stored.set(engine.url, new Response(new Uint8Array([1, 2, 3])))
+    const calls = stubDownload([1, 2, 3])
+    const asset = useOfflineAsset(engine)
+    // Asked before the cache lookup has answered, as a fast visitor would.
+    await asset.download()
+    expect(asset.state.value.phase).toBe('cached')
+    expect(calls).toEqual([])
+  })
+
+  it('同時要求兩次（背景準備與按下開始）只下載一次', async () => {
+    stubCache()
+    const calls = stubDownload([1, 2, 3])
+    const asset = useOfflineAsset(engine)
+    await Promise.all([asset.download(), asset.download()])
+    expect(calls).toEqual([engine.url])
+    expect(asset.state.value.phase).toBe('cached')
+  })
+
+  it('晚到的取消結果不會拿走新一次下載的控制權', async () => {
+    stubCache()
+    const signals: AbortSignal[] = []
+    let rejectFirst = (_reason: unknown) => {}
+    // The first request settles only when the test says so, well after it was cancelled.
+    const fetches = vi.fn((_url: string, init: RequestInit) => {
+      signals.push(init.signal!)
+      return new Promise<Response>((_resolve, reject) => { if (signals.length === 1) rejectFirst = reject })
+    })
+    vi.stubGlobal('fetch', fetches)
+    const asset = useOfflineAsset(engine)
+    void asset.download()
+    await flushPromises()
+    asset.cancel()
+    void asset.download()
+    await flushPromises()
+    rejectFirst(new DOMException('aborted', 'AbortError'))
+    await flushPromises()
+
+    // Asking again joins the attempt still under way instead of opening a third connection.
+    void asset.download()
+    await flushPromises()
+    expect(fetches).toHaveBeenCalledTimes(2)
+    // And a cancel still reaches it.
+    asset.cancel()
+    expect(signals[1]!.aborted).toBe(true)
+  })
+
+  it('瀏覽器清掉已存的檔案後，下一次要求會重新取得', async () => {
+    const cache = stubCache()
+    cache.stored.set(engine.url, new Response(new Uint8Array([1, 2, 3])))
+    const calls = stubDownload([1, 2, 3])
+    const asset = useOfflineAsset(engine)
+    await asset.inspect()
+    expect(asset.state.value.phase).toBe('cached')
+    asset.forget()
+    await asset.download()
+    expect(calls).toEqual([engine.url])
+    expect(asset.state.value.phase).toBe('cached')
+  })
 })
