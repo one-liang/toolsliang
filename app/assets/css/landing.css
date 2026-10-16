@@ -302,6 +302,8 @@
 .nb-wheel { width: 100%; display: grid; justify-items: start; gap: 12px; padding: 16px 20px 20px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-result-surface); color: var(--color-foreground); }
 .nb-wheel__art { width: min(100%, 240px); justify-self: center; }
 .dark .nb-wheel .picker-wheel { --wheel-pointer-edge: var(--chalk-50); }
+/* The tool sets the title as a heading; here it is a line of the demo, so it takes the heading's weight. */
+.nb-wheel .picker-stage__title { font-weight: 800; }
 .nb-wheel .picker-result__item { margin: 0; }
 
 /* FAQ */
