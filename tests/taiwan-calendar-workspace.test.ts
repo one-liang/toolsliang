@@ -74,6 +74,18 @@ describe('opening the calendar', () => {
     expect(dayCell(wrapper, '2026-06-19').attributes('aria-current')).toBe('date')
   })
 
+  // #91: focusing the day on load scrolled the heading and the year picker off the first screen.
+  it('selects today on opening without taking focus, and moves focus only when asked', async () => {
+    const wrapper = await mountWorkspace()
+
+    expect(wrapper.get('.calendar-day--selected').attributes('data-date')).toBe('2026-06-19')
+    expect(document.activeElement?.closest('.calendar-grid')).toBeNull()
+
+    await wrapper.get('.calendar-today').trigger('click')
+    await settle()
+    expect(document.activeElement?.getAttribute('data-date')).toBe('2026-06-19')
+  })
+
   it('offers every published year, and the next one only to say it is not announced', async () => {
     const wrapper = await mountWorkspace()
     const options = wrapper.findAll('#calendar-year option').map(option => Number(option.attributes('value')))
