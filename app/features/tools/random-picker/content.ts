@@ -9,18 +9,19 @@ import {
   type RandomPickerErrorCode,
   type RandomPickerPresentation,
 } from './domain/reference'
-import { randomPickerCaveatKeys, type RandomPickerCaveatKey } from './domain/sources'
 import type { ToolFaqEntry } from '../faq'
 import { hasLocalizedCopy, type LocaleCode, type LocalizedCopy } from '../catalog'
 
 /**
  * Everything the random picker workspace and page say out loud. It sits beside
  * the sampling modules rather than inside the component because the fairness
- * boundary is reviewed as content: the caveats keep the wording published in
- * docs/research/003-random-picker-fairness-and-sources.md §7.1, the questions
- * keep the ones approved in §7.4, and the error messages keep §5.2. Ceilings
- * are read from the reviewed limits, never retyped, so a sentence cannot
- * promise a list size the planner does not accept.
+ * boundary is reviewed as content: the questions keep the ones approved in
+ * docs/research/003-random-picker-fairness-and-sources.md §7.4 and, since #83,
+ * also carry the §7.1 boundaries the workspace used to list; the error messages
+ * keep §5.2. The workspace itself only says what depends on the current list:
+ * a repeated name holding more than one chance. Ceilings are read from the
+ * reviewed limits, never retyped, so a sentence cannot promise a list size the
+ * planner does not accept.
  */
 
 const groupedMaxEntries = randomPickerLimits.maxEntries.toLocaleString('en-US')
@@ -46,11 +47,11 @@ const randomPickerCopyEntries = {
     'zh-tw': '抽出的每一名都不同，不會有人被抽到兩次。',
     en: 'Every drawn entry is different; nothing is drawn twice.',
   },
-  presentationLegend: { 'zh-tw': '呈現方式', en: 'How to show it' },
-  presentationHint: {
-    'zh-tw': '兩種方式抽出的結果一樣，只有畫面不同。',
-    en: 'Both show the same draw; only the presentation differs.',
+  duplicatesShared: {
+    'zh-tw': '名單裡有重複的項目，目前各佔一個機會；要讓同一個名字只算一次，請改選「合併重複」。',
+    en: 'Some entries repeat, and each repeat has its own chance; choose Merge repeats to give a repeated name a single chance.',
   },
+  presentationLegend: { 'zh-tw': '呈現方式', en: 'How to show it' },
   wheelUnavailable: {
     'zh-tw': `輪盤只在抽 1 名、名單有 ${randomPickerLimits.wheelMinEntries}–${randomPickerLimits.wheelMaxEntries} 筆時可用，目前以名單呈現結果。`,
     en: `The wheel is available when drawing one entry from ${randomPickerLimits.wheelMinEntries}–${randomPickerLimits.wheelMaxEntries} candidates; this draw is shown as a list.`,
@@ -70,15 +71,7 @@ const randomPickerCopyEntries = {
   },
   progressLabel: { 'zh-tw': '輪盤進度', en: 'Wheel progress' },
   wheelCaption: { 'zh-tw': '抽籤輪盤', en: 'Draw wheel' },
-  caveatsTitle: { 'zh-tw': '看結果前要知道', en: 'Before you use this result' },
-  sourceLabel: { 'zh-tw': '作法依據', en: 'Method source' },
-  ruleVersionLabel: { 'zh-tw': '規則版本', en: 'Rule version' },
-  methodEyebrow: { 'zh-tw': '等機率作法', en: 'Equal chance' },
-  methodTitle: { 'zh-tw': '每個項目的機會是怎麼算出來的', en: 'How every entry gets the same chance' },
-  methodIntro: {
-    'zh-tw': '機會相同不是靠畫面看起來公平，而是靠下面四個步驟；每一步都有對應的自動測試。',
-    en: 'Equal chances come from these four steps, each covered by its own automated test, not from how the animation looks.',
-  },
+  candidatesLabel: { 'zh-tw': '輪盤上的項目', en: 'On the wheel' },
 } satisfies Record<string, LocalizedCopy>
 
 export type RandomPickerCopyKey = keyof typeof randomPickerCopyEntries
@@ -93,34 +86,6 @@ export const duplicatePolicyLabels: Record<DuplicatePolicy, LocalizedCopy> = {
 export const presentationLabels: Record<RandomPickerPresentation, LocalizedCopy> = {
   list: { 'zh-tw': '名單', en: 'List' },
   wheel: { 'zh-tw': '輪盤', en: 'Wheel' },
-}
-
-/** Section 7.1: shown next to the result, complete, in both locales. */
-export const randomPickerCaveats: Record<RandomPickerCaveatKey, LocalizedCopy> = {
-  'equal-probability-scope': {
-    'zh-tw': '每個有效項目的中選機率相同；機率由取樣演算法保證，不受項目順序或文字影響。',
-    en: 'Every valid entry has the same chance of being drawn; that comes from the sampling algorithm, not from the order or the text of the entries.',
-  },
-  'no-audit': {
-    'zh-tw': '抽選只在這台裝置執行，沒有伺服器見證，也沒有第三方稽核，無法向別人證明結果沒有被重抽。',
-    en: 'The draw runs on this device only, with no server witness and no third-party audit, so you cannot prove to anyone else that a result was not re-rolled.',
-  },
-  'not-a-lottery': {
-    'zh-tw': '這不是可稽核的抽獎系統，不適用需要主管機關核准、公證或紀錄留存的活動。',
-    en: 'This is not an auditable prize-draw system and is not suitable for events that require regulatory approval, notarisation, or a retained record.',
-  },
-  'duplicates-share-chances': {
-    'zh-tw': '名單裡有重複的項目，目前設定讓它們各佔一個機會；要讓同一個名字只有一次機會，請改選合併重複。',
-    en: 'The list contains repeated entries and the current setting gives each of them its own chance; switch to merging duplicates to give a repeated name a single chance.',
-  },
-  'wheel-is-presentation': {
-    'zh-tw': '輪盤只是呈現方式，結果在動畫開始前就已經決定；跳過或取消動畫都不會改變結果。',
-    en: 'The wheel is presentation only: the result is decided before the animation starts, and skipping or cancelling it changes nothing.',
-  },
-  'local-processing': {
-    'zh-tw': '名單與結果只在你的瀏覽器處理，不會送出、不會保存，關閉分頁後就消失。',
-    en: 'The list and the result are processed in your browser only; nothing is sent or stored, and both are gone when you close the tab.',
-  },
 }
 
 const randomPickerErrorCopy: Record<RandomPickerErrorCode, LocalizedCopy> = {
@@ -153,38 +118,6 @@ const randomPickerErrorCopy: Record<RandomPickerErrorCode, LocalizedCopy> = {
     en: 'You asked for {count} but the list only has {entries} to draw from.',
   },
 }
-
-/** Section 3, in the order the steps actually run inside the draw. */
-const randomPickerMethodSteps: Array<{ title: LocalizedCopy, body: LocalizedCopy }> = [
-  {
-    title: { 'zh-tw': '1. 取得隨機位元', en: '1. Take random bits' },
-    body: {
-      'zh-tw': '用瀏覽器的 crypto.getRandomValues 取得 32 位元隨機值，不使用 Math.random；瀏覽器沒有這個功能時，工具直接停下來說明，不改用其他來源。',
-      en: 'The browser\'s crypto.getRandomValues supplies 32-bit random words; Math.random is never used, and a browser without it stops the draw instead of falling back to something weaker.',
-    },
-  },
-  {
-    title: { 'zh-tw': '2. 去掉模數偏差', en: '2. Remove the modulo bias' },
-    body: {
-      'zh-tw': '直接取餘數會讓前幾個位置多分到一個隨機值。工具改用拒絕取樣：落在尾段不完整區間的隨機值丟掉重取，剩下的區間長度剛好是名單長度的整數倍。',
-      en: 'Taking a raw remainder would hand the first positions one extra word each. Rejection sampling discards any word in the incomplete tail, leaving a window whose length is a whole multiple of the list — the modulo is only applied inside it.',
-    },
-  },
-  {
-    title: { 'zh-tw': '3. 抽出不重複的名次', en: '3. Draw without repeats' },
-    body: {
-      'zh-tw': '以 Fisher–Yates 逐個位置交換，每一步都只在還沒被抽走的位置裡等機率取一個，因此同一個項目不可能被抽兩次。',
-      en: 'A Fisher–Yates partial shuffle swaps one position at a time, always choosing uniformly among the positions not yet taken, so nothing can be drawn twice.',
-    },
-  },
-  {
-    title: { 'zh-tw': '4. 輪盤只負責呈現', en: '4. The wheel only shows it' },
-    body: {
-      'zh-tw': '結果在動畫開始前就已決定，停止角度是由中選項目反推出來的；跳過動畫或關閉動畫都得到同一個結果。',
-      en: 'The result is decided before the animation starts and the stopping angle is derived from it, so skipping or disabling the animation gives the same result.',
-    },
-  },
-]
 
 /** What the list summary says, kept here so a count phrase is reviewed like any other sentence. */
 const summaryCopy = {
@@ -271,17 +204,6 @@ export function getRandomPickerCopy(locale: LocaleCode): Record<RandomPickerCopy
   ) as Record<RandomPickerCopyKey, string>
 }
 
-/**
- * A caveat that only makes sense while a repeated entry really is holding more
- * than one chance appears then; the rest are true of every draw and stay
- * visible whatever the settings are.
- */
-export function getRandomPickerCaveats(locale: LocaleCode, sharedDuplicates: boolean) {
-  return randomPickerCaveatKeys
-    .filter(key => key !== 'duplicates-share-chances' || sharedDuplicates)
-    .map(key => ({ key, text: randomPickerCaveats[key][locale] }))
-}
-
 /** The message a refused draw gets, with the numbers that make it actionable. */
 export function randomPickerErrorMessage(
   code: RandomPickerErrorCode,
@@ -306,10 +228,6 @@ export function getRandomPickerSummary(list: RandomPickerList, locale: LocaleCod
   return summary
 }
 
-export function getRandomPickerMethod(locale: LocaleCode) {
-  return randomPickerMethodSteps.map(step => ({ title: step.title[locale], body: step.body[locale] }))
-}
-
 function countPhrase(key: keyof typeof summaryCopy, count: number, locale: LocaleCode) {
   return summaryCopy[key][locale].replace('{count}', count.toLocaleString('en-US'))
 }
@@ -319,13 +237,6 @@ export function validateRandomPickerContent() {
 
   for (const key of randomPickerCopyKeys) {
     if (!hasLocalizedCopy(randomPickerCopy[key])) issues.push(`[copy:${key}] requires both locales`)
-  }
-
-  for (const key of randomPickerCaveatKeys) {
-    if (!hasLocalizedCopy(randomPickerCaveats[key])) issues.push(`[caveat:${key}] requires both locales`)
-  }
-  for (const key of Object.keys(randomPickerCaveats)) {
-    if (!randomPickerCaveatKeys.includes(key as RandomPickerCaveatKey)) issues.push(`[caveat:${key}] is not a reviewed caveat`)
   }
 
   for (const code of randomPickerErrorCodes) {
@@ -339,9 +250,6 @@ export function validateRandomPickerContent() {
   }
   for (const [key, copy] of Object.entries(summaryCopy)) {
     if (!hasLocalizedCopy(copy)) issues.push(`[summary:${key}] requires both locales`)
-  }
-  for (const [index, step] of randomPickerMethodSteps.entries()) {
-    if (!hasLocalizedCopy(step.title) || !hasLocalizedCopy(step.body)) issues.push(`[method:${index}] requires both locales`)
   }
 
   const questions = new Set<string>()

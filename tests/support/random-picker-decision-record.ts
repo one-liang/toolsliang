@@ -44,11 +44,11 @@ export function parseLimits(): Record<string, number> {
   return Object.fromEntries(rows.map(([, key, value]) => [key!, Number(value!.replaceAll(',', ''))]))
 }
 
-/** The sources the document marks as shown on the page. */
-export function parsePublishedSourceUrls(): string[] {
-  const pattern = /^\|[^|]+\|[^|]+\|[^|]+\| 是 \| <(https:\/\/[^>]+)> \|/gm
+/** Every source the document lists, and whether it marks the source as shown on the page. */
+export function parseSources(): Array<{ url: string, shownOnPage: boolean }> {
+  const pattern = /^\|[^|]+\|[^|]+\|[^|]+\| (是|否) \| <(https:\/\/[^>]+)> \|/gm
 
-  return tableRows('## 8. 來源清單', pattern).map(([, url]) => url!)
+  return tableRows('## 8. 來源清單', pattern).map(([, shown, url]) => ({ url: url!, shownOnPage: shown === '是' }))
 }
 
 export function parseDuplicatePolicies(): DuplicatePolicy[] {

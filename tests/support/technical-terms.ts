@@ -28,10 +28,7 @@ export const technicalTerms: Array<{ name: string, pattern: RegExp, locales?: Lo
  * exemption goes with the copy it covers; a stale one only stops exempting.
  * `selectors` are workspace blocks that issue removes from the rendered page.
  */
-export const rewrittenElsewhere: Array<{ issue: string, slug: string, terms?: string[], selectors?: string[] }> = [
-  // The two explanation blocks inside the random picker workspace.
-  { issue: '#83', slug: 'random-picker', selectors: ['.picker-caveats', '.picker-method'] },
-]
+export const rewrittenElsewhere: Array<{ issue: string, slug: string, terms?: string[], selectors?: string[] }> = []
 
 export function isRewrittenElsewhere(slug: string) {
   return rewrittenElsewhere.some(entry => entry.slug === slug && !entry.terms && !entry.selectors)

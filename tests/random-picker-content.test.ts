@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { copy, getTool, supportedLocales, type LocaleCode } from '@/features/tools/catalog'
 import {
-  getRandomPickerCaveats,
   getRandomPickerCopy,
-  getRandomPickerMethod,
   getRandomPickerSummary,
-  randomPickerCaveats,
   randomPickerCopyKeys,
   randomPickerErrorMessage,
   randomPickerFaq,
@@ -13,7 +10,7 @@ import {
 } from '@/features/tools/random-picker/content'
 import { parseRandomPickerList } from '@/features/tools/random-picker/domain/list'
 import { randomPickerErrorCodes, randomPickerLimits } from '@/features/tools/random-picker/domain/reference'
-import { randomPickerCaveatKeys } from '@/features/tools/random-picker/domain/sources'
+import { randomPickerCaveatKeys, type RandomPickerCaveatKey } from '@/features/tools/random-picker/domain/sources'
 
 /**
  * Everything the tool says out loud, in the two languages it has to say it in —
@@ -34,11 +31,23 @@ function everyVisibleString(locale: LocaleCode) {
     ...tool.aliases[locale],
     ...tool.keywords[locale],
     ...randomPickerCopyKeys.map(key => getRandomPickerCopy(locale)[key]),
-    ...randomPickerCaveatKeys.map(key => randomPickerCaveats[key][locale]),
     ...randomPickerErrorCodes.map(code => randomPickerErrorMessage(code, { count: 3, limit: 5, entries: 2 }, locale)),
-    ...getRandomPickerMethod(locale).flatMap(step => [step.title, step.body]),
     ...randomPickerFaq.flatMap(entry => [entry.heading[locale], entry.body[locale]]),
   ]
+}
+
+/**
+ * #83 took the §7.1 boundaries out of the workspace. Each one still has to be
+ * said on the page, in plain words: here is the sentence that says it, in the
+ * question that answers it, or in the workspace while it is true of the list.
+ */
+const boundaryWording: Record<RandomPickerCaveatKey, { question?: string, workspace?: string, 'zh-tw': string, en: string }> = {
+  'equal-probability-scope': { question: '這個工具怎麼做到每個人機會一樣？', 'zh-tw': '都不會影響機會', en: 'never affect its chance' },
+  'no-audit': { question: '這個結果可以拿來公證或事後稽核嗎？', 'zh-tw': '無法向別人證明', en: 'cannot prove' },
+  'not-a-lottery': { question: '這個結果可以拿來公證或事後稽核嗎？', 'zh-tw': '主管機關核准', en: 'regulatory approval' },
+  'duplicates-share-chances': { workspace: 'duplicatesShared', 'zh-tw': '各佔一個機會', en: 'its own chance' },
+  'wheel-is-presentation': { question: '輪盤的動畫會影響抽選結果嗎？', 'zh-tw': '動畫開始前就已經抽好', en: 'drawn before the animation starts' },
+  'local-processing': { question: '我的名單會被上傳嗎？', 'zh-tw': '不會送到', en: 'never stored' },
 }
 
 describe('random picker content', () => {
@@ -84,28 +93,34 @@ describe('random picker content', () => {
     expect(messy.map(item => item.key)).toEqual(['entries', 'blank', 'merged'])
   })
 
-  it('explains a repeated name only while it really has more than one chance', () => {
-    const withDuplicates = getRandomPickerCaveats('zh-tw', true).map(caveat => caveat.key)
-    const withoutDuplicates = getRandomPickerCaveats('zh-tw', false).map(caveat => caveat.key)
+  it('still states every documented boundary somewhere on the page, in both locales', () => {
+    expect(Object.keys(boundaryWording)).toEqual([...randomPickerCaveatKeys])
 
-    expect(withDuplicates).toEqual([...randomPickerCaveatKeys])
-    expect(withoutDuplicates).not.toContain('duplicates-share-chances')
-    expect(withoutDuplicates, '其餘免責一律呈現').toHaveLength(randomPickerCaveatKeys.length - 1)
+    for (const [key, wording] of Object.entries(boundaryWording)) {
+      for (const locale of supportedLocales) {
+        const said = wording.question
+          ? randomPickerFaq.find(entry => entry.heading['zh-tw'] === wording.question)?.body[locale]
+          : getRandomPickerCopy(locale)[wording.workspace as keyof ReturnType<typeof getRandomPickerCopy>]
+
+        expect(said, `${key}｜${locale}`).toContain(wording[locale])
+      }
+    }
   })
 
   it('says out loud that a local draw cannot be proven to anyone else', () => {
-    expect(randomPickerCaveats['no-audit']['zh-tw']).toContain('無法向別人證明')
-    expect(randomPickerCaveats['no-audit'].en.toLowerCase()).toContain('no third-party audit')
-    expect(randomPickerCaveats['wheel-is-presentation']['zh-tw']).toContain('動畫開始前')
+    const audit = randomPickerFaq.find(entry => entry.heading['zh-tw'] === '這個結果可以拿來公證或事後稽核嗎？')!
+
+    expect(audit.body['zh-tw']).toContain('不行')
+    expect(audit.body.en.toLowerCase()).toContain('no third-party audit')
+    expect(getTool('random-picker')!.seo.answer['zh-tw'], '「開始前先知道」也要說').toContain('無法由第三方稽核')
   })
 
-  it('names the two algorithms the equal-chance claim rests on', () => {
-    const method = getRandomPickerMethod('zh-tw')
-
-    expect(method.length).toBeGreaterThanOrEqual(4)
-    expect(method.map(step => step.body).join('')).toContain('getRandomValues')
-    expect(method.map(step => step.body).join('')).toContain('Fisher–Yates')
-    expect(getRandomPickerMethod('en').map(step => step.body).join('')).toContain('modulo')
+  it('explains equal chances without naming an algorithm', () => {
+    for (const locale of supportedLocales) {
+      for (const text of everyVisibleString(locale)) {
+        expect(text, text).not.toMatch(/Fisher|Yates|Durstenfeld|getRandomValues|Math\.random|拒絕取樣|模數|rejection sampling|\bmodulo\b/i)
+      }
+    }
   })
 
   it('publishes the reviewed questions once each', () => {

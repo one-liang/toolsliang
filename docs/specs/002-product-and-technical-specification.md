@@ -202,7 +202,7 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 - **Local boundary:** Candidate names, weights—weights are not supported in version one—results, and history remain in memory unless the user explicitly exports a local file. No candidates appear in URLs or logs.
 - **Module and interface:** A pure random-selection module consumes candidate ids and an injectable cryptographic random-byte source. It uses rejection sampling to avoid modulo bias and Fisher–Yates for without-replacement ordering. The wheel is presentation only and lands on the precomputed result; animation never determines fairness.
 - **Route and slug:** `/{locale}/tools/random-picker/`; stable slug `random-picker`.
-- **Bilingual content:** `本機抽選與抽籤輪盤` / `Local Random Draw & Wheel`; state equal probability, local processing, and no anti-cheat/audit capability.
+- **Bilingual content:** `抽籤與輪盤` / `Random Draw & Wheel`; state equal probability, local processing, and no anti-cheat/audit capability.
 - **SEO/AEO/GEO:** Visible explanation answers how equal probability is achieved and why a local result cannot be independently verified. Do not use “certified fair” or “online lottery.”
 - **Errors, cancellation, progress, capability:** Detect empty/duplicate-only lists, invalid draw count, unavailable secure randomness, and too many entries. Parsing can show progress for large pasted lists. A running wheel can be skipped/cancelled without changing the chosen result.
 - **Accessibility:** The form and text-result flow is complete without wheel/drag. The wheel has an adjacent candidate list, result live region, skip-animation control, and reduced-motion instant result.

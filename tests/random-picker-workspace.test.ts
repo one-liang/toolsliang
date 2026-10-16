@@ -1,14 +1,14 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import RandomPickerWorkspace from '@/components/RandomPickerWorkspace.vue'
-import { randomPickerCaveats } from '@/features/tools/random-picker/content'
+import { getRandomPickerCopy } from '@/features/tools/random-picker/content'
 import { randomPickerLimits } from '@/features/tools/random-picker/domain/reference'
-import { randomPickerReferenceVersion } from '@/features/tools/random-picker/domain/sources'
 import { setTestRoute } from './support/nuxt-stubs'
 
 function mountWorkspace(locale: 'zh-tw' | 'en' = 'zh-tw') {
   setTestRoute({ path: `/${locale}/tools/random-picker/`, params: { locale, slug: 'random-picker' } })
-  return mount(RandomPickerWorkspace)
+  // Attached, so focus moves the way it does on a page.
+  return mount(RandomPickerWorkspace, { attachTo: document.body })
 }
 
 type Workspace = ReturnType<typeof mountWorkspace>
@@ -52,6 +52,7 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.useRealTimers()
   Reflect.deleteProperty(window, 'matchMedia')
+  document.body.innerHTML = ''
 })
 
 describe('random picker workspace', () => {
@@ -76,12 +77,20 @@ describe('random picker workspace', () => {
 
   it('merges repeated entries only when asked, and says how many it merged', async () => {
     const wrapper = await enterList(mountWorkspace(), 'Amy\nAmy\nBob')
-    expect(wrapper.get('.picker-caveats').text()).toContain(randomPickerCaveats['duplicates-share-chances']['zh-tw'])
+    const note = wrapper.get('.picker-duplicates-note')
+    expect(note.text()).toBe(getRandomPickerCopy('zh-tw').duplicatesShared)
+    expect(wrapper.get('input[name="picker-duplicates"][value="keep"]').attributes('aria-describedby'), '說明掛在設定上')
+      .toContain(note.attributes('id'))
 
     await wrapper.get('input[name="picker-duplicates"][value="merge"]').setValue()
     expect(wrapper.findAll('.picker-summary li').map(item => item.text()).join(' ')).toContain('合併重複 1 筆')
-    expect(wrapper.get('.picker-caveats').text(), '合併後就沒有多佔機會的問題')
-      .not.toContain(randomPickerCaveats['duplicates-share-chances']['zh-tw'])
+    expect(wrapper.find('.picker-duplicates-note').exists(), '合併後就沒有多佔機會的問題').toBe(false)
+  })
+
+  it('says nothing about repeats while the list has none', async () => {
+    const wrapper = await enterList(mountWorkspace(), 'Amy\nBob')
+
+    expect(wrapper.find('.picker-duplicates-note').exists()).toBe(false)
   })
 
   it('adds one entry at a time without disturbing the pasted list', async () => {
@@ -247,21 +256,85 @@ describe('random picker workspace', () => {
     expect(wrapper.get('.picker-draw').attributes('disabled'), '改動名單後可以再試一次').toBeUndefined()
   })
 
-  it('names the rule version and cites the method sources', () => {
+  it('keeps the result, how it is shown and the buttons that act on it in one stage', () => {
+    const wrapper = mountWorkspace()
+    const stage = wrapper.get('.picker-stage')
+
+    expect(stage.attributes('aria-labelledby')).toBe('picker-stage-title')
+    expect(stage.get('#picker-stage-title').text()).toBe('抽選結果')
+    expect(stage.find('.picker-result[role="status"]').exists()).toBe(true)
+    expect(stage.findAll('input[name="picker-presentation"]'), '名單／輪盤就在它改變的結果旁').toHaveLength(2)
+    expect(stage.find('.picker-draw').exists()).toBe(true)
+    expect(stage.find('.picker-reset').exists()).toBe(true)
+  })
+
+  it('leaves the explanations to the questions below the workspace (#83)', () => {
     const wrapper = mountWorkspace()
 
-    expect(wrapper.get('.picker-source').text()).toContain(randomPickerReferenceVersion)
-    expect(wrapper.get('.picker-source').get('a').attributes('href')).toBe('https://www.w3.org/TR/WebCryptoAPI/')
-    expect(wrapper.get('.picker-method').text()).toContain('Fisher–Yates')
+    for (const removed of ['.picker-caveats', '.picker-method', '.picker-source']) {
+      expect(wrapper.find(removed).exists(), removed).toBe(false)
+    }
+    expect(wrapper.text()).not.toMatch(/Fisher|getRandomValues|拒絕取樣|random-picker-20/)
+  })
+
+  it('offers to draw again once there is a result, and draws from scratch after a change', async () => {
+    scriptRandom([0])
+    const wrapper = await draw(await enterList(mountWorkspace(), 'Amy\nBob'))
+    expect(wrapper.get('.picker-draw').text()).toBe('再抽一次')
+
+    await enterList(wrapper, 'Amy\nBob\nCindy')
+    expect(wrapper.get('.picker-draw').text(), '名單改了就是新的一次抽選').toBe('開始抽選')
+  })
+
+  it('delivers a repeated name as a new result, so it is announced again', async () => {
+    scriptRandom([0])
+    const wrapper = await draw(await enterList(mountWorkspace(), 'Amy\nBob'))
+    const first = wrapper.get('.picker-result__list').element
+
+    await draw(wrapper)
+    expect(drawnEntries(wrapper)).toEqual(['Amy'])
+    expect(wrapper.get('.picker-result__list').element, '同一個名字也要換成新的節點').not.toBe(first)
+  })
+
+  it('keeps the keyboard in the stage through a spin, without leaving the result', async () => {
+    vi.useFakeTimers()
+    stubReducedMotion(false)
+    scriptRandom([1])
+    const wrapper = await enterList(mountWorkspace(), 'Amy\nBob\nCindy')
+    await wrapper.get('input[name="picker-presentation"][value="wheel"]').setValue()
+
+    const drawButton = wrapper.get('.picker-draw').element as HTMLButtonElement
+    drawButton.focus()
+    await draw(wrapper)
+    await wrapper.vm.$nextTick()
+    expect(document.activeElement, '抽選鍵停用時焦點交給跳過鍵').toBe(wrapper.get('.picker-skip').element)
+    expect(wrapper.find('.picker-reset').exists(), '轉動中只留跳過鍵').toBe(false)
+
+    vi.advanceTimersByTime(5_000)
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+    expect(document.activeElement, '停下來後焦點回到再抽一次').toBe(wrapper.get('.picker-draw').element)
+    expect(wrapper.get('.picker-draw').text()).toBe('再抽一次')
+  })
+
+  it('lists every name on the wheel in full, even where a slice has to shorten it', async () => {
+    const long = '一二三四五六七八九十十一'
+    const wrapper = await enterList(mountWorkspace(), `${long}\nBob\nCindy`)
+    await wrapper.get('input[name="picker-presentation"][value="wheel"]').setValue()
+
+    expect(wrapper.findAll('.picker-wheel__label')[0]!.text(), '扇形上的名字會截短').not.toBe(long)
+    expect(wrapper.findAll('.picker-candidates li')[0]!.text()).toBe(long)
+    expect(wrapper.get('.picker-candidates').attributes('aria-labelledby')).toBe('picker-candidates-title')
   })
 
   it('speaks English on the English page', async () => {
-    const wrapper = await enterList(mountWorkspace('en'), 'Amy\nBob')
-    await wrapper.get('#picker-count').setValue('5')
+    const wrapper = await enterList(mountWorkspace('en'), 'Amy\nAmy')
+    expect(wrapper.get('.picker-duplicates-note').text()).toContain('Merge repeats')
 
+    await wrapper.get('#picker-count').setValue('5')
     expect(wrapper.get('label[for="picker-list"]').text()).toBe('Candidates')
+    expect(wrapper.get('#picker-stage-title').text()).toBe('Result')
     expect(wrapper.get('[role="alert"]').text()).toBe('You asked for 5 but the list only has 2 to draw from.')
-    expect(wrapper.get('.picker-caveats').text()).toContain('no third-party audit')
   })
 
   it('keeps the list and the result out of device storage', async () => {
