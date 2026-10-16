@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { productImageWorkbenchCanaries } from '../support/product-image-workbench-canaries'
 import { gotoHydrated } from './support/hydration'
+import { settleTransitions } from './support/motion'
 import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
 
 guardToolContentBoundary(productImageWorkbenchCanaries, { allowedOrigins: ['http://127.0.0.1:4173'] })
@@ -174,6 +175,7 @@ test('合規主圖批次：兩張圖走完流程、逐項下載並在本機打�
   await page.getByRole('link', { name: '下載封存檔' }).click()
   expect((await archive).suggestedFilename()).toBe('compliant-product-images.zip')
 
+  await settleTransitions(page)
   expect((await new AxeBuilder({ page }).include('.product-image-workbench').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
 })
 

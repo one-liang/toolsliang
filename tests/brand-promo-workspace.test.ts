@@ -2,13 +2,18 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { expect, it, vi, afterEach } from 'vitest'
 import Workspace from '@/components/BrandPromoImageWorkspace.vue'
 afterEach(() => vi.unstubAllGlobals())
-it('工作區提供有名稱的圖片入口、圖層類型與本機資產管理連結', async () => {
+it('工作區以四個按鈕加入圖層，不提供保存到裝置的入口，也不開啟裝置資料庫', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
-  const wrapper = mount(Workspace, { global: { stubs: { NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' } } } })
+  const open = vi.fn(() => { throw new Error('the promo editor must not open a device database') })
+  vi.stubGlobal('indexedDB', { open })
+  const wrapper = mount(Workspace)
   await flushPromises()
-  expect(wrapper.get('label[for="promo-file"]').text()).toBe('匯入圖片')
-  expect(wrapper.get('#promo-kind').findAll('option').map(item => item.text())).toEqual(['背景', '商品圖', '框版', 'Logo'])
-  expect(wrapper.get('a[href="/zh-tw/storage/"]').text()).toContain('本機資產')
-  expect(wrapper.get('button[type="submit"]').attributes('disabled')).toBeDefined()
+  expect(wrapper.findAll('[data-promo-add]').map(item => item.attributes('aria-label'))).toEqual(['加入商品圖', '加入背景', '加入框版', '加入 Logo'])
+  expect(wrapper.findAll('[data-promo-add]').map(item => item.text())).toEqual(['商品圖', '背景', '框版', 'Logo'])
+  expect(wrapper.get('#promo-file').attributes('accept')).toContain('image/png')
+  expect(wrapper.text()).not.toContain('保存')
+  expect(wrapper.find('a[href*="/storage/"]').exists()).toBe(false)
+  expect(wrapper.get('#promo-produce').attributes('disabled')).toBeDefined()
+  expect(open).not.toHaveBeenCalled()
   wrapper.unmount()
 })

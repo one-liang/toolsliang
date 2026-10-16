@@ -1025,27 +1025,28 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover__source img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); width: auto; height: auto; margin-inline: auto; object-fit: contain; border: var(--rule) solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
 
 
-/* Brand compositions use the shared flat tool surface and image preview budget. */
-.brand-promo__editor { display: grid; gap: 24px; margin-block: 24px; }
-.brand-promo__layers, .brand-promo__preview { min-width: 0; }
-.brand-promo h2 { margin-block: 0 16px; font-size: 1.125rem; }
-.brand-promo__layers ol, .brand-promo__library ul { padding: 0; list-style: none; display: grid; gap: 8px; }
-.brand-promo__layers li { display: flex; align-items: center; gap: 4px; border-radius: var(--radius-sm); }
-.brand-promo__layers li > button { flex: 1; min-width: 0; width: 100%; justify-content: flex-start; white-space: normal; text-align: start; }
-.brand-promo__grip { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; min-height: 44px; color: var(--color-muted-foreground); cursor: grab; }
-.brand-promo__layer--drop { outline: 2px dashed var(--color-primary-strong); outline-offset: 2px; }
-.brand-promo__layer--dragging { opacity: .5; }
-.brand-promo__thumb { flex: none; width: 32px; height: 32px; object-fit: contain; border-radius: 4px; background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; }
-.brand-promo__layers button[aria-pressed="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
-.brand-promo__controls { border: 0; padding: 0; margin-block: 24px; display: grid; gap: 16px; min-width: 0; }
-.brand-promo__controls legend { margin-bottom: 16px; font-weight: 650; }
-.brand-promo__filename, .brand-promo__library li { overflow-wrap: anywhere; }
-/* The stage frame leaves room for handles just outside the canvas, and clips anything further out. */
-.brand-promo__stage-frame { overflow: hidden; padding: 12px; }
-.brand-promo__stage { position: relative; width: min(100%, calc(var(--image-preview-max-height) * var(--promo-ratio, 1))); margin-inline: auto; border: var(--rule) solid var(--color-muted-foreground); background: var(--color-surface-subtle); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.brand-promo__stage:focus-visible { outline: 3px solid var(--color-primary-strong); outline-offset: 3px; }
+/* Brand compositions: adding a layer, the preview and the PNG action stay on the first
+   screen; the layer panel follows. The add buttons stand beside the preview at every
+   width, as an editor's tool palette does, and the stage is capped by the viewport
+   height, so a short screen shrinks the preview instead of pushing the action down. */
+.brand-promo { --promo-stage-max: clamp(160px, calc(100svh - 580px), 400px); }
+.brand-promo__editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "preview add" "output output" "panel panel"; gap: 12px; align-items: start; }
+.brand-promo__add { grid-area: add; }
+.brand-promo__preview { grid-area: preview; }
+.brand-promo__output { grid-area: output; }
+.brand-promo__panel { grid-area: panel; }
+.brand-promo__add, .brand-promo__preview, .brand-promo__output, .brand-promo__panel { min-width: 0; }
+.brand-promo__label { margin: 0 0 8px; font-size: .86rem; font-weight: 700; }
+.brand-promo__add-buttons { display: grid; gap: 6px; }
+.brand-promo__add-buttons .ui-button { padding-inline: 14px; }
+.brand-promo__file { display: none; }
+/* The stage frame leaves room for handles and the focus ring just outside the canvas, and clips anything further out. */
+.brand-promo__stage-frame { overflow: hidden; padding: 8px; }
+.brand-promo__stage { position: relative; width: min(100%, calc(var(--promo-stage-max) * var(--promo-ratio, 1))); margin-inline: auto; border: var(--rule) solid var(--color-muted-foreground); background: var(--color-surface-subtle); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.brand-promo__stage:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
 .brand-promo__canvas { position: absolute; inset: 0; overflow: hidden; }
 .brand-promo__canvas img { position: absolute; display: block; max-width: none; pointer-events: none; -webkit-user-drag: none; }
+.brand-promo__empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; color: var(--color-muted-foreground); font-size: .86rem; font-weight: 700; text-align: center; text-wrap: balance; }
 .brand-promo__selection { position: absolute; box-sizing: border-box; border: var(--rule) solid var(--color-primary-strong); box-shadow: 0 0 0 1px rgb(255 255 255 / .85); cursor: move; }
 .brand-promo__handle { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border: 2px solid var(--color-primary-strong); border-radius: 2px; background: #ffffff; touch-action: none; }
 /* A finger-sized hit area around each small visible handle. */
@@ -1058,13 +1059,33 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .brand-promo__handle--s { left: 50%; top: 100%; cursor: ns-resize; }
 .brand-promo__handle--sw { left: 0; top: 100%; cursor: nesw-resize; }
 .brand-promo__handle--w { left: 0; top: 50%; cursor: ew-resize; }
-.brand-promo__result { margin: 0; }
-.brand-promo__result img { display: block; max-width: 100%; max-height: var(--image-preview-max-height); object-fit: contain; }
-.brand-promo__library { margin-top: 24px; padding-top: 24px; border-top: var(--rule) solid var(--color-border); }
-.brand-promo__library li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.brand-promo__library a { color: var(--color-primary-strong); text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; margin-right: 16px; }
+.brand-promo__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.brand-promo__primary { flex: 1 1 8rem; }
+/* Empty live regions stay in place for screen readers but take no room. */
+.brand-promo__output .field-error:empty, .brand-promo__status:empty { margin: 0; }
+.brand-promo__status { margin: 8px 0 0; font-size: .86rem; font-weight: 700; }
+.brand-promo__panel { display: grid; gap: 20px; padding-top: 20px; border-top: 1px solid var(--color-border-subtle); }
+.brand-promo h2 { margin: 0 0 12px; font-size: 1.0625rem; }
+.brand-promo__layers ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.brand-promo__layers li { display: flex; align-items: center; gap: 4px; border-radius: var(--radius-sm); }
+.brand-promo__layers li > button { flex: 1; min-width: 0; width: 100%; justify-content: flex-start; white-space: normal; text-align: start; }
+.brand-promo__grip { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; min-height: 44px; color: var(--color-muted-foreground); cursor: grab; }
+.brand-promo__layer--drop { outline: 2px dashed var(--color-primary-strong); outline-offset: 2px; }
+.brand-promo__layer--dragging { opacity: .5; }
+.brand-promo__thumb { flex: none; width: 32px; height: 32px; object-fit: contain; border-radius: 4px; background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; }
+.brand-promo__layers button[aria-pressed="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
+.brand-promo__controls { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: 16px; }
+.brand-promo__layers .brand-promo__controls { margin-top: 20px; }
+.brand-promo__controls legend { padding: 0; margin-bottom: 12px; font-size: 1.0625rem; font-weight: 800; }
+.brand-promo__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.brand-promo__fields .field-group label { overflow-wrap: anywhere; }
+.brand-promo__layer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Side by side: the preview holds the left column and stays in view while the panel scrolls. */
 @media (min-width: 768px) {
-  .brand-promo__editor { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+  .brand-promo { --promo-stage-max: clamp(260px, calc(100svh - 350px), 640px); }
+  .brand-promo__editor { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); grid-template-rows: auto auto 1fr; grid-template-areas: "preview add" "preview output" "preview panel"; column-gap: 24px; row-gap: 16px; }
+  .brand-promo__add-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .brand-promo__preview { position: sticky; top: 80px; }
 }
 
 /* The workbench keeps the shared tool surface; only its step rail and stacked previews are new. */
