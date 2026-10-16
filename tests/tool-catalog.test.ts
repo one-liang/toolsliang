@@ -54,7 +54,7 @@ describe('tool catalog', () => {
   })
 
   it('exposes only published tools to public catalog consumers', () => {
-    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar', 'pdf-signature'])
+    expect(publishedTools.map(tool => tool.slug)).toEqual(['device-time', 'roc-year-converter', 'image-compressor', 'image-background-remover', 'brand-promo-image', 'product-image-workbench', 'bmi-calculator', 'ntd-uppercase', 'random-picker', 'taiwan-calendar', 'custom-calendar', 'pdf-signature'])
   })
 
   it('keeps unpublished registrations out of public lookup and category output', () => {
@@ -185,6 +185,7 @@ describe('tool catalog', () => {
   it('generates public routes only for supported locales and published stable slugs', () => {
     expect(getPublicToolRoutes()).toEqual([
       '/zh-tw/tools/device-time/',
+      '/zh-tw/tools/roc-year-converter/',
       '/zh-tw/tools/image-compressor/',
       '/zh-tw/tools/image-background-remover/',
       '/zh-tw/tools/brand-promo-image/',
@@ -196,6 +197,7 @@ describe('tool catalog', () => {
       '/zh-tw/tools/custom-calendar/',
       '/zh-tw/tools/pdf-signature/',
       '/en/tools/device-time/',
+      '/en/tools/roc-year-converter/',
       '/en/tools/image-compressor/',
       '/en/tools/image-background-remover/',
       '/en/tools/brand-promo-image/',

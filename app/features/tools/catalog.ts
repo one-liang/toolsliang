@@ -9,6 +9,7 @@ import { taiwanCalendarContentReview } from './taiwan-calendar/domain/sources'
 import { customCalendarDefinition } from './custom-calendar/definition'
 import { pdfSignatureDefinition } from './pdf-signature/definition'
 import { deviceTimeDefinition } from './device-time/definition'
+import { rocYearConverterDefinition } from './roc-year-converter/definition'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -175,6 +176,7 @@ export const toolCategories: ToolCategory[] = [
 
 const registeredTools: ToolDefinition[] = [
   deviceTimeDefinition,
+  rocYearConverterDefinition,
   imageCompressorDefinition,
   imageBackgroundRemoverDefinition,
   brandPromoImageDefinition,
@@ -329,8 +331,8 @@ const registeredTools: ToolDefinition[] = [
       en: 'Look up Gregorian and ROC dates, lunar dates, solar terms, holidays, and makeup workdays.',
     },
     aliases: {
-      'zh-tw': ['國曆農曆對照', '放假日查詢', '民國年對照'],
-      en: ['Taiwan holidays', 'lunar calendar', 'ROC year converter'],
+      'zh-tw': ['國曆農曆對照', '放假日查詢'],
+      en: ['Taiwan holidays', 'lunar calendar'],
     },
     keywords: {
       'zh-tw': ['農曆', '節氣', '國定假日', '補班', '民國'],
