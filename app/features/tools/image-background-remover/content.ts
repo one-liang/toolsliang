@@ -20,7 +20,7 @@ export const portraitScopeNotice: LocalizedCopy = {
 export const backgroundRemovalErrors: Record<string, LocalizedCopy> = {
   ...imageInputErrors,
   unsupported_browser: { 'zh-tw': '這個瀏覽器無法在本機執行去背模型。請改用最新版的 Chrome、Edge、Firefox 或 Safari 後重試。原圖未變更。', en: 'This browser cannot run the background removal model on your device. Retry in an up-to-date Chrome, Edge, Firefox, or Safari. Your original is unchanged.' },
-  model_download_failed: { 'zh-tw': '找不到已下載的模型或推論資源，請重新下載後再試一次。原圖未變更。', en: 'The downloaded model or runtime could not be found. Download it again and retry. Your original is unchanged.' },
+  model_download_failed: { 'zh-tw': '找不到去背需要的檔案。請重試，工具會重新準備。原圖未變更。', en: 'The files the cutout needs could not be found. Retry and the tool will get them ready again. Your original is unchanged.' },
   model_digest_mismatch: { 'zh-tw': '已下載的模型與公布的指紋不符，已停止使用。請重新下載模型後再試一次。', en: 'The downloaded model does not match the published fingerprint and was not used. Download it again and retry.' },
   insufficient_memory: { 'zh-tw': '可用記憶體不足以在本機完成去背。請關閉其他分頁、改用較小的圖片後重試。原圖未變更。', en: 'There is not enough memory to finish locally. Close other tabs or use a smaller image and retry. Your original is unchanged.' },
   inference_failed: { 'zh-tw': '模型未能完成這張圖片。請重試，或改用另一張人像照片。原圖未變更。', en: 'The model did not finish this image. Retry, or try another portrait photo. Your original is unchanged.' },

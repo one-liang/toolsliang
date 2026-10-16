@@ -8,6 +8,7 @@ import * as ntdContent from '@/features/tools/ntd-uppercase/content'
 import * as pdfSignatureContent from '@/features/tools/pdf-signature/content'
 import * as productImageWorkbenchContent from '@/features/tools/product-image-workbench/content'
 import * as randomPickerContent from '@/features/tools/random-picker/content'
+import * as rocYearContent from '@/features/tools/roc-year-converter/content'
 import * as taiwanCalendarContent from '@/features/tools/taiwan-calendar/content'
 import {
   copy,
@@ -51,6 +52,7 @@ const contentModules: Record<string, Record<string, unknown>> = {
   'pdf-signature': pdfSignatureContent,
   'product-image-workbench': productImageWorkbenchContent,
   'random-picker': randomPickerContent,
+  'roc-year-converter': rocYearContent,
   'taiwan-calendar': taiwanCalendarContent,
 }
 
@@ -144,7 +146,7 @@ describe('the sources a tool page lists', () => {
 
   it('are only listed by tools that rest on outside content; the rest say how they handle yours', () => {
     expect(reviewed.map(tool => tool.slug).sort())
-      .toEqual(['bmi-calculator', 'ntd-uppercase', 'taiwan-calendar'])
+      .toEqual(['bmi-calculator', 'ntd-uppercase', 'roc-year-converter', 'taiwan-calendar'])
 
     for (const tool of publishedTools.filter(candidate => !candidate.contentReview)) {
       expect(tool.pagePresentation.showLocalProcessingStatement, tool.slug).toBe(true)
