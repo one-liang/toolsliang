@@ -4,4 +4,6 @@
 
 撤下的只有頁面。商品圖工作台的合規分支仍沿用 `app/features/tools/compliant-product-image/` 的通路 preset、規則判定與版面引擎，ADR-0012 對合規主圖與品牌宣傳圖的區分維持不變；工作台原本連到獨立頁「查看完整規則與來源」的連結，改為直接外連該 preset 的通路公開規格原文。`docs/research/005-compliant-product-image-presets-and-sources.md` 仍是這些 preset 的查核依據。
 
+補註（#107）：ADR-0022 移除了工作台的合規分支。通路 preset、規則判定、來源連結與核對結果都已移除，ADR-0012 的區分由 ADR-0022 取代；工作台只產生品牌宣傳圖，版型步驟仍沿用這個資料夾的版面引擎。`docs/research/005-compliant-product-image-presets-and-sources.md` 改為不再使用的歷史紀錄。
+
 若日後要恢復獨立頁，需重新評估工具目錄的定位，並補回工作區、FAQ 與 e2e 驗證。

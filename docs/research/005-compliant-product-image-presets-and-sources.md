@@ -1,5 +1,7 @@
 # 合規主圖通路規格與 preset 資料模型決策紀錄
 
+> **已不再使用（2026-10-16，ADR-0022）**：商品圖工作台移除了通路規格。本紀錄提到的 `domain/reference.ts`、`preset.ts`、`sources.ts` 與 `tests/compliant-product-image-reference.test.ts`、`-preset.test.ts` 都已刪除，沒有任何程式再引用這份紀錄。本文件只保留作為當時查核的歷史紀錄，其中的通路規格不再維護，也不代表各通路目前的規定。
+
 - 對應 ticket：[T20] 研究合規主圖規格與 preset 資料模型（issue #22）
 - 後續 ticket：[T21] 實作合規主圖工具（issue #23）
 - 相關規格：[docs/specs/002-product-and-technical-specification.md](../specs/002-product-and-technical-specification.md) 12.9 節
