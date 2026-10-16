@@ -35,7 +35,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it('以有名稱的步驟列開場，合規主圖分支不提供品牌素材與壓縮步驟', async () => {
+it('以有名稱的步驟列開場，不能執行的步驟仍列出但不佔編號', async () => {
   const wrapper = mountWorkspace()
   await flushPromises()
 
@@ -50,6 +50,10 @@ it('以有名稱的步驟列開場，合規主圖分支不提供品牌素材與�
   expect(wrapper.findAll('.workbench__state').map(item => item.text()))
     .toEqual(['可以開始', '不適用', '不適用', '不適用', '不適用', '尚未開放'])
   expect(wrapper.get('[data-workbench-panel="import"]').text()).toContain('選擇商品圖')
+  // ADR-0022: there is no purpose to choose and no channel to pick any more.
+  expect(wrapper.find('input[name="workbench-purpose"]').exists()).toBe(false)
+  expect(wrapper.find('#workbench-preset').exists()).toBe(false)
+  expect(wrapper.text()).not.toMatch(/通路|合規|preset/)
   wrapper.unmount()
 })
 

@@ -13,50 +13,17 @@ const formats: EncodableMimeType[] = ['image/png', 'image/jpeg', 'image/webp']
 const send = (message: WorkerReply<CompliantRenderWireOutput>, transfer: Transferable[] = []) => self.postMessage(message, transfer)
 const progress = (stage: string) => send({ type: 'progress', progress: { stage, completed: 0, total: 1 } })
 
-/** Where the search for a capacity-compliant encode starts, and how low it may go. */
-const startQuality = 0.92
-const lowestQuality = 0.05
-const qualitySteps = 7
+/** The quality a lossy layout is written at; the compress step is where capacity is decided. */
+const layoutQuality = 0.92
 
 const capabilities = () => detectEncodableFormats(formats)
 
-/**
- * Writes the canvas inside the channel's capacity range.
- *
- * A channel that states a maximum is stating a requirement, so the search walks
- * the encoder quality down until the file fits and keeps the best-looking one
- * that does. A minimum can only be approached from the other side — the highest
- * quality the maximum still allows — and when even that is under the floor the
- * bytes are returned anyway, so `checkOutputAgainstPreset` reports the miss
- * instead of this function inventing detail the image does not have.
- */
-async function encodeWithinRange(canvas: OffscreenCanvas, input: CompliantRenderInput) {
-  const encode = async (quality?: number) => {
-    const blob = await canvas.convertToBlob({ type: input.format, quality })
-    if (blob.type !== input.format) throw new Error('unsupported_encoder')
+async function encode(canvas: OffscreenCanvas, input: CompliantRenderInput) {
+  const quality = input.format === 'image/png' ? undefined : layoutQuality
+  const blob = await canvas.convertToBlob({ type: input.format, quality })
+  if (blob.type !== input.format) throw new Error('unsupported_encoder')
 
-    return { blob, quality }
-  }
-  if (input.format === 'image/png') return encode()
-
-  let best = await encode(startQuality)
-  if (input.maxBytes !== undefined && best.blob.size > input.maxBytes) {
-    let low = lowestQuality
-    let high = startQuality
-    best = await encode(low)
-    for (let step = 0; step < qualitySteps; step++) {
-      const middle = (low + high) / 2
-      const candidate = await encode(middle)
-      if (candidate.blob.size <= input.maxBytes) { best = candidate; low = middle }
-      else high = middle
-    }
-  }
-  else if (input.minBytes !== undefined && best.blob.size < input.minBytes) {
-    const highest = await encode(1)
-    if (input.maxBytes === undefined || highest.blob.size <= input.maxBytes) best = highest
-  }
-
-  return best
+  return { blob, quality }
 }
 
 async function render(input: CompliantRenderInput) {
@@ -98,7 +65,7 @@ async function render(input: CompliantRenderInput) {
     const context = canvas.getContext('2d')
     if (!context) { send({ type: 'error', code: 'unsupported_browser' }); return }
     // The background is painted first so a contained fit or an offset crop never
-    // leaves a transparent hole a channel would read as a white or black edge.
+    // leaves a transparent hole that reads as a white or black edge.
     context.fillStyle = input.background
     context.fillRect(0, 0, input.width, input.height)
     context.drawImage(bitmap, placement.x, placement.y, placement.width, placement.height)
@@ -107,7 +74,7 @@ async function render(input: CompliantRenderInput) {
 
     progress('encoding')
     failure = 'encode_failed'
-    const { blob, quality } = await encodeWithinRange(canvas, input)
+    const { blob, quality } = await encode(canvas, input)
     const encoded = await blob.arrayBuffer()
     const previewScale = Math.min(1, 800 / input.width, 800 / input.height)
     preview = new OffscreenCanvas(Math.max(1, Math.round(input.width * previewScale)), Math.max(1, Math.round(input.height * previewScale)))

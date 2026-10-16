@@ -29,9 +29,9 @@ async function imageFile(page: Page, name: string, colour: string, width = 240, 
 }
 
 /**
- * A drawn product with enough per-pixel detail that a JPEG of it cannot collapse
- * under a channel's capacity floor. Encoding it once keeps the three-browser run
- * inside the CI budget; nothing here is a photograph.
+ * A drawn product with enough per-pixel detail that encoding it is real work.
+ * Encoding it once keeps the three-browser run inside the CI budget; nothing
+ * here is a photograph.
  */
 const fixtures = new Map<string, Buffer>()
 
@@ -89,6 +89,25 @@ async function importProducts(page: Page, files: Awaited<ReturnType<typeof image
   await expect(page.locator('[data-workbench-step="import"]')).toHaveAttribute('data-workbench-state', 'done')
 }
 
+const panel = (page: Page) => page.locator('[data-workbench-panel]')
+
+/** Brand assets and compression are both optional; passing them makes the layout the output. */
+async function skipToOutput(page: Page) {
+  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'brand', { timeout: 90_000 })
+  await batch(page, '整批略過這一步').click()
+  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'compress')
+  await batch(page, '整批略過這一步').click()
+  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'output')
+}
+
+/** ADR-0022 removed the channel presets: no purpose to pick, no channel, no rule check. */
+async function expectNoChannelSpecification(page: Page) {
+  await expect(page.locator('input[name="workbench-purpose"]')).toHaveCount(0)
+  await expect(page.locator('#workbench-preset')).toHaveCount(0)
+  await expect(page.locator('[data-workbench-check]')).toHaveCount(0)
+  await expect(panel(page)).not.toContainText(/通路|合規|規格|preset|channel/i)
+}
+
 async function outputPixels(page: Page, name = '下載第 1 項') {
   const href = await page.getByRole('link', { name }).getAttribute('href')
 
@@ -128,52 +147,43 @@ async function archiveNames(page: Page) {
   }, href)
 }
 
-test('合規主圖批次：兩張圖走完流程、逐項下載並在本機打包封存', async ({ page }) => {
+test('整批流程：兩張圖走完版型、略過品牌素材與壓縮，逐項下載並在本機打包封存', async ({ page }) => {
   await gotoHydrated(page, route)
 
-  await expect(page.locator('[data-workbench-step="brand"]')).toHaveAttribute('data-workbench-state', 'unavailable')
-  await expect(page.locator('[data-workbench-step="compress"]')).toHaveAttribute('data-workbench-state', 'unavailable')
+  // Every step belongs to the one flow; none is taken away by a purpose or a channel.
+  await expect(page.locator('[data-workbench-step="brand"]')).toHaveAttribute('data-workbench-state', 'locked')
+  await expect(page.locator('[data-workbench-step="compress"]')).toHaveAttribute('data-workbench-state', 'locked')
 
   const product = await productFile(page)
   await importProducts(page, [product, product])
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'cutout')
+  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'cutout')
 
   await batch(page, '整批略過這一步').click()
   await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'skipped')
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'layout')
-
-  // Compression belongs to whoever has not already stated a capacity: the momo
-  // preset publishes a byte range, the reviewed Amazon one does not.
-  await page.getByLabel('通路規格').selectOption('amazon-main')
-  await expect(page.locator('[data-workbench-step="compress"]')).not.toHaveAttribute('data-workbench-state', 'unavailable')
-  await page.getByLabel('通路規格').selectOption('momo-store-main')
-  await expect(page.locator('[data-workbench-step="compress"]')).toHaveAttribute('data-workbench-state', 'unavailable')
+  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'layout')
+  await expectNoChannelSpecification(page)
 
   await expect(page.getByLabel('寬度（像素）')).toHaveValue('1000')
   await batch(page, '整批產生版型').click()
 
   await expect(page.locator('[data-workbench-step="layout"]')).toHaveAttribute('data-workbench-state', 'done', { timeout: 90_000 })
+  await skipToOutput(page)
   await expect(page.locator('[data-queue-state="done"]')).toHaveCount(2)
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'output')
+  await expectNoChannelSpecification(page)
 
-  const output = await outputPixels(page)
-  expect(output).toMatchObject({ width: 1000, height: 1000, type: 'image/jpeg' })
-  expect(output.bytes).toBeGreaterThanOrEqual(50_000)
-  expect(output.bytes).toBeLessThanOrEqual(1_000_000)
-  await expect(page.locator('[data-workbench-check]')).toHaveAttribute('data-workbench-check', 'pass')
-  await expect(page.locator('[data-workbench-panel="output"]')).toContainText('不保證通路審核通過')
+  expect(await outputPixels(page)).toMatchObject({ width: 1000, height: 1000, type: 'image/jpeg' })
 
   const item = page.waitForEvent('download')
   await page.getByRole('link', { name: '下載第 2 項' }).click()
-  expect((await item).suggestedFilename()).toBe('compliant-product-image-02.jpg')
+  expect((await item).suggestedFilename()).toBe('brand-promo-image-02.jpg')
 
   await batch(page, '打包 2 個輸出成封存檔').click()
   await expect(page.getByRole('link', { name: '下載封存檔' })).toBeVisible({ timeout: 60_000 })
-  expect(await archiveNames(page)).toEqual(['compliant-product-image-01.jpg', 'compliant-product-image-02.jpg'])
+  expect(await archiveNames(page)).toEqual(['brand-promo-image-01.jpg', 'brand-promo-image-02.jpg'])
 
   const archive = page.waitForEvent('download')
   await page.getByRole('link', { name: '下載封存檔' }).click()
-  expect((await archive).suggestedFilename()).toBe('compliant-product-images.zip')
+  expect((await archive).suggestedFilename()).toBe('brand-promo-images.zip')
 
   await settleTransitions(page)
   expect((await new AxeBuilder({ page }).include('.product-image-workbench').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
@@ -191,6 +201,8 @@ for (const locale of ['zh-tw', 'en']) {
     await expect(page.locator('[data-workbench-panel]')).toContainText(locale === 'en' ? 'Choose product images' : '選擇商品圖')
     // The ceilings are stated before a file is chosen, not after one is refused.
     await expect(page.locator('#workbench-import-help')).toContainText(locale === 'en' ? '20 images' : '最多 20 張')
+    // ADR-0022: nothing on the page speaks of channel specifications any more.
+    await expect(page.locator('body')).not.toContainText(locale === 'en' ? /channel|preset|compliant/i : /通路|合規/)
 
     // A refused file must be explained in the language of the page it was refused on.
     await page.getByLabel(locale === 'en' ? 'Choose product images' : '選擇商品圖')
@@ -219,6 +231,7 @@ test('清空工作台會交還輸出佔用的記憶體，而不只是隱藏結�
   await importProducts(page, [await productFile(page)])
   await batch(page, '整批略過這一步').click()
   await batch(page, '整批產生版型').click()
+  await skipToOutput(page)
   await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible({ timeout: 60_000 })
 
   const href = await page.getByRole('link', { name: '下載第 1 項' }).getAttribute('href')
@@ -227,15 +240,10 @@ test('清空工作台會交還輸出佔用的記憶體，而不只是隱藏結�
   expect(await page.evaluate(url => fetch(url!).then(() => 'readable', () => 'released'), href)).toBe('released')
 })
 
-test('品牌宣傳圖分支：版型結果疊上 Logo，再由壓縮步驟決定容量', async ({ page }) => {
+test('品牌素材與壓縮：版型結果疊上 Logo，再由壓縮步驟決定容量', async ({ page }) => {
   await gotoHydrated(page, route)
   await importProducts(page, [await imageFile(page, 'private-workbench-canary.png', '#1d4ed8')])
   await batch(page, '整批略過這一步').click()
-
-  await page.locator('#workbench-purpose-promotional').check()
-  await expect(page.locator('[data-workbench-step="brand"]')).not.toHaveAttribute('data-workbench-state', 'unavailable')
-  await expect(page.locator('[data-workbench-step="compress"]')).not.toHaveAttribute('data-workbench-state', 'unavailable')
-  await expect(page.getByLabel('通路規格')).toHaveCount(0)
 
   // A non-square canvas: the Logo's share of the width is not its scale, so a
   // preview that reads the scale as a width would disagree with the file.
@@ -261,7 +269,7 @@ test('品牌宣傳圖分支：版型結果疊上 Logo，再由壓縮步驟決定
   await batch(page, '整批組合品牌素材').click()
   await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'compress', { timeout: 60_000 })
 
-  // The promotional branch has no channel capacity rule, so this step is where one comes from.
+  // The file size is decided here, by the merchant, and nowhere else.
   await page.getByLabel('輸出格式').selectOption('image/jpeg')
   await page.getByLabel('品質（%）').fill('40')
   await batch(page, '整批壓縮').click()
@@ -294,6 +302,7 @@ test('混合批次：不能處理的那一張只留在自己那一列，其餘�
 
   await batch(page, '整批略過這一步').click()
   await batch(page, '整批產生版型').click()
+  await skipToOutput(page)
   await expect(page.locator('[data-queue-state="done"]')).toHaveCount(2, { timeout: 90_000 })
   await expect(page.locator('[data-queue-item="item-2"]')).toHaveAttribute('data-queue-state', 'failed')
 
@@ -306,7 +315,7 @@ test('混合批次：不能處理的那一張只留在自己那一列，其餘�
 
   await batch(page, '打包 2 個輸出成封存檔').click()
   await expect(page.getByRole('link', { name: '下載封存檔' })).toBeVisible({ timeout: 60_000 })
-  expect(await archiveNames(page)).toEqual(['compliant-product-image-01.jpg', 'compliant-product-image-03.jpg'])
+  expect(await archiveNames(page)).toEqual(['brand-promo-image-01.jpg', 'brand-promo-image-03.jpg'])
 })
 
 test('逐項取消只交還那一項，先前成果保留且可重試', async ({ page }) => {
@@ -319,7 +328,6 @@ test('逐項取消只交還那一項，先前成果保留且可重試', async ({
   await importProducts(page, [await productFile(page, 1800)])
 
   await batch(page, '整批略過這一步').click()
-  await page.locator('#workbench-purpose-promotional').check()
   await page.getByLabel('寬度（像素）').fill('4800')
   await page.getByLabel('高度（像素）').fill('4800')
   await page.getByLabel('輸出格式').selectOption('image/png')
@@ -366,6 +374,7 @@ test('去背引擎不可用時只停用去背，其餘步驟仍可完成輸出',
   await expect(page.locator('[data-workbench-step="cutout"] button')).toBeDisabled()
 
   await batch(page, '整批產生版型').click()
+  await skipToOutput(page)
   await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible({ timeout: 60_000 })
 })
 
@@ -418,7 +427,10 @@ test('蓋住上限的批次仍可完成：併發受限，且封存不佔住主�
   await expect(page.locator('[data-workbench-step="import"]')).toHaveAttribute('data-workbench-state', 'done')
 
   await batch(page, '整批略過這一步').click()
-  await page.getByLabel('通路規格').selectOption('momo-store-main')
+  // A canvas large enough that compressing it is real work, so cancel-all lands
+  // while the batch is still running rather than after it has finished.
+  await page.getByLabel('寬度（像素）').fill('3000')
+  await page.getByLabel('高度（像素）').fill('3000')
 
   await page.evaluate(() => {
     const window_ = window as unknown as { __peak: number, __long: number }
@@ -430,9 +442,14 @@ test('蓋住上限的批次仍可完成：併發受限，且封存不佔住主�
   })
 
   await batch(page, '整批產生版型').click()
+  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'brand', { timeout: 180_000 })
+  await batch(page, '整批略過這一步').click()
+  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'compress')
+  await batch(page, '整批壓縮').click()
 
-  // Cancel-all in the middle of a real batch: what explicitly finished keeps its
-  // result and stays downloadable, and nothing is left half-produced.
+  // Cancel-all in the middle of a real batch: an item is finished once it is
+  // compressed, and what explicitly finished keeps its result and stays
+  // downloadable, and nothing is left half-produced.
   await expect(page.locator('[data-queue-state="done"]').first()).toBeVisible({ timeout: 120_000 })
   const cancelAll = page.getByRole('button', { name: '全部取消' })
   await expect(cancelAll).toBeVisible()
@@ -444,7 +461,7 @@ test('蓋住上限的批次仍可完成：併發受限，且封存不佔住主�
   expect(await page.getByRole('link', { name: /^下載第 / }).count()).toBe(finished)
 
   // Picking the batch back up finishes what was handed back.
-  await batch(page, '整批產生版型').click()
+  await batch(page, '整批壓縮').click()
   await expect(page.locator('[data-queue-state="done"]')).toHaveCount(20, { timeout: 180_000 })
   // §12.11 caps encoding at two jobs; a batch of twenty therefore never opens twenty.
   const peak = await page.evaluate(() => (window as unknown as { __peak: number }).__peak)
@@ -475,8 +492,8 @@ test('完整代表性流程：本機去背後接續版型與下載', async ({ pa
   await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'done', { timeout: 180_000 })
   await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'layout')
 
-  await page.getByLabel('通路規格').selectOption('momo-store-main')
   await batch(page, '整批產生版型').click()
+  await skipToOutput(page)
   await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible({ timeout: 60_000 })
   expect(await outputPixels(page)).toMatchObject({ width: 1000, height: 1000, type: 'image/jpeg' })
 

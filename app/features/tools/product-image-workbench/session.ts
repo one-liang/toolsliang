@@ -9,9 +9,9 @@
  * steps before it keep the state they earned.
  *
  * §12.11 asks for a resumable in-tab job graph. This is one node of it: a line
- * of steps, three of them optional, two belonging to only one branch. Which
- * step a merchant is reading is not here — a batch has many items and one
- * reading position, and that belongs to the queue.
+ * of steps, three of them optional. Which step a merchant is reading is not
+ * here — a batch has many items and one reading position, and that belongs to
+ * the queue.
  */
 
 export const workbenchSteps = ['import', 'cutout', 'layout', 'brand', 'compress', 'output'] as const
@@ -22,25 +22,21 @@ export type WorkbenchStep = typeof workbenchSteps[number]
 export const optionalWorkbenchSteps: readonly WorkbenchStep[] = ['cutout', 'brand', 'compress']
 
 /**
- * ADR-0012 keeps the two outputs apart: a compliant main image may carry no
- * frame, Logo or promotional overlay, so the branch decides whether the brand
- * step exists at all rather than whether it is merely discouraged.
+ * The workbench makes brand promotional artwork only; the compliant branch was
+ * removed by ADR-0022. The archive still names its files by this, so the type
+ * stays until the archive moves to the shared image module.
  */
-export const workbenchPurposes = ['compliant', 'promotional'] as const
-
-export type WorkbenchPurpose = typeof workbenchPurposes[number]
+export type WorkbenchPurpose = 'compliant' | 'promotional'
 
 /**
- * `unavailable` is not a failure: it is a step this run does not have, either
- * because the branch excludes it or because this device cannot run its engine.
- * It never blocks the steps after it.
+ * `unavailable` is not a failure: it is a step this run does not have, because
+ * this device cannot run its engine. It never blocks the steps after it.
  */
 export type WorkbenchStepState = 'locked' | 'ready' | 'running' | 'done' | 'skipped' | 'failed' | 'unavailable'
 
-export type WorkbenchBlockReason = 'purpose' | 'capability'
+export type WorkbenchBlockReason = 'capability'
 
 export interface WorkbenchSession {
-  purpose: WorkbenchPurpose
   states: Record<WorkbenchStep, WorkbenchStepState>
   /** The stable engine error code of the last failure, per step. */
   errors: Partial<Record<WorkbenchStep, string>>
@@ -97,52 +93,11 @@ function withoutBlock(blocked: WorkbenchSession['blocked'], step: WorkbenchStep)
   return Object.fromEntries(Object.entries(blocked).filter(([key]) => key !== step))
 }
 
-export function createWorkbenchSession(purpose: WorkbenchPurpose = 'compliant'): WorkbenchSession {
-  const session: WorkbenchSession = {
-    purpose,
-    states: { import: 'locked', cutout: 'locked', layout: 'locked', brand: 'locked', compress: 'locked', output: 'locked' },
-    errors: {},
-    blocked: {},
-  }
-
-  return applyPurpose(session, purpose)
-}
-
-/**
- * The brand step exists only on the promotional branch; nothing else here
- * depends on the purpose. Whether the compress step applies is decided outside
- * this module, because it turns on the channel preset rather than the branch.
- */
-function applyPurpose(session: WorkbenchSession, purpose: WorkbenchPurpose): WorkbenchSession {
-  const states = { ...session.states }
-  let blocked = { ...session.blocked }
-
-  if (purpose === 'compliant') {
-    states.brand = 'unavailable'
-    blocked.brand = 'purpose'
-  }
-  else if (blocked.brand === 'purpose') {
-    states.brand = 'locked'
-    blocked = withoutBlock(blocked, 'brand')
-  }
-
+export function createWorkbenchSession(): WorkbenchSession {
+  const states: WorkbenchSession['states'] = { import: 'locked', cutout: 'locked', layout: 'locked', brand: 'locked', compress: 'locked', output: 'locked' }
   settle(states)
 
-  return { ...session, purpose, states, blocked, errors: { ...session.errors } }
-}
-
-/**
- * A different purpose is a different output, so everything from the layout on
- * is produced again — but the imported image and the cutout are the merchant's
- * work, not the branch's, and they survive the switch.
- */
-export function setWorkbenchPurpose(session: WorkbenchSession, purpose: WorkbenchPurpose): WorkbenchSession {
-  if (session.purpose === purpose) return session
-
-  const states = { ...session.states }
-  if (states.layout !== 'unavailable') states.layout = 'locked'
-
-  return applyPurpose({ ...session, states, errors: withoutError(session, 'layout') }, purpose)
+  return { states, errors: {}, blocked: {} }
 }
 
 export function isWorkbenchStepReachable(session: WorkbenchSession, step: WorkbenchStep) {

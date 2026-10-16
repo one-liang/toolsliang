@@ -9,15 +9,12 @@
  */
 import { imageInputLimits } from '@/features/images/limits'
 import type { CompressionInput, ImageFormat } from '../image-compressor/types'
-import { resolveOutputBounds, type EncodableMimeType, type OutputBounds } from '../compliant-product-image/domain/render'
-import type { CompliantImagePreset } from '../compliant-product-image/domain/reference'
+import type { EncodableMimeType, OutputBounds } from '../compliant-product-image/domain/render'
 import type { CompliantRenderInput } from '../compliant-product-image/types'
 import type { PromoInput } from '../brand-promo-image/engine'
 import type { PromoLayer, PromoLayerKind } from '../brand-promo-image/scene'
-import type { WorkbenchPurpose } from './session'
 
 export interface WorkbenchLayoutSettings {
-  presetId: string
   width: number
   height: number
   format: EncodableMimeType
@@ -30,12 +27,11 @@ export interface WorkbenchLayoutSettings {
 }
 
 /**
- * What a promotional canvas may be. No channel published it, so it is only the
- * device budget every image entry point already enforces — stated here rather
- * than inherited from a preset, because borrowing a channel's numbers for
- * promotional artwork is exactly the confusion ADR-0012 rules out.
+ * What the layout canvas may be: the device budget every image entry point
+ * already enforces, and nothing more. No channel's numbers narrow it since
+ * ADR-0022 removed the channel presets.
  */
-export const promotionalCanvasBounds: OutputBounds = {
+export const workbenchCanvasBounds: OutputBounds = {
   minWidth: 1,
   maxWidth: imageInputLimits.maxSide,
   minHeight: 1,
@@ -43,27 +39,16 @@ export const promotionalCanvasBounds: OutputBounds = {
   maxPixels: imageInputLimits.maxPixels,
 }
 
-export function resolveLayoutBounds(
-  purpose: WorkbenchPurpose,
-  preset: CompliantImagePreset,
-  today: string,
-): OutputBounds {
-  return purpose === 'compliant' ? resolveOutputBounds(preset, today) : { ...promotionalCanvasBounds }
-}
-
 /**
- * The layout engine is the compliant renderer, whichever branch is running: it
- * is the module that fits one image onto one canvas. Only the compliant branch
- * hands it a channel's capacity range, so a promotional output is never quietly
- * squeezed to a rule that does not apply to it.
+ * The layout engine is the renderer in `compliant-product-image/`: it is the
+ * module that fits one image onto one canvas, and the settings reach it as they
+ * are, with no capacity range attached.
  */
 export function planLayoutInput(request: {
   file: File
-  purpose: WorkbenchPurpose
   settings: WorkbenchLayoutSettings
-  byteRange: { min?: number, max?: number }
 }): CompliantRenderInput {
-  const { file, purpose, settings, byteRange } = request
+  const { file, settings } = request
 
   return {
     file,
@@ -75,8 +60,6 @@ export function planLayoutInput(request: {
     offsetX: settings.offsetX,
     offsetY: settings.offsetY,
     background: settings.background,
-    minBytes: purpose === 'compliant' ? byteRange.min : undefined,
-    maxBytes: purpose === 'compliant' ? byteRange.max : undefined,
   }
 }
 
@@ -144,13 +127,9 @@ export interface WorkbenchCompressionSettings {
 }
 
 /**
- * Capacity control for the promotional branch.
- *
- * A channel preset states the bytes a compliant image must land in, and the
- * layout engine already writes inside that range. Promotional artwork has no
- * such published number, so the merchant sets one — and it is the independent
- * compressor engine that applies it (ADR-0004), with the same ceilings every
- * other image entry point uses.
+ * Capacity control. The merchant sets the quality and the largest size, and it
+ * is the independent compressor engine that applies them (ADR-0004), with the
+ * same ceilings every other image entry point uses.
  */
 export function planCompressionInput(request: { file: File, settings: WorkbenchCompressionSettings }): CompressionInput {
   const { file, settings } = request

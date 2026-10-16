@@ -8,7 +8,7 @@ import { imageErrors } from '../image-compressor/content'
 import { formatAssetSize } from '@/features/pwa/offline-assets'
 import type { WorkbenchArchiveIssue } from './archive'
 import type { WorkbenchAdmissionCode, WorkbenchItemStatus, WorkbenchQueueLimits } from './queue'
-import type { WorkbenchBlockReason, WorkbenchPurpose, WorkbenchStep, WorkbenchStepState } from './session'
+import type { WorkbenchBlockReason, WorkbenchStep, WorkbenchStepState } from './session'
 
 export const workbenchStepLabels: Record<WorkbenchStep, LocalizedCopy> = {
   import: { 'zh-tw': '匯入商品圖', en: 'Import the product image' },
@@ -29,16 +29,16 @@ export const workbenchStepSummaries: Record<WorkbenchStep, LocalizedCopy> = {
     en: 'Optionally remove the background before laying out. Skipping keeps everything you have already done.',
   },
   layout: {
-    'zh-tw': '選擇輸出用途，再決定畫布尺寸、背景與商品位置。',
-    en: 'Choose what the output is for, then set the canvas, the background, and where the product sits.',
+    'zh-tw': '決定畫布尺寸、背景與商品位置。',
+    en: 'Set the canvas, the background, and where the product sits.',
   },
   brand: {
     'zh-tw': '在宣傳圖上疊加框版與 Logo；第一版不含文字與價籤。',
     en: 'Add a frame and a Logo to promotional artwork. Version one has no text or price tags.',
   },
   compress: {
-    'zh-tw': '沒有通路規定容量時，由你決定品質與最大尺寸再輸出；略過就沿用上一步的檔案。',
-    en: 'When no channel states a capacity, you set the quality and the largest size yourself. Skipping keeps the previous step\u2019s file.',
+    'zh-tw': '由你決定品質與最大尺寸再輸出；略過就沿用上一步的檔案。',
+    en: 'Set the quality and the largest size yourself. Skipping keeps the previous step\u2019s file.',
   },
   output: {
     'zh-tw': '檢查結果後逐項下載，或把整批打包成一個封存檔。檔案只在你按下下載時才離開瀏覽器記憶體。',
@@ -56,50 +56,11 @@ export const workbenchStepStateLabels: Record<WorkbenchStepState, LocalizedCopy>
   unavailable: { 'zh-tw': '不適用', en: 'Not available' },
 }
 
-/**
- * Why a step is not offered. Never a failure, and never a reason to stop the run.
- *
- * A device that cannot run an engine says the same thing wherever it happens,
- * but a step the branch does not have owes its own reason: the brand step is
- * absent because a compliant main image may carry no overlay, and the compress
- * step because the channel already stated the capacity. One sentence covering
- * both would be true of neither.
- */
-const capabilityBlockReason: LocalizedCopy = {
-  'zh-tw': '這個瀏覽器無法在本機執行這個步驟，已只停用這一步；其餘步驟仍可正常使用。',
-  en: 'This browser cannot run this step locally, so only this step is disabled. The rest of the workbench still works.',
-}
-
-const purposeBlockReasons: Partial<Record<WorkbenchStep, LocalizedCopy>> = {
-  brand: {
-    'zh-tw': '合規主圖不得加入框版、Logo 或促銷文字，因此這個步驟不適用。需要品牌素材請改選品牌宣傳圖。',
-    en: 'A compliant main image may not carry a frame, a Logo, or promotional text, so this step does not apply. Switch to promotional artwork if you need brand assets.',
-  },
-  compress: {
-    'zh-tw': '這個通路規格已經規定了檔案容量，版型步驟也已依該範圍輸出，再壓一次只會離開規格，因此這個步驟不適用。換成沒有規定容量的通路規格，或改做品牌宣傳圖時，這一步會回到可用。',
-    en: 'This channel specification already states a file capacity, and the layout step wrote inside that range, so compressing again would only leave it. This step applies again under a preset that publishes no capacity, or on the promotional branch.',
-  },
-}
-
-export function workbenchBlockMessage(step: WorkbenchStep, reason: WorkbenchBlockReason, locale: keyof LocalizedCopy) {
-  const message = reason === 'capability' ? capabilityBlockReason : purposeBlockReasons[step] ?? capabilityBlockReason
-
-  return message[locale]
-}
-
-export const workbenchPurposeLabels: Record<WorkbenchPurpose, LocalizedCopy> = {
-  compliant: { 'zh-tw': '合規主圖', en: 'Compliant main image' },
-  promotional: { 'zh-tw': '品牌宣傳圖', en: 'Brand promo image' },
-}
-
-export const workbenchPurposeSummaries: Record<WorkbenchPurpose, LocalizedCopy> = {
-  compliant: {
-    'zh-tw': '依已核對的通路公開規格產生尺寸、背景與容量；不加入框版、Logo 或促銷文字，也不保證通路審核通過。',
-    en: 'Sizes, backgrounds, and file capacity follow a reviewed public channel specification. No frame, Logo, or promotional text is added, and approval is never guaranteed.',
-  },
-  promotional: {
-    'zh-tw': '自由設定畫布與背景，可再疊加框版與 Logo；這是宣傳用輸出，不可當成通路主圖。',
-    en: 'Set the canvas and background freely, then add a frame and a Logo. This is promotional artwork, not a marketplace main image.',
+/** Why a step is not offered. Never a failure, and never a reason to stop the run. */
+export const workbenchBlockReasons: Record<WorkbenchBlockReason, LocalizedCopy> = {
+  capability: {
+    'zh-tw': '這個瀏覽器無法在本機執行這個步驟，已只停用這一步；其餘步驟仍可正常使用。',
+    en: 'This browser cannot run this step locally, so only this step is disabled. The rest of the workbench still works.',
   },
 }
 
@@ -173,8 +134,8 @@ export const workbenchStages: Record<string, LocalizedCopy> = {
 
 /** The sentence that has to survive every redesign of this page. */
 export const workbenchLocalNotice: LocalizedCopy = {
-  'zh-tw': '整批商品圖、遮罩、框版、Logo、每一步的中間結果、最終輸出與封存檔都留在這台裝置；只有通路 preset 與去背模型會經由網路取得。',
-  en: 'The whole batch — product images, mattes, frames, Logos, every intermediate result, the outputs, and the archive — stays on this device. Only channel presets and the background removal model come over the network.',
+  'zh-tw': '整批商品圖、遮罩、框版、Logo、每一步的中間結果、最終輸出與封存檔都留在這台裝置；只有去背模型會經由網路取得。',
+  en: 'The whole batch — product images, mattes, frames, Logos, every intermediate result, the outputs, and the archive — stays on this device. Only the background removal model comes over the network.',
 }
 
 /**
@@ -233,8 +194,8 @@ export const productImageWorkbenchFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '這個工作台和單獨的圖片工具有什麼不同？', en: 'How is the workbench different from the individual tools?' },
     body: {
-      'zh-tw': '它做的事和單獨的工具一樣：去背同人像去背、版型與尺寸同合規主圖、框版與 Logo 同品牌宣傳圖。差別是每一步的結果直接交給下一步，不必反覆下載再匯入。人像去背與品牌宣傳圖也有自己的頁面，可以單獨使用。',
-      en: 'It does the same work as the individual tools: the cutout matches the portrait background remover, layout and size match the compliant product image, and frames and Logos match the brand promo image. The difference is that each result goes straight to the next step instead of being downloaded and imported again. The portrait background remover and the brand promo image also have their own pages and work on their own.',
+      'zh-tw': '它做的事和單獨的工具一樣：去背同人像去背、框版與 Logo 同品牌宣傳圖、壓縮同圖片壓縮。差別是每一步的結果直接交給下一步，不必反覆下載再匯入。人像去背、品牌宣傳圖與圖片壓縮也有自己的頁面，可以單獨使用。',
+      en: 'It does the same work as the individual tools: the cutout matches the portrait background remover, frames and Logos match the brand promo image, and compression matches the image compressor. The difference is that each result goes straight to the next step instead of being downloaded and imported again. The portrait background remover, the brand promo image, and the image compressor also have their own pages and work on their own.',
     },
   },
   {
@@ -282,15 +243,8 @@ export const productImageWorkbenchFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '封存檔是在哪裡打包的？', en: 'Where is the archive built?' },
     body: {
-      'zh-tw': '在這台裝置的瀏覽器裡。整批輸出會在背景打包成一個 ZIP 壓縮檔，過程中不經過任何伺服器；封存檔裡的檔名只由用途與序號組成，也不寫入裝置時間。如果這個瀏覽器無法打包，工作台會直接說明，並讓你逐項下載。',
-      en: 'In this browser, on this device. The finished outputs are packed into one ZIP file in the background without any server involved; names inside it are built from the output\u2019s purpose and its position, and no device clock is written into the file. If this browser cannot pack an archive, the workbench says so and you download each output on its own.',
-    },
-  },
-  {
-    heading: { 'zh-tw': '輸出可以直接上架嗎？', en: 'Can I upload the output directly?' },
-    body: {
-      'zh-tw': '合規主圖分支會依已核對的通路公開規格產生尺寸與容量，並列出哪些規則由工具核對、哪些必須你自己確認；它是規格輔助，不保證通路審核通過。品牌宣傳圖分支是宣傳用輸出，不可當成通路主圖。',
-      en: 'The compliant branch produces the size and capacity a reviewed public channel specification states, and lists which rules the tool checked and which you must judge yourself; it is specification guidance, not a guarantee of approval. The promotional branch is artwork and is not a marketplace main image.',
+      'zh-tw': '在這台裝置的瀏覽器裡。整批輸出會在背景打包成一個 ZIP 壓縮檔，過程中不經過任何伺服器；封存檔裡的檔名只由工具名稱與序號組成，也不寫入裝置時間。如果這個瀏覽器無法打包，工作台會直接說明，並讓你逐項下載。',
+      en: 'In this browser, on this device. The finished outputs are packed into one ZIP file in the background without any server involved; names inside it are built from the tool\u2019s name and each output\u2019s position, and no device clock is written into the file. If this browser cannot pack an archive, the workbench says so and you download each output on its own.',
     },
   },
 ]

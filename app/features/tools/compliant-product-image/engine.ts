@@ -21,15 +21,12 @@ function hasImpossibleOptions(input: CompliantRenderInput) {
     || !percentages.every(value => Number.isFinite(value))
     || input.zoom <= 0 || input.zoom > 400
     || ![input.offsetX, input.offsetY].every(value => value >= -100 && value <= 100)
-    || [input.minBytes, input.maxBytes].some(value => value !== undefined && !(value > 0))
 }
 
 /**
- * The renderer behind the compliant product image tool. It is handed a canvas
- * size, a format and a capacity range that the page already resolved from a
- * preset, so nothing here can turn a channel rule into a different one; whether
- * the file it produces satisfies the preset is decided afterwards, by reading
- * the file.
+ * The renderer behind the product image workbench's layout step. It is handed a
+ * canvas size, a format and a placement the page already settled, and fits one
+ * image onto that canvas. Channel presets no longer feed it (ADR-0022).
  */
 export function createCompliantImageRenderer() {
   return createWorkerEngine<CompliantRenderInput, CompliantRenderWireOutput, CompliantRenderOutput>({

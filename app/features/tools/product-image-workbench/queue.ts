@@ -18,9 +18,7 @@ import {
   failWorkbenchStep,
   finalWorkbenchArtifact,
   isWorkbenchStepReachable,
-  setWorkbenchPurpose,
   workbenchSteps,
-  type WorkbenchPurpose,
   type WorkbenchSession,
   type WorkbenchStep,
   type WorkbenchStepState,
@@ -95,13 +93,12 @@ export interface WorkbenchQueueItem {
 }
 
 export interface WorkbenchQueue {
-  purpose: WorkbenchPurpose
   /** The one step being read. A batch has many items and one panel. */
   current: WorkbenchStep
   /**
-   * The shape every item starts from: which steps this branch has, and which
-   * ones this device can run. It exists before the first file does, so an empty
-   * batch can still say what its pipeline will and will not include.
+   * The shape every item starts from: which steps this device can run. It
+   * exists before the first file does, so an empty batch can still say what its
+   * pipeline will and will not include.
    */
   pipeline: WorkbenchSession
   items: WorkbenchQueueItem[]
@@ -118,8 +115,8 @@ export interface WorkbenchAdmission {
   rejected: { index: number, code: WorkbenchAdmissionCode }[]
 }
 
-export function createWorkbenchQueue(purpose: WorkbenchPurpose = 'compliant', limits: WorkbenchQueueLimits = workbenchQueueLimits): WorkbenchQueue {
-  return { purpose, current: 'import', pipeline: createWorkbenchSession(purpose), items: [], limits, admitted: 0 }
+export function createWorkbenchQueue(limits: WorkbenchQueueLimits = workbenchQueueLimits): WorkbenchQueue {
+  return { current: 'import', pipeline: createWorkbenchSession(), items: [], limits, admitted: 0 }
 }
 
 export function workbenchQueueBytes(queue: WorkbenchQueue) {
@@ -180,8 +177,8 @@ export function updateWorkbenchItems(queue: WorkbenchQueue, transition: (session
 }
 
 /**
- * A change to the pipeline itself — the branch, or what this device can run —
- * applies to the batch and to whatever is admitted next. Anything an item
+ * A change to the pipeline itself — what this device can run — applies to the
+ * batch and to whatever is admitted next. Anything an item
  * earned on its own goes through `updateWorkbenchItem` instead.
  */
 export function updateWorkbenchPipeline(queue: WorkbenchQueue, transition: (session: WorkbenchSession) => WorkbenchSession): WorkbenchQueue {
@@ -197,13 +194,6 @@ export function measureWorkbenchItem(queue: WorkbenchQueue, id: string, size: { 
   return updateWorkbenchItem(queue, id, session => exceedsImageLimits(size.width, size.height)
     ? failWorkbenchStep(session, 'import', 'too_large')
     : completeWorkbenchStep(session, 'import'))
-}
-
-export function setWorkbenchQueuePurpose(queue: WorkbenchQueue, purpose: WorkbenchPurpose): WorkbenchQueue {
-  if (queue.purpose === purpose) return queue
-  const moved = updateWorkbenchPipeline({ ...queue, purpose }, session => setWorkbenchPurpose(session, purpose))
-
-  return goToWorkbenchStep(moved, workbenchStepStatus(moved, queue.current).reachable ? queue.current : 'layout')
 }
 
 export interface WorkbenchStepStatus {

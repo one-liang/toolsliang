@@ -1,9 +1,8 @@
 /**
  * Pure geometry: where one source image lands on one output canvas.
  *
- * It is separated from `render.ts` because the worker needs exactly this and
- * nothing else. Importing the preset interpretation would drag every channel's
- * rules into the worker bundle, and the renderer has no business reading them.
+ * It is its own module because the worker and the layout preview both need
+ * exactly this and nothing else, so the two can never disagree.
  */
 
 export interface PlacementRequest {

@@ -8,25 +8,14 @@ import { createPromoRenderer } from '@/features/tools/brand-promo-image/engine'
 import { createImageCompressor } from '@/features/tools/image-compressor/engine'
 import { workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
 import {
-  compliantImagePresets,
-} from '@/features/tools/compliant-product-image/domain/reference'
-import {
-  findCompliantImagePreset,
-  resolvePresetStatus,
-} from '@/features/tools/compliant-product-image/domain/preset'
-import {
   encodableFormats,
   formatMimeTypes,
-  resolveByteRange,
-  resolveOutputFormats,
-  suggestOutputSize,
   type EncodableFormat,
 } from '@/features/tools/compliant-product-image/domain/render'
 import {
   planBrandScene,
   planCompressionInput,
   planLayoutInput,
-  resolveLayoutBounds,
   type WorkbenchCompressionSettings,
   type WorkbenchLayoutSettings,
 } from '@/features/tools/product-image-workbench/pipeline'
@@ -41,7 +30,6 @@ import {
   removeWorkbenchItem,
   resolveWorkbenchLaneLimits,
   resolveWorkbenchLimits,
-  setWorkbenchQueuePurpose,
   updateWorkbenchItem,
   updateWorkbenchItems,
   updateWorkbenchPipeline,
@@ -62,7 +50,6 @@ import {
   startWorkbenchStep,
   unblockWorkbenchStep,
   workbenchSteps,
-  type WorkbenchPurpose,
   type WorkbenchSession,
   type WorkbenchStep,
 } from '@/features/tools/product-image-workbench/session'
@@ -124,7 +111,7 @@ export function useProductImageWorkbench() {
   }
   const limits = ref(resolveWorkbenchLimits({}))
   const laneLimits = ref(resolveWorkbenchLaneLimits({}))
-  const queue = ref(createWorkbenchQueue('compliant', limits.value))
+  const queue = ref(createWorkbenchQueue(limits.value))
 
   /** Everything the queue document deliberately does not hold, keyed by item id. */
   const sources = shallowRef<Record<string, File>>({})
@@ -142,13 +129,9 @@ export function useProductImageWorkbench() {
   const importIssues = ref<WorkbenchImportIssue[]>([])
   const selected = ref('')
 
-  /** The device's own day, so a preset that has not been re-read stops being usable here. */
-  const today = ref('')
-
-  const presetId = ref(compliantImagePresets[0]!.id)
-  const layoutFormats = ref<EncodableFormat[]>([...encodableFormats])
+  /** The formats this browser can write, asked once the layout engine answers. */
+  const availableFormats = ref<EncodableFormat[]>([...encodableFormats])
   const settings = ref<WorkbenchLayoutSettings>({
-    presetId: presetId.value,
     width: 1000,
     height: 1000,
     format: 'image/jpeg',
@@ -171,23 +154,19 @@ export function useProductImageWorkbench() {
   const busy = computed(() => Boolean(runningStep.value) || validating.value || archive.building.value)
   const items = computed(() => queue.value.items)
   const dirty = computed(() => items.value.length > 0 || busy.value)
-  const purpose = computed(() => queue.value.purpose)
   const pipeline = computed(() => queue.value.pipeline)
   const current = computed(() => queue.value.current)
-  const preset = computed(() => findCompliantImagePreset(presetId.value)!)
-  const evaluationDate = computed(() => today.value || preset.value.reviewedAt)
-  const presetStatus = computed(() => resolvePresetStatus(preset.value, evaluationDate.value))
-  const presetDisabled = computed(() => presetStatus.value === 'expired' || presetStatus.value === 'retired')
-  const bounds = computed(() => resolveLayoutBounds(purpose.value, preset.value, evaluationDate.value))
-  const byteRange = computed(() => resolveByteRange(preset.value, evaluationDate.value))
   const progress = computed(() => workbenchQueueProgress(queue.value))
   const outputs = computed(() => workbenchQueueOutputs(queue.value))
   const usedBytes = computed(() => workbenchQueueBytes(queue.value))
-  /** What the archive would contain right now, named the way a single download is. */
+  /**
+   * What the archive would contain right now, named the way a single download
+   * is. Every output is brand promotional artwork since ADR-0022.
+   */
   const archive = useWorkbenchArchive(() => outputs.value.flatMap((entry) => {
     const artifact = artifacts.value[entry.id]?.[entry.step]
 
-    return artifact ? [{ name: workbenchOutputName(queue.value.purpose, entry.ordinal, artifact.format), blob: artifact.blob }] : []
+    return artifact ? [{ name: workbenchOutputName('promotional', entry.ordinal, artifact.format), blob: artifact.blob }] : []
   }))
   const previewItem = computed(() => items.value.find(item => item.id === selected.value) ?? items.value[0])
 
@@ -224,57 +203,12 @@ export function useProductImageWorkbench() {
     }
   }
 
-  function applyPreset() {
-    if (purpose.value !== 'compliant') return
-    const size = suggestOutputSize(preset.value, evaluationDate.value)
-    const formats = resolveOutputFormats(preset.value, evaluationDate.value, layoutFormats.value)
-    const preferred = formats.includes('jpeg') ? 'jpeg' : formats[0]
-    settings.value = {
-      ...settings.value,
-      presetId: presetId.value,
-      width: size.width,
-      height: size.height,
-      format: preferred ? formatMimeTypes[preferred] : settings.value.format,
-    }
-  }
-
-  const availableFormats = computed<EncodableFormat[]>(() => purpose.value === 'compliant'
-    ? resolveOutputFormats(preset.value, evaluationDate.value, layoutFormats.value)
-    : layoutFormats.value)
-
-  /**
-   * Which engines this device can actually run. Kept as state rather than
-   * applied once, because two steps only exist on one branch: switching
-   * branches has to ask the same question again instead of quietly offering a
-   * step whose engine was already found unavailable.
-   */
+  /** Which engines this device can actually run, asked again whenever the merchant checks again. */
   const supported = ref<Record<EngineStep, boolean>>({ cutout: false, layout: false, brand: false, compress: false })
   const layoutSupported = computed(() => supported.value.layout)
 
-  /**
-   * Whether this batch has a compression step at all.
-   *
-   * §12.11 puts compression in the pipeline without qualifying the branch, so
-   * the question is not which output is being made but whether anyone has
-   * already answered it: a channel preset that states a capacity range has, and
-   * the layout step wrote inside it. Where no such range is published — and one
-   * reviewed preset publishes none — the merchant is the only one who can say
-   * how big the file may be, so the step is offered.
-   */
-  const capacityFromChannel = computed(() => purpose.value === 'compliant'
-    && (byteRange.value.min !== undefined || byteRange.value.max !== undefined))
-
-  function applyCompressionRule() {
-    queue.value = updateWorkbenchPipeline(queue.value, session => capacityFromChannel.value
-      ? blockWorkbenchStep(session, 'compress', 'purpose')
-      : session.blocked.compress === 'purpose' ? unblockWorkbenchStep(session, 'compress') : session)
-  }
-
   function applyCapabilities() {
     for (const step of engineSteps) {
-      // While the compliant branch is running, the promotional steps are already
-      // absent for a product reason; a capability answer must not overwrite that.
-      if (queue.value.pipeline.blocked[step] === 'purpose') continue
       queue.value = updateWorkbenchPipeline(queue.value, session => supported.value[step]
         ? unblockWorkbenchStep(session, step)
         : blockWorkbenchStep(session, step, 'capability'))
@@ -294,28 +228,17 @@ export function useProductImageWorkbench() {
       archive.prepare(),
     ])
     if (!mounted || !cutout || !layout || !brand || !compress) return
-    layoutFormats.value = layout.supported
+    availableFormats.value = layout.supported
       ? encodableFormats.filter(format => layout.formats.includes(formatMimeTypes[format]))
       : [...encodableFormats]
     supported.value = { cutout: cutout.supported, layout: layout.supported, brand: brand.supported, compress: compress.supported }
-    applyCompressionRule()
     applyCapabilities()
     preparing.value = false
-    applyPreset()
   }
 
   function goTo(step: WorkbenchStep) {
     if (busy.value) return
     queue.value = goToWorkbenchStep(queue.value, step)
-  }
-
-  function choosePurpose(next: WorkbenchPurpose) {
-    if (busy.value || purpose.value === next) return
-    for (const item of items.value) dropFrom(item.id, 'layout')
-    queue.value = setWorkbenchQueuePurpose(queue.value, next)
-    if (next === 'compliant') applyPreset()
-    applyCompressionRule()
-    applyCapabilities()
   }
 
   function skip(step: WorkbenchStep) {
@@ -435,9 +358,7 @@ export function useProductImageWorkbench() {
       return toStepOutcome(await engine.run({ file }, { onProgress: update => onProgress(update.stage) }))
     }
     if (step === 'layout') {
-      if (purpose.value === 'compliant' && presetDisabled.value) return { status: 'error', code: 'preset_unavailable' }
-      onProgress('validating-preset')
-      const input = planLayoutInput({ file, purpose: purpose.value, settings: settings.value, byteRange: byteRange.value })
+      const input = planLayoutInput({ file, settings: settings.value })
       return toStepOutcome(await pools.layout[slot]!.run(input, { onProgress: update => onProgress(update.stage) }))
     }
     if (step === 'brand') {
@@ -636,19 +557,12 @@ export function useProductImageWorkbench() {
     return engineSteps.some(step => session.states[step] === 'failed')
   }
 
-  watch(presetId, () => {
-    settings.value = { ...settings.value, presetId: presetId.value }
-    applyPreset()
-    applyCompressionRule()
-  })
   watch(settings, () => invalidate('layout'), { deep: true })
   watch([brandSettings, frame, logo], () => invalidate('brand'), { deep: true })
   watch(compression, () => invalidate('compress'), { deep: true })
   watch(outputs, () => archive.release())
 
   onMounted(() => {
-    today.value = new Date().toISOString().slice(0, 10)
-    applyCompressionRule()
     const device = navigator as Navigator & { deviceMemory?: number }
     limits.value = resolveWorkbenchLimits({ deviceMemory: device.deviceMemory })
     laneLimits.value = resolveWorkbenchLaneLimits({ hardwareConcurrency: navigator.hardwareConcurrency })
@@ -672,20 +586,16 @@ export function useProductImageWorkbench() {
     archiving: archive.building,
     artifacts,
     availableFormats,
-    bounds,
     brandSettings,
     buildArchive,
     busy,
-    byteRange,
     cancelAll,
     cancelItem,
     canRetryItem,
     chooseBrandAsset,
-    choosePurpose,
     clearBrandAsset,
     compression,
     current,
-    evaluationDate,
     failedStep,
     frame,
     frameSize,
@@ -705,14 +615,9 @@ export function useProductImageWorkbench() {
     pipeline,
     prepare,
     preparing,
-    preset,
-    presetDisabled,
-    presetId,
-    presetStatus,
     previewItem,
     previews,
     progress,
-    purpose,
     removeItem,
     reset,
     retryItem,
@@ -727,7 +632,6 @@ export function useProductImageWorkbench() {
     stages,
     stepStatus: (step: WorkbenchStep) => workbenchStepStatus(queue.value, step),
     withdrawn,
-    today,
     usedBytes,
   }
 }

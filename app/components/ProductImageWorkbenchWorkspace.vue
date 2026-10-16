@@ -11,43 +11,23 @@ import { heicMessage } from '@/features/images/messages'
 import { formatAssetSize } from '@/features/pwa/offline-assets'
 import { portraitScopeNotice } from '@/features/tools/image-background-remover/content'
 import { planPlacement } from '@/features/tools/compliant-product-image/domain/placement'
-import { compliantImagePresets, type CompliantImagePresetRule } from '@/features/tools/compliant-product-image/domain/reference'
-import { compliantImageSources } from '@/features/tools/compliant-product-image/domain/sources'
-import { checkOutputAgainstPreset, ruleDispositions } from '@/features/tools/compliant-product-image/domain/preset'
-import {
-  compliantImageChannelLabels,
-  compliantImageNotices,
-  compliantImageRoleLabels,
-  compliantImageSizeIssues,
-  constraintKindLabels,
-  describeRuleValue,
-  presetStatusLabels,
-  ruleDispositionLabels,
-} from '@/features/tools/compliant-product-image/content'
-import {
-  describeSizeIssue,
-  formatMimeTypes,
-  formatOfMimeType,
-  resolveOccupancyGuides,
-  resolveSafeAreaInsets,
-} from '@/features/tools/compliant-product-image/domain/render'
-import { planBrandScene } from '@/features/tools/product-image-workbench/pipeline'
+import { compliantImageSizeIssues } from '@/features/tools/compliant-product-image/content'
+import { describeSizeIssue, formatMimeTypes } from '@/features/tools/compliant-product-image/domain/render'
+import { planBrandScene, workbenchCanvasBounds } from '@/features/tools/product-image-workbench/pipeline'
 import { workbenchArchiveName, workbenchOutputName } from '@/features/tools/product-image-workbench/archive'
 import { workbenchItemStatus } from '@/features/tools/product-image-workbench/queue'
 import { imageInputLimits } from '@/features/images/limits'
 import { promoPlacement } from '@/features/tools/brand-promo-image/scene'
-import { workbenchPurposes, workbenchSteps, type WorkbenchStep } from '@/features/tools/product-image-workbench/session'
+import { workbenchSteps, type WorkbenchStep } from '@/features/tools/product-image-workbench/session'
 import {
   workbenchAdmissionMessage,
   workbenchArchiveIssues,
-  workbenchBlockMessage,
+  workbenchBlockReasons,
   workbenchErrorMessage,
   workbenchItemLabel,
   workbenchItemStatusLabels,
   workbenchLimitsNotice,
   workbenchLocalNotice,
-  workbenchPurposeLabels,
-  workbenchPurposeSummaries,
   workbenchQueueSummary,
   workbenchStages,
   workbenchStepErrors,
@@ -60,11 +40,11 @@ const { locale, withLocale } = useAppLocale()
 const en = computed(() => locale.value === 'en')
 const workbench = useProductImageWorkbench()
 const {
-  archiveIssue, archiveSupported, archiveUrl, archiving, artifacts, availableFormats, bounds, brandSettings,
-  buildArchive, busy, cancelAll, cancelItem, canRetryItem, chooseBrandAsset, choosePurpose, clearBrandAsset, compression,
-  current, evaluationDate, failedStep, frame, frameSize, frameUrl, goTo, importFiles, importIssues, items,
-  layoutSupported, limits, logo, logoSize, logoUrl, notice, outputs, pipeline, prepare, preparing, preset, presetDisabled,
-  presetId, presetStatus, previewItem, previews, progress, purpose, removeItem, reset, retryItem, runStep,
+  archiveIssue, archiveSupported, archiveUrl, archiving, artifacts, availableFormats, brandSettings,
+  buildArchive, busy, cancelAll, cancelItem, canRetryItem, chooseBrandAsset, clearBrandAsset, compression,
+  current, failedStep, frame, frameSize, frameUrl, goTo, importFiles, importIssues, items,
+  layoutSupported, limits, logo, logoSize, logoUrl, notice, outputs, pipeline, prepare, preparing,
+  previewItem, previews, progress, removeItem, reset, retryItem, runStep,
   runningStep, selectItem, selected, settings, sizes, skip, stages, stepStatus, usedBytes, withdrawn,
 } = workbench
 
@@ -78,7 +58,7 @@ const {
 
 const currentStatus = computed(() => stepStatus(current.value))
 const blockedReason = computed(() => pipeline.value.blocked[current.value])
-const sizeIssue = computed(() => describeSizeIssue(bounds.value, Number(settings.value.width), Number(settings.value.height)))
+const sizeIssue = computed(() => describeSizeIssue(workbenchCanvasBounds, Number(settings.value.width), Number(settings.value.height)))
 
 /** Every distinct reason an item stopped on this step: an aggregate that hides one is worse than none. */
 const stepErrors = computed(() => {
@@ -88,12 +68,11 @@ const stepErrors = computed(() => {
 })
 
 const readyCount = computed(() => currentStatus.value.counts.ready)
-const canRunLayout = computed(() => !busy.value && layoutSupported.value && !sizeIssue.value && !invalidLayoutField.value && readyCount.value > 0
-  && (purpose.value !== 'compliant' || (!presetDisabled.value && availableFormats.value.length > 0)))
+const canRunLayout = computed(() => !busy.value && layoutSupported.value && !sizeIssue.value && !invalidLayoutField.value && readyCount.value > 0)
 
 /**
- * The rail is numbered by the run, not by the module: a step this branch or this
- * device does not have stays listed with its reason, but takes no number —
+ * The rail is numbered by the run, not by the module: a step this device does
+ * not have stays listed with its reason, but takes no number —
  * otherwise its position in the list would disagree with the progress summary.
  */
 const stepList = computed(() => {
@@ -149,7 +128,7 @@ const rows = computed(() => items.value.map((item) => {
     alpha: latest?.format === 'image/png',
     size: sizes.value[item.id],
     bytes: item.bytes,
-    download: artifact && output ? { url: artifact.url, name: workbenchOutputName(purpose.value, output.ordinal, artifact.format), bytes: artifact.bytes, width: artifact.width, height: artifact.height } : undefined,
+    download: artifact && output ? { url: artifact.url, name: workbenchOutputName('promotional', output.ordinal, artifact.format), bytes: artifact.bytes, width: artifact.width, height: artifact.height } : undefined,
   }
 }))
 
@@ -228,36 +207,11 @@ const placementStyle = computed(() => {
     height: `${spot.height / canvas.value.height * 100}%`,
   }
 })
-/** The channel's own page, so the rules can be read where they were published. */
-const presetSource = computed(() => compliantImageSources.find(item => item.id === preset.value.sourceId))
-const occupancy = computed(() => purpose.value === 'compliant' ? resolveOccupancyGuides(preset.value, evaluationDate.value) : [])
-const safeAreas = computed(() => purpose.value === 'compliant' ? resolveSafeAreaInsets(preset.value, evaluationDate.value) : [])
-const guideInset = (ratio: number) => `${((1 - Math.sqrt(ratio)) / 2) * 100}%`
-
-/** The finished file is judged by reading the file, never by trusting the settings. */
+/** The finished file the output step previews for the selected item. */
 const previewOutput = computed(() => {
   const entry = previewItem.value && outputs.value.find(output => output.id === previewItem.value!.id)
 
   return entry ? previewArtifacts.value[entry.step] : undefined
-})
-const check = computed(() => {
-  const result = previewOutput.value
-  const format = result && formatOfMimeType(result.format)
-  if (!result || !format || purpose.value !== 'compliant') return undefined
-  return checkOutputAgainstPreset(preset.value, { width: result.width, height: result.height, format, bytes: result.bytes }, evaluationDate.value)
-})
-const ruleGroups = computed(() => {
-  const outcome = check.value
-  if (!outcome) return []
-  return ruleDispositions
-    .map(disposition => ({
-      disposition,
-      label: copy(ruleDispositionLabels[disposition], locale.value),
-      rules: outcome.ruleIds[disposition]
-        .map(id => preset.value.rules.find(rule => rule.id === id))
-        .filter((rule): rule is CompliantImagePresetRule => Boolean(rule)),
-    }))
-    .filter(group => group.rules.length > 0)
 })
 
 /**
@@ -371,9 +325,6 @@ const previousStep = computed(() => {
 function number(value: number) {
   return new Intl.NumberFormat(en.value ? 'en' : 'zh-TW').format(value)
 }
-function ruleLine(rule: CompliantImagePresetRule) {
-  return `${copy(constraintKindLabels[rule.kind], locale.value)}${en.value ? ': ' : '：'}${describeRuleValue(rule, locale.value)}`
-}
 function chooseFiles(event: Event, take: (files: File[]) => void) {
   const input = event.target as HTMLInputElement
   const files = [...input.files ?? []]
@@ -449,7 +400,7 @@ async function dropItem(id: string) {
     <section class="workbench__panel" :data-workbench-panel="current" :aria-labelledby="`workbench-${current}`">
       <h2 :id="`workbench-${current}`" ref="heading" tabindex="-1">{{ copy(workbenchStepLabels[current], locale) }}</h2>
       <p class="field-help">{{ copy(workbenchStepSummaries[current], locale) }}</p>
-      <p v-if="blockedReason" class="capability-warning">{{ workbenchBlockMessage(current, blockedReason, locale) }}</p>
+      <p v-if="blockedReason" class="capability-warning">{{ copy(workbenchBlockReasons[blockedReason], locale) }}</p>
 
       <template v-if="current === 'import'">
         <div class="field-group">
@@ -492,30 +443,6 @@ async function dropItem(id: string) {
       </template>
 
       <template v-else-if="current === 'layout'">
-        <fieldset class="workbench__controls" :disabled="busy">
-          <legend>{{ en ? 'What is this batch for?' : '這批輸出的用途' }}</legend>
-          <div v-for="option in workbenchPurposes" :key="option" class="workbench__purpose">
-            <input :id="`workbench-purpose-${option}`" type="radio" name="workbench-purpose" :value="option" :checked="purpose === option" @change="choosePurpose(option)">
-            <label :for="`workbench-purpose-${option}`">
-              <strong>{{ copy(workbenchPurposeLabels[option], locale) }}</strong>
-              <span class="field-help">{{ copy(workbenchPurposeSummaries[option], locale) }}</span>
-            </label>
-          </div>
-        </fieldset>
-
-        <div v-if="purpose === 'compliant'" class="field-group">
-          <label for="workbench-preset">{{ en ? 'Channel preset' : '通路規格' }}</label>
-          <select id="workbench-preset" v-model="presetId" class="ui-input" :disabled="busy">
-            <option v-for="item in compliantImagePresets" :key="item.id" :value="item.id">
-              {{ copy(compliantImageChannelLabels[item.channelId], locale) }} · {{ copy(compliantImageRoleLabels[item.role], locale) }}
-            </option>
-          </select>
-          <p class="field-help">
-            {{ en ? 'Reviewed' : '查核日' }} {{ preset.reviewedAt }} · {{ copy(presetStatusLabels[presetStatus], locale) }} ·
-            <a v-if="presetSource" :href="presetSource.url" target="_blank" rel="noopener noreferrer">{{ en ? 'Read the published channel specification' : '查看通路公開規格原文' }}</a>
-          </p>
-        </div>
-
         <div class="tool-workspace__grid">
           <div v-for="dimension in (['width', 'height'] as const)" :key="dimension" class="field-group">
             <label :for="`workbench-${dimension}`">{{ dimension === 'width' ? (en ? 'Width (px)' : '寬度（像素）') : (en ? 'Height (px)' : '高度（像素）') }}</label>
@@ -557,13 +484,9 @@ async function dropItem(id: string) {
         <figure v-if="layoutPreviewUrl" class="workbench__figure">
           <div class="workbench__canvas" :style="{ aspectRatio: `${canvas.width} / ${canvas.height}`, background: settings.background, '--workbench-ratio': canvas.width / canvas.height }" role="img" :aria-label="en ? 'Layout preview on the output canvas' : '版型預覽，對應輸出畫布'">
             <img v-if="placementStyle" :src="layoutPreviewUrl" :style="placementStyle" alt="">
-            <span v-for="guide in occupancy" :key="guide.ruleId" class="workbench__guide" :style="{ inset: guideInset(guide.ratio) }" aria-hidden="true" />
-            <span v-for="guide in safeAreas" :key="guide.ruleId" class="workbench__guide workbench__guide--safe" :style="{ top: `${guide.top * 100}%`, right: `${guide.right * 100}%`, bottom: `${guide.bottom * 100}%`, left: `${guide.left * 100}%` }" aria-hidden="true" />
           </div>
           <figcaption>
             {{ previewItem ? workbenchItemLabel(previewItem.ordinal, locale) : '' }} · {{ canvas.width }} × {{ canvas.height }}
-            <template v-if="occupancy.length"> · {{ en ? 'The dashed frame shows the product occupancy this channel asks for:' : '虛線輔助框標示這個通路要求的商品佔比：' }} {{ occupancy.map(guide => `${Math.round(guide.ratio * 100)}%`).join('、') }}</template>
-            <template v-if="safeAreas.length"> · {{ en ? 'The dotted frame marks the keep-out margins (top / right / bottom / left):' : '點線框標示要求留白的邊界（上／右／下／左）：' }} {{ safeAreas.map(guide => [guide.top, guide.right, guide.bottom, guide.left].map(inset => `${Math.round(inset * 100)}%`).join(' / ')).join('、') }}</template>
           </figcaption>
         </figure>
       </template>
@@ -630,7 +553,7 @@ async function dropItem(id: string) {
               {{ en ? `Pack ${outputs.length} outputs into one archive` : `打包 ${outputs.length} 個輸出成封存檔` }}
             </Button>
             <Button v-if="archiveUrl" as-child>
-              <a :href="archiveUrl" :download="workbenchArchiveName(purpose)" data-archive-download>
+              <a :href="archiveUrl" :download="workbenchArchiveName('promotional')" data-archive-download>
                 <Download :size="16" aria-hidden="true" />{{ en ? 'Download the archive' : '下載封存檔' }}
               </a>
             </Button>
@@ -643,26 +566,6 @@ async function dropItem(id: string) {
             <img :src="previewOutput.url" :alt="en ? 'Final output preview' : '最終輸出預覽'">
             <figcaption>{{ previewItem ? workbenchItemLabel(previewItem.ordinal, locale) : '' }} · {{ previewOutput.width }} × {{ previewOutput.height }} · {{ previewOutput.format }} · {{ number(previewOutput.bytes) }} bytes</figcaption>
           </figure>
-
-          <section v-if="check" class="workbench__check" :aria-label="en ? 'What was checked against this channel preset' : '對照通路規格的核對結果'">
-            <p :data-workbench-check="check.result">
-              <TriangleAlert v-if="check.result !== 'pass'" :size="16" aria-hidden="true" />
-              <CircleCheck v-else :size="16" aria-hidden="true" />
-              {{ check.result === 'pass'
-                ? (en ? 'Every rule this tool can read off this file is satisfied. This is specification guidance, not a guarantee of channel approval.' : '這個檔案能被工具核對的規則都符合。這是規格輔助，不保證通路審核通過。')
-                : check.result === 'fail'
-                  ? (en ? 'At least one requirement this tool checks is not met. Adjust the layout and produce it again.' : '至少一項工具可核對的要求未符合，請回到版型調整後重新產生。')
-                  : (en ? 'This preset is disabled, so nothing was checked.' : '這個通路規格已停用，未進行核對。') }}
-            </p>
-            <p class="field-help">{{ en ? 'Checked for the previewed item. Other items share the same settings but not necessarily the same file size.' : '這是預覽中項目的核對結果；其他項目設定相同，但檔案大小不一定相同。' }}</p>
-            <p v-for="code in check.notices" :key="code" class="field-help">{{ copy(compliantImageNotices[code], locale) }}</p>
-            <div v-for="group in ruleGroups" :key="group.disposition">
-              <h3>{{ group.label }}</h3>
-              <ul>
-                <li v-for="rule in group.rules" :key="rule.id">{{ ruleLine(rule) }}</li>
-              </ul>
-            </div>
-          </section>
         </template>
       </template>
 
