@@ -22,6 +22,10 @@ export const rocYearContentReview: PublishedToolDefinition['contentReview'] = {
         'zh-tw': '教育部《重編國語辭典修訂本》：「民國」',
         en: 'Ministry of Education, Revised Mandarin Chinese Dictionary: “民國”',
       },
+      description: {
+        'zh-tw': '「民國」紀年的意思，以及它從西元 1912 年起算，都依這個詞條。',
+        en: 'What the ROC era means, and that it starts from 1912, follow this entry.',
+      },
       url: 'https://dict.revised.moe.edu.tw/dictView.jsp?ID=31797',
     },
     {
@@ -29,12 +33,20 @@ export const rocYearContentReview: PublishedToolDefinition['contentReview'] = {
         'zh-tw': '中華民國總統府：國父－中華民國簡介',
         en: 'Office of the President: Dr. Sun Yat-sen and the founding of the Republic of China',
       },
+      description: {
+        'zh-tw': '中華民國在 1912 年成立、這一年就是民國元年，依總統府的這份簡介。',
+        en: 'That the Republic of China was founded in 1912, which is ROC year 1, follows this page from the Office of the President.',
+      },
       url: 'https://www.president.gov.tw/Page/49',
     },
     {
       title: {
         'zh-tw': '內政部戶政司：年歲對照表',
         en: 'Department of Household Registration, Ministry of the Interior: Year comparison table',
+      },
+      description: {
+        'zh-tw': '1911 年以前寫成「民國前幾年」的寫法，依戶政司的這份對照表。',
+        en: 'Writing 1911 and earlier as years before the ROC era follows this table from the Department of Household Registration.',
       },
       url: 'https://www.ris.gov.tw/documents/html/8/1/219.html',
     },
