@@ -6,7 +6,7 @@ export const deviceTimeDefinition: PublishedToolDefinition = {
   name: { 'zh-tw': '裝置時間', en: 'Device Time' },
   description: { 'zh-tw': '查看此裝置的日期、時間、時區與 UTC 時差。', en: 'View this device’s date, time, time zone, and UTC offset.' },
   aliases: { 'zh-tw': ['本機時間', '時鐘'], en: ['local clock', 'device clock'] },
-  keywords: { 'zh-tw': ['日期', '秒數', '時區', '時差'], en: ['date', 'seconds', 'time zone', 'UTC offset'] },
+  keywords: { 'zh-tw': ['日期', '秒數', '時區', '時差', '全螢幕', '12 小時制', '24 小時制'], en: ['date', 'seconds', 'time zone', 'UTC offset', 'full screen', '12-hour', '24-hour'] },
   processingClass: 'instant', routeComponentKey: 'DeviceTimeWorkspace',
   offlineMode: 'ready', capabilities: ['javascript'],
   acceptedInput: { 'zh-tw': '不需輸入；讀取此裝置的時鐘與時區設定。', en: 'No input needed; reads this device’s clock and time zone settings.' },
