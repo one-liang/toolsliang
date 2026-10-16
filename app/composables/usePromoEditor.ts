@@ -2,9 +2,23 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { createPromoHistory, createPromoLayer, reorderPromoLayers, type PromoLayer, type PromoLayerKind, type PromoScene } from '@/features/tools/brand-promo-image/scene'
 import { createPromoRenderer } from '@/features/tools/brand-promo-image/engine'
 import { createImageCompressor } from '@/features/tools/image-compressor/engine'
+import { nameImageOutputs } from '@/features/images/archive'
+import { imageBatchLimits } from '@/features/images/batch'
 import { useWorkspaceDirty } from './useWorkspaceDirty'
 
 interface SessionAsset { file: File, url: string, width: number, height: number }
+
+/**
+ * One product layer standing for several product photos: the layout is made
+ * once, and every photo is placed in that layer's frame in turn. The photos are
+ * session pixels like any other asset, so they are not steps in the history.
+ */
+interface PromoBatch { layerId: string, assetIds: string[] }
+
+/** The tool's own names, never the photos': brand-promo.png, then -2, -3 and so on. */
+function promoOutputNames(count: number) {
+  return nameImageOutputs(Array.from({ length: count }, () => ({ name: 'brand-promo.png', format: 'image/png' })), '')
+}
 
 /**
  * Session pixels are deliberately separate from the undoable, serializable scene.
@@ -23,6 +37,13 @@ export function usePromoEditor() {
   /** Which long job `busy` belongs to, so the status names it in the visitor's words. */
   const task = ref<'import' | 'produce' | ''>('')
   const output = ref('')
+  const batch = shallowRef<PromoBatch>({ layerId: '', assetIds: [] })
+  /** Which of the batch's photos the preview shows. */
+  const batchIndex = ref(0)
+  /** One finished PNG per photo, in batch order, once every one of them is made. */
+  const outputs = shallowRef<{ name: string, blob: Blob }[]>([])
+  /** The photo being made right now, while a batch is produced. */
+  const producing = ref(-1)
   const importer = createImageCompressor(), renderer = createPromoRenderer()
   let generation = 0, mounted = true
   useWorkspaceDirty('brand-promo-image', computed(() => scene.value.layers.length > 0 || busy.value))
@@ -30,6 +51,20 @@ export function usePromoEditor() {
   function clearOutput() {
     if (output.value) URL.revokeObjectURL(output.value)
     output.value = ''
+    outputs.value = []
+  }
+  /** The layer the batch belongs to, while it is still in the scene. */
+  const batchLayer = computed(() => scene.value.layers.find(layer => layer.id === batch.value.layerId))
+  const batchSize = computed(() => batchLayer.value ? batch.value.assetIds.length : 0)
+  /** What a layer shows: a batch layer shows the photo picked in the batch, every other layer its own image. */
+  function assetOf(layer: PromoLayer) {
+    const id = layer.id === batch.value.layerId && batchSize.value > 1 ? batch.value.assetIds[batchIndex.value] ?? layer.assetId : layer.assetId
+    return assets.value[id]
+  }
+  /** The scene as it is drawn with one of the batch's photos in its layer. */
+  function sceneFor(index: number): PromoScene {
+    const assetId = batch.value.assetIds[index]
+    return assetId ? { ...scene.value, layers: scene.value.layers.map(layer => layer.id === batch.value.layerId ? { ...layer, assetId } : layer) } : scene.value
   }
   function sync() {
     scene.value = history.scene
@@ -74,7 +109,7 @@ export function usePromoEditor() {
   function undo() { if (!busy.value) { history.undo(); sync() } }
   function redo() { if (!busy.value) { history.redo(); sync() } }
   function cancel() {
-    generation++; importer.cancel(); renderer.cancel(); busy.value = false; stage.value = ''; task.value = ''; message.value = 'cancelled'
+    generation++; importer.cancel(); renderer.cancel(); busy.value = false; stage.value = ''; task.value = ''; producing.value = -1; message.value = 'cancelled'
   }
   async function prepare() {
     preparing.value = true
@@ -82,6 +117,64 @@ export function usePromoEditor() {
     if (!mounted) return
     supported.value = capabilities.supported && capabilities.formats.includes('image/png')
     preparing.value = false
+  }
+  /** Reads one picture into a session asset: a small preview for the stage, and the file itself for the render. */
+  async function readAsset(file: File, current: number) {
+    const result = await importer.run({ file, format: 'image/png', quality: 1, maxWidth: 800, maxHeight: 800 }, { onProgress: progress => { stage.value = progress.stage } })
+    if (!mounted || current !== generation) return 'stale' as const
+    if (result.status !== 'success') return result
+    const assetId = crypto.randomUUID()
+    const url = URL.createObjectURL(result.output.blob)
+    assets.value = { ...assets.value, [assetId]: { file, url, width: result.output.sourceWidth, height: result.output.sourceHeight } }
+    return { status: 'success' as const, assetId }
+  }
+  /**
+   * More product photos for one product layer, to be made with the same
+   * layout. The layer the visitor has selected takes them when it is a product
+   * layer; otherwise the batch's own layer, or the first product layer.
+   */
+  async function importBatch(files: File[]) {
+    if (busy.value || !files.length) return
+    const selectedProduct = selected.value?.kind === 'product' ? selected.value : undefined
+    const layer = batchLayer.value ?? selectedProduct ?? scene.value.layers.find(entry => entry.kind === 'product')
+    if (!layer) return
+    if (batch.value.layerId !== layer.id) { batch.value = { layerId: layer.id, assetIds: [layer.assetId] }; batchIndex.value = 0 }
+    const room = imageBatchLimits.maxItems - batch.value.assetIds.length
+    if (room <= 0 || files.length > room) { error.value = 'batch_limit'; if (room <= 0) return }
+    busy.value = true; task.value = 'import'; message.value = ''; stage.value = 'reading'
+    const current = ++generation
+    let added = 0
+    for (const file of files.slice(0, Math.max(0, room))) {
+      const bytes = Object.values(assets.value).reduce((total, asset) => total + asset.file.size, 0)
+      if (bytes + file.size > 100 * 1024 * 1024) { error.value = 'session_limit'; break }
+      const result = await readAsset(file, current)
+      if (result === 'stale') return
+      if (result.status === 'cancelled') { message.value = 'cancelled'; break }
+      if (result.status === 'error') { error.value = result.error.code; continue }
+      batch.value = { ...batch.value, assetIds: [...batch.value.assetIds, result.assetId] }
+      added += 1
+    }
+    busy.value = false; stage.value = ''; task.value = ''
+    if (added) { clearOutput(); batchIndex.value = batch.value.assetIds.length - added; if (!error.value) message.value = 'batch_added' }
+  }
+  /** Shows one of the batch's photos in its layer; nothing about the layout changes. */
+  function showBatch(index: number) {
+    if (index >= 0 && index < batch.value.assetIds.length) batchIndex.value = index
+  }
+  /**
+   * Takes one photo out of the batch. The first photo is the layer's own image,
+   * so taking it out hands the layer to the next photo as one undoable step.
+   */
+  function removeFromBatch(index: number) {
+    if (busy.value || index < 0 || index >= batch.value.assetIds.length) return
+    const assetIds = batch.value.assetIds.filter((_, position) => position !== index)
+    if (index === 0 && batchLayer.value && assetIds[0]) {
+      const layerId = batchLayer.value.id
+      commit({ ...scene.value, layers: scene.value.layers.map(layer => layer.id === layerId ? { ...layer, assetId: assetIds[0]! } : layer) })
+    }
+    batch.value = { ...batch.value, assetIds }
+    batchIndex.value = Math.min(batchIndex.value, Math.max(0, assetIds.length - 1))
+    clearOutput()
   }
   async function importFile(file: File, kind: PromoLayerKind) {
     if (busy.value) return
@@ -105,8 +198,30 @@ export function usePromoEditor() {
     }
     catch { error.value = 'memory_limit' }
   }
+  /** Every photo of the batch, one after another, each with the same layout; the PNGs are offered once all of them are made. */
+  async function produceBatch() {
+    busy.value = true; task.value = 'produce'; error.value = ''; message.value = ''; clearOutput()
+    const current = ++generation
+    const made: Blob[] = []
+    for (let index = 0; index < batch.value.assetIds.length; index++) {
+      producing.value = index
+      const next = sceneFor(index)
+      const files = Object.fromEntries(next.layers.map(layer => [layer.assetId, assets.value[layer.assetId]?.file]).filter((entry): entry is [string, File] => entry[1] instanceof File))
+      const result = await renderer.run({ scene: next, files }, { onProgress: progress => { stage.value = progress.stage } })
+      if (!mounted || current !== generation) return
+      if (result.status === 'error') { error.value = result.error.code; break }
+      if (result.status === 'cancelled') { message.value = 'cancelled'; break }
+      made.push(result.output.blob)
+    }
+    busy.value = false; stage.value = ''; task.value = ''; producing.value = -1
+    if (made.length !== batch.value.assetIds.length) return
+    const names = promoOutputNames(made.length)
+    outputs.value = made.map((blob, index) => ({ name: names[index]!, blob }))
+    message.value = 'success'
+  }
   async function produce() {
     if (busy.value || !supported.value || !scene.value.layers.length) return
+    if (batchSize.value > 1) return produceBatch()
     busy.value = true; task.value = 'produce'; error.value = ''; message.value = ''; clearOutput()
     const current = ++generation
     const files = Object.fromEntries(scene.value.layers.map(layer => [layer.assetId, assets.value[layer.assetId]?.file]).filter((entry): entry is [string, File] => entry[1] instanceof File))
@@ -127,5 +242,8 @@ export function usePromoEditor() {
     Object.values(assets.value).forEach(asset => URL.revokeObjectURL(asset.url))
     assets.value = {}
   })
-  return { scene, assets, selectedId, selected, canUndo, canRedo, busy, preparing, supported, error, message, stage, task, output, commit, preview, revert, patchLayer, reorder, move, moveToEdge, remove, undo, redo, cancel, prepare, importFile, produce }
+  return {
+    scene, assets, selectedId, selected, canUndo, canRedo, busy, preparing, supported, error, message, stage, task, output, commit, preview, revert, patchLayer, reorder, move, moveToEdge, remove, undo, redo, cancel, prepare, importFile, produce,
+    batch, batchIndex, batchLayer, batchSize, outputs, producing, assetOf, importBatch, showBatch, removeFromBatch,
+  }
 }

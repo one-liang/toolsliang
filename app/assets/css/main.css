@@ -1215,12 +1215,13 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
    width, as an editor's tool palette does, and the stage is capped by the viewport
    height, so a short screen shrinks the preview instead of pushing the action down. */
 .brand-promo { --promo-stage-max: clamp(160px, calc(100svh - 580px), 400px); }
-.brand-promo__editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "preview add" "output output" "panel panel"; gap: 12px; align-items: start; }
+.brand-promo__editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "preview add" "output output" "batch batch" "panel panel"; gap: 12px; align-items: start; }
 .brand-promo__add { grid-area: add; }
 .brand-promo__preview { grid-area: preview; }
 .brand-promo__output { grid-area: output; }
 .brand-promo__panel { grid-area: panel; }
-.brand-promo__add, .brand-promo__preview, .brand-promo__output, .brand-promo__panel { min-width: 0; }
+.brand-promo__batch { grid-area: batch; }
+.brand-promo__add, .brand-promo__preview, .brand-promo__output, .brand-promo__batch, .brand-promo__panel { min-width: 0; }
 .brand-promo__label { margin: 0 0 8px; font-size: .86rem; font-weight: 700; }
 .brand-promo__add-buttons { display: grid; gap: 6px; }
 .brand-promo__add-buttons .ui-button { padding-inline: 14px; }
@@ -1265,12 +1266,22 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .brand-promo__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .brand-promo__fields .field-group label { overflow-wrap: anywhere; }
 .brand-promo__layer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* One layout for many product photos: the photos sit under the stage they are previewed on. */
+.brand-promo__batch { display: grid; gap: 10px; }
+.brand-promo__batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.brand-promo__batch-bar .field-help { flex: 1 1 14rem; margin: 0; }
+.brand-promo__batch .image-batch-strip { margin-top: 0; }
+.brand-promo__downloads { margin-top: 12px; }
 /* Side by side: the preview holds the left column and stays in view while the panel scrolls. */
 @media (min-width: 768px) {
   .brand-promo { --promo-stage-max: clamp(260px, calc(100svh - 350px), 640px); }
-  .brand-promo__editor { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); grid-template-rows: auto auto 1fr; grid-template-areas: "preview add" "preview output" "preview panel"; column-gap: 24px; row-gap: 16px; }
+  .brand-promo__editor { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); grid-template-rows: auto auto auto 1fr; grid-template-areas: "preview add" "preview output" "batch panel" ". panel"; column-gap: 24px; row-gap: 16px; }
+  /* With a batch, the canvas gives up some height so the photos it previews stay on the first screen. */
+  .brand-promo--batch { --promo-stage-max: clamp(220px, calc(100svh - 510px), 520px); }
   .brand-promo__add-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .brand-promo__preview { position: sticky; top: 80px; }
+  /* The batch sits under the canvas, so the canvas no longer stays pinned over it. */
+  .brand-promo--batch .brand-promo__preview { position: static; }
 }
 
 /* The workbench keeps the shared tool surface; only its step rail and stacked previews are new. */
