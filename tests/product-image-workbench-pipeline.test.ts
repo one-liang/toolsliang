@@ -3,17 +3,12 @@ import {
   planBrandScene,
   planCompressionInput,
   planLayoutInput,
-  promotionalCanvasBounds,
-  resolveLayoutBounds,
+  workbenchCanvasBounds,
 } from '@/features/tools/product-image-workbench/pipeline'
-import { findCompliantImagePreset } from '@/features/tools/compliant-product-image/domain/preset'
 import { describeSizeIssue } from '@/features/tools/compliant-product-image/domain/render'
 import { imageInputLimits } from '@/features/images/limits'
 
-const today = '2026-09-09'
-const preset = findCompliantImagePreset('momo-store-main')!
 const settings = {
-  presetId: 'momo-store-main',
   width: 1000,
   height: 1000,
   format: 'image/jpeg' as const,
@@ -26,27 +21,22 @@ const settings = {
 const product = new File([new Uint8Array([137, 80])], 'product.png', { type: 'image/png' })
 
 describe('版型步驟的輸出範圍', () => {
-  it('合規主圖沿用通路 preset 的尺寸限制', () => {
-    const bounds = resolveLayoutBounds('compliant', preset, today)
-
-    expect(bounds).toEqual(expect.objectContaining({ exact: { width: 1000, height: 1000 } }))
-    expect(describeSizeIssue(bounds, 900, 900)).toBe('not-exact')
-  })
-
-  it('品牌宣傳圖不套用通路規格，只受本機處理上限限制', () => {
-    const bounds = resolveLayoutBounds('promotional', preset, today)
-
-    expect(bounds).toEqual(promotionalCanvasBounds)
-    expect(bounds.exact).toBeUndefined()
-    expect(bounds.maxPixels).toBe(imageInputLimits.maxPixels)
-    expect(describeSizeIssue(bounds, 900, 1600)).toBeUndefined()
-    expect(describeSizeIssue(bounds, 9000, 1000)).toBe('too-large')
+  it('畫布只受本機處理上限限制，任何長寬比都可以', () => {
+    expect(workbenchCanvasBounds).toEqual({
+      minWidth: 1,
+      maxWidth: imageInputLimits.maxSide,
+      minHeight: 1,
+      maxHeight: imageInputLimits.maxSide,
+      maxPixels: imageInputLimits.maxPixels,
+    })
+    expect(describeSizeIssue(workbenchCanvasBounds, 900, 1600)).toBeUndefined()
+    expect(describeSizeIssue(workbenchCanvasBounds, 9000, 1000)).toBe('too-large')
   })
 })
 
 describe('版型步驟交給算繪引擎的輸入', () => {
-  it('合規主圖帶上通路要求的容量範圍', () => {
-    const input = planLayoutInput({ file: product, purpose: 'compliant', settings, byteRange: { min: 20_000, max: 2_000_000 } })
+  it('設定原樣交給算繪引擎，不附帶任何容量範圍', () => {
+    const input = planLayoutInput({ file: product, settings })
 
     expect(input).toEqual({
       file: product,
@@ -58,21 +48,12 @@ describe('版型步驟交給算繪引擎的輸入', () => {
       offsetX: 0,
       offsetY: 0,
       background: '#ffffff',
-      minBytes: 20_000,
-      maxBytes: 2_000_000,
     })
-  })
-
-  it('品牌宣傳圖不帶通路容量範圍，避免把通路規則套到宣傳輸出', () => {
-    const input = planLayoutInput({ file: product, purpose: 'promotional', settings, byteRange: { min: 20_000, max: 2_000_000 } })
-
-    expect(input.minBytes).toBeUndefined()
-    expect(input.maxBytes).toBeUndefined()
   })
 
   it('去背結果會取代原圖成為版型步驟的輸入', () => {
     const cutout = new File([new Uint8Array([137, 80])], 'cutout.png', { type: 'image/png' })
-    expect(planLayoutInput({ file: cutout, purpose: 'compliant', settings, byteRange: {} }).file).toBe(cutout)
+    expect(planLayoutInput({ file: cutout, settings }).file).toBe(cutout)
   })
 })
 

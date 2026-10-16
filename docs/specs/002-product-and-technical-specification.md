@@ -40,7 +40,7 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 26. As a scheduler, I want local custom calendar overrides with storage controls, so that private schedules stay under my control.
 27. As an image user, I want local compression with progress and quality controls, so that I can reduce supported files privately.
 28. As an image user, I want local background removal, so that image pixels never reach an external AI service.
-29. As a merchant, I want reviewed compliant-image presets and a no-approval guarantee notice, so that guidance is useful but honest.
+29. As a merchant, I want reviewed compliant-image presets and a no-approval guarantee notice, so that guidance is useful but honest. (Removed by ADR-0022.)
 30. As a商用創作者, I want local background, frame, and Logo composition without first-version text or price tags, so that scope stays reliable.
 31. As a商用創作者, I want reusable image engines combined in a batch workbench, so that repeated import/export is unnecessary.
 32. As a PDF user, I want local handwritten-signature placement clearly distinguished from digital signatures, so that capability and limits are clear.
@@ -270,10 +270,11 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 
 #### 12.9 Compliant product image
 
+- **Status:** Removed. ADR-0019 withdrew the standalone page, and ADR-0022 removed the channel presets, rule checks, sources and the compliant branch from the product image workbench. The slug stays reserved as unpublished; the rest of this section is kept as history and no longer describes shipped behavior.
 - **User story and non-goals:** A merchant prepares an image against a reviewed public channel preset covering canvas, background, centering, and product occupancy. The tool does not guarantee approval and does not add border, Logo, promotional text, or price tags.
 - **Local boundary:** Product images and outputs stay on device. Channel preset JSON and source citations are public static assets from toolsliang-controlled origins.
 - **Module and interface:** A versioned preset registry defines channel, region, image role, dimensions, aspect, background, allowed formats/size, occupancy guidance, source URL, effective/review date, and status. A worker composition engine validates and renders without claiming to algorithmically prove every policy.
-- **Route and slug:** stable slug `compliant-product-image`, reserved as unpublished. The standalone `/{locale}/tools/compliant-product-image/` page was withdrawn by ADR-0019; the capability ships only as the compliant branch of the product image workbench.
+- **Route and slug:** stable slug `compliant-product-image`, reserved as unpublished. The standalone `/{locale}/tools/compliant-product-image/` page was withdrawn by ADR-0019, and the workbench's compliant branch by ADR-0022.
 - **Bilingual content:** `合規主圖` / `Compliant Product Image`; visible copy says “規格輔助，不保證通路審核通過” / “Specification guidance, not a guarantee of channel approval.”
 - **SEO/AEO/GEO:** Channel-specific content is indexable only for verified active presets. Answer what is checked, what is not checked, and the source/review date. Retired presets remain documented or redirect safely without stale claims.
 - **Errors, cancellation, progress, capability:** Block expired/unverified presets, unsupported image, impossible dimensions, memory limits, and render failure. Stages: validate preset, decode, fit, render, encode. Cancel is available after start.
@@ -298,12 +299,12 @@ Nuxt 4 公開內容採 SSR/prerender，工具內容只在瀏覽器處理；工�
 
 #### 12.11 Product image workbench
 
-- **User story and non-goals:** A商用創作者 processes a batch through import, optional background removal, layout/purpose preset, compression, and batch download without repeated import/export. It is not a full image editor, DAM, cloud collaboration tool, or server render farm.
-- **Local boundary:** Batch files, scene state, masks, intermediate pixels, outputs, names, and archives stay on device. Only versioned engines/presets are downloaded.
-- **Module and interface:** An orchestration module composes the same background-removal, layout, compliance/promo, compression, and export engines used by independent tools. It owns a resumable in-tab job graph, bounded concurrency, per-item state, aggregate progress, cancel-all/cancel-item, retry, and deterministic cleanup. It does not duplicate engine logic.
+- **User story and non-goals:** A商用創作者 processes a batch through import, optional background removal, layout, optional frame and Logo, optional compression, and batch download without repeated import/export. It is not a full image editor, DAM, cloud collaboration tool, or server render farm.
+- **Local boundary:** Batch files, scene state, masks, intermediate pixels, outputs, names, and archives stay on device. Only versioned engines are downloaded.
+- **Module and interface:** An orchestration module composes the same background-removal, layout, promo, compression, and export engines used by independent tools. It owns a resumable in-tab job graph, bounded concurrency, per-item state, aggregate progress, cancel-all/cancel-item, retry, and deterministic cleanup. It does not duplicate engine logic.
 - **Route and slug:** `/{locale}/tools/product-image-workbench/`; stable slug `product-image-workbench`.
 - **Bilingual content:** `商品圖工作台` / `Product Image Workbench`; copy explains the pipeline, device limits, which steps require first download, and that work is not cloud-saved.
-- **SEO/AEO/GEO:** Describe the workflow and link to independent tool pages. Clearly separate compliant and promotional branches and their limitations.
+- **SEO/AEO/GEO:** Describe the workflow and link to independent tool pages. The workbench has one promotional flow and no channel specification (ADR-0022); do not claim marketplace main-image compliance.
 - **Errors, cancellation, progress, capability:** Preflight total bytes/pixels/items, required engines, storage, memory, and archive capability. Default first-release limit is 20 images and 200 MiB combined subject to lower device capability. Progress is per item and stage; cancellation preserves explicitly completed downloadable items only.
 - **Accessibility:** Job queue is an operable list/table with status text, per-item actions, aggregate live summary, focus restoration, and no drag-only ordering. Visual previews have filename-free accessible item labels generated locally.
 - **Performance budget:** Shell becomes interactive without loading heavy engines; bounded concurrency defaults to one inference and up to two codec jobs. Long tasks never block the main thread over 50 ms.

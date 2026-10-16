@@ -8,7 +8,6 @@ import {
   isWorkbenchStepReachable,
   noteWorkbenchStepError,
   resetWorkbenchStep,
-  setWorkbenchPurpose,
   skipWorkbenchStep,
   startWorkbenchStep,
   unblockWorkbenchStep,
@@ -21,29 +20,26 @@ function importDone(session = createWorkbenchSession()) {
   return completeWorkbenchStep(startWorkbenchStep(session, 'import'), 'import')
 }
 
-/** The compliant branch: import, skip the cutout, lay out, download. */
-function compliantOutput(session = createWorkbenchSession()) {
+/** Import, skip the cutout, lay out. */
+function laidOut(session = createWorkbenchSession()) {
   const afterCutout = skipWorkbenchStep(importDone(session), 'cutout')
   return completeWorkbenchStep(startWorkbenchStep(afterCutout, 'layout'), 'layout')
 }
 
 describe('工作階段的步驟順序', () => {
-  it('新的工作階段只開放匯入，合規主圖分支不提供品牌素材步驟', () => {
+  it('新的工作階段只開放匯入，其餘六個步驟都在，沒有任何一步因用途被拿掉', () => {
     const session = createWorkbenchSession()
 
-    expect(session.purpose).toBe('compliant')
     expect(session.states).toEqual({
       import: 'ready',
       cutout: 'locked',
       layout: 'locked',
-      brand: 'unavailable',
+      brand: 'locked',
       compress: 'locked',
       output: 'locked',
     })
-    expect(session.blocked.brand).toBe('purpose')
-    // Whether compression applies turns on the channel preset, not the branch,
-    // so this module has no opinion about it.
-    expect(session.blocked.compress).toBeUndefined()
+    expect(session.blocked).toEqual({})
+    expect(session).not.toHaveProperty('purpose')
   })
 
   it('完成一個步驟才開放下一個步驟', () => {
@@ -65,27 +61,25 @@ describe('工作階段的步驟順序', () => {
     const session = createWorkbenchSession()
 
     expect(skipWorkbenchStep(session, 'import')).toBe(session)
-    expect(skipWorkbenchStep(compliantOutput(), 'layout').states.layout).toBe('done')
+    expect(skipWorkbenchStep(laidOut(), 'layout').states.layout).toBe('done')
   })
 
-  it('合規主圖略過壓縮後產生可下載的輸出', () => {
-    const session = skipWorkbenchStep(compliantOutput(), 'compress')
+  it('略過品牌素材與壓縮時，版型結果就是可下載的輸出', () => {
+    const session = skipWorkbenchStep(skipWorkbenchStep(laidOut(), 'brand'), 'compress')
 
-    expect(session.states.brand).toBe('unavailable')
     expect(session.states.output).toBe('done')
     expect(finalWorkbenchArtifact(session)).toBe('layout')
   })
 
-  it('品牌宣傳圖分支在版型之後才開放品牌素材與壓縮，輸出等兩者都有結論', () => {
-    const promotional = setWorkbenchPurpose(createWorkbenchSession(), 'promotional')
-    const laidOut = compliantOutput(promotional)
+  it('版型之後才開放品牌素材與壓縮，輸出等兩者都有結論', () => {
+    const afterLayout = laidOut()
 
-    expect(laidOut.states.brand).toBe('ready')
-    expect(laidOut.states.compress).toBe('locked')
-    expect(laidOut.states.output).toBe('locked')
-    expect(finalWorkbenchArtifact(laidOut)).toBeUndefined()
+    expect(afterLayout.states.brand).toBe('ready')
+    expect(afterLayout.states.compress).toBe('locked')
+    expect(afterLayout.states.output).toBe('locked')
+    expect(finalWorkbenchArtifact(afterLayout)).toBeUndefined()
 
-    const branded = completeWorkbenchStep(startWorkbenchStep(laidOut, 'brand'), 'brand')
+    const branded = completeWorkbenchStep(startWorkbenchStep(afterLayout, 'brand'), 'brand')
     expect(branded.states.compress).toBe('ready')
     expect(branded.states.output).toBe('locked')
     expect(finalWorkbenchArtifact(branded)).toBeUndefined()
@@ -96,8 +90,7 @@ describe('工作階段的步驟順序', () => {
   })
 
   it('壓縮結果是最後產生的檔案，取代品牌素材的結果成為下載的輸出', () => {
-    const promotional = setWorkbenchPurpose(createWorkbenchSession(), 'promotional')
-    const branded = completeWorkbenchStep(startWorkbenchStep(compliantOutput(promotional), 'brand'), 'brand')
+    const branded = completeWorkbenchStep(startWorkbenchStep(laidOut(), 'brand'), 'brand')
     const compressed = completeWorkbenchStep(startWorkbenchStep(branded, 'compress'), 'compress')
 
     expect(compressed.states.output).toBe('done')
@@ -136,7 +129,7 @@ describe('步驟失敗與取消的隔離', () => {
   })
 
   it('改設定與取消走同一條路：步驟交還給使用者，下游成果同時作廢', () => {
-    const changed = resetWorkbenchStep(compliantOutput(), 'layout')
+    const changed = resetWorkbenchStep(laidOut(), 'layout')
 
     expect(changed.states.layout).toBe('ready')
     expect(changed.states.output).toBe('locked')
@@ -144,7 +137,7 @@ describe('步驟失敗與取消的隔離', () => {
   })
 
   it('重新執行上游步驟會作廢下游成果，避免拿舊結果當新結果', () => {
-    const restarted = startWorkbenchStep(compliantOutput(), 'layout')
+    const restarted = startWorkbenchStep(laidOut(), 'layout')
 
     expect(restarted.states.layout).toBe('running')
     expect(restarted.states.output).toBe('locked')
@@ -154,7 +147,7 @@ describe('步驟失敗與取消的隔離', () => {
   })
 
   it('失敗的步驟不會讓下游看起來仍可下載', () => {
-    const failed = failWorkbenchStep(startWorkbenchStep(compliantOutput(), 'layout'), 'layout', 'encode_failed')
+    const failed = failWorkbenchStep(startWorkbenchStep(laidOut(), 'layout'), 'layout', 'encode_failed')
 
     expect(failed.states.output).toBe('locked')
     expect(finalWorkbenchArtifact(failed)).toBeUndefined()
@@ -168,9 +161,10 @@ describe('能力不足只停用受影響的步驟', () => {
     expect(blocked.states.cutout).toBe('unavailable')
     expect(blocked.blocked.cutout).toBe('capability')
     expect(blocked.states.layout).toBe('ready')
-    expect(workbenchProgress(blocked)).toEqual({ completed: 1, total: 4 })
+    expect(workbenchProgress(blocked)).toEqual({ completed: 1, total: 5 })
 
-    const output = skipWorkbenchStep(completeWorkbenchStep(startWorkbenchStep(blocked, 'layout'), 'layout'), 'compress')
+    const afterLayout = completeWorkbenchStep(startWorkbenchStep(blocked, 'layout'), 'layout')
+    const output = skipWorkbenchStep(skipWorkbenchStep(afterLayout, 'brand'), 'compress')
     expect(output.states.output).toBe('done')
   })
 
@@ -193,9 +187,8 @@ describe('能力不足只停用受影響的步驟', () => {
     expect(restored.states.layout).toBe('locked')
   })
 
-  it('品牌素材引擎不可用時，品牌宣傳圖分支仍能輸出版型結果', () => {
-    const promotional = setWorkbenchPurpose(createWorkbenchSession(), 'promotional')
-    const blocked = blockWorkbenchStep(compliantOutput(promotional), 'brand', 'capability')
+  it('品牌素材引擎不可用時，仍能輸出版型結果', () => {
+    const blocked = blockWorkbenchStep(laidOut(), 'brand', 'capability')
 
     expect(blocked.states.brand).toBe('unavailable')
     // The step after it is simply next in line; a missing engine never ends the run.
@@ -208,33 +201,18 @@ describe('能力不足只停用受影響的步驟', () => {
 describe('回到前一步與進度', () => {
   it('尚未開放的步驟不可進入', () => {
     expect(isWorkbenchStepReachable(createWorkbenchSession(), 'layout')).toBe(false)
-    expect(isWorkbenchStepReachable(compliantOutput(), 'layout')).toBe(true)
+    expect(isWorkbenchStepReachable(laidOut(), 'layout')).toBe(true)
   })
 
-  it('切換用途保留匯入與去背成果，只作廢版型之後的步驟', () => {
-    const switched = setWorkbenchPurpose(compliantOutput(), 'promotional')
-
-    expect(switched.states.import).toBe('done')
-    expect(switched.states.cutout).toBe('skipped')
-    expect(switched.states.layout).toBe('ready')
-    expect(switched.states.brand).toBe('locked')
-    expect(switched.states.compress).toBe('locked')
-    expect(switched.states.output).toBe('locked')
-    expect(switched.blocked.brand).toBeUndefined()
-    expect(switched.blocked.compress).toBeUndefined()
-  })
-
-  it('進度只計算這個分支實際適用的步驟', () => {
-    expect(workbenchProgress(createWorkbenchSession())).toEqual({ completed: 0, total: 5 })
-    expect(workbenchProgress(skipWorkbenchStep(compliantOutput(), 'compress'))).toEqual({ completed: 5, total: 5 })
-
-    const promotional = setWorkbenchPurpose(createWorkbenchSession(), 'promotional')
-    expect(workbenchProgress(promotional)).toEqual({ completed: 0, total: 6 })
-    expect(workbenchProgress(compliantOutput(promotional))).toEqual({ completed: 3, total: 6 })
+  it('進度只計算實際適用的步驟', () => {
+    expect(workbenchProgress(createWorkbenchSession())).toEqual({ completed: 0, total: 6 })
+    expect(workbenchProgress(laidOut())).toEqual({ completed: 3, total: 6 })
+    expect(workbenchProgress(skipWorkbenchStep(skipWorkbenchStep(laidOut(), 'brand'), 'compress'))).toEqual({ completed: 6, total: 6 })
+    expect(workbenchProgress(blockWorkbenchStep(createWorkbenchSession(), 'cutout', 'capability'))).toEqual({ completed: 0, total: 5 })
   })
 
   it('工作階段只記錄步驟狀態，不持有任何工具內容，也不記錄閱讀位置', () => {
-    const session: WorkbenchSession = compliantOutput()
+    const session: WorkbenchSession = laidOut()
 
     expect(workbenchSteps).toEqual(['import', 'cutout', 'layout', 'brand', 'compress', 'output'])
     expect(JSON.stringify(session)).not.toMatch(/blob:|data:|File|\.png/)

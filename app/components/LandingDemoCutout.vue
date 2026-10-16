@@ -12,14 +12,14 @@ const text = computed(() => props.locale === 'en'
       before: 'Original',
       after: 'Transparent PNG',
       steps: 'Product image workbench steps',
-      items: ['Cutout', 'Compliant size', 'Frame & Logo'],
+      items: ['Cutout', 'Frame & Logo', 'Compress'],
     }
   : {
       art: '示意圖：同一張人像去背前後的對照',
       before: '原圖',
       after: '透明 PNG',
       steps: '商品圖工作台流程',
-      items: ['去背', '合規尺寸', '框版 Logo'],
+      items: ['去背', '框版 Logo', '壓縮'],
     })
 
 const frames = ['before', 'after'] as const

@@ -12,9 +12,9 @@ export const productImageWorkbenchDefinition: PublishedToolDefinition = {
   availability: { state: 'published', publishedAt: '2026-09-09' },
   status: { kind: 'new', startsAt: '2026-09-09', endsAt: '2026-10-09' },
   name: { 'zh-tw': '商品圖工作台', en: 'Product Image Workbench' },
-  description: { 'zh-tw': '把去背、合規尺寸與品牌素材串成一次本機作業。', en: 'Run cutout, compliant sizing, and brand assets as one local pass.' },
+  description: { 'zh-tw': '把多張商品圖的去背、套版與壓縮串成一次本機作業。', en: 'Run cutout, layout with brand assets, and compression on a batch of product images as one local pass.' },
   aliases: { 'zh-tw': ['商品圖流程', '上架圖工作台'], en: ['product image pipeline', 'listing image workbench'] },
-  keywords: { 'zh-tw': ['去背', '主圖', '框版', 'Logo', '通路規格'], en: ['cutout', 'main image', 'frame', 'Logo', 'channel preset'] },
+  keywords: { 'zh-tw': ['去背', '套版', '框版', 'Logo', '壓縮'], en: ['cutout', 'layout', 'frame', 'Logo', 'compression'] },
   processingClass: 'worker', routeComponentKey: 'ProductImageWorkbenchWorkspace', offlineMode: 'ready',
   capabilities: ['javascript', 'web-worker'],
   acceptedInput: { 'zh-tw': '單張 JPEG、PNG 或 WebP 商品圖，另可加入框版與 Logo；每張最多 25 MiB、2,400 萬像素、單邊 8,192 像素。不支援 HEIC／HEIF。', en: 'One JPEG, PNG, or WebP product image, plus an optional frame and Logo; each up to 25 MiB, 24 megapixels, and 8,192 pixels per side. HEIC/HEIF is not supported.' },
@@ -22,8 +22,8 @@ export const productImageWorkbenchDefinition: PublishedToolDefinition = {
   pagePresentation: { showHeadingIcon: false, showLocalProcessingStatement: true },
   seo: {
     contentKey: 'product-image-workbench',
-    title: { 'zh-tw': '商品圖工作台：本機完成去背、合規尺寸與品牌素材', en: 'Product Image Workbench: local cutout, compliant sizing, brand assets' },
-    description: { 'zh-tw': '在瀏覽器裡把商品圖依序完成去背、通路合規尺寸與框版 Logo，中間結果不必重複匯出匯入，圖片與輸出都不離開裝置。', en: 'Take a product image through cutout, channel-compliant sizing, and frame or Logo composition in the browser, without exporting and importing between steps. Images and output never leave your device.' },
-    answer: { 'zh-tw': '工作台把三件事串成一次作業，全部在這台裝置上完成：人像去背、合規主圖的尺寸與背景、品牌宣傳圖的框版與 Logo。合規主圖與品牌宣傳圖是兩條分支，合規分支不加入框版、Logo 或促銷文字，也不保證通路審核通過。任何步驟失敗或取消都只影響那一步，先前成果保留；瀏覽器不支援某個步驟時只停用該步驟。', en: 'The workbench chains three jobs into one pass, all on this device: portrait cutout, compliant sizing and background, and promotional frame or Logo composition. Compliant and promotional outputs are separate branches; the compliant branch adds no frame, Logo, or promotional text and never guarantees channel approval. A failed or cancelled step affects only that step, and an unsupported step is disabled on its own.' },
+    title: { 'zh-tw': '商品圖工作台：本機完成去背、套版與壓縮', en: 'Product Image Workbench: local cutout, layout, and compression' },
+    description: { 'zh-tw': '在瀏覽器裡把多張商品圖依序完成去背、版型、框版 Logo 與壓縮，中間結果不必重複匯出匯入，圖片與輸出都不離開裝置。', en: 'Take a batch of product images through cutout, layout, frame or Logo composition, and compression in the browser, without exporting and importing between steps. Images and output never leave your device.' },
+    answer: { 'zh-tw': '工作台把三件事串成一次作業，全部在這台裝置上完成：人像去背、套上背景、框版與 Logo，以及壓縮檔案大小。去背與壓縮都可以略過。任何步驟失敗或取消都只影響那一步，先前成果保留；瀏覽器不支援某個步驟時只停用該步驟。', en: 'The workbench chains three jobs into one pass, all on this device: portrait cutout, your background, frame, and Logo, and compression to a smaller file. The cutout and the compression can be skipped. A failed or cancelled step affects only that step, and an unsupported step is disabled on its own.' },
   },
 }

@@ -35,9 +35,7 @@ it('交給引擎的輸入只帶使用者的檔案本身，場景文件不複製�
   const logo = new File([new Uint8Array([137, 80])], 'private-workbench-logo.png', { type: 'image/png' })
   const layout = planLayoutInput({
     file: product,
-    purpose: 'compliant',
-    settings: { presetId: 'momo-store-main', width: 1000, height: 1000, format: 'image/jpeg', fit: 'cover', zoom: 100, offsetX: 0, offsetY: 0, background: '#ffffff' },
-    byteRange: {},
+    settings: { width: 1000, height: 1000, format: 'image/jpeg', fit: 'cover', zoom: 100, offsetX: 0, offsetY: 0, background: '#ffffff' },
   })
   const { scene } = planBrandScene({ canvas: { width: 1000, height: 1000 }, product, logo, logoScale: 25, logoX: 0, logoY: 0, logoOpacity: 100 })
 

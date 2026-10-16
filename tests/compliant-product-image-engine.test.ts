@@ -15,7 +15,7 @@ const options = {
 
 const png = new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], 'product.png', { type: 'image/png' })
 
-describe('合規主圖 Tool Engine', () => {
+describe('版型步驟的算繪引擎', () => {
   it.each([
     ['product.HEIC', 'image/jpeg', new Uint8Array([255, 216, 255])],
     ['product.png', 'image/heif', new Uint8Array([137, 80, 78, 71])],
@@ -36,7 +36,6 @@ describe('合規主圖 Tool Engine', () => {
     ['超出範圍的位移', { offsetX: 140 }],
     ['本工具無法輸出的格式', { format: 'image/gif' as unknown as CompliantRenderInput['format'] }],
     ['不合法的背景填色', { background: 'white' }],
-    ['不合法的容量下限', { minBytes: 0 }],
   ])('不合法設定在開始前就被擋下，不進入 Worker：%s', async (_label, patch) => {
     const engine = createCompliantImageRenderer()
 
@@ -156,20 +155,6 @@ describe('worker 生命週期', () => {
 
     expect(await engine.run({ file: png, ...options }))
       .toMatchObject({ status: 'error', error: { code: 'unsupported_encoder', recoverable: true } })
-    engine.dispose()
-  })
-
-  it('把容量範圍原樣交給 Worker，不在頁面上假裝已經達成', async () => {
-    let received: CompliantRenderInput | undefined
-    stubWorker((message, worker) => {
-      if (message.type === 'prepare') { worker.onmessage?.({ data: { type: 'capabilities', supported: true, formats: ['image/jpeg'] } }); return }
-      received = message.input
-      worker.onmessage?.({ data: { type: 'error', code: 'failed' } })
-    })
-    const engine = createCompliantImageRenderer()
-    await engine.run({ file: png, ...options, minBytes: 50_000, maxBytes: 1_000_000 })
-
-    expect(received).toMatchObject({ minBytes: 50_000, maxBytes: 1_000_000 })
     engine.dispose()
   })
 

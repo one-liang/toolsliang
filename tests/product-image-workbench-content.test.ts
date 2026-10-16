@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { getTool } from '@/features/tools/catalog'
+import { copy, getTool, supportedLocales, type PublishedToolDefinition } from '@/features/tools/catalog'
 import { getToolFaq } from '@/features/tools/faq'
+import { buildToolStructuredData } from '@/features/tools/structured-data'
 import { resolveToolWorkspace } from '@/features/tools/workspace-resolver'
+import * as workbenchContent from '@/features/tools/product-image-workbench/content'
 import {
   workbenchAdmissionMessage,
-  workbenchBlockMessage,
+  workbenchBlockReasons,
   workbenchErrorMessage,
   workbenchItemLabel,
   workbenchLimitsNotice,
@@ -39,16 +41,49 @@ describe('商品圖工作台的目錄註冊', () => {
 
     expect(tool?.localProcessingStatement['zh-tw']).toContain('留在這台裝置')
     expect(copyOf(workbenchLocalNotice)).toContain('留在這台裝置')
-    expect(answers.map(entry => entry.body).join('')).toContain('不保證通路審核通過')
     expect(answers.map(entry => entry.body).join('')).toContain('先前完成的步驟仍然保留')
     expect(getToolFaq('product-image-workbench', 'en').map(entry => entry.body).join(' ')).toContain('never syncs to the cloud')
   })
 
-  it('不宣稱合規主圖可以加上框版或 Logo，也說明為什麼不再壓一次', () => {
-    expect(workbenchBlockMessage('brand', 'purpose', 'zh-tw')).toContain('合規主圖不得加入框版、Logo 或促銷文字')
-    expect(workbenchBlockMessage('compress', 'purpose', 'zh-tw')).toContain('這個通路規格已經規定了檔案容量')
-    expect(workbenchBlockMessage('brand', 'purpose', 'zh-tw')).not.toBe(workbenchBlockMessage('compress', 'purpose', 'zh-tw'))
-    expect(workbenchBlockMessage('cutout', 'capability', 'zh-tw')).toContain('其餘步驟仍可正常使用')
+  it('步驟停用的唯一理由是瀏覽器做不到，且說明其餘步驟仍可使用', () => {
+    expect(Object.keys(workbenchBlockReasons)).toEqual(['capability'])
+    expect(copyOf(workbenchBlockReasons.capability)).toContain('其餘步驟仍可正常使用')
+  })
+})
+
+/**
+ * ADR-0022 removed the channel presets: the page, its FAQ, its structured data
+ * and the workspace copy no longer speak of channels, specifications or a
+ * compliant main image anywhere.
+ */
+describe('商品圖工作台不再提到通路規格', () => {
+  const channelWording = /通路|合規|主圖|上架規格|preset|channel|complian|main image/i
+
+  function strings(value: unknown, found: string[] = []): string[] {
+    if (typeof value === 'string') found.push(value)
+    else if (value && typeof value === 'object') Object.values(value).forEach(child => strings(child, found))
+    return found
+  }
+
+  it.each(supportedLocales)('%s 的工具頁、FAQ 與結構化資料', (locale) => {
+    const tool = getTool('product-image-workbench') as PublishedToolDefinition
+    const page = [
+      copy(tool.name, locale),
+      copy(tool.description, locale),
+      copy(tool.seo.title, locale),
+      copy(tool.seo.description, locale),
+      copy(tool.seo.answer, locale),
+      ...tool.keywords[locale],
+      ...tool.aliases[locale],
+      ...getToolFaq('product-image-workbench', locale).flatMap(entry => [entry.heading, entry.body]),
+      ...strings(buildToolStructuredData(tool, locale)),
+    ]
+
+    expect(page.filter(text => channelWording.test(text))).toEqual([])
+  })
+
+  it('工作區的每一句文案', () => {
+    expect(strings(workbenchContent).filter(text => channelWording.test(text))).toEqual([])
   })
 })
 

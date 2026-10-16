@@ -91,8 +91,8 @@ const landingCategoryPitches: Record<LandingCategoryId, LocalizedCopy> = {
  */
 const landingToolTaglines: Record<string, LocalizedCopy> = {
   'product-image-workbench': {
-    'zh-tw': '去背、合規尺寸、框版 Logo 一次跑完',
-    en: 'Cutout, compliant sizing and frames in one run',
+    'zh-tw': '去背、框版 Logo、壓縮一次跑完',
+    en: 'Cutout, frames and compression in one run',
   },
   'image-background-remover': {
     'zh-tw': '把人像從背景分離，輸出透明 PNG',

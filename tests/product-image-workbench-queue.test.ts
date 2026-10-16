@@ -8,7 +8,6 @@ import {
   planWorkbenchRuns,
   removeWorkbenchItem,
   resolveWorkbenchLaneLimits,
-  setWorkbenchQueuePurpose,
   updateWorkbenchItem,
   updateWorkbenchItems,
   workbenchLaneOf,
@@ -108,7 +107,7 @@ describe('批次的彙總狀態', () => {
 
   it('彙總進度以項目為單位，明確區分完成、未完成與尚未開始', () => {
     const laidOut = everyItem(everyItem(everyItem(queueOf(3), 'import'), 'cutout'), 'layout')
-    const settled = updateWorkbenchItems(laidOut, session => skipWorkbenchStep(session, 'compress'))
+    const settled = updateWorkbenchItems(laidOut, session => skipWorkbenchStep(skipWorkbenchStep(session, 'brand'), 'compress'))
     const queue = updateWorkbenchItem(settled, 'item-3', session => failWorkbenchStep(startWorkbenchStep(session, 'layout'), 'layout', 'encode_failed'))
 
     expect(workbenchQueueProgress(queue)).toEqual({ total: 3, done: 2, failed: 1, running: 0, pending: 0 })
@@ -116,26 +115,19 @@ describe('批次的彙總狀態', () => {
     expect(workbenchQueueOutputs(queue).every(entry => entry.step === 'layout')).toBe(true)
   })
 
-  it('用途改變會套用到批次裡的每個項目，不會只改到其中一個', () => {
-    const queue = setWorkbenchQueuePurpose(everyItem(queueOf(2), 'import'), 'promotional')
+  it('品牌素材與壓縮對每個項目都是同一條流程裡的步驟，沒有任何一步因用途被停用', () => {
+    const queue = queueOf(2)
 
-    expect(queue.purpose).toBe('promotional')
-    expect(queue.items.every(item => item.session.purpose === 'promotional')).toBe(true)
+    expect(queue).not.toHaveProperty('purpose')
     expect(workbenchStepStatus(queue, 'brand').state).toBe('locked')
     expect(workbenchStepStatus(queue, 'compress').state).toBe('locked')
-  })
-
-  it('品牌素材由分支決定；壓縮不是分支的事，因此佇列不會只因用途就停用它', () => {
-    expect(workbenchStepStatus(queueOf(1), 'brand').state).toBe('unavailable')
-    expect(workbenchStepStatus(queueOf(1), 'compress').state).toBe('locked')
-    expect(workbenchStepStatus(setWorkbenchQueuePurpose(queueOf(1), 'promotional'), 'brand').state).toBe('locked')
   })
 
   it('還沒有圖片時，佇列仍說得出這條流程有哪些步驟，之後收下的項目也照這個形狀開始', () => {
     const empty = createWorkbenchQueue()
 
     expect(workbenchStepStatus(empty, 'import').state).toBe('ready')
-    expect(workbenchStepStatus(empty, 'brand').state).toBe('unavailable')
+    expect(workbenchStepStatus(empty, 'brand').state).toBe('locked')
 
     const blocked = updateWorkbenchPipeline(empty, session => blockWorkbenchStep(session, 'cutout', 'capability'))
     expect(workbenchStepStatus(blocked, 'cutout').state).toBe('unavailable')
