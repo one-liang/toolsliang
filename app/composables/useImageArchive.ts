@@ -1,7 +1,6 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { createArchiveWriter } from '@/features/tools/product-image-workbench/engine'
-import { checkWorkbenchArchive } from '@/features/tools/product-image-workbench/archive'
-import type { WorkbenchArchiveEntryInput } from '@/features/tools/product-image-workbench/types'
+import { checkImageArchive, type ImageArchiveEntryInput } from '@/features/images/archive'
+import { createImageArchiveWriter } from '@/features/images/archive-writer'
 
 /**
  * Packing the finished outputs into one file, here on the device.
@@ -12,8 +11,8 @@ import type { WorkbenchArchiveEntryInput } from '@/features/tools/product-image-
  * writer at all. §12.11 asks for that last one to be answered before an archive
  * is offered, which is why the engine is asked on mount rather than on click.
  */
-export function useWorkbenchArchive(entries: () => WorkbenchArchiveEntryInput[]) {
-  const writer = createArchiveWriter()
+export function useImageArchive(entries: () => ImageArchiveEntryInput[]) {
+  const writer = createImageArchiveWriter()
   const supported = ref(false)
   const building = ref(false)
   const stage = ref('')
@@ -21,7 +20,7 @@ export function useWorkbenchArchive(entries: () => WorkbenchArchiveEntryInput[])
   const failure = ref('')
   let mounted = true
 
-  const issue = computed(() => checkWorkbenchArchive({
+  const issue = computed(() => checkImageArchive({
     count: entries().length,
     bytes: entries().reduce((total, entry) => total + entry.blob.size, 0),
   }))

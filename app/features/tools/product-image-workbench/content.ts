@@ -6,8 +6,9 @@ import { backgroundRemovalErrors, backgroundRemovalStages } from '../image-backg
 import { promoErrors } from '../brand-promo-image/content'
 import { imageErrors } from '../image-compressor/content'
 import { formatAssetSize } from '@/features/pwa/offline-assets'
-import type { WorkbenchArchiveIssue } from './archive'
-import type { WorkbenchAdmissionCode, WorkbenchItemStatus, WorkbenchQueueLimits } from './queue'
+import type { ImageArchiveIssue } from '@/features/images/archive'
+import type { ImageBatchLimits } from '@/features/images/batch'
+import type { WorkbenchAdmissionCode, WorkbenchItemStatus } from './queue'
 import type { WorkbenchBlockReason, WorkbenchPurpose, WorkbenchStep, WorkbenchStepState } from './session'
 
 export const workbenchStepLabels: Record<WorkbenchStep, LocalizedCopy> = {
@@ -128,7 +129,7 @@ const sharedWorkbenchErrors: Record<string, LocalizedCopy> = {
 }
 
 /** What the archive itself can refuse, decided before a byte is written. */
-export const workbenchArchiveIssues: Record<WorkbenchArchiveIssue, LocalizedCopy> = {
+export const workbenchArchiveIssues: Record<ImageArchiveIssue, LocalizedCopy> = {
   nothing_to_archive: {
     'zh-tw': '這批還沒有完成的輸出可以打包。完成至少一個項目後再下載封存檔。',
     en: 'This batch has no finished output to pack yet. Finish at least one item, then download the archive.',
@@ -196,7 +197,7 @@ export const workbenchItemStatusLabels: Record<WorkbenchItemStatus, LocalizedCop
 }
 
 /** The ceilings, in the words the merchant is refused with, so both come from one place. */
-export function workbenchLimitsNotice(limits: WorkbenchQueueLimits, locale: keyof LocalizedCopy) {
+export function workbenchLimitsNotice(limits: ImageBatchLimits, locale: keyof LocalizedCopy) {
   const size = formatAssetSize(limits.maxBytes, locale)
 
   return locale === 'en'
@@ -204,7 +205,7 @@ export function workbenchLimitsNotice(limits: WorkbenchQueueLimits, locale: keyo
     : `這台裝置一次最多 ${limits.maxItems} 張、合計 ${size}。`
 }
 
-export function workbenchAdmissionMessage(code: WorkbenchAdmissionCode, limits: WorkbenchQueueLimits, locale: keyof LocalizedCopy) {
+export function workbenchAdmissionMessage(code: WorkbenchAdmissionCode, limits: ImageBatchLimits, locale: keyof LocalizedCopy) {
   const size = formatAssetSize(limits.maxBytes, locale)
   const messages: Record<WorkbenchAdmissionCode, LocalizedCopy> = {
     too_many_items: {

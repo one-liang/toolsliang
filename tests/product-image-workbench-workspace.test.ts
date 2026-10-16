@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, expect, it, vi } from 'vitest'
 import Workspace from '@/components/ProductImageWorkbenchWorkspace.vue'
 import { shellStubs } from './support/nuxt-stubs'
-import { workbenchQueueLimits } from '@/features/tools/product-image-workbench/queue'
+import { imageBatchLimits } from '@/features/images/batch'
 
 /** No worker script can be fetched here, so every engine reports itself unsupported. */
 function mountWorkspace() {
@@ -97,7 +97,7 @@ it('批次上限在選檔前就寫在畫面上', async () => {
   await flushPromises()
 
   const help = wrapper.get('#workbench-import-help').text()
-  expect(help).toContain(`最多 ${workbenchQueueLimits.maxItems} 張`)
+  expect(help).toContain(`最多 ${imageBatchLimits.maxItems} 張`)
   expect(help).toContain('單張最多 25 MiB')
   expect(wrapper.get('#workbench-file').attributes('multiple')).toBeDefined()
   wrapper.unmount()
@@ -119,9 +119,9 @@ it('匯入的每張圖片各自成為一列，標籤只有序號，不顯示來�
 it('超過張數上限的圖片在開始前就被退回並說明，已收下的不受影響', async () => {
   const wrapper = mountWorkspace()
   await flushPromises()
-  await selectFiles(wrapper, Array.from({ length: workbenchQueueLimits.maxItems + 2 }, (_, index) => png(`item-${index}.png`)))
+  await selectFiles(wrapper, Array.from({ length: imageBatchLimits.maxItems + 2 }, (_, index) => png(`item-${index}.png`)))
 
-  expect(wrapper.findAll('[data-queue-item]')).toHaveLength(workbenchQueueLimits.maxItems)
+  expect(wrapper.findAll('[data-queue-item]')).toHaveLength(imageBatchLimits.maxItems)
   expect(wrapper.get('#workbench-import-issues').text()).toContain('超過張數上限')
   expect(wrapper.get('#workbench-import-issues').attributes('role')).toBe('alert')
   wrapper.unmount()

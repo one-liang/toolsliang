@@ -1,12 +1,11 @@
-import { buildZipArchive } from './archive'
-import type { ArchiveWireOutput, WorkbenchArchiveInput } from './types'
-import type { WorkerReply } from '../engine/worker-engine'
+import { buildZipArchive, type ArchiveWireOutput, type ImageArchiveInput } from './archive'
+import type { WorkerReply } from '../tools/engine/worker-engine'
 
 declare const self: DedicatedWorkerGlobalScope
 const send = (message: WorkerReply<ArchiveWireOutput>, transfer: Transferable[] = []) => self.postMessage(message, transfer)
 
 /**
- * Reads every finished output and writes the one file the merchant downloads.
+ * Reads every finished output and writes the one file the person downloads.
  *
  * It runs off the main thread for the reason §12.11 states as a budget: a
  * batch is up to 200 MiB, and reading and checksumming that much on the page
@@ -14,7 +13,7 @@ const send = (message: WorkerReply<ArchiveWireOutput>, transfer: Transferable[] 
  * touches the network — the bytes arrive from the page and the archive goes
  * straight back.
  */
-async function write(input: WorkbenchArchiveInput) {
+async function write(input: ImageArchiveInput) {
   try {
     const entries: { name: string, bytes: Uint8Array }[] = []
     for (const [index, entry] of input.entries.entries()) {
@@ -31,7 +30,7 @@ async function write(input: WorkbenchArchiveInput) {
   }
 }
 
-self.onmessage = async (event: MessageEvent<{ type: 'prepare' } | { type: 'run', input: WorkbenchArchiveInput }>) => {
+self.onmessage = async (event: MessageEvent<{ type: 'prepare' } | { type: 'run', input: ImageArchiveInput }>) => {
   if (event.data.type === 'prepare') send({ type: 'capabilities', supported: true, formats: ['application/zip'] })
   else await write(event.data.input)
 }
