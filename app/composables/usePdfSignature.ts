@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { createPdfSignatureSession, type PdfSignatureSession } from '@/features/tools/pdf-signature/engine'
 import {
   pdfDisplayBox,
@@ -11,7 +11,7 @@ import {
   createPdfWorkspace,
   dragPlacement,
   movePlacement,
-  placeSignature,
+  placeSignature as placeSignatureOnPage,
   placementGeometry,
   placementSummary,
   placementsOnPage,
@@ -43,6 +43,13 @@ export interface SignatureAsset {
   url: string
   /** Set once it is also a local asset on this device. */
   savedId?: string
+}
+
+/** A signature saved on this device, ready to be shown as a thumbnail before anything is opened. */
+export interface SavedSignature {
+  id: string
+  name: string
+  url: string
 }
 
 interface PagePreview {
@@ -90,11 +97,15 @@ export function usePdfSignature(locale: () => LocaleCode) {
   const busy = ref(false)
   const stage = ref<{ stage: PdfSignatureStage, page?: number, total?: number }>()
   const error = ref('')
-  const message = ref<'opened' | 'cancelled' | 'exported' | 'signature-saved' | 'signature-removed' | ''>('')
+  const message = ref<'opened' | 'cancelled' | 'exported' | 'signature-saved' | 'signature-placed' | ''>('')
+  /** The page the last signature went onto, for the line that says so. */
+  const placedOn = ref(0)
   const output = ref('')
   const outputInfo = shallowRef<{ mode: string, decrypted: boolean, pageCount: number, bytes: number }>()
 
   const previews = new Map<number, PagePreview>()
+  /** Thumbnails of the signatures saved on this device, one object URL per record. */
+  const savedUrls = new Map<string, string>()
   let generation = 0
   let mounted = true
   let signatureCount = 0
@@ -108,7 +119,20 @@ export function usePdfSignature(locale: () => LocaleCode) {
   const pagePlacements = computed(() => placementsOnPage(workspace.value, pageIndex.value))
   const canUndo = computed(() => canUndoPlacement(workspace.value))
   const activeSignature = computed(() => signatures.value.find(signature => signature.id === activeSignatureId.value))
-  const savedSignatures = computed(() => local.records.value.filter(record => record.kind === 'signature'))
+  /** Oldest first, so the signature a visitor saved first keeps its place at the top. */
+  const savedSignatures = computed(() => local.records.value
+    .filter(record => record.kind === 'signature' && record.payload.format === 'binary')
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt)))
+  const savedThumbnails = shallowRef<SavedSignature[]>([])
+  /**
+   * The signatures made in this session that are not already in the list as a
+   * saved one. A saved signature deleted elsewhere comes back here, because what
+   * is on the page still needs it.
+   */
+  const sessionSignatures = computed(() => {
+    const saved = new Set(savedSignatures.value.map(record => record.id))
+    return signatures.value.filter(signature => !signature.savedId || !saved.has(signature.savedId))
+  })
   /** The widest page in the document decides how many pixels a signature is worth. */
   const maxPlacedWidthPt = computed(() => Math.max(
     595,
@@ -116,6 +140,25 @@ export function usePdfSignature(locale: () => LocaleCode) {
   ))
 
   useWorkspaceDirty('pdf-signature', computed(() => Boolean(file.value) || busy.value))
+
+  /* Saved pixels are read from the device store and shown as they are; only the URLs are made here. */
+  watch(savedSignatures, (records) => {
+    const keep = new Set(records.map(record => record.id))
+    for (const [id, url] of savedUrls) {
+      if (keep.has(id)) continue
+      URL.revokeObjectURL(url)
+      savedUrls.delete(id)
+    }
+    savedThumbnails.value = records.flatMap((record) => {
+      if (record.payload.format !== 'binary') return []
+      let url = savedUrls.get(record.id)
+      if (!url) {
+        url = URL.createObjectURL(new Blob([record.payload.bytes.slice()], { type: record.payload.mediaType }))
+        savedUrls.set(record.id, url)
+      }
+      return [{ id: record.id, name: record.name, url }]
+    })
+  })
 
   function revokePreviews() {
     for (const entry of previews.values()) URL.revokeObjectURL(entry.url)
@@ -273,10 +316,15 @@ export function usePdfSignature(locale: () => LocaleCode) {
     if (activeSignatureId.value === id) activeSignatureId.value = signatures.value.at(-1)?.id ?? ''
   }
 
-  /** Keeps the signature on this device, only because the visitor asked. */
-  async function saveSignature(id: string, name: string) {
+  /**
+   * Keeps the signature on this device, only because the visitor asked, under
+   * the name it already has; renaming belongs to the saved-assets page. Answers
+   * the id of the new record.
+   */
+  async function saveSignature(id: string) {
     const entry = signatures.value.find(signature => signature.id === id)
-    if (!entry) return
+    if (!entry) return undefined
+    const name = entry.name
     /* The repository answers with the whole listing, so the new record is the
      * one that was not there before — matching on the name would pick the wrong
      * row as soon as two signatures share one. */
@@ -286,52 +334,64 @@ export function usePdfSignature(locale: () => LocaleCode) {
       name,
       payload: { format: 'binary', mediaType: 'image/png', bytes: new Uint8Array(entry.bytes.slice(0)) },
     })
-    if (!mounted) return
-    if (!result.ok) { error.value = `storage_${result.code}`; return }
+    if (!mounted) return undefined
+    if (!result.ok) { error.value = `storage_${result.code}`; return undefined }
 
     const saved = result.value.records.find(record => record.kind === 'signature' && !before.has(record.id))
     signatures.value = signatures.value.map(signature => signature.id === id
-      ? { ...signature, name, savedId: saved?.id }
+      ? { ...signature, savedId: saved?.id }
       : signature)
+    error.value = ''
     message.value = 'signature-saved'
     await local.refresh()
+    return saved?.id
   }
 
   /**
-   * Brings a signature saved on this device back into the session. Its pixels
-   * are read from the device store, never re-downloaded, and its size is taken
-   * from the image itself so a placement keeps the proportions it was saved in.
+   * Brings a signature saved on this device back into the session and puts it
+   * on the page being shown. Its pixels are read from the device store, never
+   * re-downloaded, and its size is taken from the image itself so a placement
+   * keeps the proportions it was saved in. A saved signature already in the
+   * session is placed again rather than decoded twice. Answers the placement.
    */
   async function useSavedSignature(id: string) {
+    const existing = signatures.value.find(signature => signature.savedId === id)
+    if (existing) return placeSignature(existing.id)
+
     const record = local.records.value.find(candidate => candidate.id === id)
-    if (!record || record.payload.format !== 'binary') return
+    if (!record || record.payload.format !== 'binary') return undefined
     try {
       const bytes = record.payload.bytes.slice().buffer as ArrayBuffer
       const bitmap = await createImageBitmap(new Blob([bytes], { type: record.payload.mediaType }))
-      if (!mounted) { bitmap.close(); return }
+      if (!mounted) { bitmap.close(); return undefined }
       addSignature({ name: record.name, bytes, width: bitmap.width, height: bitmap.height, savedId: record.id })
       bitmap.close()
-      if (report.value) place()
+      return place()
     }
     catch {
       error.value = 'signature_unreadable'
+      return undefined
     }
   }
 
-  async function forgetSavedSignature(id: string) {
-    if (await local.remove(id)) message.value = 'signature-removed'
+  /** Puts a signature of this session on the page being shown. */
+  function placeSignature(id: string) {
+    if (!signatures.value.some(signature => signature.id === id)) return undefined
+    activeSignatureId.value = id
+    return place()
   }
 
+  /** Places the active signature on the page being shown, and answers the new placement's id. */
   function place() {
     const signature = activeSignature.value
-    if (!signature || !report.value) return
+    if (!signature || !report.value) return undefined
     placementCount += 1
-    workspace.value = placeSignature(workspace.value, {
-      id: `placement-${placementCount}`,
-      page: pageIndex.value,
-      signature,
-    })
+    const id = `placement-${placementCount}`
+    workspace.value = placeSignatureOnPage(workspace.value, { id, page: pageIndex.value, signature })
     clearOutput()
+    placedOn.value = pageIndex.value
+    message.value = 'signature-placed'
+    return id
   }
 
   function update(change: (state: PdfWorkspaceState) => PdfWorkspaceState) {
@@ -406,6 +466,8 @@ export function usePdfSignature(locale: () => LocaleCode) {
     revokePreviews()
     clearOutput()
     for (const signature of signatures.value) URL.revokeObjectURL(signature.url)
+    for (const url of savedUrls.values()) URL.revokeObjectURL(url)
+    savedUrls.clear()
     signatures.value = []
     file.value = undefined
   })
@@ -432,11 +494,14 @@ export function usePdfSignature(locale: () => LocaleCode) {
     activeSignature,
     activeSignatureId,
     savedSignatures,
+    savedThumbnails,
+    sessionSignatures,
     maxPlacedWidthPt,
     busy,
     stage,
     error,
     message,
+    placedOn,
     output,
     outputInfo,
     localError: local.error,
@@ -450,7 +515,7 @@ export function usePdfSignature(locale: () => LocaleCode) {
     dropSignature,
     saveSignature,
     useSavedSignature,
-    forgetSavedSignature,
+    placeSignature,
     place,
     select: (id: string) => update(state => selectPlacement(state, id)),
     move: (delta: { x: number, y: number }, options: { continuing?: boolean } = {}) =>

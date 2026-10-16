@@ -10,8 +10,9 @@ import type { PdfSignatureReply, PdfSignatureRequest } from '@/features/tools/pd
  * goes away.
  *
  * Making a signature is not exercised here — this environment has no canvas, so
- * a rasterised signature cannot exist in it. `tests/e2e/pdf-signature.spec.ts`
- * covers drawing, typing, importing and placing in real browsers, and
+ * a rasterised signature cannot exist in it, and no device database either, so
+ * there are no saved signatures. `tests/e2e/pdf-signature.spec.ts` covers
+ * drawing, typing, importing, saving and placing in real browsers, and
  * `tests/pdf-signature-placement.test.ts` covers the arithmetic behind them.
  */
 const mounted: ReturnType<typeof mount>[] = []
@@ -64,6 +65,14 @@ const documentReport = {
   ],
 }
 
+function mountWorkspace() {
+  const wrapper = mount(PdfSignatureWorkspace, {
+    global: { stubs: { NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' } } },
+  })
+  mounted.push(wrapper)
+  return wrapper
+}
+
 function pdf(name = 'contract.pdf') {
   return new File([new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37])], name, { type: 'application/pdf' })
 }
@@ -78,8 +87,7 @@ async function choose(wrapper: ReturnType<typeof mount>, file: File) {
 
 it('工作區只放操作，產品邊界的兩句話改由頁面下方的「開始前先知道」說明（#82）', async () => {
   stubWorker(capable)
-  const wrapper = mount(PdfSignatureWorkspace)
-  mounted.push(wrapper)
+  const wrapper = mountWorkspace()
   await flushPromises()
 
   const text = wrapper.text()
@@ -92,8 +100,7 @@ it('工作區只放操作，產品邊界的兩句話改由頁面下方的「開�
 
 it('瀏覽器不支援時說明原因並提供重新檢查，不讓人先選檔案再失望', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('no worker asset') }))
-  const wrapper = mount(PdfSignatureWorkspace)
-  mounted.push(wrapper)
+  const wrapper = mountWorkspace()
   await flushPromises()
 
   expect(wrapper.text()).toContain('這個瀏覽器無法在本機開啟並編輯 PDF')
@@ -103,15 +110,14 @@ it('瀏覽器不支援時說明原因並提供重新檢查，不讓人先選檔�
 it('離線且尚未取得本機引擎時，說的是引擎還沒下載，而不是瀏覽器不支援', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
   vi.stubGlobal('navigator', { ...globalThis.navigator, onLine: false })
-  const wrapper = mount(PdfSignatureWorkspace)
-  mounted.push(wrapper)
+  const wrapper = mountWorkspace()
   await flushPromises()
   await choose(wrapper, pdf())
 
   expect(wrapper.find('[role="alert"]').text()).toContain('本機 PDF 引擎還沒有存到這台裝置上')
 })
 
-it('開啟後顯示頁數與保護狀態，並要求第一頁的預覽', async () => {
+it('開啟後頁數只出現在頁次選單，不另列文件摘要與保護狀態，並要求第一頁的預覽（#111）', async () => {
   const requests: PdfSignatureRequest[] = []
   stubWorker((request, reply) => {
     requests.push(request)
@@ -121,13 +127,14 @@ it('開啟後顯示頁數與保護狀態，並要求第一頁的預覽', async (
       reply({ type: 'preview', id: request.id, report: { index: request.page, scale: request.scale, width: 893, height: 1263, bytes: new Uint8Array([1]).buffer } })
     }
   })
-  const wrapper = mount(PdfSignatureWorkspace)
-  mounted.push(wrapper)
+  const wrapper = mountWorkspace()
   await flushPromises()
   await choose(wrapper, pdf())
 
-  expect(wrapper.find('[data-document-summary]').text()).toContain('共 2 頁')
-  expect(wrapper.find('[data-document-summary]').text()).toContain('沒有密碼保護')
+  expect(wrapper.findAll('#pdf-signature-page option').map(option => option.text())).toEqual(['1 / 2', '2 / 2'])
+  expect(wrapper.find('label[for="pdf-signature-page"]').text()).toContain('共 2 頁')
+  expect(wrapper.find('[data-document-summary]').exists()).toBe(false)
+  expect(wrapper.text()).not.toContain('密碼保護')
   expect(wrapper.find('[data-page-preview] img').attributes('src')).toMatch(/^blob:/)
   expect(requests.filter(request => request.type === 'preview')).toMatchObject([{ page: 0, scale: 1.5 }])
   // A document nobody has signed cannot be exported.
@@ -147,8 +154,7 @@ it('需要密碼時出現密碼欄位，密碼只往 Worker 送，不寫進任�
       reply({ type: 'preview', id: request.id, report: { index: request.page, scale: request.scale, width: 893, height: 1263, bytes: new Uint8Array([1]).buffer } })
     }
   })
-  const wrapper = mount(PdfSignatureWorkspace)
-  mounted.push(wrapper)
+  const wrapper = mountWorkspace()
   await flushPromises()
   await choose(wrapper, pdf('locked.pdf'))
 
@@ -167,7 +173,7 @@ it('需要密碼時出現密碼欄位，密碼只往 Worker 送，不寫進任�
   await flushPromises()
 
   expect(passwords).toEqual([undefined, 'wrong', 'toolsliang-t24'])
-  expect(wrapper.find('[data-document-summary]').text()).toContain('有密碼保護')
+  expect(wrapper.find('[data-page-preview] img').exists()).toBe(true)
   // A protected document loses its protection on the way out, and that is said before the download exists.
   expect(wrapper.find('[data-decrypted-notice]').text()).toBe(pdfSignatureDisclosures['decrypted-export']['zh-tw'])
   expect(wrapper.find('[data-export-summary]').exists()).toBe(false)
@@ -182,8 +188,7 @@ it('取消會終止 Worker，並說明原檔未變更', async () => {
     if (request.type === 'open') reply({ type: 'document', id: request.id, report: documentReport })
     /* The preview never answers, so the workspace stays busy and cancellable. */
   })
-  const wrapper = mount(PdfSignatureWorkspace)
-  mounted.push(wrapper)
+  const wrapper = mountWorkspace()
   await flushPromises()
   await choose(wrapper, pdf())
 
@@ -207,8 +212,7 @@ it('離開工具時釋放 Worker 與所有 Blob URL', async () => {
       reply({ type: 'preview', id: request.id, report: { index: request.page, scale: request.scale, width: 893, height: 1263, bytes: new Uint8Array([1]).buffer } })
     }
   })
-  const wrapper = mount(PdfSignatureWorkspace)
-  mounted.push(wrapper)
+  const wrapper = mountWorkspace()
   await flushPromises()
   await choose(wrapper, pdf())
   const created = wrapper.find('[data-page-preview] img').attributes('src')
@@ -218,4 +222,19 @@ it('離開工具時釋放 Worker 與所有 Blob URL', async () => {
 
   expect(revoked).toContain(created)
   expect(workers.every(worker => worker.terminated)).toBe(true)
+})
+
+it('建立簽名只有一排三個入口，不再有「使用這個簽名」與保存名稱欄位（#111）', async () => {
+  stubWorker(capable)
+  const wrapper = mountWorkspace()
+  await flushPromises()
+
+  const create = wrapper.find('.pdf-signature__create')
+  expect(create.attributes('role')).toBe('group')
+  expect(create.findAll('button').map(button => button.text())).toEqual(['手寫', '文字'])
+  // Choosing a picture is the whole step: the file input sits behind its own label.
+  expect(create.find('input[type="file"]#signature-image').attributes('aria-label')).toContain('圖片')
+  expect(create.find('label[for="signature-image"]').text()).toBe('圖片')
+  expect(wrapper.text()).not.toContain('使用這個簽名')
+  expect(wrapper.find('#pdf-signature-name').exists()).toBe(false)
 })

@@ -117,8 +117,8 @@ export const signatureInputErrors: Record<SignatureInputErrorCode, LocalizedCopy
     en: 'There is no signature yet. Draw one on the pad, type one, or import a transparent image.',
   },
   signature_unreadable: {
-    'zh-tw': '這個保存的簽名讀不回來，可能已經損壞。請刪除後重新建立一個。',
-    en: 'That saved signature could not be read back and may be damaged. Delete it and make a new one.',
+    'zh-tw': '這個保存的簽名讀不回來，可能已經損壞。請到本機資產頁刪除後重新建立一個。',
+    en: 'That saved signature could not be read back and may be damaged. Delete it on the saved-assets page and make a new one.',
   },
   multiple_files: {
     'zh-tw': '一次只能選一個檔案。',
