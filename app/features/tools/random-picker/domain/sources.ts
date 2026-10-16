@@ -1,4 +1,4 @@
-import type { PublishedToolDefinition } from '@/features/tools/catalog'
+import type { ToolContentReview } from '@/features/tools/catalog'
 
 /**
  * Document boundary for the local random picker: which sources back the
@@ -26,7 +26,13 @@ export const randomPickerCaveatKeys = [
 
 export type RandomPickerCaveatKey = typeof randomPickerCaveatKeys[number]
 
-export const randomPickerContentReview: PublishedToolDefinition['contentReview'] = {
+/**
+ * The specifications the equal-chance method was reviewed against. They explain
+ * how the tool works rather than what it says, so since #82 the tool page lists
+ * no sources and says how it handles the list instead; only the method note in
+ * the workspace still cites them.
+ */
+export const randomPickerContentReview: ToolContentReview = {
   reviewedAt: '2026-09-05',
   sourceEdition: {
     'zh-tw': 'W3C Web Cryptography API 建議標準（2017 年 1 月 26 日）與 Durstenfeld 隨機排列演算法（Communications of the ACM，1964 年 7 月）',

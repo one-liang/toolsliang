@@ -315,7 +315,7 @@ test('解碼前估算記憶體並提供恢復方式', async ({ page }) => {
   input.writeUInt32BE(13, 8); input.write('IHDR', 12); input.writeUInt32BE(6000, 16); input.writeUInt32BE(4000, 20)
   await page.getByLabel('Choose image', { exact: true }).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/png', buffer: input })
   await page.getByRole('button', { name: 'Compress image', exact: true }).click()
-  await expect(page.locator('#compressor-error')).toContainText('Not enough memory')
+  await expect(page.locator('#compressor-error')).toContainText('needs more memory than this device can spare')
   await expect(page.locator('#compressor-error')).toContainText('Close other tabs and retry')
   await expect(page.getByRole('button', { name: 'Clear image', exact: true })).toBeVisible()
 })

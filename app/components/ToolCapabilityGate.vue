@@ -8,9 +8,9 @@ const unavailable = ref<ToolCapability[]>([])
 const capabilityNames: Record<ToolCapability, Record<LocaleCode, string>> = {
   javascript: { 'zh-tw': 'JavaScript', en: 'JavaScript' },
   'web-worker': { 'zh-tw': '背景處理', en: 'background processing' },
-  wasm: { 'zh-tw': 'WebAssembly', en: 'WebAssembly' },
-  webgl: { 'zh-tw': 'WebGL', en: 'WebGL' },
-  webgpu: { 'zh-tw': 'WebGPU', en: 'WebGPU' },
+  wasm: { 'zh-tw': '高效能運算', en: 'high-performance computing' },
+  webgl: { 'zh-tw': '繪圖加速', en: 'graphics acceleration' },
+  webgpu: { 'zh-tw': '顯示卡運算', en: 'graphics-card computing' },
 }
 const unavailableNames = computed(() => unavailable.value.map(capability => capabilityNames[capability][props.locale]).join('、'))
 

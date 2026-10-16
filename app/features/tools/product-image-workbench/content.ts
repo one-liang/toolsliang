@@ -233,8 +233,8 @@ export const productImageWorkbenchFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '這個工作台和單獨的圖片工具有什麼不同？', en: 'How is the workbench different from the individual tools?' },
     body: {
-      'zh-tw': '它用的是同一批本機引擎：去背用人像去背、版型與尺寸用合規主圖、框版與 Logo 用品牌宣傳圖。差別是中間結果留在瀏覽器記憶體裡直接交給下一步，不必反覆匯出再匯入。每個工具仍有自己的頁面，可以單獨使用。',
-      en: 'It runs the same local engines: the portrait background remover, the compliant product image renderer, and the brand promo composer. The difference is that each result is handed to the next step in browser memory instead of being exported and imported again. Every tool still has its own page and works on its own.',
+      'zh-tw': '它做的事和單獨的工具一樣：去背同人像去背、版型與尺寸同合規主圖、框版與 Logo 同品牌宣傳圖。差別是每一步的結果直接交給下一步，不必反覆下載再匯入。人像去背與品牌宣傳圖也有自己的頁面，可以單獨使用。',
+      en: 'It does the same work as the individual tools: the cutout matches the portrait background remover, layout and size match the compliant product image, and frames and Logos match the brand promo image. The difference is that each result goes straight to the next step instead of being downloaded and imported again. The portrait background remover and the brand promo image also have their own pages and work on their own.',
     },
   },
   {
@@ -275,15 +275,15 @@ export const productImageWorkbenchFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '批次裡有一張失敗，其他張會受影響嗎？', en: 'If one image in the batch fails, what happens to the rest?' },
     body: {
-      'zh-tw': '不會。每張圖片各自走自己的流程，失敗只記在那一張上，可以單獨重試或從佇列移除；其他張照常完成，也照常可以下載。取消也一樣：只有明確完成的項目會留下可下載的檔案。',
-      en: 'Nothing. Each image runs its own pipeline, a failure is recorded on that image alone, and you can retry or remove just that one; the rest finish and stay downloadable. Cancelling behaves the same way — only items that explicitly finished keep a file you can download.',
+      'zh-tw': '不會。每張圖片各自走自己的流程，失敗只記在那一張上，可以單獨重試或從清單移除；其他張照常完成，也照常可以下載。取消也一樣：只有明確完成的項目會留下可下載的檔案。',
+      en: 'Nothing. Each image goes through the steps on its own, a failure is recorded on that image alone, and you can retry or remove just that one; the rest finish and stay downloadable. Cancelling behaves the same way — only items that explicitly finished keep a file you can download.',
     },
   },
   {
     heading: { 'zh-tw': '封存檔是在哪裡打包的？', en: 'Where is the archive built?' },
     body: {
-      'zh-tw': '在這台裝置的瀏覽器裡。整批輸出會在背景執行緒打包成一個 ZIP，過程中不經過任何伺服器；封存檔裡的檔名只由用途與序號組成，也不寫入裝置時間。如果這個瀏覽器無法打包，工作台會直接說明，並讓你逐項下載。',
-      en: 'In this browser, on this device. The finished outputs are packed into one ZIP on a background thread without any server involved; names inside it are built from the output\u2019s purpose and its position, and no device clock is written into the file. If this browser cannot pack an archive, the workbench says so and you download each output on its own.',
+      'zh-tw': '在這台裝置的瀏覽器裡。整批輸出會在背景打包成一個 ZIP 壓縮檔，過程中不經過任何伺服器；封存檔裡的檔名只由用途與序號組成，也不寫入裝置時間。如果這個瀏覽器無法打包，工作台會直接說明，並讓你逐項下載。',
+      en: 'In this browser, on this device. The finished outputs are packed into one ZIP file in the background without any server involved; names inside it are built from the output\u2019s purpose and its position, and no device clock is written into the file. If this browser cannot pack an archive, the workbench says so and you download each output on its own.',
     },
   },
   {

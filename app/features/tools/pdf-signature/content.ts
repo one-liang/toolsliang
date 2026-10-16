@@ -20,8 +20,8 @@ const maxMegabytes = pdfSignatureLimits.maxBytes / (1024 * 1024)
  */
 export const pdfSignatureErrors: Record<PdfSignatureFailureCode, LocalizedCopy> = {
   unsupported_browser: {
-    'zh-tw': '這個瀏覽器無法在本機開啟並編輯 PDF。請改用支援背景處理與畫布輸出的最新版瀏覽器後重試。原檔未變更。',
-    en: 'This browser cannot open and edit a PDF locally. Retry in an up-to-date browser with background processing and canvas output. Your original is unchanged.',
+    'zh-tw': '這個瀏覽器無法在本機開啟並編輯 PDF。請改用最新版瀏覽器後重試。原檔未變更。',
+    en: 'This browser cannot open and edit a PDF locally. Retry in an up-to-date browser that supports background processing and drawing. Your original is unchanged.',
   },
   not_a_pdf: {
     'zh-tw': '這個檔案不是 PDF。請改選 PDF 檔後重試；原檔未變更。',
@@ -139,8 +139,8 @@ export const pdfSignatureFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': 'PDF 會被傳送到伺服器嗎？', en: 'Is my PDF sent to a server?' },
     body: {
-      'zh-tw': `不會。${pdfSignatureDisclosures['local-processing']['zh-tw']}工具沒有任何可以接收檔案的端點，關閉分頁就會清掉工作內容。`,
-      en: `No. ${pdfSignatureDisclosures['local-processing'].en} There is no endpoint here that could receive a file, and closing the tab clears the workspace.`,
+      'zh-tw': `不會。${pdfSignatureDisclosures['local-processing']['zh-tw']}這個網站也沒有任何接收檔案的地方，關閉分頁就會清掉工作內容。`,
+      en: `No. ${pdfSignatureDisclosures['local-processing'].en} This site has nowhere that could receive a file, and closing the tab clears the workspace.`,
     },
   },
   {
@@ -167,15 +167,15 @@ export const pdfSignatureFaq: ToolFaqEntry[] = [
   {
     heading: { 'zh-tw': '輸出的檔案會有什麼變化？', en: 'What changes in the file I download?' },
     body: {
-      'zh-tw': `${pdfSignatureDisclosures['original-pages-untouched']['zh-tw']}未加密的檔案以增量更新寫出，沒有簽名的頁面維持原本的位元組；每一份輸出都會先重新開啟確認讀得到，讀不到就不提供下載。`,
-      en: `${pdfSignatureDisclosures['original-pages-untouched'].en} An unencrypted file is written as an incremental update, so the pages you did not sign keep their original bytes, and every export is opened again before it is offered — if it cannot be read, it is not handed over.`,
+      'zh-tw': `${pdfSignatureDisclosures['original-pages-untouched']['zh-tw']}沒有密碼保護的檔案，工具只會加上簽名、不會重寫整份檔案，沒有簽名的頁面一點都不會變；每一份輸出都會先重新開啟確認讀得到，讀不到就不提供下載。`,
+      en: `${pdfSignatureDisclosures['original-pages-untouched'].en} For a file without a password, the tool only adds the signature instead of rewriting the whole file, so the pages you did not sign stay exactly as they were, and every export is opened again before it is offered — if it cannot be read, it is not handed over.`,
     },
   },
   {
     heading: { 'zh-tw': '有哪些限制？', en: 'What are the limits?' },
     body: {
-      'zh-tw': `單次最多 ${pdfSignatureLimits.maxPages} 頁、${maxMegabytes} MiB，且依裝置可用記憶體可能更低。簽名一律轉成帶透明度的 PNG 疊在頁面上，不會嵌入字型，也不會改寫頁面原有的文字；表單欄位、XFA 表單與加了憑證簽章的檔案不在支援範圍。`,
-      en: `Up to ${pdfSignatureLimits.maxPages} pages and ${maxMegabytes} MiB at a time, and less on a device with less memory. Every signature becomes a transparent PNG placed over the page — no font is embedded and no existing text is rewritten. Form fields, XFA forms, and files that already carry a certificate-based signature are out of scope.`,
+      'zh-tw': `單次最多 ${pdfSignatureLimits.maxPages} 頁、${maxMegabytes} MiB，且依裝置可用記憶體可能更低。簽名一律轉成透明背景的圖片疊在頁面上，不會改寫頁面原有的文字；可填寫的表單欄位與已經加了憑證簽章的檔案不在支援範圍。`,
+      en: `Up to ${pdfSignatureLimits.maxPages} pages and ${maxMegabytes} MiB at a time, and less on a device with less memory. Every signature becomes a transparent image placed over the page, and no existing text is rewritten. Fillable form fields and files that already carry a certificate-based signature are out of scope.`,
     },
   },
 ]

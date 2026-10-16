@@ -1,4 +1,4 @@
-import type { LocalizedCopy, PublishedToolDefinition } from '@/features/tools/catalog'
+import type { LocalizedCopy, ToolContentReview } from '@/features/tools/catalog'
 
 /**
  * Document boundary for the Taiwan calendar tool: which datasets it ingests,
@@ -165,7 +165,7 @@ export type TaiwanCalendarCaveatKey = typeof taiwanCalendarCaveatKeys[number]
  * the astronomical layer is only taken where its table can be read and checked
  * field by field (see §3.2 of the decision record).
  */
-export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview'] = {
+export const taiwanCalendarContentReview: ToolContentReview = {
   reviewedAt: '2026-09-06',
   sourceEdition: {
     'zh-tw': '中華民國 109 至 116 年政府行政機關辦公日曆表（政府資料開放平臺 2026-07-15 更新，114 年採 1141020 修正版）與中央氣象署中華民國 109 至 116 年日曆資料表',
@@ -178,12 +178,20 @@ export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview
         'zh-tw': '政府資料開放平臺：中華民國政府行政機關辦公日曆表',
         en: 'data.gov.tw: Government agency office calendar of the Republic of China',
       },
+      description: {
+        'zh-tw': '每一天上班還是放假，包括國定假日與補假，都以這份辦公日曆表為準。',
+        en: 'Whether each day is a workday or a day off, national holidays and substitute days included, follows this office calendar.',
+      },
       url: 'https://data.gov.tw/dataset/14718',
     },
     {
       title: {
         'zh-tw': '交通部中央氣象署：日曆資料表',
         en: 'Central Weather Administration: calendar data tables',
+      },
+      description: {
+        'zh-tw': '農曆日期與二十四節氣採用氣象署每年公布的日曆資料表。',
+        en: 'Lunar dates and the 24 solar terms come from the calendar tables the administration publishes each year.',
       },
       url: 'https://www.cwa.gov.tw/V8/C/D/calendar_data.html',
     },
@@ -192,12 +200,20 @@ export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview
         'zh-tw': '氣象資料開放平臺：日曆資料—國農曆對照（A-A0087-001）',
         en: 'CWA Open Data: calendar data — Gregorian/lunar conversion (A-A0087-001)',
       },
+      description: {
+        'zh-tw': '國曆與農曆的逐日對照。',
+        en: 'The day-by-day match between Gregorian and lunar dates.',
+      },
       url: 'https://opendata.cwa.gov.tw/dataset/astronomy/A-A0087-001',
     },
     {
       title: {
         'zh-tw': '氣象資料開放平臺：日曆資料—節氣日期（A-A0087-003）',
         en: 'CWA Open Data: calendar data — solar term dates (A-A0087-003)',
+      },
+      description: {
+        'zh-tw': '每個節氣落在哪一天。',
+        en: 'The day each solar term falls on.',
       },
       url: 'https://opendata.cwa.gov.tw/dataset/astronomy/A-A0087-003',
     },
@@ -206,12 +222,20 @@ export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview
         'zh-tw': '全國法規資料庫：紀念日及節日實施條例',
         en: 'Laws & Regulations Database: Act on Commemoration Days and Holidays',
       },
+      description: {
+        'zh-tw': '哪些紀念日與節日要放假。',
+        en: 'Which commemoration days and festivals are days off.',
+      },
       url: 'https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0020095',
     },
     {
       title: {
         'zh-tw': '行政院人事行政總處：政府機關配合紀念日與節日補假及調整放假處理要點',
         en: 'DGPA: Directions for substitute holidays and adjusted holidays in government agencies',
+      },
+      description: {
+        'zh-tw': '補假與調整放假的規則，包括 115 年起不再補班。',
+        en: 'The rules for substitute and adjusted days off, including the end of makeup workdays from 2026.',
       },
       url: 'https://www.dgpa.gov.tw/information?uid=84&pid=12576',
     },
@@ -220,12 +244,20 @@ export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview
         'zh-tw': '行政院人事行政總處新聞稿：修正 114 年並核定 115 年政府行政機關辦公日曆表',
         en: 'DGPA press release: 2025 office calendar amended and 2026 office calendar approved',
       },
+      description: {
+        'zh-tw': '修正 114 年、核定 115 年辦公日曆表的公告。',
+        en: 'The announcement amending the 2025 office calendar and approving the 2026 one.',
+      },
       url: 'https://www.dgpa.gov.tw/information?uid=82&pid=12574',
     },
     {
       title: {
         'zh-tw': '政府資料開放授權條款－第 1 版',
         en: 'Open Government Data License, version 1.0',
+      },
+      description: {
+        'zh-tw': '使用上面這些政府開放資料的條件；本站依此標示資料提供機關。',
+        en: 'The terms for using the government open data above; this site credits the providing agencies under them.',
       },
       url: 'https://data.gov.tw/license',
     },
@@ -234,6 +266,10 @@ export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview
         'zh-tw': 'DATA.GOV.HK：公曆與農曆對照表',
         en: 'DATA.GOV.HK: Gregorian-Lunar Calendar Conversion Table',
       },
+      description: {
+        'zh-tw': '香港天文台的農曆對照表，只用來交叉核對農曆日期。',
+        en: 'The Hong Kong Observatory lunar conversion table, used only to cross-check lunar dates.',
+      },
       url: 'https://data.gov.hk/tc-data/dataset/hk-hko-rss-gregorian-lunar-calendar-conversion-table',
     },
     {
@@ -241,12 +277,20 @@ export const taiwanCalendarContentReview: PublishedToolDefinition['contentReview
         'zh-tw': '香港天文台：二十四節氣的日期及時間資料',
         en: 'Hong Kong Observatory: dates and times of the 24 solar terms',
       },
+      description: {
+        'zh-tw': '香港天文台的節氣日期，只用來交叉核對。',
+        en: 'The Hong Kong Observatory solar term dates, used only for cross-checking.',
+      },
       url: 'https://www.hko.gov.hk/tc/gts/astronomy/Solar_Term.htm',
     },
     {
       title: {
         'zh-tw': 'DATA.GOV.HK 使用條款',
         en: 'DATA.GOV.HK Terms and Conditions of Use',
+      },
+      description: {
+        'zh-tw': '使用香港政府開放資料的條件。',
+        en: 'The terms for using Hong Kong government open data.',
       },
       url: 'https://data.gov.hk/en/terms-and-conditions',
     },

@@ -18,13 +18,4 @@ export const deviceTimeDefinition: PublishedToolDefinition = {
     description: { 'zh-tw': '查看瀏覽器提供的裝置日期、時間、時區與 UTC 時差，可切換秒數並複製時間資訊。讀值不離開裝置，並非網路校時。', en: 'View your device date, time, time zone, and UTC offset. Toggle seconds and copy time information locally. This clock is not network-corrected.' },
     answer: { 'zh-tw': '裝置時間依據此裝置的時鐘與時區設定，可能因設定錯誤而不準確；它不是網路校正的國家標準時間，也不能作為時間證明。', en: 'Device time follows this device’s clock and time zone settings, which may be incorrect. It is not network-corrected official time or proof of time.' },
   },
-  contentReview: {
-    reviewedAt: '2026-09-05', sourceEffectiveAt: '2026-09-05',
-    sourceEdition: { 'zh-tw': 'ECMAScript 與 HTML 現行規格（2026-09-05 查閱版本）', en: 'ECMAScript and HTML living specifications (accessed September 5, 2026)' },
-    sources: [
-      { title: { 'zh-tw': 'ECMAScript 日期與裝置時鐘', en: 'ECMAScript Date and system time' }, url: 'https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-date-objects' },
-      { title: { 'zh-tw': 'Intl 日期時間與時區格式', en: 'Intl date, time, and time zone formatting' }, url: 'https://tc39.es/ecma402/#datetimeformat-objects' },
-      { title: { 'zh-tw': 'HTML 頁面可見性', en: 'HTML page visibility' }, url: 'https://html.spec.whatwg.org/multipage/interaction.html#page-visibility' },
-    ],
-  },
 }

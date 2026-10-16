@@ -310,7 +310,13 @@ test('保存的簽名是本機資產，可在工具頁重複使用與刪除', as
 test('雙語工具頁說明本機邊界與限制，並指向同一個工具', async ({ page }) => {
   await gotoHydrated(page, '/zh-tw/tools/pdf-signature/')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('PDF 手寫簽名')
-  await expect(page.locator('.pdf-signature__scope').first()).toContainText('不是憑證式數位簽章')
+  // #82: the workspace holds only the signing; what this is not is said below it.
+  await expect(page.locator('.pdf-signature__scope')).toHaveCount(0)
+  await page.getByRole('heading', { name: '開始前先知道' }).click()
+  await expect(page.locator('.tool-contract__body')).toContainText('不是憑證式數位簽章')
+  await expect(page.locator('.tool-contract__body')).toContainText('不會驗證簽署人身分')
+  await expect(page.getByRole('heading', { name: '這個工具怎麼處理你的內容' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '這個工具用到的開放原始碼授權' })).toHaveAttribute('href', '/zh-tw/licenses/')
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://toolsliang.com/zh-tw/tools/pdf-signature/')
   await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute('href', 'https://toolsliang.com/en/tools/pdf-signature/')
 
