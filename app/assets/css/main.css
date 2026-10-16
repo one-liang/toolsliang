@@ -1114,7 +1114,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-compressor__frame figcaption strong { color: var(--color-foreground); font-weight: 800; }
 .image-compressor__change { padding: 1px 10px; border: 1.5px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-primary); color: var(--color-primary-foreground); font-weight: 800; }
 .image-compressor__change--larger { background: var(--color-warning-surface); color: var(--color-warning); border-color: var(--color-warning); }
-.image-compressor__placeholder { display: inline-flex; align-items: center; gap: 8px; color: var(--color-muted-foreground); font-size: .9rem; font-weight: 700; }
+.image-compressor__placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; text-align: center; color: var(--color-muted-foreground); font-size: .9rem; font-weight: 700; }
 .image-compressor__spin { animation: image-compressor-spin 900ms linear infinite; }
 @keyframes image-compressor-spin { to { rotate: 360deg; } }
 .image-compressor__panel { grid-area: panel; display: grid; align-content: start; gap: 12px; min-width: 0; }
