@@ -8,12 +8,10 @@ import {
   planWorkbenchRuns,
   removeWorkbenchItem,
   resolveWorkbenchLaneLimits,
-  resolveWorkbenchLimits,
   setWorkbenchQueuePurpose,
   updateWorkbenchItem,
   updateWorkbenchItems,
   workbenchLaneOf,
-  workbenchQueueLimits,
   workbenchQueueOutputs,
   workbenchQueueProgress,
   updateWorkbenchPipeline,
@@ -76,16 +74,6 @@ describe('批次的收件與上限', () => {
 
     expect(grown.items.map(item => item.id)).toEqual(['item-2', 'item-3'])
     expect(grown.items.map(item => item.ordinal)).toEqual([2, 3])
-  })
-
-  it('上限依裝置能力下修，回報的數字就是使用者看到的數字', () => {
-    expect(resolveWorkbenchLimits({})).toEqual(workbenchQueueLimits)
-    expect(resolveWorkbenchLimits({ deviceMemory: 8 })).toEqual(workbenchQueueLimits)
-
-    const small = resolveWorkbenchLimits({ deviceMemory: 0.5 })
-    expect(small.maxBytes).toBeLessThan(workbenchQueueLimits.maxBytes)
-    expect(small.maxItems).toBeLessThan(workbenchQueueLimits.maxItems)
-    expect(small.maxItems).toBeGreaterThan(0)
   })
 
   it('量到的尺寸超過本機上限的項目在開始前就標成不能處理，其餘項目照常', () => {

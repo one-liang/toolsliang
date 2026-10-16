@@ -11,6 +11,7 @@
  * position, its byte count — which is the only thing the shared limits can be
  * checked against before anything is decoded — and its own state.
  */
+import { imageBatchLimits, type ImageBatchLimits } from '@/features/images/batch'
 import { exceedsImageLimits } from '@/features/images/limits'
 import {
   completeWorkbenchStep,
@@ -25,29 +26,6 @@ import {
   type WorkbenchStep,
   type WorkbenchStepState,
 } from './session'
-
-export interface WorkbenchQueueLimits {
-  maxItems: number
-  maxBytes: number
-}
-
-/** §12.11's first-release ceiling, before this device is asked what it can hold. */
-export const workbenchQueueLimits: WorkbenchQueueLimits = { maxItems: 20, maxBytes: 200 * 1024 * 1024 }
-
-/**
- * A batch is held in memory from import to download, and every step adds a
- * result beside the source it came from, so the byte budget is a fraction of
- * what the device admits to having rather than the whole of it. `deviceMemory`
- * is coarse and absent in some browsers; when it says nothing, the shared
- * first-release ceiling stands, because a limit invented from silence is not
- * more careful, only more annoying.
- */
-export function resolveWorkbenchLimits(device: { deviceMemory?: number }, base: WorkbenchQueueLimits = workbenchQueueLimits): WorkbenchQueueLimits {
-  if (!device.deviceMemory) return { ...base }
-  const maxBytes = Math.min(base.maxBytes, Math.round(device.deviceMemory * 1024 ** 3 / 8))
-
-  return { maxBytes, maxItems: Math.max(1, Math.min(base.maxItems, Math.round(base.maxItems * maxBytes / base.maxBytes))) }
-}
 
 /**
  * Which resource a step competes for. Inference and encoding are limited apart
@@ -105,7 +83,7 @@ export interface WorkbenchQueue {
    */
   pipeline: WorkbenchSession
   items: WorkbenchQueueItem[]
-  limits: WorkbenchQueueLimits
+  limits: ImageBatchLimits
   /** How many items this queue has ever admitted, so a removed one's number is never reused. */
   admitted: number
 }
@@ -118,7 +96,7 @@ export interface WorkbenchAdmission {
   rejected: { index: number, code: WorkbenchAdmissionCode }[]
 }
 
-export function createWorkbenchQueue(purpose: WorkbenchPurpose = 'compliant', limits: WorkbenchQueueLimits = workbenchQueueLimits): WorkbenchQueue {
+export function createWorkbenchQueue(purpose: WorkbenchPurpose = 'compliant', limits: ImageBatchLimits = imageBatchLimits): WorkbenchQueue {
   return { purpose, current: 'import', pipeline: createWorkbenchSession(purpose), items: [], limits, admitted: 0 }
 }
 

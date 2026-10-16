@@ -1,4 +1,5 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { resolveImageBatchLimits } from '@/features/images/batch'
 import { validateImageInput } from '@/features/images/input'
 import { imageInputLimits } from '@/features/images/limits'
 import { createBackgroundRemover } from '@/features/tools/image-background-remover/engine'
@@ -40,7 +41,6 @@ import {
   planWorkbenchRuns,
   removeWorkbenchItem,
   resolveWorkbenchLaneLimits,
-  resolveWorkbenchLimits,
   setWorkbenchQueuePurpose,
   updateWorkbenchItem,
   updateWorkbenchItems,
@@ -67,7 +67,7 @@ import {
   type WorkbenchStep,
 } from '@/features/tools/product-image-workbench/session'
 import { measureImage } from '@/features/images/measure'
-import { useWorkbenchArchive } from './useWorkbenchArchive'
+import { useImageArchive } from './useImageArchive'
 import { useWorkbenchBrandAssets } from './useWorkbenchBrandAssets'
 import { useWorkspaceDirty } from './useWorkspaceDirty'
 import { useUnloadGuard } from './useUnloadGuard'
@@ -122,7 +122,7 @@ export function useProductImageWorkbench() {
     brand: Array.from({ length: poolSizes.brand }, createPromoRenderer),
     compress: Array.from({ length: poolSizes.compress }, createImageCompressor),
   }
-  const limits = ref(resolveWorkbenchLimits({}))
+  const limits = ref(resolveImageBatchLimits({}))
   const laneLimits = ref(resolveWorkbenchLaneLimits({}))
   const queue = ref(createWorkbenchQueue('compliant', limits.value))
 
@@ -184,7 +184,7 @@ export function useProductImageWorkbench() {
   const outputs = computed(() => workbenchQueueOutputs(queue.value))
   const usedBytes = computed(() => workbenchQueueBytes(queue.value))
   /** What the archive would contain right now, named the way a single download is. */
-  const archive = useWorkbenchArchive(() => outputs.value.flatMap((entry) => {
+  const archive = useImageArchive(() => outputs.value.flatMap((entry) => {
     const artifact = artifacts.value[entry.id]?.[entry.step]
 
     return artifact ? [{ name: workbenchOutputName(queue.value.purpose, entry.ordinal, artifact.format), blob: artifact.blob }] : []
@@ -650,7 +650,7 @@ export function useProductImageWorkbench() {
     today.value = new Date().toISOString().slice(0, 10)
     applyCompressionRule()
     const device = navigator as Navigator & { deviceMemory?: number }
-    limits.value = resolveWorkbenchLimits({ deviceMemory: device.deviceMemory })
+    limits.value = resolveImageBatchLimits({ deviceMemory: device.deviceMemory })
     laneLimits.value = resolveWorkbenchLaneLimits({ hardwareConcurrency: navigator.hardwareConcurrency })
     queue.value = { ...queue.value, limits: limits.value }
     void prepare()
