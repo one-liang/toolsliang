@@ -2,19 +2,15 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, expect, it, vi } from 'vitest'
 import Workspace from '@/components/ProductImageWorkbenchWorkspace.vue'
 import { shellStubs } from './support/nuxt-stubs'
-import { imageBatchLimits } from '@/features/images/batch'
 
 /** No worker script can be fetched here, so every engine reports itself unsupported. */
-function mountWorkspace() {
+async function mountWorkspace() {
   vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:preview')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
-  return mount(Workspace, { global: { stubs: shellStubs }, attachTo: document.body })
-}
-
-function steps(wrapper: ReturnType<typeof mountWorkspace>) {
-  return Object.fromEntries(wrapper.findAll('[data-workbench-step]')
-    .map(item => [item.attributes('data-workbench-step'), item.attributes('data-workbench-state')]))
+  const wrapper = mount(Workspace, { global: { stubs: shellStubs }, attachTo: document.body })
+  for (let round = 0; round < 4; round += 1) await flushPromises()
+  return wrapper
 }
 
 const png = (name: string, bytes = 1024) => new File(
@@ -23,11 +19,11 @@ const png = (name: string, bytes = 1024) => new File(
   { type: 'image/png' },
 )
 
-async function selectFiles(wrapper: ReturnType<typeof mountWorkspace>, files: File[]) {
-  const input = wrapper.find('#workbench-file')
+async function selectFiles(wrapper: Awaited<ReturnType<typeof mountWorkspace>>, files: File[]) {
+  const input = wrapper.find('[data-batch-input]')
   Object.defineProperty(input.element, 'files', { value: files, configurable: true })
   await input.trigger('change')
-  await flushPromises()
+  for (let round = 0; round < 6; round += 1) await flushPromises()
 }
 
 afterEach(() => {
@@ -35,124 +31,48 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it('以有名稱的步驟列開場，不能執行的步驟仍列出但不佔編號', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
+it('選圖前只有選圖區，批次上限寫在畫面上，沒有步驟導覽列', async () => {
+  const wrapper = await mountWorkspace()
 
-  expect(wrapper.findAll('[data-workbench-step] button > span:first-of-type').map(item => item.text())).toEqual([
-    '1. 匯入商品圖',
-    '去背（選用）',
-    '版型與尺寸',
-    '品牌素材（選用）',
-    '壓縮容量（選用）',
-    '2. 輸出與下載',
-  ])
-  expect(wrapper.findAll('.workbench__state').map(item => item.text()))
-    .toEqual(['可以開始', '不適用', '不適用', '不適用', '不適用', '尚未開放'])
-  expect(wrapper.get('[data-workbench-panel="import"]').text()).toContain('選擇商品圖')
-  // ADR-0022: there is no purpose to choose and no channel to pick any more.
-  expect(wrapper.find('input[name="workbench-purpose"]').exists()).toBe(false)
-  expect(wrapper.find('#workbench-preset').exists()).toBe(false)
-  expect(wrapper.text()).not.toMatch(/通路|合規|preset/)
+  expect(wrapper.find('[data-batch-input]').exists()).toBe(true)
+  expect(wrapper.text()).toContain('20 張')
+  expect(wrapper.find('[data-workbench-step]').exists()).toBe(false)
+  expect(wrapper.find('.workbench__layout').exists()).toBe(false)
   wrapper.unmount()
 })
 
-it('每個引擎各自回答能力，不能執行的步驟只停用自己，匯入仍可操作', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
+it('瀏覽器做不到的那一件只停用自己並說明，不會留著勾選', async () => {
+  const wrapper = await mountWorkspace()
+  await selectFiles(wrapper, [png('private-workbench-canary.png')])
 
-  expect(steps(wrapper)).toMatchObject({ import: 'ready', cutout: 'unavailable', layout: 'unavailable' })
-  expect(wrapper.get('[data-workbench-step="cutout"] button').attributes('disabled')).toBeDefined()
-  expect(wrapper.get('[data-workbench-step="import"] button').attributes('disabled')).toBeUndefined()
+  for (const job of ['cutout', 'compose', 'compress']) {
+    const box = wrapper.find(`[data-workbench-job="${job}"] input[type=checkbox]`)
+    expect(box.attributes('disabled')).toBeDefined()
+    expect((box.element as HTMLInputElement).checked).toBe(false)
+    expect(wrapper.find(`#workbench-${job}-hint`).text()).toContain('這個瀏覽器無法在本機完成這一步')
+  }
+  // With nothing it can do, there is nothing to start.
+  expect(wrapper.find('[data-workbench-run]').attributes('disabled')).toBeDefined()
   wrapper.unmount()
 })
 
-it('版型是必要步驟，無法執行時流程到此為止，不出現產不出來的輸出', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
-
-  expect(steps(wrapper).output).toBe('locked')
-  expect(wrapper.find('a[download]').exists()).toBe(false)
-  expect(wrapper.get('.workbench__steps').text()).toContain('不適用')
-  wrapper.unmount()
-})
-
-it('尚未開放的步驟不能被點開，工作台不會顯示可下載的輸出', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
-
-  await wrapper.get('[data-workbench-step="output"] button').trigger('click')
-  expect(wrapper.get('[data-workbench-panel]').attributes('data-workbench-panel')).toBe('import')
-  expect(wrapper.find('a[download]').exists()).toBe(false)
-  wrapper.unmount()
-})
-
-it('無法在本機處理時說明原因並提供重新檢查', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
-
-  expect(wrapper.get('.capability-warning').text()).toContain('這個瀏覽器無法在背景處理圖片')
-  expect(wrapper.findAll('button').some(item => item.text() === '重新檢查')).toBe(true)
-  wrapper.unmount()
-})
-
-it('批次上限在選檔前就寫在畫面上', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
-
-  const help = wrapper.get('#workbench-import-help').text()
-  expect(help).toContain(`最多 ${imageBatchLimits.maxItems} 張`)
-  expect(help).toContain('單張最多 25 MiB')
-  expect(wrapper.get('#workbench-file').attributes('multiple')).toBeDefined()
-  wrapper.unmount()
-})
-
-it('匯入的每張圖片各自成為一列，標籤只有序號，不顯示來源檔名', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
-  await selectFiles(wrapper, [png('secret-supplier-a.png'), png('secret-supplier-b.png')])
-
-  const rows = wrapper.findAll('[data-queue-item]')
-  expect(rows).toHaveLength(2)
-  expect(rows.map(row => row.get('[data-queue-status]').element.previousElementSibling?.textContent))
-    .toEqual(['第 1 項', '第 2 項'])
-  expect(wrapper.get('.workbench__queue').text()).not.toContain('secret-supplier')
-  wrapper.unmount()
-})
-
-it('超過張數上限的圖片在開始前就被退回並說明，已收下的不受影響', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
-  await selectFiles(wrapper, Array.from({ length: imageBatchLimits.maxItems + 2 }, (_, index) => png(`item-${index}.png`)))
-
-  expect(wrapper.findAll('[data-queue-item]')).toHaveLength(imageBatchLimits.maxItems)
-  expect(wrapper.get('#workbench-import-issues').text()).toContain('超過張數上限')
-  expect(wrapper.get('#workbench-import-issues').attributes('role')).toBe('alert')
-  wrapper.unmount()
-})
-
-it('每一列的動作都是有名稱的按鈕，移除後焦點落在接手的那一列', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
-  await selectFiles(wrapper, [png('a.png'), png('b.png')])
-
-  const remove = wrapper.get('[data-queue-item="item-1"] [data-queue-remove]')
-  expect(remove.text()).toBe('移除第 1 項')
-  await remove.trigger('click')
-  await flushPromises()
-
-  expect(wrapper.findAll('[data-queue-item]').map(row => row.attributes('data-queue-item'))).toEqual(['item-2'])
-  expect(document.activeElement).toBe(wrapper.get('[data-queue-item="item-2"] [data-queue-remove]').element)
-  wrapper.unmount()
-})
-
-it('彙總摘要以 live region 宣告，且把每一張都算進去', async () => {
-  const wrapper = mountWorkspace()
-  await flushPromises()
+it('多張時出現縮圖列，可以切換與移除；清除全部後回到選圖區', async () => {
+  const wrapper = await mountWorkspace()
   await selectFiles(wrapper, [png('a.png'), png('b.png'), png('c.png')])
 
-  const summary = wrapper.get('.workbench__steps p[role="status"]')
-  expect(summary.text()).toContain('共 3 張')
-  expect(summary.text()).toContain('3 張等待處理')
+  const options = wrapper.findAll('[role=option]')
+  expect(options).toHaveLength(3)
+  await options[1]!.trigger('click')
+  expect(wrapper.find('[data-batch-current]').text()).toContain('第 2／3 張')
+
+  await wrapper.find('[data-batch-remove]').trigger('click')
+  await flushPromises()
+  expect(wrapper.findAll('[role=option]')).toHaveLength(2)
+
+  const button = (label: string) => wrapper.findAll('button').find(candidate => candidate.text().includes(label))!
+  await button('全部清除').trigger('click')
+  await button('確定清除').trigger('click')
+  await flushPromises()
+  expect(wrapper.find('.workbench__layout').exists()).toBe(false)
   wrapper.unmount()
 })

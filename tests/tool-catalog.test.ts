@@ -161,6 +161,11 @@ describe('tool catalog', () => {
     expect(tool.localProcessingStatement['zh-tw'], '工具頁必須說明名單留在裝置').toContain('此裝置')
   })
 
+  it('keeps the withdrawn compliant product image slug reserved after its last engine went with #112 (ADR-0019, ADR-0022)', () => {
+    expect(getTool('compliant-product-image')).toBeUndefined()
+    expect(unpublishedToolSlugs, 'ADR-0011：下架的 slug 仍保留在註冊表').toContain('compliant-product-image')
+  })
+
   it('withdraws the custom calendar from every public lookup but keeps its slug reserved (ADR-0021)', () => {
     expect(getTool('custom-calendar')).toBeUndefined()
     expect(unpublishedToolSlugs, 'ADR-0011：下架的 slug 仍保留在註冊表').toContain('custom-calendar')

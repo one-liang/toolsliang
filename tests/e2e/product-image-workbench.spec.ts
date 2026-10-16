@@ -3,62 +3,27 @@ import { expect, test, type Page } from '@playwright/test'
 import { productImageWorkbenchCanaries } from '../support/product-image-workbench-canaries'
 import { gotoHydrated } from './support/hydration'
 import { settleTransitions } from './support/motion'
-import { expectOfflineRequests, guardToolContentBoundary } from './support/tool-content-boundary'
+import { guardToolContentBoundary } from './support/tool-content-boundary'
 
 guardToolContentBoundary(productImageWorkbenchCanaries, { allowedOrigins: ['http://127.0.0.1:4173'] })
 
-/** Preparing five engines and running a model on the WebAssembly baseline is the slow part. */
+/** Running the portrait model on the WebAssembly baseline is the slow part. */
 test.setTimeout(240_000)
 
 const route = '/zh-tw/tools/product-image-workbench/'
-
-/** A batch action names the number of images it will touch, so match on the verb. */
-const batch = (page: Page, verb: string) => page.getByRole('button', { name: new RegExp(verb) })
+const photos = (page: Page) => page.locator('.workbench [data-batch-input]')
 
 /** Drawn in the page, never a real photograph; the file name is the canary the guard watches. */
-async function imageFile(page: Page, name: string, colour: string, width = 240, height = 240) {
-  const bytes = await page.evaluate(async ({ colour, width, height }) => {
+async function imageFile(page: Page, name: string, colour: string, width = 240, height = 240, type = 'image/png') {
+  const bytes = await page.evaluate(async ({ colour, width, height, type }) => {
     const canvas = new OffscreenCanvas(width, height)
     const context = canvas.getContext('2d')!
     context.fillStyle = colour
     context.fillRect(0, 0, width, height)
-    return [...new Uint8Array(await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer())]
-  }, { colour, width, height })
+    return [...new Uint8Array(await (await canvas.convertToBlob({ type, quality: 0.95 })).arrayBuffer())]
+  }, { colour, width, height, type })
 
-  return { name, mimeType: 'image/png', buffer: Buffer.from(bytes) }
-}
-
-/**
- * A drawn product with enough per-pixel detail that encoding it is real work.
- * Encoding it once keeps the three-browser run inside the CI budget; nothing
- * here is a photograph.
- */
-const fixtures = new Map<string, Buffer>()
-
-async function productFile(page: Page, size = 800) {
-  const cached = fixtures.get(String(size))
-  if (cached) return { name: 'private-workbench-canary.png', mimeType: 'image/jpeg', buffer: cached }
-
-  const bytes = await page.evaluate(async (side) => {
-    const canvas = new OffscreenCanvas(side, side)
-    const context = canvas.getContext('2d')!
-    const pixels = context.createImageData(side, side)
-    let seed = 20260909
-    for (let index = 0; index < pixels.data.length; index += 4) {
-      seed = (Math.imul(seed, 1664525) + 1013904223) | 0
-      pixels.data[index] = 200 + (seed >>> 25)
-      pixels.data[index + 1] = 60 + ((seed >>> 18) & 0x3f)
-      pixels.data[index + 2] = 60 + ((seed >>> 11) & 0x3f)
-      pixels.data[index + 3] = 255
-    }
-    context.putImageData(pixels, 0, 0)
-    return [...new Uint8Array(await (await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.95 })).arrayBuffer())]
-  }, size)
-
-  const buffer = Buffer.from(bytes)
-  fixtures.set(String(size), buffer)
-
-  return { name: 'private-workbench-canary.png', mimeType: 'image/jpeg', buffer }
+  return { name, mimeType: type, buffer: Buffer.from(bytes) }
 }
 
 /** A head and shoulders the portrait model can find, drawn the same way. */
@@ -78,137 +43,163 @@ async function portraitFile(page: Page) {
   return { name: 'private-workbench-canary.png', mimeType: 'image/png', buffer: Buffer.from(bytes) }
 }
 
-/** Re-encoding shifts a channel by a step or two; the assertion is about which layer won. */
-function expectColour(actual: number[], expected: [number, number, number]) {
-  expected.forEach((channel, index) => expect(Math.abs(actual[index]! - channel)).toBeLessThanOrEqual(6))
+/** Every finished output, read back: its size, type, and the colour at a corner and at the centre. */
+async function outputs(page: Page) {
+  const links = page.locator('.workbench [data-batch-download]')
+  const found = []
+  for (const link of await links.all()) {
+    found.push(await page.evaluate(async (url) => {
+      const blob = await (await fetch(url!)).blob()
+      const image = await createImageBitmap(blob)
+      const canvas = new OffscreenCanvas(image.width, image.height)
+      const context = canvas.getContext('2d')!
+      context.drawImage(image, 0, 0)
+      const output = { type: blob.type, width: image.width, height: image.height, corner: [...context.getImageData(4, 4, 1, 1).data], centre: [...context.getImageData(Math.floor(image.width / 2), Math.floor(image.height / 2), 1, 1).data] }
+      image.close()
+      return output
+    }, await link.getAttribute('href')))
+  }
+  return found
 }
 
-async function importProducts(page: Page, files: Awaited<ReturnType<typeof imageFile>>[]) {
-  await page.getByLabel('選擇商品圖').setInputFiles(files)
-  await expect(page.locator('[data-queue-item]')).toHaveCount(files.length)
-  await expect(page.locator('[data-workbench-step="import"]')).toHaveAttribute('data-workbench-state', 'done')
+/** JPEG moves colours a little; this is "the same colour" for a flat fill. */
+function near(actual: number[], expected: number[]) {
+  return actual.slice(0, 3).every((value, index) => Math.abs(value - expected[index]!) <= 12)
 }
 
-const panel = (page: Page) => page.locator('[data-workbench-panel]')
-
-/** Brand assets and compression are both optional; passing them makes the layout the output. */
-async function skipToOutput(page: Page) {
-  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'brand', { timeout: 90_000 })
-  await batch(page, '整批略過這一步').click()
-  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'compress')
-  await batch(page, '整批略過這一步').click()
-  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'output')
-}
-
-/** ADR-0022 removed the channel presets: no purpose to pick, no channel, no rule check. */
-async function expectNoChannelSpecification(page: Page) {
-  await expect(page.locator('input[name="workbench-purpose"]')).toHaveCount(0)
-  await expect(page.locator('#workbench-preset')).toHaveCount(0)
-  await expect(page.locator('[data-workbench-check]')).toHaveCount(0)
-  await expect(panel(page)).not.toContainText(/通路|合規|規格|preset|channel/i)
-}
-
-async function outputPixels(page: Page, name = '下載第 1 項') {
-  const href = await page.getByRole('link', { name }).getAttribute('href')
-
-  return page.evaluate(async (url) => {
-    const blob = await (await fetch(url!)).blob()
-    const image = await createImageBitmap(blob)
-    // Closing an ImageBitmap zeroes its dimensions, so read them first.
-    const { width, height } = image
-    const canvas = new OffscreenCanvas(width, height)
-    const context = canvas.getContext('2d')!
-    context.drawImage(image, 0, 0)
-    const centre = [...context.getImageData(Math.floor(width / 2), Math.floor(height / 2), 1, 1).data]
-    const corner = [...context.getImageData(2, 2, 1, 1).data]
-    image.close()
-    return { width, height, bytes: blob.size, type: blob.type, centre, corner }
-  }, href)
-}
-
-/** Reads the archive the page built, the way an unzip program would. */
-async function archiveNames(page: Page) {
-  const href = await page.getByRole('link', { name: '下載封存檔' }).getAttribute('href')
-
-  return page.evaluate(async (url) => {
-    const bytes = new Uint8Array(await (await fetch(url!)).arrayBuffer())
-    const view = new DataView(bytes.buffer)
-    let end = bytes.length - 22
-    while (end >= 0 && view.getUint32(end, true) !== 0x06054B50) end -= 1
-    const count = view.getUint16(end + 10, true)
-    let offset = view.getUint32(end + 16, true)
-    const names: string[] = []
-    for (let index = 0; index < count; index += 1) {
-      const nameLength = view.getUint16(offset + 28, true)
-      names.push(new TextDecoder().decode(bytes.subarray(offset + 46, offset + 46 + nameLength)))
-      offset += 46 + nameLength + view.getUint16(offset + 30, true) + view.getUint16(offset + 32, true)
-    }
-    return names
-  }, href)
-}
-
-test('整批流程：兩張圖走完版型、略過品牌素材與壓縮，逐項下載並在本機打包封存', async ({ page }) => {
+test('套版與壓縮：三張商品圖套上同一個 Logo，一次處理並在本機打包 ZIP', async ({ page }) => {
   await gotoHydrated(page, route)
+  await photos(page).setInputFiles([
+    await imageFile(page, 'private-workbench-canary.png', '#ff0000'),
+    await imageFile(page, 'private-workbench-canary.png', '#00ff00'),
+    await imageFile(page, 'private-workbench-canary.png', '#ffff00'),
+  ])
+  await expect(page.getByRole('listbox', { name: '這批圖片' }).getByRole('option')).toHaveCount(3)
+  // The jobs start as the tools' own defaults: the portrait cutout is off, the layout and the compression on.
+  await expect(page.locator('[data-workbench-job="cutout"] input[type=checkbox]')).not.toBeChecked()
+  await expect(page.locator('[data-workbench-job="compose"] input[type=checkbox]')).toBeChecked()
+  await expect(page.locator('[data-workbench-job="compress"] input[type=checkbox]')).toBeChecked()
+  await expect(page.locator('[data-promo-stage]')).toBeVisible()
 
-  // Every step belongs to the one flow; none is taken away by a purpose or a channel.
-  await expect(page.locator('[data-workbench-step="brand"]')).toHaveAttribute('data-workbench-state', 'locked')
-  await expect(page.locator('[data-workbench-step="compress"]')).toHaveAttribute('data-workbench-state', 'locked')
+  const chooser = page.waitForEvent('filechooser')
+  await page.locator('[data-workbench-add="logo"]').click()
+  await (await chooser).setFiles(await imageFile(page, 'private-workbench-logo.png', '#0000ff', 100, 100))
+  await page.getByLabel('縮放（%）', { exact: true }).fill('20')
 
-  const product = await productFile(page)
-  await importProducts(page, [product, product])
-  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'cutout')
+  await page.locator('[data-workbench-run]').click()
+  await expect(page.locator('.workbench__status')).toContainText('完成 3／3 張', { timeout: 120_000 })
+  const made = await outputs(page)
+  expect(made).toHaveLength(3)
+  for (const [index, colour] of [[255, 0, 0], [0, 255, 0], [255, 255, 0]].entries()) {
+    expect(made[index]).toMatchObject({ type: 'image/jpeg', width: 1000, height: 1000 })
+    // Each photo fills the product layer, and the Logo sits in the same place on every one.
+    expect(near(made[index]!.corner, colour), `第 ${index + 1} 張的商品圖`).toBe(true)
+    expect(near(made[index]!.centre, [0, 0, 255]), `第 ${index + 1} 張的 Logo`).toBe(true)
+  }
 
-  await batch(page, '整批略過這一步').click()
-  await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'skipped')
-  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'layout')
-  await expectNoChannelSpecification(page)
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: '全部下載（ZIP）', exact: true }).click()
+  const zip = await download
+  expect(zip.suggestedFilename()).toBe('product-images.zip')
+  const { readFile } = await import('node:fs/promises')
+  const bytes = (await readFile((await zip.path())!)).toString('latin1')
+  for (const name of ['product-image-01.jpg', 'product-image-02.jpg', 'product-image-03.jpg']) expect(bytes).toContain(name)
+  expect(bytes, 'ZIP 內不得沿用原始檔名').not.toContain('private-workbench')
 
-  await expect(page.getByLabel('寬度（像素）')).toHaveValue('1000')
-  await batch(page, '整批產生版型').click()
-
-  await expect(page.locator('[data-workbench-step="layout"]')).toHaveAttribute('data-workbench-state', 'done', { timeout: 90_000 })
-  await skipToOutput(page)
-  await expect(page.locator('[data-queue-state="done"]')).toHaveCount(2)
-  await expectNoChannelSpecification(page)
-
-  expect(await outputPixels(page)).toMatchObject({ width: 1000, height: 1000, type: 'image/jpeg' })
-
-  const item = page.waitForEvent('download')
-  await page.getByRole('link', { name: '下載第 2 項' }).click()
-  expect((await item).suggestedFilename()).toBe('brand-promo-image-02.jpg')
-
-  await batch(page, '打包 2 個輸出成封存檔').click()
-  await expect(page.getByRole('link', { name: '下載封存檔' })).toBeVisible({ timeout: 60_000 })
-  expect(await archiveNames(page)).toEqual(['brand-promo-image-01.jpg', 'brand-promo-image-02.jpg'])
-
-  const archive = page.waitForEvent('download')
-  await page.getByRole('link', { name: '下載封存檔' }).click()
-  expect((await archive).suggestedFilename()).toBe('brand-promo-images.zip')
-
+  // Changing the layout makes every output stale at once.
+  await page.getByLabel('縮放（%）', { exact: true }).fill('30')
+  await expect(page.locator('.workbench [data-batch-download]')).toHaveCount(0)
+  await expect(page.locator('[data-workbench-run]')).toContainText('全部處理（3 張）')
   await settleTransitions(page)
-  expect((await new AxeBuilder({ page }).include('.product-image-workbench').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
+  expect((await new AxeBuilder({ page }).include('.workbench').withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
 })
 
-/** The English page is its own contract: its own URL, its own copy, its own audit. */
+test('只壓縮：關閉套版後維持原尺寸，和圖片壓縮相同', async ({ page }) => {
+  await gotoHydrated(page, route)
+  const source = await imageFile(page, 'private-workbench-canary.png', '#c0392b', 800, 600, 'image/jpeg')
+  await photos(page).setInputFiles(source)
+  await page.locator('[data-workbench-job="compose"] input[type=checkbox]').uncheck()
+  await expect(page.locator('[data-promo-stage]')).toHaveCount(0)
+  await expect(page.locator('[data-workbench-preview]')).toBeVisible()
+  await page.locator('[data-workbench-run]').click()
+  await expect(page.locator('.workbench__status')).toContainText('完成 1／1 張', { timeout: 60_000 })
+  const [made] = await outputs(page)
+  expect(made).toMatchObject({ type: 'image/jpeg', width: 800, height: 600 })
+  const download = page.waitForEvent('download')
+  await page.getByRole('link', { name: '下載圖片' }).click()
+  expect((await download).suggestedFilename()).toBe('product-image-01.jpg')
+})
+
+test('有一張不能處理時只停在那一張，其餘照常完成', async ({ page }) => {
+  await gotoHydrated(page, route)
+  const oversized = Buffer.alloc(33)
+  Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(oversized)
+  oversized.writeUInt32BE(13, 8); oversized.write('IHDR', 12); oversized.writeUInt32BE(9000, 16); oversized.writeUInt32BE(9000, 20)
+  await photos(page).setInputFiles([
+    await imageFile(page, 'private-workbench-canary.png', '#ff0000'),
+    { name: 'private-workbench-canary.png', mimeType: 'image/png', buffer: oversized },
+    await imageFile(page, 'private-workbench-canary.png', '#00ff00'),
+  ])
+  const strip = page.getByRole('listbox', { name: '這批圖片' })
+  await page.locator('[data-workbench-run]').click()
+  await expect(page.locator('.workbench__status')).toContainText('完成 2／3 張', { timeout: 120_000 })
+  await expect(strip.locator('[data-batch-status="failed"]')).toHaveCount(1)
+  await strip.getByRole('option').nth(1).click()
+  await expect(page.locator('[data-batch-current]')).toContainText('失敗')
+  // A picture over the limits stays refused, so trying again is not offered.
+  await expect(page.locator('[data-batch-retry]')).toHaveCount(0)
+  await expect(page.locator('.workbench [data-batch-download]')).toHaveCount(2)
+})
+
+test('第一個畫面就看得到縮圖列、畫布、三個選項、處理與下載按鈕（#112）', async ({ page }, info) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await gotoHydrated(page, route)
+  await photos(page).setInputFiles([
+    await imageFile(page, 'private-workbench-canary.png', '#ff0000', 240, 320),
+    await imageFile(page, 'private-workbench-canary.png', '#00ff00', 320, 240),
+  ])
+  await expect(page.locator('[data-promo-stage]')).toBeVisible()
+  expect(await page.evaluate(() => scrollY)).toBe(0)
+  const fold = await page.evaluate(() => innerHeight)
+  const visible = async (label: string, target: ReturnType<Page['locator']>) => {
+    const box = (await target.boundingBox())!
+    expect(box.y + box.height, `${label}不捲動就要完整看得到`).toBeLessThanOrEqual(fold)
+  }
+  await visible('縮圖列', page.getByRole('listbox', { name: '這批圖片' }))
+  await visible('畫布', page.locator('[data-promo-stage]'))
+  for (const job of ['cutout', 'compose', 'compress']) await visible(`「${job}」選項`, page.locator(`[data-workbench-job="${job}"] input[type=checkbox]`))
+  await visible('處理按鈕', page.locator('[data-workbench-run]'))
+  await page.locator('[data-workbench-run]').click()
+  await expect(page.getByRole('button', { name: '全部下載（ZIP）', exact: true })).toBeVisible({ timeout: 60_000 })
+  await visible('下載按鈕', page.getByRole('button', { name: '全部下載（ZIP）', exact: true }))
+  if (info.project.name === 'chromium') await page.screenshot({ path: 'artifacts/product-image-workbench-1366.png' })
+
+  await page.setViewportSize({ width: 375, height: 812 })
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await settleTransitions(page)
+  await page.evaluate(() => window.scrollTo(0, 0))
+  if (info.project.name === 'chromium') await page.screenshot({ path: 'artifacts/product-image-workbench-375.png', fullPage: true })
+})
+
 for (const locale of ['zh-tw', 'en']) {
-  test(`${locale} 響應式、亮暗色、SEO 與無障礙`, async ({ page }, info) => {
+  test(`${locale} 響應式、亮暗色、SEO 與無障礙`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await gotoHydrated(page, `/${locale}/tools/product-image-workbench/`)
 
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://toolsliang.com/${locale}/tools/product-image-workbench/`)
     await expect(page.locator('link[hreflang="en"]')).toHaveAttribute('href', 'https://toolsliang.com/en/tools/product-image-workbench/')
     await expect(page.locator('link[hreflang="zh-Hant-TW"]')).toHaveAttribute('href', 'https://toolsliang.com/zh-tw/tools/product-image-workbench/')
-    await expect(page.locator('[data-workbench-panel]')).toContainText(locale === 'en' ? 'Choose product images' : '選擇商品圖')
     // The ceilings are stated before a file is chosen, not after one is refused.
-    await expect(page.locator('#workbench-import-help')).toContainText(locale === 'en' ? '20 images' : '最多 20 張')
-    // ADR-0022: nothing on the page speaks of channel specifications any more.
+    await expect(page.locator('.workbench')).toContainText(locale === 'en' ? '20 images' : '20 張')
+    // ADR-0022, and #112: no channel specifications, and no step rail.
     await expect(page.locator('body')).not.toContainText(locale === 'en' ? /channel|preset|compliant/i : /通路|合規/)
+    await expect(page.locator('[data-workbench-step]')).toHaveCount(0)
 
-    // A refused file must be explained in the language of the page it was refused on.
-    await page.getByLabel(locale === 'en' ? 'Choose product images' : '選擇商品圖')
-      .setInputFiles({ name: 'renamed.png', mimeType: 'image/png', buffer: Buffer.from('not an image at all') })
-    await expect(page.locator('#workbench-import-issues')).toContainText(locale === 'en' ? 'Choose a JPEG, PNG, or WebP image' : '請選擇真正的 JPEG、PNG 或 WebP 圖片')
+    // A refused file is explained in the language of the page it was refused on.
+    await photos(page).setInputFiles({ name: 'renamed.png', mimeType: 'image/png', buffer: Buffer.from('not an image at all') })
+    await expect(page.locator('[data-batch-issue="unsupported_format"]')).toContainText(locale === 'en' ? 'Choose a JPEG, PNG, or WebP image' : '請選擇真正的 JPEG、PNG 或 WebP 圖片')
 
+    await photos(page).setInputFiles(await imageFile(page, 'private-workbench-canary.png', '#ff0000'))
     for (const width of [320, 375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -216,287 +207,23 @@ for (const locale of ['zh-tw', 'en']) {
     for (const theme of ['light', 'dark']) {
       if (theme === 'dark') await page.getByRole('button', { name: locale === 'en' ? 'Toggle color theme' : '切換色彩模式' }).click()
       expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
-      if (info.project.name === 'chromium') await page.screenshot({ path: `artifacts/product-image-workbench-${locale}-${theme}.png`, fullPage: true })
     }
   })
 }
 
-/**
- * Reading a revoked URL is the condition under test, and the browser reports the
- * refused request; it lives in its own test so the flow above stays strict.
- */
-test('清空工作台會交還輸出佔用的記憶體，而不只是隱藏結果', async ({ page }) => {
-  expectOfflineRequests(page)
-  await gotoHydrated(page, route)
-  await importProducts(page, [await productFile(page)])
-  await batch(page, '整批略過這一步').click()
-  await batch(page, '整批產生版型').click()
-  await skipToOutput(page)
-  await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible({ timeout: 60_000 })
-
-  const href = await page.getByRole('link', { name: '下載第 1 項' }).getAttribute('href')
-  await page.getByRole('button', { name: '清空工作台' }).click()
-  await expect(page.getByRole('link', { name: '下載第 1 項' })).toHaveCount(0)
-  expect(await page.evaluate(url => fetch(url!).then(() => 'readable', () => 'released'), href)).toBe('released')
-})
-
-test('品牌素材與壓縮：版型結果疊上 Logo，再由壓縮步驟決定容量', async ({ page }) => {
-  await gotoHydrated(page, route)
-  await importProducts(page, [await imageFile(page, 'private-workbench-canary.png', '#1d4ed8')])
-  await batch(page, '整批略過這一步').click()
-
-  // A non-square canvas: the Logo's share of the width is not its scale, so a
-  // preview that reads the scale as a width would disagree with the file.
-  await page.getByLabel('寬度（像素）').fill('900')
-  await page.getByLabel('高度（像素）').fill('600')
-  await page.getByLabel('輸出格式').selectOption('image/png')
-  await batch(page, '整批產生版型').click()
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'brand', { timeout: 60_000 })
-
-  await page.getByLabel('Logo 圖片').setInputFiles(await imageFile(page, 'private-workbench-logo.png', '#16a34a', 120, 120))
-  await page.getByLabel('Logo 縮放（%）').fill('40')
-  await page.getByLabel('Logo 水平位置（%）').fill('0')
-  await page.getByLabel('Logo 垂直位置（%）').fill('0')
-
-  // 40% of the contain fit of a 120 px square on 900 × 600 is 240 px, not 360.
-  await expect.poll(() => page.evaluate(() => {
-    const canvas = document.querySelector('[data-workbench-panel="brand"] .workbench__canvas')!
-    const layers = canvas.querySelectorAll('img')
-    const logo = layers[layers.length - 1]!
-    return Math.round(logo.getBoundingClientRect().width / canvas.getBoundingClientRect().width * 1000) / 1000
-  })).toBeCloseTo(240 / 900, 2)
-
-  await batch(page, '整批組合品牌素材').click()
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'compress', { timeout: 60_000 })
-
-  // The file size is decided here, by the merchant, and nowhere else.
-  await page.getByLabel('輸出格式').selectOption('image/jpeg')
-  await page.getByLabel('品質（%）').fill('40')
-  await batch(page, '整批壓縮').click()
-  await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible({ timeout: 60_000 })
-
-  const output = await outputPixels(page)
-  expect(output).toMatchObject({ width: 900, height: 600, type: 'image/jpeg' })
-  // The Logo covers the centre; the layout result still shows at the edge.
-  expectColour(output.centre, [22, 163, 74])
-  expectColour(output.corner, [29, 78, 216])
-
-  const download = page.waitForEvent('download')
-  await page.getByRole('link', { name: '下載第 1 項' }).click()
-  expect((await download).suggestedFilename()).toBe('brand-promo-image-01.jpg')
-})
-
-test('混合批次：不能處理的那一張只留在自己那一列，其餘照常完成', async ({ page }) => {
-  await gotoHydrated(page, route)
-  // 9,000 pixels on one side is over the shared ceiling, and it is said before
-  // the batch runs rather than discovered halfway through it.
-  const oversized = await imageFile(page, 'private-workbench-canary.png', '#b91c1c', 9000, 100)
-  const product = await productFile(page)
-  await page.getByLabel('選擇商品圖').setInputFiles([product, oversized, product])
-  await expect(page.locator('[data-queue-item]')).toHaveCount(3)
-
-  await expect(page.locator('[data-queue-item="item-2"]')).toHaveAttribute('data-queue-state', 'failed')
-  await expect(page.locator('[data-queue-item="item-2"]')).toContainText('圖片超過本機處理上限')
-  // Nothing about that file can be run again, so no row offers to.
-  await expect(page.locator('[data-queue-item="item-2"]').getByRole('button', { name: '重試第 2 項' })).toHaveCount(0)
-
-  await batch(page, '整批略過這一步').click()
-  await batch(page, '整批產生版型').click()
-  await skipToOutput(page)
-  await expect(page.locator('[data-queue-state="done"]')).toHaveCount(2, { timeout: 90_000 })
-  await expect(page.locator('[data-queue-item="item-2"]')).toHaveAttribute('data-queue-state', 'failed')
-
-  await expect(page.getByRole('status').filter({ hasText: '共 3 張' }).first()).toContainText('1 張未完成')
-
-  // Removing the row it stopped on puts the reading position on the row that took its place.
-  await page.getByRole('button', { name: '移除第 2 項' }).click()
-  await expect(page.locator('[data-queue-item]')).toHaveCount(2)
-  expect(await page.evaluate(() => document.activeElement?.closest('[data-queue-item]')?.getAttribute('data-queue-item'))).toBe('item-3')
-
-  await batch(page, '打包 2 個輸出成封存檔').click()
-  await expect(page.getByRole('link', { name: '下載封存檔' })).toBeVisible({ timeout: 60_000 })
-  expect(await archiveNames(page)).toEqual(['brand-promo-image-01.jpg', 'brand-promo-image-03.jpg'])
-})
-
-test('逐項取消只交還那一項，先前成果保留且可重試', async ({ page }) => {
-  await gotoHydrated(page, route)
-  // Cancelling needs a step that is still running. Delaying the engine's own
-  // script does not produce one — the Service Worker and the browser cache both
-  // answer that request without touching the network — so the work itself is
-  // made heavy instead: a 3.2 MP source written to the largest canvas the tool
-  // allows.
-  await importProducts(page, [await productFile(page, 1800)])
-
-  await batch(page, '整批略過這一步').click()
-  await page.getByLabel('寬度（像素）').fill('4800')
-  await page.getByLabel('高度（像素）').fill('4800')
-  await page.getByLabel('輸出格式').selectOption('image/png')
-  await batch(page, '整批產生版型').click()
-
-  // The panel reflows while the step runs. Waiting for the button to hold still
-  // spends the very window this test needs, and a forced click can land where
-  // the button no longer is, so the event is dispatched on the element itself.
-  const cancelItem = page.getByRole('button', { name: '取消第 1 項' })
-  await expect(cancelItem).toBeVisible()
-  await cancelItem.dispatchEvent('click')
-
-  await expect(page.locator('[data-workbench-step="import"]')).toHaveAttribute('data-workbench-state', 'done')
-  await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'skipped')
-  await expect(page.locator('[data-workbench-step="layout"]')).toHaveAttribute('data-workbench-state', 'ready')
-  await expect(page.getByRole('link', { name: '下載第 1 項' })).toHaveCount(0)
-
-  // The same step retries from the results the earlier steps still hold.
-  await page.getByLabel('寬度（像素）').fill('800')
-  await page.getByLabel('高度（像素）').fill('800')
-  await batch(page, '整批產生版型').click()
-  await expect(page.locator('[data-workbench-step="layout"]')).toHaveAttribute('data-workbench-state', 'done', { timeout: 60_000 })
-
-  await batch(page, '整批略過這一步').click()
-  await batch(page, '整批略過這一步').click()
-  await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible()
-
-  // Going back and changing the layout retires the output instead of leaving a stale file downloadable.
-  await page.locator('[data-workbench-step="layout"] button').click()
-  await page.getByLabel('縮放（%）').fill('120')
-  await expect(page.locator('[data-workbench-step="layout"]')).toHaveAttribute('data-workbench-state', 'ready')
-  await expect(page.locator('[data-workbench-step="output"]')).toHaveAttribute('data-workbench-state', 'locked')
-})
-
-test('去背引擎不可用時只停用去背，其餘步驟仍可完成輸出', async ({ page }) => {
-  // The aborted worker request is the condition under test; the browser reports it.
-  expectOfflineRequests(page)
-  await page.route('**/*background-removal.worker*', handler => handler.abort())
-  await gotoHydrated(page, route)
-
-  await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'unavailable', { timeout: 30_000 })
-  await importProducts(page, [await productFile(page)])
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'layout')
-  await expect(page.locator('[data-workbench-step="cutout"] button')).toBeDisabled()
-
-  await batch(page, '整批產生版型').click()
-  await skipToOutput(page)
-  await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible({ timeout: 60_000 })
-})
-
-test('純鍵盤可完成步驟切換與佇列操作，未完成工作會攔截離開', async ({ page }) => {
-  await gotoHydrated(page, route)
-  await importProducts(page, [await productFile(page)])
-
-  // Unfinished local work is the one thing a closed tab cannot get back.
-  expect(await page.evaluate(() => {
-    const event = new Event('beforeunload', { cancelable: true })
-    window.dispatchEvent(event)
-    return event.defaultPrevented
-  })).toBe(true)
-
-  await page.locator('[data-workbench-step="import"] button').focus()
-  await page.keyboard.press('Enter')
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'import')
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('workbench-import')
-
-  await page.getByRole('status').filter({ hasText: '共 1 張' }).first().waitFor()
-  await expect(page.getByRole('status').filter({ hasText: '第 1 步' }).first()).toBeVisible()
-
-  await page.locator('[data-workbench-step="cutout"] button').focus()
-  await page.keyboard.press('Enter')
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('workbench-cutout')
-  await expect(page.getByRole('status').filter({ hasText: '第 2 步' }).first()).toBeVisible()
-
-  // Every row action is a real button, reachable and large enough to hit.
-  const remove = page.getByRole('button', { name: '移除第 1 項' })
-  await remove.focus()
-  const target = await remove.boundingBox()
-  expect(target!.width).toBeGreaterThanOrEqual(44)
-  expect(target!.height).toBeGreaterThanOrEqual(44)
-  await page.keyboard.press('Enter')
-  await expect(page.locator('[data-queue-item]')).toHaveCount(0)
-  // The queue went away with its last row, so the reading position lands on the panel.
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('workbench-import')
-})
-
-test('蓋住上限的批次仍可完成：併發受限，且封存不佔住主執行緒', async ({ page }, info) => {
-  test.skip(info.project.name !== 'chromium', '長工作量測只在支援 longtask 的瀏覽器進行一次')
-
-  await gotoHydrated(page, route)
-  const product = await productFile(page)
-  // Two more than the batch holds: the extra ones are refused as they are added,
-  // and what was taken in is still a batch that runs to the end.
-  await page.getByLabel('選擇商品圖').setInputFiles(Array.from({ length: 22 }, () => product))
-  await expect(page.locator('[data-queue-item]')).toHaveCount(20)
-  await expect(page.locator('#workbench-import-issues')).toContainText('超過張數上限')
-  await expect(page.locator('[data-workbench-step="import"]')).toHaveAttribute('data-workbench-state', 'done')
-
-  await batch(page, '整批略過這一步').click()
-  // A canvas large enough that compressing it is real work, so cancel-all lands
-  // while the batch is still running rather than after it has finished.
-  await page.getByLabel('寬度（像素）').fill('3000')
-  await page.getByLabel('高度（像素）').fill('3000')
-
-  await page.evaluate(() => {
-    const window_ = window as unknown as { __peak: number, __long: number }
-    window_.__peak = 0
-    window_.__long = 0
-    new PerformanceObserver(list => { for (const entry of list.getEntries()) window_.__long = Math.max(window_.__long, entry.duration) })
-      .observe({ entryTypes: ['longtask'] })
-    setInterval(() => { window_.__peak = Math.max(window_.__peak, document.querySelectorAll('[data-queue-state="running"]').length) }, 20)
-  })
-
-  await batch(page, '整批產生版型').click()
-  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'brand', { timeout: 180_000 })
-  await batch(page, '整批略過這一步').click()
-  await expect(panel(page)).toHaveAttribute('data-workbench-panel', 'compress')
-  await batch(page, '整批壓縮').click()
-
-  // Cancel-all in the middle of a real batch: an item is finished once it is
-  // compressed, and what explicitly finished keeps its result and stays
-  // downloadable, and nothing is left half-produced.
-  await expect(page.locator('[data-queue-state="done"]').first()).toBeVisible({ timeout: 120_000 })
-  const cancelAll = page.getByRole('button', { name: '全部取消' })
-  await expect(cancelAll).toBeVisible()
-  await cancelAll.dispatchEvent('click')
-  await expect(page.getByRole('status').filter({ hasText: '已完成的項目保留成果' })).toBeVisible()
-  await expect(page.locator('[data-queue-state="running"]')).toHaveCount(0)
-  const finished = await page.locator('[data-queue-state="done"]').count()
-  expect(finished).toBeGreaterThan(0)
-  expect(await page.getByRole('link', { name: /^下載第 / }).count()).toBe(finished)
-
-  // Picking the batch back up finishes what was handed back.
-  await batch(page, '整批壓縮').click()
-  await expect(page.locator('[data-queue-state="done"]')).toHaveCount(20, { timeout: 180_000 })
-  // §12.11 caps encoding at two jobs; a batch of twenty therefore never opens twenty.
-  const peak = await page.evaluate(() => (window as unknown as { __peak: number }).__peak)
-  expect(peak).toBeGreaterThan(0)
-  expect(peak).toBeLessThanOrEqual(2)
-
-  await batch(page, '打包 20 個輸出成封存檔').click()
-  await expect(page.getByRole('link', { name: '下載封存檔' })).toBeVisible({ timeout: 60_000 })
-  expect(await archiveNames(page)).toHaveLength(20)
-  // The budget is 50 ms. The ceiling asserted here is far looser on purpose:
-  // reading and checksumming a whole batch on the page would produce a task of
-  // seconds, and a loose bound stays honest on a shared CI machine.
-  expect(await page.evaluate(() => (window as unknown as { __long: number }).__long)).toBeLessThan(500)
-})
-
-test('完整代表性流程：本機去背後接續版型與下載', async ({ page }, info) => {
+test('去背：勾選後在本機去背，輸出透明 PNG', async ({ page }, info) => {
   test.skip(info.project.name !== 'chromium', '模型下載與推論的完整流程只在 Chromium 驗證一次')
 
   await gotoHydrated(page, route)
-  await importProducts(page, [await portraitFile(page)])
-
-  await expect(page.locator('[data-workbench-model]')).toHaveAttribute('data-model-ready', 'false')
-  await expect(batch(page, '整批去背')).toBeDisabled()
-  await page.getByRole('button', { name: '下載模型' }).click()
-  await page.locator('[data-workbench-model][data-model-ready="true"]').waitFor({ timeout: 180_000 })
-
-  await batch(page, '整批去背').click()
-  await expect(page.locator('[data-workbench-step="cutout"]')).toHaveAttribute('data-workbench-state', 'done', { timeout: 180_000 })
-  await expect(page.locator('[data-workbench-panel]')).toHaveAttribute('data-workbench-panel', 'layout')
-
-  await batch(page, '整批產生版型').click()
-  await skipToOutput(page)
-  await expect(page.getByRole('link', { name: '下載第 1 項' })).toBeVisible({ timeout: 60_000 })
-  expect(await outputPixels(page)).toMatchObject({ width: 1000, height: 1000, type: 'image/jpeg' })
-
-  await page.evaluate(() => window.scrollTo(0, 0))
-  await page.screenshot({ path: 'artifacts/product-image-workbench-desktop.png', fullPage: true })
+  await photos(page).setInputFiles(await portraitFile(page))
+  await page.locator('[data-workbench-job="cutout"] input[type=checkbox]').check()
+  await page.locator('[data-workbench-job="compose"] input[type=checkbox]').uncheck()
+  await page.locator('[data-workbench-job="compress"] input[type=checkbox]').uncheck()
+  await page.locator('[data-workbench-run]').click()
+  await expect(page.locator('.workbench__status')).toContainText('完成 1／1 張', { timeout: 180_000 })
+  const [made] = await outputs(page)
+  expect(made).toMatchObject({ type: 'image/png', width: 512, height: 512 })
+  // The drawn background is gone and the drawn person is kept.
+  expect(made!.corner[3]).toBeLessThan(16)
+  expect(made!.centre[3]).toBeGreaterThan(200)
 })

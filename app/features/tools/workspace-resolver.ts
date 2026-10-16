@@ -1,7 +1,6 @@
 import archiveWorkerUrl from '../images/archive.worker?worker&url'
 import promoWorkerUrl from './brand-promo-image/promo.worker?worker&url'
 import backgroundRemovalWorkerUrl from './image-background-remover/background-removal.worker?worker&url'
-import compliantImageWorkerUrl from './compliant-product-image/compliant-image.worker?worker&url'
 import imageWorkerUrl from './image-compressor/image.worker?worker&url'
 import { defineAsyncComponent, type AsyncComponentLoader } from 'vue'
 import type { PublishedToolDefinition } from '@/features/tools/catalog'
@@ -38,6 +37,6 @@ export function getToolWorkspaceAssets(componentKey: string): string[] {
   if (componentKey === 'BrandPromoImageWorkspace') return [promoWorkerUrl, imageWorkerUrl]
   if (componentKey === 'ImageCompressorWorkspace') return [imageWorkerUrl]
   if (componentKey === 'ImageBackgroundRemoverWorkspace') return [backgroundRemovalWorkerUrl]
-  if (componentKey === 'ProductImageWorkbenchWorkspace') return [compliantImageWorkerUrl, promoWorkerUrl, imageWorkerUrl, archiveWorkerUrl]
+  if (componentKey === 'ProductImageWorkbenchWorkspace') return [promoWorkerUrl, imageWorkerUrl, backgroundRemovalWorkerUrl, archiveWorkerUrl]
   return []
 }
