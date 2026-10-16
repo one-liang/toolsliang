@@ -3,9 +3,11 @@ import {
   getTaiwanCalendarCaveats,
   getTaiwanCalendarCopy,
   describeCivilDate,
+  describeDayFlag,
   describeDayMark,
   describeLunarDate,
   describeLunarDayMark,
+  describeMonthName,
   describeOfficialDay,
   describeSolarTerm,
   officialDayKindLabels,
@@ -261,5 +263,27 @@ describe('what a day cell can fit', () => {
     expect(describeDayMark({ kind: 'makeup-workday', holidays: [], label: '補行上班' }, 'zh-tw')).toBe('補班日')
     expect(describeDayMark({ kind: 'national-holiday', holidays: ['childrens-day', 'tomb-sweeping-day'], label: '兒童節及民族掃墓節' }, 'zh-tw'))
       .toBe('兒童節、民族掃墓節')
+  })
+})
+
+describe('what a year-at-a-glance cell can fit', () => {
+  it('flags every day the office calendar names, and leaves an ordinary week alone', () => {
+    const flag = (kind: CalendarDay['official']['kind'], locale: LocaleCode = 'zh-tw') =>
+      describeDayFlag({ kind, holidays: [], label: '' }, locale)
+
+    expect(flag('workday')).toBe('')
+    expect(flag('weekend')).toBe('')
+    expect(flag('national-holiday')).toBe('休')
+    expect(flag('substitute-holiday')).toBe('休')
+    expect(flag('bridge-holiday')).toBe('休')
+    expect(flag('makeup-workday')).toBe('班')
+    expect(flag('national-holiday', 'en')).toBe('Off')
+    expect(flag('makeup-workday', 'en')).toBe('Work')
+  })
+
+  it('names a month on its own in each locale', () => {
+    expect(describeMonthName(1, 'zh-tw')).toBe('1 月')
+    expect(describeMonthName(12, 'zh-tw')).toBe('12 月')
+    expect(describeMonthName(2, 'en')).toBe('February')
   })
 })

@@ -13,7 +13,9 @@ export interface LocalAssetErrorMessage {
 }
 
 const kindLabels: Record<LocalAssetKind, Record<LocaleCode, string>> = {
-  calendar: { 'zh-tw': '自訂行事曆', en: 'Custom calendars' },
+  // The tool was withdrawn (ADR-0021); a calendar a device saved earlier is still
+  // listed here, so the label says why no tool opens it any more.
+  calendar: { 'zh-tw': '自訂行事曆（已下架）', en: 'Custom calendars (withdrawn)' },
   background: { 'zh-tw': '背景', en: 'Backgrounds' },
   frame: { 'zh-tw': '框版', en: 'Frames' },
   logo: { 'zh-tw': 'Logo', en: 'Logos' },
@@ -98,11 +100,11 @@ const errorMessages: Record<LocalAssetErrorCode, Record<LocaleCode, LocalAssetEr
   'empty-bundle': {
     'zh-tw': {
       title: '沒有可處理的本機資產',
-      recovery: '先在工具中保存框版、Logo、簽名或自訂行事曆，或選擇一個含有資產的匯出檔。',
+      recovery: '先在工具中保存框版、Logo 或簽名，或選擇一個含有資產的匯出檔。',
     },
     en: {
       title: 'There are no local assets to work with',
-      recovery: 'Save a frame, Logo, signature, or custom calendar in a tool first, or choose an export file that contains assets.',
+      recovery: 'Save a frame, Logo, or signature in a tool first, or choose an export file that contains assets.',
     },
   },
   unknown: {
@@ -163,7 +165,7 @@ export interface LocalAssetCopy {
 const zhTw: LocalAssetCopy = {
   eyebrow: '裝置儲存',
   title: '本機資產',
-  intro: '你在工具中主動保存的框版、Logo、簽名與自訂行事曆都列在這裡，可以逐筆檢視、匯出或刪除。',
+  intro: '你在工具中主動保存的框版、Logo 與簽名都列在這裡，可以逐筆檢視、匯出或刪除。',
   boundary: '本機資產只保存在這台裝置的瀏覽器資料庫，不會上傳、不會進入離線快取，也不會隨雲端偏好同步。清除瀏覽器資料、使用無痕視窗、瀏覽器回收儲存空間或更換裝置時，這些資產會消失；需要保留就自行匯出備份。',
   usageTitle: '儲存用量',
   usageTotal: '本機資產合計',
@@ -171,7 +173,7 @@ const zhTw: LocalAssetCopy = {
   usageNoEstimate: '這個瀏覽器沒有提供儲存空間估計值。',
   listTitle: '已保存的資產',
   empty: '這台裝置還沒有本機資產。',
-  emptyHint: '在支援的工具中保存框版、Logo、簽名或自訂行事曆後，就會出現在這裡。',
+  emptyHint: '在支援的工具中保存框版、Logo 或簽名後，就會出現在這裡。',
   sizeLabel: '大小',
   updatedLabel: '更新時間',
   renameLabel: name => `重新命名「${name}」`,
@@ -202,7 +204,7 @@ const zhTw: LocalAssetCopy = {
 const en: LocalAssetCopy = {
   eyebrow: 'Device storage',
   title: 'Local assets',
-  intro: 'Frames, Logos, signatures, and custom calendars you chose to save in a tool are listed here, ready to review, export, or delete.',
+  intro: 'Frames, Logos, and signatures you chose to save in a tool are listed here, ready to review, export, or delete.',
   boundary: 'Local assets stay in this browser\'s database on this device. They are never uploaded, never enter the offline cache, and never sync as cloud preferences. Clearing browser data, private browsing, storage reclaimed by the browser, or moving to another device removes them, so export a backup if you need to keep them.',
   usageTitle: 'Storage in use',
   usageTotal: 'Local assets total',
@@ -210,7 +212,7 @@ const en: LocalAssetCopy = {
   usageNoEstimate: 'This browser does not report a storage estimate.',
   listTitle: 'Saved assets',
   empty: 'No local assets are saved on this device yet.',
-  emptyHint: 'Save a frame, Logo, signature, or custom calendar in a supported tool and it will appear here.',
+  emptyHint: 'Save a frame, Logo, or signature in a supported tool and it will appear here.',
   sizeLabel: 'Size',
   updatedLabel: 'Updated',
   renameLabel: name => `Rename “${name}”`,

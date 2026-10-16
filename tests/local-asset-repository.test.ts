@@ -265,6 +265,55 @@ describe('the single asset a tool owns', () => {
   })
 })
 
+/**
+ * ADR-0021 withdrew the custom calendar without an export of its own. What it
+ * left on a device is still an ordinary local asset: the asset manager has to
+ * read it, name it and delete it, never fail over it.
+ */
+describe('a custom calendar left by the withdrawn tool', () => {
+  function leftoverCalendar(overrides: Record<string, unknown> = {}) {
+    return {
+      ...createLocalAssetRecord({
+        kind: 'calendar',
+        name: '自訂行事曆',
+        payload: { format: 'text', mediaType: 'application/json', text: '{"format":"toolsliang.custom-calendar","version":1,"entries":[]}' },
+      }, { id: 'custom-calendar', now }),
+      ...overrides,
+    }
+  }
+
+  it('still lists beside the assets the current tools save', async () => {
+    store.rows.set('custom-calendar', leftoverCalendar())
+    await repository().save(signatureDraft())
+
+    const listing = await repository().list()
+    expect(listing.ok && listing.value.records.map(record => [record.id, record.kind])).toEqual([
+      ['custom-calendar', 'calendar'],
+      ['asset-1', 'signature'],
+    ])
+    expect(listing.ok && listing.value.unreadable).toEqual([])
+  })
+
+  it('deletes without touching anything else', async () => {
+    store.rows.set('custom-calendar', leftoverCalendar())
+    await repository().save(signatureDraft())
+
+    const removed = await repository().remove('custom-calendar')
+    expect(removed.ok && removed.value.records.map(record => record.id)).toEqual(['asset-1'])
+    expect(store.rows.has('custom-calendar')).toBe(false)
+  })
+
+  it('deletes one this build cannot read, too', async () => {
+    store.rows.set('custom-calendar', leftoverCalendar({ version: 99 }))
+
+    const listing = await repository().list()
+    expect(listing.ok && listing.value.unreadable).toEqual([{ id: 'custom-calendar', reason: 'unsupported-version', name: '自訂行事曆' }])
+
+    const removed = await repository().remove('custom-calendar')
+    expect(removed.ok && removed.value.unreadable).toEqual([])
+  })
+})
+
 describe('device boundary', () => {
   async function exerciseEveryOperation() {
     const owner = repository()

@@ -28,16 +28,7 @@ export const technicalTerms: Array<{ name: string, pattern: RegExp, locales?: Lo
  * exemption goes with the copy it covers; a stale one only stops exempting.
  * `selectors` are workspace blocks that issue removes from the rendered page.
  */
-export const rewrittenElsewhere: Array<{ issue: string, slug: string, terms?: string[], selectors?: string[] }> = [
-  // The whole tool is being withdrawn.
-  { issue: '#89', slug: 'custom-calendar' },
-  // The cutout's download, offline and preparation copy (the model version shown beside the download
-  // included), which the workbench borrows for its cutout step.
-  { issue: '#86', slug: 'image-background-remover', terms: ['model runtime', 'file internals', 'library or model name'] },
-  { issue: '#86', slug: 'product-image-workbench', terms: ['model runtime'] },
-  // The two explanation blocks inside the Taiwan calendar workspace.
-  { issue: '#88', slug: 'taiwan-calendar', selectors: ['.calendar-caveats', '.calendar-sources'] },
-]
+export const rewrittenElsewhere: Array<{ issue: string, slug: string, terms?: string[], selectors?: string[] }> = []
 
 export function isRewrittenElsewhere(slug: string) {
   return rewrittenElsewhere.some(entry => entry.slug === slug && !entry.terms && !entry.selectors)

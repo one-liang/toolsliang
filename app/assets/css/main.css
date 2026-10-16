@@ -746,7 +746,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .calendar-day[data-kind="makeup-workday"] { border-style: dashed; border-color: var(--color-border-strong); }
 .calendar-day--today { border-color: var(--color-success); outline: 2px solid var(--color-success); outline-offset: -5px; }
 .calendar-day.calendar-day--selected { border-color: var(--sidebar-active-bg); background: var(--sidebar-active-bg); color: var(--sidebar-active-fg); }
-.calendar-day.calendar-day--selected :is(.calendar-day__number, .calendar-day__lunar, .calendar-day__mark, .calendar-day__today, .calendar-day__custom) { color: inherit; }
+.calendar-day.calendar-day--selected :is(.calendar-day__number, .calendar-day__lunar, .calendar-day__mark, .calendar-day__today, .calendar-day__flag) { color: inherit; }
 
 .calendar-side { display: grid; gap: 16px; align-content: start; }
 .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources {
@@ -784,98 +784,52 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .calendar-sources__edition { font-family: var(--font-mono); font-size: .8rem; }
 .calendar-sources__contract { margin: 12px 0 0; color: var(--color-muted-foreground); font-family: var(--font-mono); font-size: .78rem; }
 
-/* The custom calendar reuses the month grid of the Taiwan calendar: same table,
-   same day cell, same reviewed marks. Only what belongs to this device's own
-   layer is styled here, and it is always text first — the tint and the dashed
-   edge repeat what the cell and its accessible name already say. */
-.custom-calendar-workspace { display: grid; gap: 16px; }
-.custom-calendar-boundary { display: flex; align-items: flex-start; gap: 9px; margin: 0; padding: 14px 16px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); font-size: .85rem; line-height: 1.7; }
-.custom-calendar-boundary svg { flex: none; margin-top: 3px; color: var(--color-success); }
-.custom-calendar-error { display: flex; align-items: flex-start; gap: 9px; padding: 14px 16px; border: var(--rule) solid var(--color-destructive); border-radius: var(--radius-md); background: var(--color-destructive-surface); font-size: .85rem; line-height: 1.65; }
-.custom-calendar-error svg { flex: none; margin-top: 3px; color: var(--color-destructive); }
-.custom-calendar-error p { margin: 0; }
-.custom-calendar-error__title { margin-bottom: 4px; font-weight: 700; }
-.custom-calendar-error__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-.calendar-day__custom {
-  display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
-  color: var(--color-primary-strong); font-size: .75rem; font-weight: 800; line-height: 1.3;
+.calendar-view { margin: 0; padding: 0; border: 0; }
+.calendar-view legend { padding: 0; margin-bottom: 8px; font-size: .86rem; font-weight: 700; }
+
+/* Twelve months at once, the way the DGPA prints the office calendar. The
+   columns follow the room the card has, not the viewport: the sidebar and the
+   page width decide that, so a container query reads it directly. */
+.calendar-year-view { container-type: inline-size; margin-top: 14px; }
+.calendar-year-view__hint { margin: 0 0 14px; color: var(--color-muted-foreground); font-size: .78rem; }
+.calendar-months { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px 28px; align-items: start; }
+@container (min-width: 540px) { .calendar-months { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (min-width: 720px) { .calendar-months { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.calendar-mini { width: 100%; border-spacing: 2px; border-collapse: separate; table-layout: fixed; }
+.calendar-mini caption { margin-bottom: 6px; padding-left: 2px; font-size: .95rem; font-weight: 800; text-align: left; }
+.calendar-mini th { padding: 2px 0; color: var(--color-muted-foreground); font-size: .68rem; font-weight: 800; }
+.calendar-mini th abbr { text-decoration: none; }
+.calendar-mini td { padding: 0; vertical-align: top; }
+.calendar-day.calendar-day--compact { min-height: 50px; gap: 0; padding: 4px 1px 3px; border-radius: 8px; }
+.calendar-day--compact .calendar-day__number { font-size: .86rem; line-height: 1.25; }
+.calendar-day--compact .calendar-day__lunar { overflow: hidden; font-size: .6rem; line-height: 1.3; white-space: nowrap; }
+.calendar-day__flag { color: var(--color-holiday); font-size: .6rem; font-weight: 800; line-height: 1.3; }
+.calendar-day__flag[data-flag="work"] { color: var(--color-foreground); }
+/* The DGPA paints every day off alike, weekend or holiday; the weekday column
+   and the flag say which, so the tint only repeats it at a glance. */
+.calendar-day--compact[data-kind="weekend"]:not(.calendar-day--selected) { border-color: var(--color-border-subtle); background: var(--color-holiday-surface); }
+.calendar-legend li[data-legend="day-off"] .calendar-legend__swatch { border-color: var(--color-holiday); background: var(--color-holiday-surface); }
+.calendar-legend__flag { min-width: 16px; color: var(--color-holiday); font-size: .8rem; font-weight: 800; text-align: center; }
+.calendar-legend__flag[data-flag="work"] { color: var(--color-foreground); }
+
+/* Attribution is a condition of the Open Government Data Licence, so the
+   publisher, edition and licence stay on screen; only the dates, the
+   cross-check and the disclaimers fold away under the line. */
+.calendar-edition { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--color-border-subtle); color: var(--color-muted-foreground); font-size: .78rem; line-height: 1.7; }
+.calendar-edition__line { margin: 0; overflow-wrap: anywhere; }
+.calendar-edition a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
+.calendar-edition__revised { color: var(--color-foreground); font-weight: 800; }
+.calendar-edition__details > summary { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; list-style: none; color: var(--color-foreground); font-weight: 700; cursor: pointer; }
+.calendar-edition__details > summary::-webkit-details-marker { display: none; }
+.calendar-edition__details > summary::after {
+  content: ''; inline-size: 18px; block-size: 18px; flex: none;
+  background: var(--select-chevron) center / 18px no-repeat;
+  transition: transform var(--duration-fast) var(--ease-standard);
 }
-.calendar-day[data-custom] { border-color: var(--color-border-strong); }
-.calendar-day[data-changed="true"] { border-style: dashed; border-color: var(--color-primary-strong); }
-.custom-calendar-day, .custom-calendar-agenda-panel, .custom-calendar-storage, .custom-calendar-caveats {
-  padding: 16px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle);
-}
-.custom-calendar-storage, .custom-calendar-caveats { margin-top: 0; }
-.custom-calendar-layers { display: grid; gap: 10px; margin: 0 0 14px; }
-.custom-calendar-layers div { display: grid; gap: 2px; }
-.custom-calendar-layers dt { color: var(--color-muted-foreground); font-size: .72rem; font-weight: 800; }
-.custom-calendar-layers dd { margin: 0; font-size: .88rem; line-height: 1.6; overflow-wrap: anywhere; }
-.custom-calendar-layers__lunar { display: block; color: var(--color-muted-foreground); font-size: .8rem; }
-.custom-calendar-changed, .custom-calendar-conflict { display: block; margin-top: 4px; font-size: .8rem; font-weight: 700; }
-.custom-calendar-changed { color: var(--color-primary-strong); }
-.custom-calendar-conflict { color: var(--color-warning); }
-.custom-calendar-day__title { margin: 0 0 8px; font-size: .78rem; font-weight: 800; color: var(--color-muted-foreground); }
-.custom-calendar-entries { display: grid; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
-.custom-calendar-entry { padding: 10px 12px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); }
-.custom-calendar-entry__title { margin: 0; font-size: .92rem; font-weight: 750; overflow-wrap: anywhere; }
-.custom-calendar-entry__meta { margin: 2px 0 0; color: var(--color-muted-foreground); font-size: .78rem; }
-.custom-calendar-entry__note { margin: 6px 0 0; font-size: .82rem; line-height: 1.6; overflow-wrap: anywhere; }
-.custom-calendar-entry__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.custom-calendar-entry__actions > .ui-button { min-height: 44px; }
-.custom-calendar-entry__confirm { display: grid; gap: 10px; margin-top: 10px; padding: 12px; border: var(--rule) solid var(--color-destructive); border-radius: var(--radius-sm); background: var(--color-destructive-surface); font-size: .82rem; line-height: 1.6; }
-.custom-calendar-entry__confirm p { margin: 0; }
-.custom-calendar-entry__confirm > .ui-button { min-height: 44px; justify-self: start; }
-.custom-calendar-agenda { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.custom-calendar-agenda__button {
-  width: 100%; min-height: 44px; display: grid; gap: 2px;
-  padding: 8px 10px; border: 0; border-bottom: 1px solid var(--color-border-subtle); border-radius: 0;
-  background: var(--color-surface); color: var(--color-foreground); font: inherit; text-align: left; cursor: pointer;
-}
-.custom-calendar-agenda__date { color: var(--color-primary-strong); font-size: .78rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-.custom-calendar-agenda__text { font-size: .86rem; line-height: 1.5; overflow-wrap: anywhere; }
-.custom-calendar-form { display: grid; gap: 14px; padding: 14px; border: var(--rule) solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface); }
-.custom-calendar-form__legend { margin: 0; font-size: .95rem; font-weight: 780; }
-.custom-calendar-form__error { padding: 12px; border: var(--rule) solid var(--color-destructive); border-radius: var(--radius-sm); background: var(--color-destructive-surface); font-size: .82rem; line-height: 1.6; }
-.custom-calendar-form__error p { margin: 0 0 6px; }
-.custom-calendar-form__error ul { display: grid; gap: 4px; margin: 0; padding-left: 20px; }
-.custom-calendar-form__error-title { font-weight: 700; }
-.custom-calendar-form__actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.custom-calendar-form__actions > .ui-button { min-height: 44px; }
-.custom-calendar-field { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
-.custom-calendar-field > label, .custom-calendar-field legend { padding: 0; font-size: .86rem; font-weight: 700; }
-.custom-calendar-field .field-help { margin: 0; }
-.custom-calendar-field__error { display: block; margin-top: 4px; color: var(--color-destructive); font-weight: 700; }
-.custom-calendar-marks__options { display: grid; gap: 8px; }
-.custom-calendar-mark-option { min-height: 44px; display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; gap: 4px 10px; padding: 8px 10px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); cursor: pointer; }
-.custom-calendar-mark-option input { width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary-strong); }
-.custom-calendar-mark-option__label { font-size: .88rem; font-weight: 700; }
-.custom-calendar-mark-option__hint { grid-column: 2; color: var(--color-muted-foreground); font-size: .78rem; line-height: 1.5; }
-.custom-calendar-mark-option:focus-within { border-color: var(--color-primary-strong); }
-/* A date control cannot shrink below its own picker (about 166px), so the two dates sit
-   side by side only when both fit and stack otherwise, instead of overlapping. */
-.custom-calendar-dates { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 14px 10px; }
-.custom-calendar-dates > div { display: grid; gap: 8px; }
-.custom-calendar-dates label { font-size: .82rem; font-weight: 700; }
-.custom-calendar-dates .ui-input { min-height: 44px; }
-.custom-calendar-dates .field-help { grid-column: 1 / -1; }
-.custom-calendar-note { min-height: 88px; padding: 10px 12px; line-height: 1.6; resize: vertical; }
-.custom-calendar-status { min-height: 22px; margin: 0; color: var(--color-success); font-size: .84rem; font-weight: 700; line-height: 1.6; }
-.custom-calendar-storage__total { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: .88rem; font-weight: 700; }
-.custom-calendar-storage__total svg { flex: none; color: var(--color-primary-strong); }
-.custom-calendar-storage__actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(248px, 1fr)); gap: 18px 20px; align-items: start; margin-top: 14px; }
-.custom-calendar-storage__action { display: grid; justify-items: start; gap: 4px; }
-.custom-calendar-storage__action .field-help { margin: 0; }
-.custom-calendar-storage__action > .ui-button { min-height: 44px; }
-.custom-calendar-storage__import { position: relative; }
-.custom-calendar-storage__import label { min-height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border: var(--rule) solid var(--color-border-strong); border-radius: var(--radius-full); background: var(--color-surface); font-size: .875rem; font-weight: 700; cursor: pointer; }
-.custom-calendar-storage__import input { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
-.custom-calendar-storage__import:focus-within label { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
-.custom-calendar-storage__import--disabled label { opacity: .55; cursor: not-allowed; }
-.custom-calendar-confirm { display: grid; gap: 10px; margin-top: 14px; padding: 14px 16px; border: var(--rule) solid var(--color-destructive); border-radius: var(--radius-md); background: var(--color-destructive-surface); font-size: .85rem; line-height: 1.6; }
-.custom-calendar-confirm p { margin: 0; }
-.custom-calendar-confirm__actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.custom-calendar-confirm__actions > .ui-button { min-height: 44px; }
-.custom-calendar-caveats ul { display: grid; gap: 8px; margin: 0; padding-left: 20px; color: var(--color-muted-foreground); font-size: .84rem; line-height: 1.65; }
+.calendar-edition__details[open] > summary::after { transform: rotate(180deg); }
+.calendar-edition__details[open] > summary { margin-bottom: 4px; }
+.calendar-edition__details .calendar-revised { margin-bottom: 12px; color: var(--color-foreground); }
+.calendar-edition__details :is(.calendar-caveats, .calendar-sources) { margin-top: 12px; }
 
 .tool-faq { display: grid; gap: 14px; margin: 0; }
 .tool-faq__question { margin: 0 0 6px; font-size: .95rem; font-weight: 800; }
@@ -906,9 +860,8 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 @keyframes drawer-enter { from { translate: 0 16px; } }
 @media (hover: hover) and (pointer: fine) {
   /* A selected or current item stays inverted under the pointer; the yellow hover would leave its light text unreadable. */
-  .calendar-day:not(.calendar-day--selected):hover, .custom-calendar-mark-option:hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); }
-  .calendar-agenda__button:hover, .custom-calendar-agenda__button:hover { background: var(--color-surface-hover); }
-  .custom-calendar-storage__import label:hover { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
+  .calendar-day:not(.calendar-day--selected):hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); }
+  .calendar-agenda__button:hover { background: var(--color-surface-hover); }
   .mobile-nav__item:hover { background: var(--color-surface-hover); color: var(--color-foreground); }
   .drawer-tool-link:not(.router-link-exact-active):hover { border-color: var(--color-border-strong); background: var(--color-surface-hover); }
 }
@@ -1004,22 +957,9 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .tool-offline { display: grid; gap: 12px; }
 .tool-offline__summary { margin: 0; }
 
-.offline-asset {
-  display: grid;
-  gap: 10px;
-  padding: 14px;
-  border: var(--rule) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-subtle);
-}
-.offline-asset__copy { display: grid; gap: 4px; }
-.offline-asset__meta { color: var(--color-muted-foreground); font-size: .82rem; }
-.offline-asset__status { margin: 0; color: var(--color-muted-foreground); font-size: .88rem; line-height: 1.6; }
+/* The progress bar for files a tool gets ready on first use (portrait model). */
 .offline-asset__progress { block-size: 10px; border: var(--rule) solid var(--color-border); border-radius: 999px; background: var(--color-surface); overflow: hidden; }
-.offline-asset__percent { margin: 0; color: var(--color-muted-foreground); font-size: .82rem; font-variant-numeric: tabular-nums; }
 .offline-asset__progress > span { display: block; block-size: 100%; background: var(--color-primary-strong); transition: inline-size var(--duration-fast) var(--ease-standard); }
-.offline-asset__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.offline-asset__actions > .ui-button { min-height: 44px; }
 
 .offline-page__heading { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
 .offline-page__icon { display: grid; place-items: center; inline-size: 52px; block-size: 52px; flex: none; border-radius: var(--radius-md); background: var(--color-warning-surface); color: var(--color-warning); }
@@ -1092,21 +1032,40 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-background-remover .field-error { display: flex; align-items: flex-start; gap: 8px; }
 .image-compressor .field-error svg,
 .image-background-remover .field-error svg { flex-shrink: 0; }
-.image-compressor__comparison figure,
 .image-background-remover__comparison figure { min-width: 0; margin: 0; }
-.image-compressor__comparison figcaption,
 .image-background-remover__comparison figcaption { margin-bottom: 12px; font-size: .875rem; overflow-wrap: anywhere; }
 .image-compressor__download,
 .image-background-remover__download { margin-top: 16px; }
 .image-compressor__settings { padding: 0; margin: 24px 0 0; border: 0; min-width: 0; }
 .image-compressor__settings legend { margin-bottom: 16px; font-weight: 700; }
-.image-compressor__comparison { margin-top: 24px; }
-.image-compressor__comparison img { width: 100%; height: auto; max-height: var(--image-preview-max-height); object-fit: contain; border: var(--rule) solid var(--color-muted-foreground); border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+/* Original and output sit side by side as thumbnail cards at every width, so the comparison never needs scrolling. */
+.image-compressor__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.image-compressor__card { display: grid; align-content: start; gap: 12px; min-width: 0; margin: 0; padding: 12px; border: var(--rule) solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-surface); }
+.image-compressor__thumb { display: flex; align-items: center; justify-content: center; height: 136px; overflow: hidden; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
+/* Sized to the picture rather than filling the frame, so the checkerboard marks only real transparency. */
+.image-compressor__thumb img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.image-compressor__thumb-empty { display: grid; justify-items: center; gap: 4px; margin: 0; padding: 8px; color: var(--color-muted-foreground); font-size: .8rem; text-align: center; }
+.image-compressor__card figcaption { display: grid; justify-items: start; gap: 8px; font-size: .875rem; overflow-wrap: anywhere; }
+.image-compressor__card-title { font-weight: 800; }
+.image-compressor__card dl { display: grid; gap: 4px; justify-self: stretch; margin: 0; }
+/* Phones stack each label over its value, so both rows break the same way however wide the numbers are. */
+.image-compressor__card dl div { display: grid; gap: 2px; }
+.image-compressor__card dt { color: var(--color-muted-foreground); }
+.image-compressor__card dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.image-compressor__change { padding: 2px 10px; border: 1.5px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-primary); color: var(--color-primary-foreground); font-weight: 800; }
+.image-compressor__change--larger { background: var(--color-warning-surface); color: var(--color-warning); border-color: var(--color-warning); }
+@media (min-width: 768px) {
+  .image-compressor__cards { gap: 20px; }
+  .image-compressor__card { padding: 16px; }
+  .image-compressor__thumb { height: 200px; }
+  .image-compressor__card dl div { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; }
+}
 
 /* Portrait background remover: only what the shared image workspace rules do not cover. */
 .image-background-remover__scope { margin: 0 0 16px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); }
-.image-background-remover__model { margin: 24px 0; padding: 16px; border: var(--rule) solid var(--color-border); border-radius: var(--radius-md); display: grid; gap: 12px; }
-.image-background-remover__model-status { margin: 0; line-height: 1.6; }
+.image-background-remover__preparing { display: grid; gap: 8px; max-width: 420px; margin-top: 16px; }
+.image-background-remover__preparing-label { display: flex; justify-content: space-between; gap: 12px; margin: 0; font-size: .9rem; }
+.image-background-remover__preparing-label > span:last-child { color: var(--color-muted-foreground); font-variant-numeric: tabular-nums; }
 .image-background-remover__zoom { margin-top: 24px; }
 .image-background-remover__zoom input[type="range"] { min-height: 44px; padding: 0; }
 .image-background-remover__comparison { margin-top: 16px; }
@@ -1254,7 +1213,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .signature-pad__panel { display: grid; gap: 12px; }
 
 /* One ruled card per tool: what used to be a panel inside it is a section under a hairline. */
-:is(.ntd-rules, .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources, .custom-calendar-day, .custom-calendar-agenda-panel, .custom-calendar-storage, .custom-calendar-caveats, .image-background-remover__model, .workbench__model, .workbench__check) {
+:is(.ntd-rules, .calendar-detail, .calendar-agenda-panel, .calendar-legend, .calendar-caveats, .calendar-sources, .image-background-remover__model, .workbench__model, .workbench__check) {
   padding: 16px 0 0; border: 0; border-top: 1px solid var(--color-border-subtle); border-radius: 0; background: none;
 }
 /* A table keeps a frame; it is data, not a card. */

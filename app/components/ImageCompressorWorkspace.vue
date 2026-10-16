@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { Download, Image, TriangleAlert } from '@lucide/vue'
+import { Download, Image, ImageOff, TriangleAlert } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { imageSignature, validateImageInput } from '@/features/images/input'
 import { imageInputLimits } from '@/features/images/limits'
+import { formatStoredSize } from '@/features/shell/local-assets/usage'
 import { createImageCompressor } from '@/features/tools/image-compressor/engine'
 import { compressorErrors, heicMessage, imageStages } from '@/features/tools/image-compressor/content'
 import { defaultOutputFormat, recommendedQuality } from '@/features/tools/image-compressor/output-settings'
@@ -18,7 +19,10 @@ const preparing = ref(false)
 const source = shallowRef<File>()
 const result = shallowRef<CompressionOutput>()
 const outputUrl = ref('')
-const originalUrl = ref('')
+/** The chosen file itself, shown as the original's thumbnail from selection until it is replaced or cleared. */
+const sourceUrl = ref('')
+const sourceDimensions = ref<{ width: number, height: number }>()
+const sourcePreviewFailed = ref(false)
 const sourceFormat = ref<ImageFormat>()
 /** Set only by the format field, so a choice carries over to the next image while untouched images follow their source. */
 const chosenFormat = ref<ImageFormat>()
@@ -45,23 +49,49 @@ const status = computed(() => {
   if (message.value === 'success') return locale.value === 'en' ? 'Image ready. Compare the actual size before downloading.' : '圖片已完成，請比較實際大小後下載。'
   return ''
 })
-const savings = computed(() => source.value && result.value ? Math.round((1 - result.value.blob.size / source.value.size) * 100) : 0)
+const grew = computed(() => Boolean(source.value && result.value && result.value.blob.size > source.value.size))
+/** Whole percent, except that a change too small to round to 1% is not called 0%. */
+const change = computed(() => {
+  if (!source.value || !result.value) return ''
+  const en = locale.value === 'en'
+  const ratio = result.value.blob.size / source.value.size
+  if (ratio === 1) return en ? 'Same size' : '大小相同'
+  const percent = Math.round(Math.abs(1 - ratio) * 100)
+  if (ratio < 1) return percent < 1 ? (en ? 'Less than 1% smaller' : '縮小不到 1%') : (en ? `${percent}% smaller` : `縮小 ${percent}%`)
+  return percent < 1 ? (en ? 'Less than 1% larger' : '增加不到 1%') : (en ? `${percent}% larger` : `增加 ${percent}%`)
+})
 const sizeNote = computed(() => {
   const en = locale.value === 'en'
   if (result.value?.keptOriginal) {
     return en
-      ? `The original is already compact, so compressing again would only make it larger. This kept the original image data and removed its metadata (${savings.value}% smaller). You can try another output format.`
-      : `原圖已經很精簡，再壓縮只會變大，因此沿用原圖內容並移除中繼資料（減少 ${savings.value}%）。可改用其他輸出格式再試。`
+      ? 'The original is already compact, so compressing again would only make it larger. This kept the original image data and removed its metadata. You can try another output format.'
+      : '原圖已經很精簡，再壓縮只會變大，因此沿用原圖內容並移除中繼資料。可改用其他輸出格式再試。'
   }
-  if (savings.value >= 0) return en ? `${savings.value}% smaller` : `減少 ${savings.value}%`
-  return en ? `${-savings.value}% larger — keep the original if you prefer.` : `增加 ${-savings.value}% — 可以選擇保留原檔。`
+  if (grew.value) return en ? 'The output is larger than the original — keep the original if you prefer.' : '輸出比原檔大，可以選擇保留原檔。'
+  return ''
 })
 const extension = computed(() => result.value?.format === 'image/jpeg' ? 'jpg' : result.value?.format === 'image/webp' ? 'webp' : 'png')
-function size(bytes: number) { return `${new Intl.NumberFormat(locale.value === 'en' ? 'en' : 'zh-TW').format(bytes)} bytes` }
+/** Derived from the chosen file's name, so the download is easy to match with its original. */
+const downloadName = computed(() => `${source.value?.name.replace(/\.[^.]*$/, '') || 'image'}-compressed.${extension.value}`)
+const sourceCard = computed(() => {
+  const width = result.value?.sourceWidth ?? sourceDimensions.value?.width
+  const height = result.value?.sourceHeight ?? sourceDimensions.value?.height
+  return { dimensions: width && height ? `${width} × ${height}` : '', size: source.value ? formatStoredSize(source.value.size, locale.value) : '' }
+})
+function measureSource(event: Event) {
+  const image = event.target as HTMLImageElement
+  sourceDimensions.value = { width: image.naturalWidth, height: image.naturalHeight }
+}
+function setSourcePreview(file: File | undefined) {
+  if (sourceUrl.value) URL.revokeObjectURL(sourceUrl.value)
+  sourceUrl.value = ''; sourceDimensions.value = undefined; sourcePreviewFailed.value = false
+  if (!file) return
+  try { sourceUrl.value = URL.createObjectURL(file) }
+  catch { sourcePreviewFailed.value = true }
+}
 function clearResult() {
   if (outputUrl.value) URL.revokeObjectURL(outputUrl.value)
-  if (originalUrl.value) URL.revokeObjectURL(originalUrl.value)
-  outputUrl.value = ''; originalUrl.value = ''; result.value = undefined
+  outputUrl.value = ''; result.value = undefined
   message.value = ''
 }
 async function prepare() {
@@ -112,7 +142,6 @@ async function compress() {
   else {
     try {
       outputUrl.value = URL.createObjectURL(outcome.output.blob)
-      originalUrl.value = URL.createObjectURL(outcome.output.preview)
       result.value = outcome.output; message.value = 'success'
     }
     catch { clearResult(); error.value = 'memory_limit' }
@@ -125,8 +154,9 @@ function cancel() {
 function reset() { cancel(); source.value = undefined; sourceFormat.value = undefined; error.value = ''; message.value = ''; fileInput.value?.focus() }
 // A new image already clears the result; only choosing another format makes an output stale.
 watch(chosenFormat, () => { clearResult(); error.value = '' })
+watch(source, setSourcePreview)
 onMounted(prepare)
-onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearResult(); source.value = undefined })
+onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearResult(); setSourcePreview(undefined); source.value = undefined })
 </script>
 
 <template>
@@ -155,7 +185,7 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
             <p id="compressor-format-help" class="field-help">{{ locale === 'en' ? 'Only available encoders are offered. JPEG and WebP images keep their format by default. JPEG fills transparent areas with white.' : '只提供可用的編碼格式。JPEG、WebP 預設沿用原格式；JPEG 透明區會補白。' }}</p>
           </div>
         </div>
-        <p class="field-help">{{ locale === 'en' ? 'Output keeps the original dimensions; JPEG and WebP use a recommended quality. Previews appear after compression.' : '輸出維持原圖尺寸；JPEG／WebP 以建議品質壓縮。壓縮後顯示比較預覽。' }}</p>
+        <p class="field-help">{{ locale === 'en' ? 'Output keeps the original dimensions; JPEG and WebP use a recommended quality. After compression, the output thumbnail appears next to the original.' : '輸出維持原圖尺寸；JPEG／WebP 以建議品質壓縮。壓縮後輸出縮圖會出現在原圖旁。' }}</p>
       </fieldset>
       <div class="tool-workspace__actions">
         <Button type="submit" :disabled="!source || busy || !capabilities?.supported">{{ locale === 'en' ? 'Compress image' : '壓縮圖片' }}</Button>
@@ -166,19 +196,37 @@ onBeforeUnmount(() => { mounted = false; ++generation; engine.dispose(); clearRe
     <p id="compressor-error" role="alert" class="field-error"><TriangleAlert v-if="errorText" :size="18" aria-hidden="true" />{{ errorText }}</p>
     <p role="status" class="image-compressor__status">{{ status }}</p>
     <div v-if="running && stage" role="progressbar" :aria-label="imageStages[stage]?.[locale]" class="field-help">{{ locale === 'en' ? 'Working locally; you can cancel at any time.' : '正在本機處理，可隨時取消。' }}</div>
-    <div v-if="result && source" class="tool-workspace__grid image-compressor__comparison">
-      <figure data-image-original>
-        <figcaption>{{ locale === 'en' ? 'Original' : '原圖' }} · {{ result.sourceWidth }} × {{ result.sourceHeight }} · {{ size(source.size) }}</figcaption>
-        <img :src="originalUrl" :alt="locale === 'en' ? 'Original image preview' : '原圖預覽'">
+    <div v-if="source" class="image-compressor__cards">
+      <figure class="image-compressor__card" data-image-original>
+        <div class="image-compressor__thumb">
+          <img v-if="sourceUrl && !sourcePreviewFailed" :src="sourceUrl" :alt="locale === 'en' ? 'Original image thumbnail' : '原圖縮圖'" decoding="async" @load="measureSource" @error="sourcePreviewFailed = true">
+          <p v-else class="image-compressor__thumb-empty"><ImageOff :size="20" aria-hidden="true" />{{ locale === 'en' ? 'No preview available' : '無法顯示預覽' }}</p>
+        </div>
+        <figcaption>
+          <strong class="image-compressor__card-title">{{ locale === 'en' ? 'Original' : '原圖' }}</strong>
+          <dl>
+            <div v-if="sourceCard.dimensions"><dt>{{ locale === 'en' ? 'Dimensions' : '尺寸' }}</dt><dd>{{ sourceCard.dimensions }}</dd></div>
+            <div><dt>{{ locale === 'en' ? 'File size' : '檔案大小' }}</dt><dd>{{ sourceCard.size }}</dd></div>
+          </dl>
+        </figcaption>
       </figure>
-      <figure data-image-result>
-        <figcaption>{{ locale === 'en' ? 'Output' : '輸出' }} · {{ result.width }} × {{ result.height }} · {{ size(result.blob.size) }}</figcaption>
-        <img :src="outputUrl" :alt="locale === 'en' ? 'Compressed image preview' : '壓縮圖片預覽'">
+      <figure v-if="result" class="image-compressor__card" data-image-result>
+        <div class="image-compressor__thumb">
+          <img :src="outputUrl" :alt="locale === 'en' ? 'Compressed image thumbnail' : '壓縮後縮圖'" decoding="async">
+        </div>
+        <figcaption>
+          <strong class="image-compressor__card-title">{{ locale === 'en' ? 'Output' : '輸出' }}</strong>
+          <dl>
+            <div><dt>{{ locale === 'en' ? 'Dimensions' : '尺寸' }}</dt><dd>{{ result.width }} × {{ result.height }}</dd></div>
+            <div><dt>{{ locale === 'en' ? 'File size' : '檔案大小' }}</dt><dd>{{ formatStoredSize(result.blob.size, locale) }}</dd></div>
+          </dl>
+          <span class="image-compressor__change" :class="{ 'image-compressor__change--larger': grew }">{{ change }}</span>
+        </figcaption>
       </figure>
     </div>
     <template v-if="result">
-      <p class="field-help">{{ sizeNote }}</p>
-      <Button as-child class="image-compressor__download"><a :href="outputUrl" :download="`compressed-image.${extension}`"><Download :size="18" aria-hidden="true" />{{ locale === 'en' ? 'Download image' : '下載圖片' }}</a></Button>
+      <p v-if="sizeNote" class="field-help">{{ sizeNote }}</p>
+      <Button as-child class="image-compressor__download"><a :href="outputUrl" :download="downloadName"><Download :size="18" aria-hidden="true" />{{ locale === 'en' ? 'Download image' : '下載圖片' }}</a></Button>
     </template>
   </Card>
 </template>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getPublicPageRoutes, getPublicToolRoutes, supportedLocales } from '@/features/tools/catalog'
+import { getPublicPageRoutes, getPublicToolRoutes, getWithdrawnToolRedirects, supportedLocales } from '@/features/tools/catalog'
 import { renderToolSitemap } from '@/features/tools/sitemap'
 
 describe('tool sitemap', () => {
@@ -10,6 +10,13 @@ describe('tool sitemap', () => {
     expect(sitemap).toContain('<loc>https://toolsliang.com/en/tools/ntd-uppercase/</loc>')
     expect(sitemap).not.toContain('image-resizer')
     expect(sitemap).not.toContain('/tw/')
+  })
+
+  it('drops a withdrawn tool, whose old address is now only a redirect (ADR-0021)', () => {
+    const sitemap = renderToolSitemap('https://toolsliang.com')
+
+    expect(sitemap).not.toContain('custom-calendar')
+    for (const { from } of getWithdrawnToolRedirects()) expect(sitemap).not.toContain(from)
   })
 
   it('lists the landing page for every supported locale', () => {

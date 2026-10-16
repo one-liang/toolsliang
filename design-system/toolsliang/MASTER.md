@@ -142,7 +142,7 @@ toolsliang 採「無陰影的新粗獷工具站」：白紙、墨色 2px 邊界�
 
 ### 選項（radio／checkbox）
 
-一行文字的選項使用 `.choice-option`，並排的一組放在 `.choice-group`（間距 8px）：至少 44px 高的膠囊、2px `input-border`，18px 的圓點與文字以同一條中線垂直置中、相距 10px；左內距 12px 讓圓點接近膠囊圓弧的圓心，右內距 18px。選取時套用上表的 Selected 規則，停用時 opacity 55%。包住 radio 或 checkbox 的標籤是選項，不套用欄位標籤的樣式。帶說明文字的卡片式選項（自訂行事曆的日別、商品圖工作台的用途）把圓點對齊第一行標題。
+一行文字的選項使用 `.choice-option`，並排的一組放在 `.choice-group`（間距 8px）：至少 44px 高的膠囊、2px `input-border`，18px 的圓點與文字以同一條中線垂直置中、相距 10px；左內距 12px 讓圓點接近膠囊圓弧的圓心，右內距 18px。選取時套用上表的 Selected 規則，停用時 opacity 55%。包住 radio 或 checkbox 的標籤是選項，不套用欄位標籤的樣式。帶說明文字的卡片式選項（例如商品圖工作台的用途）把圓點對齊第一行標題。
 
 ## WCAG 2.2 AA
 
