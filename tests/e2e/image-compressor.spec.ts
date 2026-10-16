@@ -202,12 +202,22 @@ for (const mobile of [false, true]) test(`12 MP JPEG 建議品質、主執行緒
     return await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]!); reader.readAsDataURL(blob) })
   })
   // Choosing the file starts the work, so the clock starts when the input reports the file, not when the test hands it over.
+  // The stall budget is for the compression, which runs in a worker. Showing the 12 MP original means the browser
+  // decodes it for the screen, which WebKit does on the main thread; as before #108, when the preview was shown before
+  // the clock started, the stall is measured from the moment that preview is on screen.
   await page.evaluate(() => {
-    const metrics = { start: 0, progressAt: 0, maxGap: 0, last: performance.now() }
-    const timer = setInterval(() => { const now = performance.now(); metrics.maxGap = Math.max(metrics.maxGap, now - metrics.last); metrics.last = now }, 20)
-    const observer = new MutationObserver(() => { if (metrics.start && !metrics.progressAt && document.querySelector('[role=progressbar]')) metrics.progressAt = performance.now() })
+    const metrics = { start: 0, progressAt: 0, maxGap: 0, last: performance.now(), measuring: false }
+    const timer = setInterval(() => { const now = performance.now(); if (metrics.measuring) metrics.maxGap = Math.max(metrics.maxGap, now - metrics.last); metrics.last = now }, 20)
+    const observer = new MutationObserver(() => {
+      if (metrics.start && !metrics.progressAt && document.querySelector('[role=progressbar]')) metrics.progressAt = performance.now()
+      const preview = document.querySelector<HTMLImageElement>('[data-image-original] img')
+      if (preview && !preview.dataset.watched) {
+        preview.dataset.watched = 'true'
+        void preview.decode().catch(() => undefined).then(() => { metrics.last = performance.now(); metrics.measuring = true })
+      }
+    })
     observer.observe(document.body, { childList: true, subtree: true })
-    document.querySelector('.image-compressor [data-batch-input]')!.addEventListener('change', () => { metrics.start = performance.now(); metrics.last = metrics.start; metrics.maxGap = 0 }, { once: true })
+    document.querySelector('.image-compressor [data-batch-input]')!.addEventListener('change', () => { metrics.start = performance.now() }, { once: true })
     Object.assign(window, { compressionMetrics: metrics, stopMetrics: () => { clearInterval(timer); observer.disconnect() } })
   })
   await files(page).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/jpeg', buffer: Buffer.from(bytes, 'base64') })
