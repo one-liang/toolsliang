@@ -54,11 +54,20 @@ async function dragBy(page: Page, from: { x: number, y: number }, share: { x: nu
 async function percent(page: Page, label: string) {
   return Number(await page.getByLabel(label, { exact: true }).inputValue())
 }
+/** Position and size by number sit folded under the layer controls, since dragging does the same; these tests type into them. */
+async function openExact(page: Page) {
+  const exact = page.locator('[data-promo-exact]')
+  if (!(await exact.evaluate(element => (element as HTMLDetailsElement).open))) await exact.locator('summary').click()
+}
 
 test('在預覽上直接拖曳、拉角等比縮放、拉邊拉伸，並以快捷鍵調整圖層上下', async ({ page }) => {
   await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
   await add(page, 'background', '#ff0000')
   await add(page, 'logo', '#0000ff')
+  // Dragging is the way in, so the numbers start folded away (#124).
+  await expect(page.locator('[data-promo-exact]')).not.toHaveAttribute('open', /.*/)
+  await expect(page.getByLabel('不透明度（%）', { exact: true })).toBeVisible()
+  await openExact(page)
   await page.getByLabel('縮放（%）', { exact: true }).fill('50')
   const stage = page.locator('[data-promo-stage]')
   await stage.scrollIntoViewIfNeeded()
@@ -107,6 +116,7 @@ test('組合、鍵盤調整、圖層順序、復原重做與 PNG 像素輸出', 
   await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
   await add(page, 'background', '#ff0000')
   await add(page, 'logo', '#0000ff')
+  await openExact(page)
   await page.getByLabel('縮放（%）', { exact: true }).fill('50')
   await page.getByLabel('水平位置（%）', { exact: true }).fill('1')
   await page.locator('[data-promo-stage]').focus()
@@ -306,6 +316,7 @@ test('無效尺寸或位置不會被另一欄編輯清除，修正前禁止輸�
   await expect(page.getByRole('button', { name: '產生 PNG', exact: true })).toBeDisabled()
   await expect(page.getByLabel('寬度（像素）')).toHaveAttribute('aria-invalid', 'true')
   await page.getByLabel('寬度（像素）').fill('1000')
+  await openExact(page)
   await page.getByLabel('水平位置（%）').fill('101')
   await page.getByLabel('垂直位置（%）').fill('5')
   await expect(page.getByLabel('水平位置（%）')).toHaveValue('101')
@@ -320,6 +331,7 @@ test('同一版面套用到多張商品圖，一次產生並打包 ZIP（#110）
   await gotoHydrated(page, '/zh-tw/tools/brand-promo-image/')
   await add(page, 'product', '#ff0000')
   await add(page, 'logo', '#0000ff')
+  await openExact(page)
   await page.getByLabel('縮放（%）', { exact: true }).fill('20')
 
   const chooser = page.waitForEvent('filechooser')

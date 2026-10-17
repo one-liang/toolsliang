@@ -56,7 +56,7 @@ describe('工具頁工作區寬度', () => {
     expect(main.get('[data-capability-gate]').classes()).toEqual(['tool-page__workspace'])
   })
 
-  it('開啟寬版時只放寬工作區，標題與說明留在閱讀欄', async () => {
+  it('開啟寬版時整頁一起放寬，標題、工作區與說明都是頁面的直接子元素（#124）', async () => {
     wideTools.add('ntd-uppercase')
     const main = await openTool('ntd-uppercase')
     const workspace = main.get('.tool-page__workspace')
