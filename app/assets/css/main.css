@@ -1350,7 +1350,11 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .workbench h2 { margin: 0 0 12px; font-size: 1.0625rem; }
 /* The canvas on the left, every control on the right, as in the brand promo image. */
 @media (min-width: 768px) {
-  .workbench { --promo-stage-max: clamp(180px, calc(100svh - 570px), 560px); }
+  /* The canvas is sized for the screen it has once the heading scrolls away and the stage sticks under the
+     top bar: 80px above it, then the frame, the help line and a margin below, plus the strip of photos when
+     there are several. On the first screen its top shows beside the jobs; a short scroll brings all of it in. */
+  .workbench { --promo-stage-max: clamp(240px, calc(100svh - 170px), 1000px); }
+  .workbench--batch { --promo-stage-max: clamp(220px, calc(100svh - 320px), 1000px); }
   .workbench__layout { grid-template-columns: minmax(0, 1fr) var(--tool-side-width); align-items: start; column-gap: 24px; }
   .workbench__stage { position: sticky; top: 80px; }
   .workbench__panel { padding-left: 24px; border-left: 1px solid var(--color-border-subtle); }

@@ -102,7 +102,7 @@ function removePhoto(id: string) {
 </script>
 
 <template>
-  <Card class="tool-workspace workbench product-image-workbench" :data-model-ready="String(model.ready.value)" :aria-busy="busy" @keydown="shortcut">
+  <Card class="tool-workspace workbench product-image-workbench" :class="{ 'workbench--batch': several }" :data-model-ready="String(model.ready.value)" :aria-busy="busy" @keydown="shortcut">
     <p v-if="checking" role="status" class="capability-checking">{{ en ? 'Checking what this browser can do…' : '正在確認這個瀏覽器能做哪些事…' }}</p>
 
     <ImageBatchPicker ref="picker" :count="batch.held.value.count" :bytes="batch.held.value.bytes" :limits="batch.limits.value" @add="add" @clear="clear" />
