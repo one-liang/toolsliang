@@ -6,7 +6,8 @@ const all = ['image/png', 'image/jpeg', 'image/webp'] as const
 it.each([
   ['image/jpeg', all, 'image/jpeg'],
   ['image/webp', all, 'image/webp'],
-  ['image/png', all, 'image/jpeg'],
+  ['image/png', all, 'image/png'],
+  ['image/png', ['image/jpeg', 'image/webp'], 'image/jpeg'],
   [undefined, all, 'image/jpeg'],
   ['image/webp', ['image/png', 'image/jpeg'], 'image/jpeg'],
   ['image/jpeg', ['image/png'], 'image/png'],

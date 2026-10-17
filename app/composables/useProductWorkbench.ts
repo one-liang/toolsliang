@@ -192,7 +192,8 @@ export function useProductWorkbench() {
     }
     if (jobs.compress) {
       stage.value = 'compress'
-      const source = imageFormats.find(type => type === file.type)
+      // Automatic keeps the format of the visitor's own photo, not of the PNG a cutout or the layout made from it.
+      const source = imageFormats.find(type => type === item.file.type)
       const target = format.value !== 'auto' && offeredFormats.value.includes(format.value) ? format.value : defaultOutputFormat(source, offeredFormats.value)
       // Every accepted picture fits within the largest side, so the output keeps its size.
       const outcome = await compressor.run({ file, format: target, quality: recommendedQuality, maxWidth: imageInputLimits.maxSide, maxHeight: imageInputLimits.maxSide })

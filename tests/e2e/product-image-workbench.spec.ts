@@ -62,7 +62,7 @@ async function outputs(page: Page) {
   return found
 }
 
-/** JPEG moves colours a little; this is "the same colour" for a flat fill. */
+/** JPEG and a reduced palette move colours a little; this is "the same colour" for a flat fill. */
 function near(actual: number[], expected: number[]) {
   return actual.slice(0, 3).every((value, index) => Math.abs(value - expected[index]!) <= 12)
 }
@@ -71,7 +71,7 @@ test('套版與壓縮：三張商品圖套上同一個 Logo，一次處理並在
   await gotoHydrated(page, route)
   await photos(page).setInputFiles([
     await imageFile(page, 'private-workbench-canary.png', '#ff0000'),
-    await imageFile(page, 'private-workbench-canary.png', '#00ff00'),
+    await imageFile(page, 'private-workbench-canary.png', '#00ff00', 240, 240, 'image/jpeg'),
     await imageFile(page, 'private-workbench-canary.png', '#ffff00'),
   ])
   await expect(page.getByRole('listbox', { name: '這批圖片' }).getByRole('option')).toHaveCount(3)
@@ -93,7 +93,8 @@ test('套版與壓縮：三張商品圖套上同一個 Logo，一次處理並在
   const made = await outputs(page)
   expect(made).toHaveLength(3)
   for (const [index, colour] of [[255, 0, 0], [0, 255, 0], [255, 255, 0]].entries()) {
-    expect(made[index]).toMatchObject({ type: 'image/jpeg', width: 1000, height: 1000 })
+    // Automatic keeps each photo's own format, not that of the PNG the layout makes from it.
+    expect(made[index]).toMatchObject({ type: index === 1 ? 'image/jpeg' : 'image/png', width: 1000, height: 1000 })
     // Each photo fills the product layer, and the Logo sits in the same place on every one.
     expect(near(made[index]!.corner, colour), `第 ${index + 1} 張的商品圖`).toBe(true)
     expect(near(made[index]!.centre, [0, 0, 255]), `第 ${index + 1} 張的 Logo`).toBe(true)
@@ -105,7 +106,7 @@ test('套版與壓縮：三張商品圖套上同一個 Logo，一次處理並在
   expect(zip.suggestedFilename()).toBe('product-images.zip')
   const { readFile } = await import('node:fs/promises')
   const bytes = (await readFile((await zip.path())!)).toString('latin1')
-  for (const name of ['product-image-01.jpg', 'product-image-02.jpg', 'product-image-03.jpg']) expect(bytes).toContain(name)
+  for (const name of ['product-image-01.png', 'product-image-02.jpg', 'product-image-03.png']) expect(bytes).toContain(name)
   expect(bytes, 'ZIP 內不得沿用原始檔名').not.toContain('private-workbench')
 
   // Changing the layout makes every output stale at once.

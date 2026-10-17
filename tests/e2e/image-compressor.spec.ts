@@ -38,7 +38,10 @@ test('PNG 本機壓縮、維持原尺寸、透明度與下載', async ({ page },
   await expect(page.getByRole('img', { name: 'Original image thumbnail' })).toBeVisible()
   await expect(page.locator('[data-image-original]')).toContainText('80 × 40')
   await expect(page.locator('[data-image-original]')).toContainText(/\d KB/)
-  // Choosing the image compresses it; a PNG starts on JPEG, and choosing PNG compresses it again.
+  // Choosing the image compresses it: Automatic keeps a PNG a PNG, and each format chosen compresses it again.
+  await expect(page.locator('[data-image-result]')).toContainText('PNG')
+  await expect(page.locator('.image-compressor')).toContainText('Each image keeps its format; PNG shrinks by using fewer colours and keeps transparency.')
+  await page.getByLabel('Output format').selectOption('image/jpeg')
   await expect(page.locator('[data-image-result]')).toContainText('JPEG')
   await page.getByLabel('Output format').selectOption('image/png')
   await expect(page.locator('[data-image-result]')).toContainText('PNG')
@@ -65,6 +68,51 @@ test('PNG 本機壓縮、維持原尺寸、透明度與下載', async ({ page },
   await settleTransitions(page)
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([])
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/image-compressor-result-desktop.png', fullPage: true })
+})
+
+test('自動格式把多色 PNG 減到 256 色以內，仍是 PNG、保留透明且變小', async ({ page }) => {
+  await gotoHydrated(page, '/en/tools/image-compressor/')
+  // A gradient body with a soft edge and a soft shadow on a transparent ground, like a product cut out of its photo.
+  const bytes = await page.evaluate(async () => {
+    const canvas = new OffscreenCanvas(480, 360)
+    const ctx = canvas.getContext('2d')!
+    const gradient = ctx.createLinearGradient(0, 0, 480, 360)
+    gradient.addColorStop(0, '#1d4ed8'); gradient.addColorStop(0.5, '#f97316'); gradient.addColorStop(1, '#16a34a')
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 12
+    ctx.fillStyle = gradient
+    ctx.beginPath(); ctx.ellipse(240, 170, 180, 120, 0, 0, Math.PI * 2); ctx.fill()
+    return [...new Uint8Array(await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer())]
+  })
+  await files(page).setInputFiles({ name: 'private-image-canary.png', mimeType: 'image/png', buffer: Buffer.from(bytes) })
+  await expect(page.locator('[data-image-result]')).toContainText('PNG')
+  await expect(page.locator('[data-image-result]')).toContainText('480 × 360')
+  await expect(page.locator('[data-image-result]')).toContainText(/\d+% smaller/)
+  await expect(page.locator('.image-compressor')).not.toContainText('kept the original image data')
+  const output = await page.getByRole('link', { name: 'Download image' }).getAttribute('href')
+  const result = await page.evaluate(async ({ url, source }) => {
+    const blob = await fetch(url!).then(response => response.blob())
+    const png = new Uint8Array(await blob.arrayBuffer())
+    const read = async (bytes: Uint8Array) => {
+      const bitmap = await createImageBitmap(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'image/png' }))
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height); const ctx = canvas.getContext('2d')!; ctx.drawImage(bitmap, 0, 0); bitmap.close()
+      return ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    }
+    const before = await read(new Uint8Array(source)), after = await read(png)
+    let opaqueKept = true, transparentKept = true, error = 0
+    for (let i = 0; i < before.length; i += 4) {
+      if (before[i + 3] === 255 && after[i + 3] !== 255) opaqueKept = false
+      if (before[i + 3] === 0 && after[i + 3] !== 0) transparentKept = false
+      for (let c = 0; c < 4; c++) error += Math.abs(before[i + c]! - after[i + c]!)
+    }
+    return { type: blob.type, size: blob.size, colourType: png[25], opaqueKept, transparentKept, meanError: error / before.length }
+  }, { url: output, source: bytes })
+  // Colour type 3: an indexed PNG, every opaque pixel still opaque and every transparent one still transparent.
+  expect(result).toMatchObject({ type: 'image/png', colourType: 3, opaqueKept: true, transparentKept: true })
+  expect(result.size).toBeLessThan(bytes.length)
+  expect(result.meanError).toBeLessThan(4)
+  const download = page.waitForEvent('download')
+  await page.getByRole('link', { name: 'Download image' }).click()
+  expect((await download).suggestedFilename()).toBe('private-image-canary-compressed.png')
 })
 
 test('JPEG EXIF 方向正規化並移除來源中繼資料', async ({ page }) => {

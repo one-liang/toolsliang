@@ -83,8 +83,9 @@ const sizeNote = computed(() => {
   return ''
 })
 const formatHelp = computed(() => {
-  if (choice.value === 'auto') return en.value ? 'JPEG and WebP keep their format; PNG becomes JPEG with white behind transparent areas.' : 'JPEG、WebP 維持原格式；PNG 轉成 JPEG，透明處補白。'
+  if (choice.value === 'auto') return en.value ? 'Each image keeps its format; PNG shrinks by using fewer colours and keeps transparency.' : '每張都維持原格式；PNG 以減少顏色來縮小，保留透明背景。'
   if (choice.value === 'image/jpeg') return en.value ? 'Transparent areas become white.' : '透明處會補成白色。'
+  if (choice.value === 'image/png') return en.value ? 'Shrinks by using fewer colours and keeps transparency; photos are usually smaller as JPEG.' : '以減少顏色來縮小，保留透明背景；照片改選 JPEG 通常更小。'
   return ''
 })
 const status = computed(() => {
