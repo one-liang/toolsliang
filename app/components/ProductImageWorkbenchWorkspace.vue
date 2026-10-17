@@ -107,6 +107,7 @@ function removePhoto(id: string) {
 
     <ImageBatchPicker ref="picker" :count="batch.held.value.count" :bytes="batch.held.value.bytes" :limits="batch.limits.value" @add="add" @clear="clear" />
 
+    <!-- The picture on the left, every control on the right, as in the brand promo image. -->
     <div v-if="selected" class="workbench__layout">
       <div class="workbench__stage">
         <ImageBatchStrip
@@ -126,15 +127,11 @@ function removePhoto(id: string) {
             <img :src="plain.url" :alt="en ? 'Preview of the image on screen' : '目前這張圖片的預覽'" decoding="async">
           </div>
         </figure>
-        <div v-if="jobs.compose" class="workbench__canvas-tools">
-          <Button size="icon" variant="outline" :disabled="busy || !canUndo" :aria-label="en ? 'Undo' : '復原'" :title="en ? 'Undo (Ctrl/⌘ Z)' : '復原（Ctrl／⌘ Z）'" aria-keyshortcuts="Control+z Meta+z" @click="undo"><Undo2 :size="18" aria-hidden="true" /></Button>
-          <Button size="icon" variant="outline" :disabled="busy || !canRedo" :aria-label="en ? 'Redo' : '重做'" :title="en ? 'Redo (Ctrl/⌘ Shift Z)' : '重做（Ctrl／⌘ Shift Z）'" aria-keyshortcuts="Control+Shift+z Meta+Shift+z" @click="redo"><Redo2 :size="18" aria-hidden="true" /></Button>
-          <p id="promo-stage-help" class="field-help workbench__help">
-            {{ en
-              ? 'The photo on screen sits in the product layer. Drag a layer to move it, a corner to resize it.'
-              : '目前這張商品圖放在商品圖層裡。拖曳圖層可移動，拖曳四角可縮放。' }}
-          </p>
-        </div>
+        <p v-if="jobs.compose" id="promo-stage-help" class="field-help workbench__help">
+          {{ en
+            ? 'The photo on screen sits in the product layer. Drag a layer to move it, a corner to resize it.'
+            : '目前這張商品圖放在商品圖層裡。拖曳圖層可移動，拖曳四角可縮放。' }}
+        </p>
       </div>
 
       <div class="workbench__panel">
@@ -180,18 +177,23 @@ function removePhoto(id: string) {
           </div>
         </div>
 
-        <div v-if="busy || pending || issue" class="workbench__actions">
-          <Button v-if="!busy" :disabled="!anyJob || invalid" data-workbench-run @click="start">
+        <!-- Finished photos are downloaded from where the button that made them stood, straight under the jobs. -->
+        <ImageBatchDownload :files="downloads" :archive-name="workbenchArchiveName" :disabled="busy" />
+        <!-- The status shares the row with undo, redo and the button, and stands beside undo and redo once nothing is left to process. -->
+        <div class="workbench__actions">
+          <template v-if="jobs.compose">
+            <Button size="icon" variant="outline" :disabled="busy || !canUndo" :aria-label="en ? 'Undo' : '復原'" :title="en ? 'Undo (Ctrl/⌘ Z)' : '復原（Ctrl／⌘ Z）'" aria-keyshortcuts="Control+z Meta+z" @click="undo"><Undo2 :size="18" aria-hidden="true" /></Button>
+            <Button size="icon" variant="outline" :disabled="busy || !canRedo" :aria-label="en ? 'Redo' : '重做'" :title="en ? 'Redo (Ctrl/⌘ Shift Z)' : '重做（Ctrl／⌘ Shift Z）'" aria-keyshortcuts="Control+Shift+z Meta+Shift+z" @click="redo"><Redo2 :size="18" aria-hidden="true" /></Button>
+          </template>
+          <Button v-if="busy" variant="outline" class="workbench__primary" @click="cancel"><X :size="18" aria-hidden="true" />{{ en ? 'Cancel' : '取消' }}</Button>
+          <Button v-else-if="pending || issue" class="workbench__primary" :disabled="!anyJob || invalid" data-workbench-run @click="start">
             <Play :size="18" aria-hidden="true" />{{ runLabel }}
           </Button>
-          <Button v-else variant="outline" @click="cancel"><X :size="18" aria-hidden="true" />{{ en ? 'Cancel' : '取消' }}</Button>
+          <p role="status" class="workbench__status">{{ status }}</p>
         </div>
-        <p role="status" class="workbench__status">{{ status }}</p>
         <p id="promo-error" role="alert" class="field-error">{{ errorText }}</p>
-        <ImageBatchDownload :files="downloads" :archive-name="workbenchArchiveName" :disabled="busy" />
+        <PromoLayers v-if="jobs.compose" v-model:invalid="invalid" class="workbench__layers" :editor="editor" :locked="busy" />
       </div>
-
-      <PromoLayers v-if="jobs.compose" v-model:invalid="invalid" class="workbench__layers" :editor="editor" :locked="busy" />
     </div>
   </Card>
 </template>

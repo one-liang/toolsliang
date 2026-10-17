@@ -46,6 +46,14 @@ const transforms = computed(() => [
   { key: 'scale' as const, label: en.value ? 'Scale (%)' : '縮放（%）', min: 1, max: 400 },
   { key: 'opacity' as const, label: en.value ? 'Opacity (%)' : '不透明度（%）', min: 0, max: 100 },
 ])
+/** Opacity has no gesture on the canvas, so it stays in view. */
+const opacityField = computed(() => transforms.value.find(field => field.key === 'opacity')!)
+/**
+ * Position and size are what dragging already does, so their numbers stay folded
+ * away. They remain one click from any pointer: the way to place a layer
+ * without a drag (WCAG 2.5.7) and to set it exactly.
+ */
+const placementFields = computed(() => transforms.value.filter(field => field.key !== 'opacity'))
 function transform(key: 'x' | 'y' | 'scale' | 'opacity', raw: string | number) {
   const field = transforms.value.find(item => item.key === key)!
   drafts[key] = raw
@@ -117,11 +125,9 @@ function dragLayerEnd() { draggedLayerId.value = ''; dropTargetId.value = '' }
       </ol>
       <fieldset v-if="selected" :disabled="locked" class="brand-promo__controls">
         <legend>{{ lead(en ? 'Adjust' : '調整', selected.kind) + labels[selected.kind] }}</legend>
-        <div class="brand-promo__fields">
-          <div v-for="field in transforms" :key="field.key" class="field-group">
-            <label :for="`promo-${field.key}`">{{ field.label }}</label>
-            <Input :id="`promo-${field.key}`" :model-value="drafts[field.key]" :aria-invalid="Boolean(invalidFields[field.key])" type="number" :min="field.min" :max="field.max" step="1" aria-describedby="promo-error" @update:model-value="transform(field.key, $event)" />
-          </div>
+        <div class="field-group">
+          <label :for="`promo-${opacityField.key}`">{{ opacityField.label }}</label>
+          <Input :id="`promo-${opacityField.key}`" :model-value="drafts[opacityField.key]" :aria-invalid="Boolean(invalidFields[opacityField.key])" type="number" :min="opacityField.min" :max="opacityField.max" step="1" aria-describedby="promo-error" @update:model-value="transform(opacityField.key, $event)" />
         </div>
         <div class="brand-promo__layer-actions">
           <Button variant="outline" :disabled="scene.layers.at(-1)?.id === selectedId" aria-keyshortcuts="Control+BracketRight Meta+BracketRight" @click="move(1)">
@@ -135,6 +141,15 @@ function dragLayerEnd() { draggedLayerId.value = ''; dropTargetId.value = '' }
             <Trash2 :size="18" aria-hidden="true" />{{ en ? 'Remove layer' : '移除圖層' }}
           </Button>
         </div>
+        <details class="brand-promo__exact" data-promo-exact>
+          <summary>{{ en ? 'Position and size in numbers' : '用數值調整位置與大小' }}</summary>
+          <div class="brand-promo__fields">
+            <div v-for="field in placementFields" :key="field.key" class="field-group">
+              <label :for="`promo-${field.key}`">{{ field.label }}</label>
+              <Input :id="`promo-${field.key}`" :model-value="drafts[field.key]" :aria-invalid="Boolean(invalidFields[field.key])" type="number" :min="field.min" :max="field.max" step="1" aria-describedby="promo-error" @update:model-value="transform(field.key, $event)" />
+            </div>
+          </div>
+        </details>
       </fieldset>
     </section>
 

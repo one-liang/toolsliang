@@ -86,6 +86,8 @@
   --sidebar-collapsed: 80px;
 
   /* Component tokens */
+  /* The control column beside a wide tool's canvas or preview: the image tools and the PDF signature share it. */
+  --tool-side-width: clamp(280px, 26vw, 340px);
   --device-clock-font-size: clamp(2.4rem, 5vw, 4rem);
   --device-clock-font-weight: 800;
   --device-clock-line-height: 1.2;
@@ -499,11 +501,11 @@ select.ui-input {
 .tool-heading--filled .tool-heading__icon { background: var(--paper-0); }
 .tool-contract, .tool-reference { margin-top: 20px; padding: clamp(20px, 4vw, 28px); border: var(--rule) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
 .tool-page { width: min(980px, 100%); padding-top: 24px; }
-/* A tool whose definition asks for a wide workspace lets only the workspace reach 1440px.
-   Everything else keeps the column a standard tool page reads in: 980px less the gutter,
-   which follows the inline padding .workspace-page has at each breakpoint. */
-.tool-page--wide { --tool-page-gutter: 20px; width: min(1440px, 100%); }
-.tool-page--wide > :not(.tool-page__workspace) { max-width: calc(980px - 2 * var(--tool-page-gutter)); margin-inline: auto; }
+/* A tool whose definition asks for a wide workspace widens the whole page to 1440px, so the
+   heading, the workspace and the sections under it share one pair of edges. Running text
+   inside the sections keeps a reading measure of its own. */
+.tool-page--wide { width: min(1440px, 100%); }
+.tool-page--wide :is(.tool-contract, .tool-reference) :is(p, dd, li) { max-width: 72ch; }
 .tool-page .breadcrumbs { margin-bottom: 16px; }
 .tool-page .tool-heading { margin-bottom: 20px; }
 .tool-page .tool-contract { margin-top: 16px; padding: clamp(16px, 3vw, 24px); }
@@ -1054,7 +1056,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .app-topbar__brand { display: none; }
   .workspace-page { padding: 52px 40px 88px; }
   .tool-page { padding-top: 32px; }
-  .tool-page--wide { --tool-page-gutter: 40px; }
   .calendar-body { grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); align-items: start; }
   .mobile-nav { display: none; }
   .pwa-update { inset: auto 24px 24px auto; margin-inline: 0; }
@@ -1064,7 +1065,6 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .state-matrix { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
   .workspace-page { padding-inline: 56px; }
-  .tool-page--wide { --tool-page-gutter: 56px; }
 }
 
 @media (max-width: 767px) {
@@ -1107,7 +1107,8 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-compressor__placeholder, .image-background-remover__placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; text-align: center; color: var(--color-muted-foreground); font-size: .9rem; font-weight: 700; }
 .image-compressor__spin, .image-background-remover__spin { animation: image-compressor-spin 900ms linear infinite; }
 @keyframes image-compressor-spin { to { rotate: 360deg; } }
-.image-compressor__panel, .image-background-remover__panel { grid-area: panel; display: grid; align-content: start; gap: 12px; min-width: 0; }
+/* One column the width of the track: a long file name is cut short instead of pushing the panel past the card. */
+.image-compressor__panel, .image-background-remover__panel { grid-area: panel; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; }
 /* Empty live regions stay in place for assistive technology but take no room in the column. */
 .image-compressor__panel > [role]:empty, .image-background-remover__panel > [role]:empty { margin-block: -6px; }
 /* A control group with nothing to offer right now (every picture done) takes no room either. */
@@ -1134,7 +1135,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
   .image-compressor__view, .image-background-remover__view { height: clamp(200px, 100svh - 520px, 460px); }
 }
 @media (min-width: 1024px) {
-  .image-compressor__layout, .image-background-remover__layout { grid-template-columns: minmax(0, 1fr) clamp(260px, 24vw, 320px); grid-template-areas: "stage panel" "strip panel"; grid-template-rows: auto 1fr; column-gap: 24px; }
+  .image-compressor__layout, .image-background-remover__layout { grid-template-columns: minmax(0, 1fr) var(--tool-side-width); grid-template-areas: "stage panel" "strip panel"; grid-template-rows: auto 1fr; column-gap: 24px; }
   .image-compressor__panel, .image-background-remover__panel { padding-left: 24px; border-left: 1px solid var(--color-border-subtle); }
 }
 
@@ -1221,25 +1222,32 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .image-batch-download__size { flex: none; color: var(--color-muted-foreground); font-size: .84rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 
-/* Brand compositions: adding a layer, the preview and the PNG action stay on the first
-   screen; the layer panel follows. The add buttons stand beside the preview at every
-   width, as an editor's tool palette does, and the stage is capped by the viewport
-   height, so a short screen shrinks the preview instead of pushing the action down. */
+/* Brand compositions: the canvas on the left and every control on the right, as in the product
+   workbench. On a phone the two columns open into one grid so the add buttons stay beside the
+   preview, as an editor's tool palette does, and the stage is capped by the viewport height, so a
+   short screen shrinks the preview instead of pushing the action down. */
 .brand-promo { --promo-stage-max: clamp(160px, calc(100svh - 580px), 400px); }
-.brand-promo__editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "preview add" "output output" "batch batch" "panel panel"; gap: 12px; align-items: start; }
+.brand-promo__editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "strip strip" "preview add" "output output" "help help" "batch batch" "panel panel"; gap: 12px; align-items: start; }
+.brand-promo__main, .brand-promo__side { display: contents; }
+/* The canvas and the layers panel are shared with the product workbench, so their places are named only here. */
+.brand-promo .brand-promo__strip { grid-area: strip; margin-top: 0; }
 .brand-promo__add { grid-area: add; }
-.brand-promo__preview { grid-area: preview; }
+.brand-promo .brand-promo__preview { grid-area: preview; }
+.brand-promo__help { grid-area: help; margin: 0; }
 .brand-promo__output { grid-area: output; }
-.brand-promo__panel { grid-area: panel; }
+.brand-promo .brand-promo__panel { grid-area: panel; }
 .brand-promo__batch { grid-area: batch; }
 .brand-promo__add, .brand-promo__preview, .brand-promo__output, .brand-promo__batch, .brand-promo__panel { min-width: 0; }
 .brand-promo__label { margin: 0 0 8px; font-size: .86rem; font-weight: 700; }
 .brand-promo__add-buttons { display: grid; gap: 6px; }
 .brand-promo__add-buttons .ui-button { padding-inline: 14px; }
 .brand-promo__file { display: none; }
-/* The stage frame leaves room for handles and the focus ring just outside the canvas, and clips anything further out. */
-.brand-promo__stage-frame { overflow: hidden; padding: 8px; }
-.brand-promo__stage { position: relative; width: min(100%, calc(var(--promo-stage-max) * var(--promo-ratio, 1))); margin-inline: auto; border: var(--rule) solid var(--color-muted-foreground); background: var(--color-surface-subtle); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* The stage sits on the same warm frame as the other image tools' previews. The frame leaves room for handles and
+   the focus ring just outside the canvas, and clips anything further out. */
+.brand-promo__stage-frame { overflow: hidden; padding: 16px; border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.brand-promo__stage { position: relative; width: min(100%, calc(var(--promo-stage-max) * var(--promo-ratio, 1))); margin-inline: auto; border: var(--rule) solid var(--color-muted-foreground); background: var(--color-surface); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* Once there is something on it, the canvas shows the PNG's transparency with the checkerboard the other image tools use. */
+.brand-promo__stage:not(:has(.brand-promo__empty)) { background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
 .brand-promo__stage:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
 .brand-promo__canvas { position: absolute; inset: 0; overflow: hidden; }
 .brand-promo__canvas img { position: absolute; display: block; max-width: none; pointer-events: none; -webkit-user-drag: none; }
@@ -1273,26 +1281,33 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .brand-promo__layers button[aria-pressed="true"] { border-color: var(--color-primary-strong); background: var(--color-surface-hover); }
 .brand-promo__controls { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: 16px; }
 .brand-promo__layers .brand-promo__controls { margin-top: 20px; }
+/* Position and size by number: folded away, since dragging does the same, but one click from any pointer. */
+.brand-promo__exact { border-top: 1px solid var(--color-border-subtle); }
+.brand-promo__exact > summary { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; list-style: none; cursor: pointer; font-size: .9rem; font-weight: 700; }
+.brand-promo__exact > summary::-webkit-details-marker { display: none; }
+.brand-promo__exact > summary::after { content: ''; inline-size: 20px; block-size: 20px; flex: none; background: var(--select-chevron) center / 20px no-repeat; transition: transform var(--duration-fast) var(--ease-standard); }
+.brand-promo__exact[open] > summary::after { transform: rotate(180deg); }
+.brand-promo__exact > summary:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
+.brand-promo__exact .brand-promo__fields { padding-top: 4px; }
 .brand-promo__controls legend { padding: 0; margin-bottom: 12px; font-size: 1.0625rem; font-weight: 800; }
 .brand-promo__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .brand-promo__fields .field-group label { overflow-wrap: anywhere; }
 .brand-promo__layer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-/* One layout for many product photos: the photos sit under the stage they are previewed on. */
-.brand-promo__batch { display: grid; gap: 10px; }
-.brand-promo__batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.brand-promo__batch-bar .field-help { flex: 1 1 14rem; margin: 0; }
-.brand-promo__batch .image-batch-strip { margin-top: 0; }
+/* One layout for many product photos: the photos sit above the stage they are previewed on, the button among the controls. */
+.brand-promo__batch { display: grid; justify-items: start; gap: 8px; }
+.brand-promo__batch .field-help { margin: 0; }
 .brand-promo__downloads { margin-top: 12px; }
-/* Side by side: the preview holds the left column and stays in view while the panel scrolls. */
+/* Side by side: the canvas holds the left column and stays in view while the controls on the right scroll.
+   Nothing else shares that column, so the canvas never slides over a button. */
 @media (min-width: 768px) {
   .brand-promo { --promo-stage-max: clamp(260px, calc(100svh - 350px), 640px); }
-  .brand-promo__editor { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); grid-template-rows: auto auto auto 1fr; grid-template-areas: "preview add" "preview output" "batch panel" ". panel"; column-gap: 24px; row-gap: 16px; }
-  /* With a batch, the canvas gives up some height so the photos it previews stay on the first screen. */
-  .brand-promo--batch { --promo-stage-max: clamp(220px, calc(100svh - 510px), 520px); }
+  .brand-promo__editor { grid-template-columns: minmax(0, 1fr) var(--tool-side-width); grid-template-areas: none; column-gap: 24px; }
+  .brand-promo__main, .brand-promo__side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .brand-promo__main { position: sticky; top: 80px; }
+  .brand-promo__side { gap: 20px; padding-left: 24px; border-left: 1px solid var(--color-border-subtle); }
+  /* With a batch, the canvas gives up the height of the photos above it, so both stay on the first screen. */
+  .brand-promo--batch { --promo-stage-max: clamp(220px, calc(100svh - 470px), 560px); }
   .brand-promo__add-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .brand-promo__preview { position: sticky; top: 80px; }
-  /* The batch sits under the canvas, so the canvas no longer stays pinned over it. */
-  .brand-promo--batch .brand-promo__preview { position: static; }
 }
 
 /*
@@ -1302,17 +1317,15 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
  */
 .workbench { --promo-stage-max: clamp(160px, calc(100svh - 620px), 360px); }
 /* The canvas is the brand promo image's own; here it sits in the stage column rather than in that tool's grid. */
-.workbench .brand-promo__preview { grid-area: auto; }
-.workbench__layout { display: grid; grid-template-areas: "stage" "panel" "layers"; gap: 16px; margin-top: 16px; }
-.workbench__stage { grid-area: stage; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.workbench__layout { display: grid; gap: 16px; margin-top: 16px; }
+.workbench__stage { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .workbench__plain { margin: 0; }
-.workbench__view { position: relative; height: calc(var(--promo-stage-max) + 16px); border-radius: var(--radius-md); background: var(--color-surface-subtle); overflow: hidden; }
-.workbench__view img { position: absolute; inset: 8px; display: block; width: auto; height: auto; max-width: calc(100% - 16px); max-height: calc(100% - 16px); margin: auto; }
+.workbench__view { position: relative; height: calc(var(--promo-stage-max) + 36px); border-radius: var(--radius-md); background: var(--color-surface-subtle); overflow: hidden; }
+.workbench__view img { position: absolute; inset: 16px; display: block; width: auto; height: auto; max-width: calc(100% - 32px); max-height: calc(100% - 32px); margin: auto; }
 .workbench__view--alpha img { background-color: #ffffff; background-image: linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%), linear-gradient(45deg, #e6e4de 25%, transparent 25%, transparent 75%, #e6e4de 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
-.workbench__canvas-tools { display: flex; align-items: center; gap: 8px; }
-.workbench__help { flex: 1 1 12rem; margin: 0; }
+.workbench__help { margin: 0; }
 .workbench__strip { margin-top: 0; }
-.workbench__panel { grid-area: panel; display: grid; align-content: start; gap: 12px; min-width: 0; }
+.workbench__panel { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; }
 .workbench__panel > [role]:empty { margin-block: -6px; }
 .workbench__jobs { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .workbench__jobs legend { margin-bottom: 8px; padding: 0; font-weight: 800; }
@@ -1322,16 +1335,22 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .workbench__toggle { font-weight: 700; }
 .workbench__format { width: 100%; }
 .workbench__job .field-help { margin: 0; line-height: 1.45; }
-.workbench__layer-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.workbench__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.workbench__actions .ui-button { flex: 1 1 10rem; }
-.workbench__status { margin: 0; color: var(--color-muted-foreground); font-size: .86rem; line-height: 1.5; }
+/* Sized by their words, so "Background" keeps its padding in English and the row wraps only when it must. */
+.workbench__layer-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.workbench__layer-tools .ui-button { flex: 1 1 auto; padding-inline: 14px; }
+.workbench__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.workbench__primary { flex: 1 1 10rem; }
+.workbench__status { flex: 1 1 12rem; margin: 0; color: var(--color-muted-foreground); font-size: .86rem; line-height: 1.5; }
+/* An empty status stays in the row for screen readers but takes no line of its own. */
+.workbench__status:empty { flex: 0 0 0; }
 .workbench .field-error { display: flex; align-items: flex-start; gap: 8px; margin: 0; }
-.workbench__layers { grid-area: layers; }
+.workbench__layers { margin-top: 0; }
 .workbench h2 { margin: 0 0 12px; font-size: 1.0625rem; }
-@media (min-width: 1024px) {
+/* The canvas on the left, every control on the right, as in the brand promo image. */
+@media (min-width: 768px) {
   .workbench { --promo-stage-max: clamp(180px, calc(100svh - 570px), 560px); }
-  .workbench__layout { grid-template-columns: minmax(0, 1fr) clamp(280px, 26vw, 340px); grid-template-areas: "stage panel" "layers layers"; column-gap: 24px; }
+  .workbench__layout { grid-template-columns: minmax(0, 1fr) var(--tool-side-width); align-items: start; column-gap: 24px; }
+  .workbench__stage { position: sticky; top: 80px; }
   .workbench__panel { padding-left: 24px; border-left: 1px solid var(--color-border-subtle); }
 }
 
@@ -1421,7 +1440,8 @@ button.pdf-signature__thumb:disabled { opacity: .55; cursor: not-allowed; }
 }
 /* Wide enough for the page and the list side by side: the workspace then fills the screen under the top bar. */
 @container pdf-signature (min-width: 700px) {
-  .pdf-signature__layout { grid-template-columns: minmax(0, 1fr) minmax(264px, 300px); gap: 24px; }
+  .pdf-signature__layout { grid-template-columns: minmax(0, 1fr) var(--tool-side-width); gap: 24px; }
+  .pdf-signature__side { padding-left: 24px; border-left: 1px solid var(--color-border-subtle); }
   .pdf-signature__stage { min-height: 340px; }
   .pdf-signature--open .pdf-signature__layout { height: max(500px, calc(100svh - 156px)); }
   .pdf-signature--open .pdf-signature__main, .pdf-signature--open .pdf-signature__side { min-height: 0; }

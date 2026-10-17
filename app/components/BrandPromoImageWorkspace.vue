@@ -94,56 +94,68 @@ function choose(event: Event) {
       <Button variant="outline" @click="prepare">{{ en ? 'Check again' : '重新檢查' }}</Button>
     </div>
 
+    <!-- The picture on the left, every control on the right: nothing sits under the canvas for it to cover. -->
     <div class="brand-promo__editor">
-      <div class="brand-promo__add" role="group" aria-labelledby="promo-add-label">
-        <p id="promo-add-label" class="brand-promo__label">{{ en ? 'Add a layer' : '加入圖層' }}</p>
-        <div class="brand-promo__add-buttons">
-          <Button
-            v-for="item in addKinds"
-            :key="item"
-            variant="outline"
-            :data-promo-add="item"
-            :aria-label="lead(en ? 'Add' : '加入', item) + labels[item]"
-            :disabled="locked || preparing || !supported"
-            aria-describedby="promo-error"
-            @click="pick(item)"
-          >
-            {{ labels[item] }}
-          </Button>
-        </div>
-        <input id="promo-file" ref="fileInput" class="brand-promo__file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" tabindex="-1" aria-hidden="true" @change="choose">
-      </div>
-
-      <PromoCanvas :editor="editor" :empty-text="en ? 'Add a product image, then a background, frame, or Logo.' : '先加入商品圖，再疊上背景、框版或 Logo。'" />
-
-      <div class="brand-promo__output">
-        <div class="brand-promo__actions">
-          <Button variant="outline" size="icon" :disabled="locked || !canUndo" :aria-label="en ? 'Undo' : '復原'" :title="en ? 'Undo (Ctrl/⌘ Z)' : '復原（Ctrl／⌘ Z）'" aria-keyshortcuts="Control+z Meta+z" @click="undo">
-            <Undo2 :size="18" aria-hidden="true" />
-          </Button>
-          <Button variant="outline" size="icon" :disabled="locked || !canRedo" :aria-label="en ? 'Redo' : '重做'" :title="en ? 'Redo (Ctrl/⌘ Shift Z)' : '重做（Ctrl／⌘ Shift Z）'" aria-keyshortcuts="Control+Shift+z Meta+Shift+z" @click="redo">
-            <Redo2 :size="18" aria-hidden="true" />
-          </Button>
-          <Button v-if="ready && !several" as-child class="brand-promo__primary">
-            <a id="promo-download" :href="output" download="brand-promo.png"><Download :size="18" aria-hidden="true" />{{ en ? 'Download PNG' : '下載 PNG' }}</a>
-          </Button>
-          <Button v-else-if="!ready" id="promo-produce" class="brand-promo__primary" :disabled="locked || !supported || !scene.layers.length || invalid" aria-describedby="promo-error" @click="!invalid && produce()">
-            {{ several ? (en ? `Make ${batchSize} PNGs` : `產生 ${batchSize} 張 PNG`) : (en ? 'Make PNG' : '產生 PNG') }}
-          </Button>
-          <Button v-if="busy" variant="outline" @click="cancel">{{ en ? 'Cancel' : '取消' }}</Button>
-        </div>
-        <ImageBatchDownload v-if="several && ready" class="brand-promo__downloads" :files="outputs" archive-name="brand-promo.zip" />
-        <p id="promo-error" role="alert" class="field-error">{{ errorText }}</p>
-        <p role="status" class="brand-promo__status">{{ statusText }}</p>
-        <p v-show="scene.layers.length" id="promo-stage-help" class="field-help">
+      <div class="brand-promo__main">
+        <ImageBatchStrip
+          v-if="several"
+          class="brand-promo__strip"
+          :items="batchItems"
+          :selected-id="batch.assetIds[batchIndex]"
+          :disabled="locked"
+          @select="id => showBatch(batch.assetIds.indexOf(id))"
+          @remove="id => removeFromBatch(batch.assetIds.indexOf(id))"
+        />
+        <PromoCanvas :editor="editor" :empty-text="en ? 'Add a product image, then a background, frame, or Logo.' : '先加入商品圖，再疊上背景、框版或 Logo。'" />
+        <p v-show="scene.layers.length" id="promo-stage-help" class="field-help brand-promo__help">
           {{ en
             ? 'Drag a layer on the preview to move it, a corner to resize it, or an edge to stretch it. After clicking the preview, arrow keys nudge and Delete removes.'
             : '在預覽上拖曳圖層即可移動，拖曳四角縮放、四邊拉伸。點一下預覽後，方向鍵可微調、Delete 可移除。' }}
         </p>
       </div>
 
-      <div v-if="batchTarget" class="brand-promo__batch" data-promo-batch>
-        <div class="brand-promo__batch-bar">
+      <div class="brand-promo__side">
+        <div class="brand-promo__add" role="group" aria-labelledby="promo-add-label">
+          <p id="promo-add-label" class="brand-promo__label">{{ en ? 'Add a layer' : '加入圖層' }}</p>
+          <div class="brand-promo__add-buttons">
+            <Button
+              v-for="item in addKinds"
+              :key="item"
+              variant="outline"
+              :data-promo-add="item"
+              :aria-label="lead(en ? 'Add' : '加入', item) + labels[item]"
+              :disabled="locked || preparing || !supported"
+              aria-describedby="promo-error"
+              @click="pick(item)"
+            >
+              {{ labels[item] }}
+            </Button>
+          </div>
+          <input id="promo-file" ref="fileInput" class="brand-promo__file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" tabindex="-1" aria-hidden="true" @change="choose">
+        </div>
+
+        <div class="brand-promo__output">
+          <div class="brand-promo__actions">
+            <Button variant="outline" size="icon" :disabled="locked || !canUndo" :aria-label="en ? 'Undo' : '復原'" :title="en ? 'Undo (Ctrl/⌘ Z)' : '復原（Ctrl／⌘ Z）'" aria-keyshortcuts="Control+z Meta+z" @click="undo">
+              <Undo2 :size="18" aria-hidden="true" />
+            </Button>
+            <Button variant="outline" size="icon" :disabled="locked || !canRedo" :aria-label="en ? 'Redo' : '重做'" :title="en ? 'Redo (Ctrl/⌘ Shift Z)' : '重做（Ctrl／⌘ Shift Z）'" aria-keyshortcuts="Control+Shift+z Meta+Shift+z" @click="redo">
+              <Redo2 :size="18" aria-hidden="true" />
+            </Button>
+            <Button v-if="ready && !several" as-child class="brand-promo__primary">
+              <a id="promo-download" :href="output" download="brand-promo.png"><Download :size="18" aria-hidden="true" />{{ en ? 'Download PNG' : '下載 PNG' }}</a>
+            </Button>
+            <Button v-else-if="!ready" id="promo-produce" class="brand-promo__primary" :disabled="locked || !supported || !scene.layers.length || invalid" aria-describedby="promo-error" @click="!invalid && produce()">
+              {{ several ? (en ? `Make ${batchSize} PNGs` : `產生 ${batchSize} 張 PNG`) : (en ? 'Make PNG' : '產生 PNG') }}
+            </Button>
+            <Button v-if="busy" variant="outline" @click="cancel">{{ en ? 'Cancel' : '取消' }}</Button>
+          </div>
+          <ImageBatchDownload v-if="several && ready" class="brand-promo__downloads" :files="outputs" archive-name="brand-promo.zip" />
+          <p id="promo-error" role="alert" class="field-error">{{ errorText }}</p>
+          <p role="status" class="brand-promo__status">{{ statusText }}</p>
+        </div>
+
+        <div v-if="batchTarget" class="brand-promo__batch" data-promo-batch>
           <Button variant="outline" :disabled="locked || !supported" aria-describedby="promo-batch-help promo-error" data-promo-batch-add @click="pickBatch">
             <Images :size="18" aria-hidden="true" />{{ several ? (en ? 'Add more product photos' : '加入更多商品圖') : (en ? 'Use this layout for more photos' : '套用到多張商品圖') }}
           </Button>
@@ -152,19 +164,11 @@ function choose(event: Event) {
               ? (en ? `${batchSize} product photos share this layout; making the PNGs makes one for each.` : `${batchSize} 張商品圖共用這個版面，產生時每張各一張 PNG。`)
               : (en ? 'Add other product photos: each is placed in this product layer with the same position, size and layer order.' : '加入其他商品圖，每一張都放進這個商品圖層，位置、大小與圖層順序不變。') }}
           </p>
+          <input ref="batchInput" class="brand-promo__file" type="file" multiple accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" tabindex="-1" aria-hidden="true" data-promo-batch-input @change="chooseBatch">
         </div>
-        <input ref="batchInput" class="brand-promo__file" type="file" multiple accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" tabindex="-1" aria-hidden="true" data-promo-batch-input @change="chooseBatch">
-        <ImageBatchStrip
-          v-if="several"
-          :items="batchItems"
-          :selected-id="batch.assetIds[batchIndex]"
-          :disabled="locked"
-          @select="id => showBatch(batch.assetIds.indexOf(id))"
-          @remove="id => removeFromBatch(batch.assetIds.indexOf(id))"
-        />
-      </div>
 
-      <PromoLayers v-model:invalid="invalid" :editor="editor" />
+        <PromoLayers v-model:invalid="invalid" :editor="editor" />
+      </div>
     </div>
   </Card>
 </template>

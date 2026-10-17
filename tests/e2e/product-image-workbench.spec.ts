@@ -84,6 +84,8 @@ test('套版與壓縮：三張商品圖套上同一個 Logo，一次處理並在
   const chooser = page.waitForEvent('filechooser')
   await page.locator('[data-workbench-add="logo"]').click()
   await (await chooser).setFiles(await imageFile(page, 'private-workbench-logo.png', '#0000ff', 100, 100))
+  // Position and size by number sit folded away beside the canvas, since dragging does the same.
+  await page.locator('[data-promo-exact] summary').click()
   await page.getByLabel('縮放（%）', { exact: true }).fill('20')
 
   await page.locator('[data-workbench-run]').click()
