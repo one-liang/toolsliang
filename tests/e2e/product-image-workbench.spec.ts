@@ -154,7 +154,7 @@ test('有一張不能處理時只停在那一張，其餘照常完成', async ({
   await expect(page.locator('.workbench [data-batch-download]')).toHaveCount(2)
 })
 
-test('第一個畫面就看得到縮圖列、畫布、三個選項、處理與下載按鈕（#112）', async ({ page }, info) => {
+test('第一個畫面就看得到縮圖列、畫布、三個選項、處理與下載按鈕（#112），捲動後畫布整張放大在畫面內', async ({ page }, info) => {
   await page.setViewportSize({ width: 1366, height: 768 })
   await gotoHydrated(page, route)
   await photos(page).setInputFiles([
@@ -169,13 +169,23 @@ test('第一個畫面就看得到縮圖列、畫布、三個選項、處理與�
     expect(box.y + box.height, `${label}不捲動就要完整看得到`).toBeLessThanOrEqual(fold)
   }
   await visible('縮圖列', page.getByRole('listbox', { name: '這批圖片' }))
-  await visible('畫布', page.locator('[data-promo-stage]'))
+  // The canvas is sized for the screen without the heading, so the first screen shows its top beside the jobs.
+  expect(fold - (await page.locator('[data-promo-stage]').boundingBox())!.y, '畫布在第一畫面要露出上半部').toBeGreaterThanOrEqual(160)
   for (const job of ['cutout', 'compose', 'compress']) await visible(`「${job}」選項`, page.locator(`[data-workbench-job="${job}"] input[type=checkbox]`))
   await visible('處理按鈕', page.locator('[data-workbench-run]'))
   await page.locator('[data-workbench-run]').click()
   await expect(page.getByRole('button', { name: '全部下載（ZIP）', exact: true })).toBeVisible({ timeout: 60_000 })
   await visible('下載按鈕', page.getByRole('button', { name: '全部下載（ZIP）', exact: true }))
   if (info.project.name === 'chromium') await page.screenshot({ path: 'artifacts/product-image-workbench-1366.png' })
+
+  // Once the heading scrolls away the stage sticks under the top bar, and the whole canvas fits in the screen at a working size.
+  await page.evaluate(() => window.scrollTo(0, document.querySelector('.workbench__layout')!.getBoundingClientRect().top + scrollY - 80))
+  const canvas = (await page.locator('[data-promo-stage]').boundingBox())!
+  expect(canvas.y, '畫布上緣在頂列之下').toBeGreaterThanOrEqual(64)
+  await visible('捲動後的畫布', page.locator('[data-promo-stage]'))
+  await visible('捲動後的畫布說明', page.locator('#promo-stage-help'))
+  expect(canvas.height, '畫布夠大，方便拖曳').toBeGreaterThanOrEqual(400)
+  if (info.project.name === 'chromium') await page.screenshot({ path: 'artifacts/product-image-workbench-1366-scrolled.png' })
 
   await page.setViewportSize({ width: 375, height: 812 })
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
