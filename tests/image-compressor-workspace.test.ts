@@ -81,7 +81,7 @@ it('選圖後立即顯示原圖並自動壓縮，以 KB 與縮小比例比較，
   expect(output.text()).toContain('80 × 40')
   expect(output.text()).toContain('1.5 KB')
   expect(output.text()).toContain('縮小 50%')
-  expect(wrapper.find('a[download]').attributes('download')).toBe('product shot.final-compressed.jpg')
+  expect(wrapper.find('a[download]').attributes('download')).toBe('product shot.final-compressed.png')
   expect(wrapper.find('[data-compressor-summary]').exists()).toBe(false)
   expect(wrapper.text()).not.toMatch(/\bbytes\b/)
 })
@@ -97,7 +97,7 @@ it('一次壓縮多張，顯示合計並提供 ZIP 下載', async () => {
   expect(wrapper.find('[data-compressor-summary]').text()).toContain('縮小 50%')
   expect(wrapper.find('[data-batch-download-all]').exists()).toBe(true)
   const names = wrapper.findAll('details a[download]').map(link => link.attributes('download'))
-  expect(names).toEqual(['a-compressed.jpg', 'b-compressed.jpg', 'a-compressed-2.jpg'])
+  expect(names).toEqual(['a-compressed.png', 'b-compressed.png', 'a-compressed-2.png'])
 })
 
 it('改輸出格式會用新格式重新壓縮整批', async () => {
@@ -106,11 +106,14 @@ it('改輸出格式會用新格式重新壓縮整批', async () => {
   mounted.push(wrapper)
   await flushPromises()
   await selectFiles(wrapper, [png('a.png', 3072), png('b.png', 3072)])
-  expect(formats).toEqual(['image/jpeg', 'image/jpeg'])
-  await wrapper.find('#compressor-format').setValue('image/png')
+  // Automatic keeps each PNG a PNG; choosing JPEG compresses the batch again.
+  expect(formats).toEqual(['image/png', 'image/png'])
+  expect(wrapper.text()).toContain('每張都維持原格式；PNG 以減少顏色來縮小，保留透明背景。')
+  await wrapper.find('#compressor-format').setValue('image/jpeg')
   for (let round = 0; round < 6; round += 1) await flushPromises()
-  expect(formats).toEqual(['image/jpeg', 'image/jpeg', 'image/png', 'image/png'])
-  expect(wrapper.find('[data-image-result]').text()).toContain('PNG')
+  expect(formats).toEqual(['image/png', 'image/png', 'image/jpeg', 'image/jpeg'])
+  expect(wrapper.find('[data-image-result]').text()).toContain('JPEG')
+  expect(wrapper.text()).toContain('透明處會補成白色。')
 })
 
 it('清除全部時釋放縮圖與輸出的 object URL', async () => {

@@ -107,13 +107,13 @@ it('無法讀取原檔時回報可恢復讀取錯誤', async () => {
   expect(await engine.run({ file, ...options })).toEqual({ status: 'error', error: { code: 'read_failed', recoverable: true, suggestedAction: 'retry' } })
 })
 
-it.each(['reading', 'decoding', 'processing', 'encoding', 'preparing-download'])('可在 %s 階段中止，不交付半成品', async (stage) => {
+it.each(['reading', 'decoding', 'processing', 'reducing-colors', 'encoding', 'preparing-download'])('可在 %s 階段中止，不交付半成品', async (stage) => {
   vi.stubGlobal('Worker', class {
     onmessage?: (event: { data: unknown }) => void
     terminate() {}
     postMessage() {
       queueMicrotask(() => {
-        for (const step of ['decoding', 'processing', 'encoding']) this.onmessage?.({ data: { type: 'progress', progress: { stage: step, completed: 0, total: 1 } } })
+        for (const step of ['decoding', 'processing', 'reducing-colors', 'encoding']) this.onmessage?.({ data: { type: 'progress', progress: { stage: step, completed: 0, total: 1 } } })
         this.onmessage?.({ data: { type: 'result', output: { bytes: new ArrayBuffer(1), preview: new ArrayBuffer(1), format: 'image/png', width: 1, height: 1, sourceWidth: 1, sourceHeight: 1 } } })
       })
     }
