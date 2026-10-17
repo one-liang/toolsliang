@@ -177,7 +177,10 @@ function removePhoto(id: string) {
           </div>
         </div>
 
-        <div v-if="busy || pending || issue || jobs.compose" class="workbench__actions">
+        <!-- Finished photos are downloaded from where the button that made them stood, straight under the jobs. -->
+        <ImageBatchDownload :files="downloads" :archive-name="workbenchArchiveName" :disabled="busy" />
+        <!-- The status shares the row with undo, redo and the button, and stands beside undo and redo once nothing is left to process. -->
+        <div class="workbench__actions">
           <template v-if="jobs.compose">
             <Button size="icon" variant="outline" :disabled="busy || !canUndo" :aria-label="en ? 'Undo' : '復原'" :title="en ? 'Undo (Ctrl/⌘ Z)' : '復原（Ctrl／⌘ Z）'" aria-keyshortcuts="Control+z Meta+z" @click="undo"><Undo2 :size="18" aria-hidden="true" /></Button>
             <Button size="icon" variant="outline" :disabled="busy || !canRedo" :aria-label="en ? 'Redo' : '重做'" :title="en ? 'Redo (Ctrl/⌘ Shift Z)' : '重做（Ctrl／⌘ Shift Z）'" aria-keyshortcuts="Control+Shift+z Meta+Shift+z" @click="redo"><Redo2 :size="18" aria-hidden="true" /></Button>
@@ -186,10 +189,9 @@ function removePhoto(id: string) {
           <Button v-else-if="pending || issue" class="workbench__primary" :disabled="!anyJob || invalid" data-workbench-run @click="start">
             <Play :size="18" aria-hidden="true" />{{ runLabel }}
           </Button>
+          <p role="status" class="workbench__status">{{ status }}</p>
         </div>
-        <p role="status" class="workbench__status">{{ status }}</p>
         <p id="promo-error" role="alert" class="field-error">{{ errorText }}</p>
-        <ImageBatchDownload :files="downloads" :archive-name="workbenchArchiveName" :disabled="busy" />
         <PromoLayers v-if="jobs.compose" v-model:invalid="invalid" class="workbench__layers" :editor="editor" :locked="busy" />
       </div>
     </div>

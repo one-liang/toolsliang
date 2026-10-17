@@ -1338,9 +1338,11 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 /* Sized by their words, so "Background" keeps its padding in English and the row wraps only when it must. */
 .workbench__layer-tools { display: flex; flex-wrap: wrap; gap: 6px; }
 .workbench__layer-tools .ui-button { flex: 1 1 auto; padding-inline: 14px; }
-.workbench__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.workbench__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .workbench__primary { flex: 1 1 10rem; }
-.workbench__status { margin: 0; color: var(--color-muted-foreground); font-size: .86rem; line-height: 1.5; }
+.workbench__status { flex: 1 1 12rem; margin: 0; color: var(--color-muted-foreground); font-size: .86rem; line-height: 1.5; }
+/* An empty status stays in the row for screen readers but takes no line of its own. */
+.workbench__status:empty { flex: 0 0 0; }
 .workbench .field-error { display: flex; align-items: flex-start; gap: 8px; margin: 0; }
 .workbench__layers { margin-top: 0; }
 .workbench h2 { margin: 0 0 12px; font-size: 1.0625rem; }
