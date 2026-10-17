@@ -1176,7 +1176,8 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 :is(.image-batch-picker__issues, .image-batch-strip__error, .image-batch-download__error) svg { flex: none; margin-top: 3px; }
 .image-batch-picker__names { overflow-wrap: anywhere; }
 
-.image-batch-strip { --batch-thumb: 64px; margin-top: 12px; }
+/* Never wider than the column it sits in: twenty thumbnails scroll inside the list instead of widening that column. */
+.image-batch-strip { --batch-thumb: 64px; min-width: 0; margin-top: 12px; }
 /* The padding keeps the focus ring inside the scroller, which would otherwise clip it. */
 .image-batch-strip__list { display: flex; gap: 8px; margin: 0; padding: 5px 5px 9px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 5px; scrollbar-width: thin; scrollbar-color: var(--color-border-subtle) transparent; }
 .image-batch-strip__item { position: relative; flex: none; width: var(--batch-thumb); height: var(--batch-thumb); padding: 3px; border: var(--rule) solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--color-surface); cursor: pointer; scroll-snap-align: start; transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
@@ -1318,7 +1319,8 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .workbench { --promo-stage-max: clamp(160px, calc(100svh - 620px), 360px); }
 /* The canvas is the brand promo image's own; here it sits in the stage column rather than in that tool's grid. */
 .workbench__layout { display: grid; gap: 16px; margin-top: 16px; }
-.workbench__stage { display: grid; gap: 10px; align-content: start; min-width: 0; }
+/* One track the width of the column, so a long strip of photos scrolls inside it rather than pushing the canvas over the controls. */
+.workbench__stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; min-width: 0; }
 .workbench__plain { margin: 0; }
 .workbench__view { position: relative; height: calc(var(--promo-stage-max) + 36px); border-radius: var(--radius-md); background: var(--color-surface-subtle); overflow: hidden; }
 .workbench__view img { position: absolute; inset: 16px; display: block; width: auto; height: auto; max-width: calc(100% - 32px); max-height: calc(100% - 32px); margin: auto; }
