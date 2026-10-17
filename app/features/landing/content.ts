@@ -7,6 +7,7 @@ import {
   type LocaleCode,
   type LocalizedCopy,
   type PublishedToolDefinition,
+  type ToolStatusMetadata,
 } from '@/features/tools/catalog'
 
 /** A short heading plus the sentence that backs it, both fully localized. */
@@ -91,16 +92,16 @@ const landingCategoryPitches: Record<LandingCategoryId, LocalizedCopy> = {
  */
 const landingToolTaglines: Record<string, LocalizedCopy> = {
   'product-image-workbench': {
-    'zh-tw': '去背、框版 Logo、壓縮一次跑完',
-    en: 'Cutout, frames and compression in one run',
+    'zh-tw': '多張商品圖一次去背、套版、壓縮',
+    en: 'Remove backgrounds, apply a layout and compress many photos at once',
   },
   'image-background-remover': {
     'zh-tw': '把人像從背景分離，輸出透明 PNG',
     en: 'Lift a person off the background as a transparent PNG',
   },
   'image-compressor': {
-    'zh-tw': '調整品質、尺寸與格式，比較後再下載',
-    en: 'Tune quality, size and format, compare, then download',
+    'zh-tw': '以建議品質壓縮一張或多張，比較後下載',
+    en: 'Compress one image or many at the recommended quality, compare, download',
   },
   'brand-promo-image': {
     'zh-tw': '幫商品圖加上背景、框版與 Logo',
@@ -171,6 +172,8 @@ export interface LandingToolEntry {
   slug: string
   name: string
   tagline: string
+  /** The catalog's own status, shown with the same badge as the tool directory. */
+  status?: ToolStatusMetadata
 }
 
 export interface LandingCategory {
@@ -204,6 +207,7 @@ export function getLandingCategories(locale: LocaleCode): LandingCategory[] {
         slug: tool.slug,
         name: copy(tool.name, locale),
         tagline: copy(landingToolTaglines[tool.slug]!, locale),
+        status: tool.status,
       })),
     }))
 }

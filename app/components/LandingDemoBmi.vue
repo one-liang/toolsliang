@@ -1,43 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getBmiDemo } from '@/features/landing/demos'
+import BmiResult from '@/components/BmiResult.vue'
+import { bmiDemoInput, getBmiDemo } from '@/features/landing/demos'
+import { getBmiCopy } from '@/features/tools/bmi-calculator/content'
 import type { LocaleCode } from '@/features/tools/catalog'
 
 const props = defineProps<{ locale: LocaleCode }>()
 const bmi = computed(() => getBmiDemo(props.locale))
-const text = computed(() => props.locale === 'en'
-  ? {
-      standard: 'Taiwan’s adult categories (Health Promotion Administration)',
-      scale: `The four adult BMI categories, with ${bmi.value.display} marked in ${bmi.value.categoryName}`,
-    }
-  : {
-      standard: '國民健康署成人健康體位標準',
-      scale: `成人 BMI 四個分級，標出 ${bmi.value.display} 落在「${bmi.value.categoryName}」`,
-    })
+const text = computed(() => getBmiCopy(props.locale))
 </script>
 
 <template>
+  <!-- The calculator's own result panel (#92), for the measurements written above it with the calculator's field names. -->
   <div class="nb-bmi" data-demo="bmi">
-    <p class="nb-bmi__standard">{{ text.standard }}</p>
-    <div class="nb-bmi__scale" role="img" :aria-label="text.scale">
-      <div class="nb-bmi__bar">
-        <span
-          v-for="band in bmi.bands"
-          :key="band.id"
-          :class="['nb-bmi__band', `nb-bmi__band--${band.id}`]"
-          :style="{ width: `${(band.to - band.from) * 100}%` }"
-        />
+    <dl class="nb-bmi__input">
+      <div>
+        <dt>{{ text.heightCentimetresLabel }}</dt>
+        <dd>{{ bmiDemoInput.heightCentimetres }}</dd>
       </div>
-      <span class="nb-bmi__marker" :style="{ '--pos': bmi.position }" data-bmi-marker>
-        <span class="nb-bmi__pin">{{ bmi.display }}</span>
-      </span>
-    </div>
-    <ul class="nb-bmi__legend">
-      <li v-for="band in bmi.bands" :key="band.id" :class="{ 'is-current': band.current }">
-        <span :class="['nb-bmi__swatch', `nb-bmi__band--${band.id}`]" aria-hidden="true" />
-        <span class="nb-bmi__name">{{ band.name }}</span>
-        <span class="nb-bmi__range">{{ band.range }}</span>
-      </li>
-    </ul>
+      <div>
+        <dt>{{ text.weightKilogramsLabel }}</dt>
+        <dd>{{ bmiDemoInput.weightKilograms }}</dd>
+      </div>
+    </dl>
+    <BmiResult :result="bmi.result" :locale="locale" />
   </div>
 </template>

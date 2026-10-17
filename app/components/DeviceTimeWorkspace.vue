@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onBeforeUnmount, ref, shallowRef, watch 
 import { Check, Clipboard, LoaderCircle, Maximize, TriangleAlert } from '@lucide/vue'
 import { DialogRoot, DialogTrigger } from 'reka-ui'
 import DeviceTimeFullscreen from '@/components/DeviceTimeFullscreen.vue'
+import DeviceTimeReading from '@/components/DeviceTimeReading.vue'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getDeviceStorage } from '@/features/shell/device-storage'
@@ -78,22 +79,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Card class="tool-workspace device-time">
-    <div v-if="reading?.ok" data-device-clock class="device-time__reading" aria-live="off">
-      <p class="device-time__date">{{ reading.date }}</p>
-      <time class="device-time__clock" :datetime="reading.datetime">
-        <span v-for="(part, index) in reading.timeParts" :key="index" :class="{ 'device-time__period': part.type !== 'clock' }">{{ part.value }}</span>
-      </time>
-      <dl class="device-time__zone">
-        <div>
-          <dt>{{ locale === 'en' ? 'Time zone' : '時區' }}</dt>
-          <dd>{{ reading.timeZone ?? (locale === 'en' ? 'Time zone unavailable' : '無法取得時區名稱') }}</dd>
-        </div>
-        <div>
-          <dt>{{ locale === 'en' ? 'UTC offset' : 'UTC 時差' }}</dt>
-          <dd>{{ reading.offset }}</dd>
-        </div>
-      </dl>
-    </div>
+    <DeviceTimeReading v-if="reading?.ok" data-device-clock :reading="reading" :locale="locale" aria-live="off" />
     <p class="field-help">{{ locale === 'en' ? 'Follows your device settings. Not network-corrected time.' : '依據你的裝置設定顯示，未經網路校時。' }}</p>
     <p v-if="reading?.ok && reading.reduced" data-clock-capability class="field-help">
       {{ locale === 'en' ? 'Full time zone formatting is unavailable. Showing basic local time and UTC offset from this device.' : '瀏覽器無法提供完整時區格式，目前顯示基本本機時間與此裝置的 UTC 時差。' }}
@@ -147,15 +133,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.device-time__reading { font-variant-numeric: tabular-nums; }
-.device-time__date { margin-bottom: 8px; font-size: 1.125rem; }
-.device-time__clock { display: block; color: var(--color-foreground); font-family: var(--font-mono); font-size: var(--device-clock-font-size); font-weight: var(--device-clock-font-weight); line-height: var(--device-clock-line-height); }
-.device-time__period { font-family: var(--font-zh); font-size: .4em; }
-.device-time__period:first-child { margin-inline-end: .3em; }
-.device-time__zone { display: flex; flex-wrap: wrap; gap: 16px 32px; margin: 24px 0; }
-.device-time__zone dt { color: var(--color-muted-foreground); font-size: .875rem; }
-.device-time__zone dd { margin: 4px 0 0; overflow-wrap: anywhere; }
-.device-time__zone > div { min-width: 0; }
 .device-time__hour-cycle { min-width: 0; margin: 20px 0 0; padding: 0; border: 0; }
 .device-time__hour-cycle legend { margin-bottom: 8px; padding: 0; font-size: .86rem; font-weight: 700; }
 .device-time__status { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: .875rem; }
