@@ -374,15 +374,22 @@ test('保存的簽名以縮圖排在清單最前面，開啟 PDF 前就看得到
   await expect(page.locator('[data-saved-signature]')).toHaveCount(0)
 })
 
-test('1366×768 與 1920×1080：寬版工作區，開啟 PDF 後頁面預覽、簽名清單與下載都在第一畫面（#104、#111）', async ({ page }) => {
+test('1366×768 與 1920×1080：寬版頁與標題、說明同寬，開啟 PDF 後頁面預覽、簽名清單與下載都在第一畫面（#104、#111、#124）', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 })
   await gotoHydrated(page, '/zh-tw/tools/pdf-signature/')
   const workspace = page.locator('.tool-page__workspace')
-  const reading = page.locator('.tool-heading')
-  expect((await workspace.boundingBox())!.width).toBeGreaterThan((await reading.boundingBox())!.width + 200)
+  const heading = page.locator('.tool-heading')
+  const sections = page.locator('.tool-contract').first()
+  // The page widens past a standard tool page's 980px, and the heading and the sections widen with it (#124).
+  const edges = async () => Promise.all([workspace, heading, sections].map(async block => {
+    const box = (await block.boundingBox())!
+    return [Math.round(box.x), Math.round(box.x + box.width)]
+  }))
+  expect((await workspace.boundingBox())!.width).toBeGreaterThan(980 + 200)
+  expect(new Set((await edges()).map(edge => edge.join()))).toHaveProperty('size', 1)
 
   await page.setViewportSize({ width: 1366, height: 768 })
-  expect((await workspace.boundingBox())!.width).toBeGreaterThan((await reading.boundingBox())!.width)
+  expect(new Set((await edges()).map(edge => edge.join()))).toHaveProperty('size', 1)
   await typeSignature(page, '簽名測試用字', { button: '文字', field: '要寫上的文字' })
 
   await page.getByLabel('選擇 PDF 檔').setInputFiles(upload('rotated-pages'))
