@@ -45,7 +45,7 @@ import { selectableYears } from '@/features/tools/taiwan-calendar/domain/years'
 
 type CalendarView = 'month' | 'year'
 
-const { locale } = useAppLocale()
+const { locale, withLocale } = useAppLocale()
 const text = computed(() => getTaiwanCalendarCopy(locale.value))
 const {
   year, month, calendar, refusalMessage, loading, today, selectedDate, selectedDay, weeks,
@@ -403,6 +403,9 @@ function dayFlag(day: CalendarDay) {
           <strong v-else-if="segment.emphasis" class="calendar-edition__revised">{{ segment.text }}</strong>
           <template v-else>{{ segment.text }}</template>
         </template>
+      </p>
+      <p class="calendar-working-day-link">
+        {{ text.workingDayLinkPrefix }}<NuxtLink :to="withLocale('/tools/working-day-calculator/')">{{ text.workingDayLinkText }}</NuxtLink>{{ text.workingDayLinkSuffix }}
       </p>
 
       <details class="calendar-edition__details">

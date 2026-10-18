@@ -18,7 +18,10 @@ const CURRENT_YEAR = 2026
 
 async function mountWorkspace(locale: 'zh-tw' | 'en' = 'zh-tw') {
   setTestRoute({ path: `/${locale}/tools/taiwan-calendar/`, params: { locale, slug: 'taiwan-calendar' } })
-  const wrapper = mount(TaiwanCalendarWorkspace, { attachTo: document.body })
+  const wrapper = mount(TaiwanCalendarWorkspace, {
+    attachTo: document.body,
+    global: { stubs: { NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' } } },
+  })
   await settle()
   return wrapper
 }
@@ -425,5 +428,17 @@ describe('the English page', () => {
     expect(wrapper.get('.calendar-grid thead th').text()).toBe('Sun')
     expect(wrapper.get('.calendar-detail').text()).toContain('Dragon Boat Festival')
     expect(wrapper.get('.calendar-detail').text()).toContain('端午節')
+  })
+})
+
+describe('the way to the working day calculator', () => {
+  it('links to it in the same language, beside the dataset edition', async () => {
+    const zh = await mountWorkspace()
+    expect(zh.get('.calendar-working-day-link a').attributes('href')).toBe('/zh-tw/tools/working-day-calculator/')
+    expect(zh.get('.calendar-working-day-link').text()).toBe('要算第幾個工作天？請用工作天計算。')
+    zh.unmount()
+
+    const en = await mountWorkspace('en')
+    expect(en.get('.calendar-working-day-link a').attributes('href')).toBe('/en/tools/working-day-calculator/')
   })
 })

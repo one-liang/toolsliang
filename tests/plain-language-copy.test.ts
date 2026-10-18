@@ -10,6 +10,7 @@ import * as productImageWorkbenchContent from '@/features/tools/product-image-wo
 import * as randomPickerContent from '@/features/tools/random-picker/content'
 import * as rocYearContent from '@/features/tools/roc-year-converter/content'
 import * as taiwanCalendarContent from '@/features/tools/taiwan-calendar/content'
+import * as workingDayContent from '@/features/tools/working-day-calculator/content'
 import {
   copy,
   publishedTools,
@@ -54,6 +55,7 @@ const contentModules: Record<string, Record<string, unknown>> = {
   'random-picker': randomPickerContent,
   'roc-year-converter': rocYearContent,
   'taiwan-calendar': taiwanCalendarContent,
+  'working-day-calculator': workingDayContent,
 }
 
 /** What the tool page itself prints, in one locale, outside the workspace component. */
@@ -146,7 +148,7 @@ describe('the sources a tool page lists', () => {
 
   it('are only listed by tools that rest on outside content; the rest say how they handle yours', () => {
     expect(reviewed.map(tool => tool.slug).sort())
-      .toEqual(['bmi-calculator', 'ntd-uppercase', 'roc-year-converter', 'taiwan-calendar'])
+      .toEqual(['bmi-calculator', 'ntd-uppercase', 'roc-year-converter', 'taiwan-calendar', 'working-day-calculator'])
 
     for (const tool of publishedTools.filter(candidate => !candidate.contentReview)) {
       expect(tool.pagePresentation.showLocalProcessingStatement, tool.slug).toBe(true)

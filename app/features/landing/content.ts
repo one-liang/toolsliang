@@ -135,6 +135,10 @@ const landingToolTaglines: Record<string, LocalizedCopy> = {
     'zh-tw': '民國年、西元年互查，附逐年對照表',
     en: 'ROC and Gregorian years both ways, with a year table',
   },
+  'working-day-calculator': {
+    'zh-tw': '數 N 個工作天，連假、補假自動跳過',
+    en: 'Count working days, with holidays and substitute days skipped',
+  },
 }
 
 /**
