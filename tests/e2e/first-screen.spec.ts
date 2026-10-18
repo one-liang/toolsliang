@@ -73,6 +73,15 @@ const TOOLS: FirstScreen[] = [
     result: page => page.locator('.roc-year__result'),
   },
   {
+    slug: 'working-day-calculator',
+    name: '工作天計算',
+    ready: page => page.locator('[data-working-day-state="ready"]').waitFor(),
+    input: page => page.getByLabel('幾個工作天'),
+    // The answer updates as the number is typed; switching what to count is the one control that acts on it.
+    action: page => page.getByRole('radio', { name: '數區間' }),
+    result: page => page.locator('.working-day__result'),
+  },
+  {
     slug: 'random-picker',
     name: '抽籤與輪盤',
     input: page => page.getByLabel('候選名單'),
