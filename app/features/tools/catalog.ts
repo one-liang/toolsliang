@@ -9,6 +9,7 @@ import { taiwanCalendarContentReview } from './taiwan-calendar/domain/sources'
 import { pdfSignatureDefinition } from './pdf-signature/definition'
 import { deviceTimeDefinition } from './device-time/definition'
 import { rocYearConverterDefinition } from './roc-year-converter/definition'
+import { workingDayCalculatorDefinition } from './working-day-calculator/definition'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -24,7 +25,7 @@ export const offlineAssetPathPrefix = `${process.env.NUXT_APP_BASE_URL || '/'}as
 export const toolIcons = [
   'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
   'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive', 'clock',
-  'calendar-plus', 'pen-line',
+  'calendar-plus', 'pen-line', 'calendar-range',
 ] as const
 
 export type ToolIcon = typeof toolIcons[number]
@@ -192,6 +193,7 @@ export const toolCategories: ToolCategory[] = [
 const registeredTools: ToolDefinition[] = [
   deviceTimeDefinition,
   rocYearConverterDefinition,
+  workingDayCalculatorDefinition,
   imageCompressorDefinition,
   imageBackgroundRemoverDefinition,
   brandPromoImageDefinition,

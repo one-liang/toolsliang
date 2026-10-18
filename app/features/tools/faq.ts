@@ -5,6 +5,7 @@ import { productImageWorkbenchFaq } from './product-image-workbench/content'
 import { pdfSignatureFaq } from './pdf-signature/content'
 import { deviceTimeFaq } from './device-time/content'
 import { rocYearFaq } from './roc-year-converter/content'
+import { workingDayFaq } from './working-day-calculator/content'
 import { bmiFaq } from './bmi-calculator/content'
 import { ntdFaq } from './ntd-uppercase/content'
 import { randomPickerFaq } from './random-picker/content'
@@ -30,6 +31,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'taiwan-calendar': taiwanCalendarFaq,
   'device-time': deviceTimeFaq,
   'roc-year-converter': rocYearFaq,
+  'working-day-calculator': workingDayFaq,
   'image-compressor': imageCompressorFaq,
   'image-background-remover': imageBackgroundRemoverFaq,
   'product-image-workbench': productImageWorkbenchFaq,
