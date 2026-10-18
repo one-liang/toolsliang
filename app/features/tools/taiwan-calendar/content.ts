@@ -99,6 +99,9 @@ const taiwanCalendarCopyEntries = {
   editionDetailsLabel: { 'zh-tw': '資料日期與使用須知', en: 'Dataset dates and notes' },
   caveatsTitle: { 'zh-tw': '使用須知', en: 'Before you rely on these dates' },
   sourcesTitle: { 'zh-tw': '各資料集的版本與日期', en: 'Each dataset, its edition and dates' },
+  workingDayLinkPrefix: { 'zh-tw': '要算第幾個工作天？請用', en: 'Need to count working days? Use the ' },
+  workingDayLinkText: { 'zh-tw': '工作天計算', en: 'Working Day Calculator' },
+  workingDayLinkSuffix: { 'zh-tw': '。', en: '.' },
 } satisfies Record<string, LocalizedCopy>
 
 export type TaiwanCalendarCopyKey = keyof typeof taiwanCalendarCopyEntries

@@ -882,6 +882,7 @@ details[open] > .tool-contract__summary::after { transform: rotate(180deg); }
 .calendar-edition__line { margin: 0; overflow-wrap: anywhere; }
 .calendar-edition a { color: var(--color-primary-strong); text-decoration: underline; text-underline-offset: 3px; }
 .calendar-edition__revised { color: var(--color-foreground); font-weight: 800; }
+.calendar-working-day-link { margin: 4px 0 0; overflow-wrap: anywhere; }
 .calendar-edition__details > summary { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; list-style: none; color: var(--color-foreground); font-weight: 700; cursor: pointer; }
 .calendar-edition__details > summary::-webkit-details-marker { display: none; }
 .calendar-edition__details > summary::after {
