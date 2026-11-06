@@ -276,7 +276,7 @@ function downloadSvg() {
         </label>
       </div>
       <p v-if="colorError" id="qr-color-error" class="field-error" role="alert">{{ colorError }}</p>
-      <Button v-if="colorsChanged" type="button" variant="ghost" class="qr-code__reset" @click="resetColors">
+      <Button v-if="colorsChanged" type="button" variant="outline" class="qr-code__reset" @click="resetColors">
         {{ text.resetColors }}
       </Button>
     </fieldset>
@@ -332,7 +332,7 @@ function downloadSvg() {
 .qr-code__swatch input[aria-invalid="true"] { border-color: var(--color-destructive); }
 .qr-code__swatch input:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
 .qr-code__hex { color: var(--color-muted-foreground); font-family: var(--font-mono); font-size: .78rem; font-weight: 400; }
-.qr-code__reset { margin-top: 8px; padding-inline: 0; text-decoration: underline; }
+.qr-code__reset { margin-top: 12px; }
 
 @media (min-width: 768px) {
   .qr-code { grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); grid-template-areas: "content preview" "colors preview" "trademark trademark"; align-items: start; }
