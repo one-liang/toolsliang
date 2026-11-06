@@ -179,7 +179,11 @@ test('第一個畫面就看得到縮圖列、畫布、三個選項、處理與�
   if (info.project.name === 'chromium') await page.screenshot({ path: 'artifacts/product-image-workbench-1366.png' })
 
   // Once the heading scrolls away the stage sticks under the top bar, and the whole canvas fits in the screen at a working size.
-  await page.evaluate(() => window.scrollTo(0, document.querySelector('.workbench__layout')!.getBoundingClientRect().top + scrollY - 80))
+  // The site scrolls smoothly, so jump instantly: measuring mid-scroll catches the stage before it sticks.
+  await page.evaluate(() => window.scrollTo({
+    top: document.querySelector('.workbench__layout')!.getBoundingClientRect().top + scrollY - 80,
+    behavior: 'instant',
+  }))
   const canvas = (await page.locator('[data-promo-stage]').boundingBox())!
   expect(canvas.y, '畫布上緣在頂列之下').toBeGreaterThanOrEqual(64)
   await visible('捲動後的畫布', page.locator('[data-promo-stage]'))
