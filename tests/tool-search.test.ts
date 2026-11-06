@@ -19,4 +19,12 @@ describe('tool search', () => {
     expect(searchTools('business day calculator', 'en')[0]?.slug).toBe('working-day-calculator')
     expect(searchTools('放假日查詢', 'zh-tw')[0]?.slug).toBe('taiwan-calendar')
   })
+
+  it('sends a QR Code search, in the words visitors type, to the QR Code generator', () => {
+    expect(searchTools('QR Code', 'zh-tw')[0]?.slug).toBe('qr-code-generator')
+    expect(searchTools('二維碼', 'zh-tw').map(tool => tool.slug)).toEqual(['qr-code-generator'])
+    expect(searchTools('QR碼', 'zh-tw')[0]?.slug).toBe('qr-code-generator')
+    expect(searchTools('qr code', 'en')[0]?.slug).toBe('qr-code-generator')
+    expect(searchTools('wifi qr', 'en')[0]?.slug).toBe('qr-code-generator')
+  })
 })

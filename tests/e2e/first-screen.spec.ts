@@ -82,6 +82,15 @@ const TOOLS: FirstScreen[] = [
     result: page => page.locator('.working-day__result'),
   },
   {
+    slug: 'qr-code-generator',
+    name: 'QR Code 產生器',
+    ready: page => page.locator('[data-qr-state]').waitFor(),
+    input: page => page.getByLabel('貼上網址'),
+    // The code is drawn as the link is typed; downloading it is what the visitor came for.
+    action: page => page.getByRole('button', { name: '下載 PNG' }),
+    result: page => page.locator('.qr-code__stage'),
+  },
+  {
     slug: 'random-picker',
     name: '抽籤與輪盤',
     input: page => page.getByLabel('候選名單'),

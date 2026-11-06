@@ -7,6 +7,7 @@ import * as imageCompressorContent from '@/features/tools/image-compressor/conte
 import * as ntdContent from '@/features/tools/ntd-uppercase/content'
 import * as pdfSignatureContent from '@/features/tools/pdf-signature/content'
 import * as productImageWorkbenchContent from '@/features/tools/product-image-workbench/content'
+import * as qrCodeContent from '@/features/tools/qr-code-generator/content'
 import * as randomPickerContent from '@/features/tools/random-picker/content'
 import * as rocYearContent from '@/features/tools/roc-year-converter/content'
 import * as taiwanCalendarContent from '@/features/tools/taiwan-calendar/content'
@@ -52,6 +53,7 @@ const contentModules: Record<string, Record<string, unknown>> = {
   'ntd-uppercase': ntdContent,
   'pdf-signature': pdfSignatureContent,
   'product-image-workbench': productImageWorkbenchContent,
+  'qr-code-generator': qrCodeContent,
   'random-picker': randomPickerContent,
   'roc-year-converter': rocYearContent,
   'taiwan-calendar': taiwanCalendarContent,
