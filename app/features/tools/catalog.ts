@@ -10,6 +10,7 @@ import { pdfSignatureDefinition } from './pdf-signature/definition'
 import { deviceTimeDefinition } from './device-time/definition'
 import { rocYearConverterDefinition } from './roc-year-converter/definition'
 import { workingDayCalculatorDefinition } from './working-day-calculator/definition'
+import { qrCodeGeneratorDefinition } from './qr-code-generator/definition'
 
 export type LocaleCode = 'zh-tw' | 'en'
 export type ToolStatus = 'new' | 'pro' | 'hot'
@@ -25,7 +26,7 @@ export const offlineAssetPathPrefix = `${process.env.NUXT_APP_BASE_URL || '/'}as
 export const toolIcons = [
   'banknote', 'calculator', 'calendar-days', 'dices', 'shopping-bag',
   'file-text', 'image', 'crop', 'braces', 'table', 'type', 'case-sensitive', 'clock',
-  'calendar-plus', 'pen-line', 'calendar-range',
+  'calendar-plus', 'pen-line', 'calendar-range', 'qr-code',
 ] as const
 
 export type ToolIcon = typeof toolIcons[number]
@@ -198,6 +199,7 @@ const registeredTools: ToolDefinition[] = [
   imageBackgroundRemoverDefinition,
   brandPromoImageDefinition,
   productImageWorkbenchDefinition,
+  qrCodeGeneratorDefinition,
   {
     slug: 'bmi-calculator', category: 'calculation', icon: 'calculator',
     availability: { state: 'published', publishedAt: '2026-09-05' },

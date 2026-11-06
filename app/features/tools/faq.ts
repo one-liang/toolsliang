@@ -6,6 +6,7 @@ import { pdfSignatureFaq } from './pdf-signature/content'
 import { deviceTimeFaq } from './device-time/content'
 import { rocYearFaq } from './roc-year-converter/content'
 import { workingDayFaq } from './working-day-calculator/content'
+import { qrFaq } from './qr-code-generator/content'
 import { bmiFaq } from './bmi-calculator/content'
 import { ntdFaq } from './ntd-uppercase/content'
 import { randomPickerFaq } from './random-picker/content'
@@ -35,6 +36,7 @@ const toolFaqByContentKey: Record<string, ToolFaqEntry[]> = {
   'image-compressor': imageCompressorFaq,
   'image-background-remover': imageBackgroundRemoverFaq,
   'product-image-workbench': productImageWorkbenchFaq,
+  'qr-code-generator': qrFaq,
   'pdf-signature': pdfSignatureFaq,
 }
 
